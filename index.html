@@ -561,9 +561,9 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .tokchip:hover{background:var(--light);border-color:var(--border-2)}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:16px}
 .modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;position:relative}
+.modal{background:var(--white);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;position:relative}
 .modal-title{font-family:var(--fd);font-size:20px;font-weight:600;margin-bottom:3px}
 .modal-sub{font-size:13px;color:var(--text-3);margin-bottom:22px}
 .modal-close{position:absolute;top:16px;right:18px;background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-3);line-height:1;padding:3px}
@@ -662,8 +662,8 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 
   /* Modal - full screen on mobile */
   .modal-overlay{padding:0;align-items:flex-end}
-  .modal{max-width:100%;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:92vh;padding:20px 16px}
-  .modal-footer{flex-direction:column;gap:8px}
+  .modal{max-width:100%;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:85vh;padding:20px 16px calc(20px + env(safe-area-inset-bottom, 16px));overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .modal-footer{flex-direction:column;gap:8px;position:sticky;bottom:0;background:var(--white);padding-top:14px;margin-top:18px;z-index:1}
   .modal-footer .btn{width:100%;justify-content:center;padding:12px}
 
   /* Toast - bottom center on mobile */
@@ -1441,7 +1441,22 @@ window.hqTab=function(tab){
   document.getElementById('hq-container').scrollTop=0;
 };
 
-window.openModal=function(){document.getElementById('prospectModal').classList.add('open')};
+window.openModal=function(){
+  var p=window._hqProspect;
+  if(p){
+    document.getElementById('f-company').value=p.company||'';
+    document.getElementById('f-contact').value=p.contact||'';
+    document.getElementById('f-email').value=p.email||'';
+    document.getElementById('f-phone').value=p.phone||'';
+    document.getElementById('f-industry').value=p.industry||'';
+    document.getElementById('f-state').value=p.state||'';
+    document.getElementById('f-headcount').value=p.headcount||'';
+    document.getElementById('f-persona').value=p.persona||'CFO';
+    document.getElementById('f-linkedin').value=p.linkedin||'';
+    selectTrack(p.track||'WFN');
+  }
+  document.getElementById('prospectModal').classList.add('open');
+};
 window.closeModal=function(){document.getElementById('prospectModal').classList.remove('open')};
 window.selectTrack=function(t){
   selectedRole=t;
@@ -1452,6 +1467,7 @@ window.selectTrack=function(t){
 window.saveProspect=function(){
   const company=document.getElementById('f-company').value.trim();
   if(!company){showToast('Company name is required',true);return}
+  var isEdit=!!window._hqProspect;
   window._hqProspect={
     company,contact:document.getElementById('f-contact').value.trim(),
     persona:document.getElementById('f-persona').value,
@@ -1463,8 +1479,13 @@ window.saveProspect=function(){
     linkedin:document.getElementById('f-linkedin').value.trim(),
     track:selectedRole||'WFN'
   };
-  closeModal();hqRenderBanner();hqAdvancePipeline(1);
-  showToast('Pipeline initialized for '+company);
+  closeModal();hqRenderBanner();
+  if(!isEdit){hqAdvancePipeline(1);showToast('Pipeline initialized for '+company)}
+  else{
+    // Re-render composer if it's active so updated data carries through
+    try{ecRenderAll()}catch(e){}
+    showToast('Prospect updated — '+company);
+  }
 };
 
 function hqRenderBanner(){
