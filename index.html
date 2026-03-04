@@ -870,20 +870,6 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
           </div>
 
           <div class="fg">
-            <label class="fl">Role / Track</label>
-            <div class="role-grid">
-              <div class="role-card sel-wfn" id="role-wfn" onclick="selectRole('WFN')">
-                <div class="rc-tag">Track A</div>
-                <div class="rc-name">ADP WorkforceNow</div>
-              </div>
-              <div class="role-card" id="role-ts" onclick="selectRole('TS')">
-                <div class="rc-tag">Track B</div>
-                <div class="rc-name">ADP TotalSource</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="fg">
             <label class="fl">Password</label>
             <div class="pw-wrap">
               <input class="fi" id="r-pass" type="password" placeholder="Min. 8 characters" autocomplete="new-password" oninput="checkPwStrength(this.value)">
@@ -906,15 +892,8 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
             <div class="fe" id="r-pass2-err">Passwords do not match</div>
           </div>
 
-          <div class="fg">
-            <label class="fl">Access Code <span style="color:var(--text-3);font-size:10px;text-transform:none;letter-spacing:0">(from your manager)</span></label>
-            <input class="fi code-input" id="r-code" placeholder="BP-XXXX" maxlength="7" oninput="this.value=this.value.toUpperCase()">
-            <div class="fe" id="r-code-err">Invalid access code</div>
-            <div style="font-size:11px;color:var(--text-3);margin-top:5px">Demo code: <code>BP-2025</code></div>
-          </div>
-
           <button class="sub-btn" onclick="doRegister()">
-            <span>⚡</span> Create Account & Enter HQ
+            <span>⚡</span> Create Account
           </button>
 
           <div class="form-note">
@@ -1003,11 +982,6 @@ function showFieldErr(id,msgId,msg){
 function showBanner(id,msgId,msg){document.getElementById(msgId).textContent=msg;document.getElementById(id).classList.add('show')}
 
 let selectedRole='WFN';
-function selectRole(r){
-  selectedRole=r;
-  document.getElementById('role-wfn').className='role-card'+(r==='WFN'?' sel-wfn':'');
-  document.getElementById('role-ts').className='role-card'+(r==='TS'?' sel-ts':'');
-}
 
 function checkPwStrength(pw){
   const cols=['#ef4444','#f97316','#eab308','#22c55e'];
@@ -1020,7 +994,6 @@ function checkPwStrength(pw){
 }
 
 // ── AUTH ──
-const VALID_CODES=['BP-2025','BP-DEMO','BP-SALE','BP-2024'];
 
 function doRegister(){
   clearErrors();
@@ -1029,17 +1002,15 @@ function doRegister(){
   const email=document.getElementById('r-email').value.trim().toLowerCase();
   const pass=document.getElementById('r-pass').value;
   const pass2=document.getElementById('r-pass2').value;
-  const code=document.getElementById('r-code').value.trim().toUpperCase();
   let valid=true;
   if(!first||!last){showToast('Please enter your full name',true);return}
   if(!email||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){showFieldErr('r-email','r-email-err','Valid email required');valid=false}
   if(pass.length<8){showFieldErr('r-pass','r-pass-err','Password must be at least 8 characters');valid=false}
   if(pass!==pass2){showFieldErr('r-pass2','r-pass2-err','Passwords do not match');valid=false}
-  if(!VALID_CODES.includes(code)){showFieldErr('r-code','r-code-err','Invalid access code — try BP-2025');valid=false}
   if(!valid)return;
   const users=getUsers();
   if(users.find(u=>u.email===email)){showBanner('reg-err','reg-err-msg','An account with this email already exists.');return}
-  const nu={email,first,last,password:pass,role:selectedRole,created:new Date().toLocaleDateString('en-US')};
+  const nu={email,first,last,password:pass,role:'WFN',created:new Date().toLocaleDateString('en-US')};
   users.push(nu);saveUsers(users);
   showToast('Account created! Please sign in to continue.');
   setTimeout(function(){
@@ -1053,7 +1024,6 @@ function doRegister(){
     document.getElementById('r-email').value='';
     document.getElementById('r-pass').value='';
     document.getElementById('r-pass2').value='';
-    document.getElementById('r-code').value='';
   },800);
 }
 
