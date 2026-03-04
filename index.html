@@ -579,6 +579,96 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:700px){.left-panel{display:none}.right-panel{padding:24px 18px}}
 @media(max-width:800px){.tool-grid,.ec-2col,.rt-days{grid-template-columns:1fr}}
+
+/* ═══════════════════════════════════════
+   MOBILE HQ RESPONSIVE OVERRIDES
+   ═══════════════════════════════════════ */
+@media(max-width:600px){
+  /* Allow page to scroll naturally */
+  html,body{overflow:auto;height:auto}
+  .portal-view{height:auto;min-height:100vh}
+  #view-hq.portal-view.active{padding-top:52px}
+
+  /* Top bar - compact */
+  .top-bar{height:52px;padding:0 12px;gap:6px}
+  .tb-logo{width:26px;height:26px;font-size:10px;border-radius:5px}
+  .tb-name{font-size:12px}
+  .tb-sep{display:none}
+  .tb-sub{display:none}
+  .tb-right{gap:6px}
+  .user-chip{padding:4px 10px 4px 4px;gap:6px;border-radius:16px}
+  .ua{width:24px;height:24px;font-size:9px}
+  .un{font-size:11px}
+  .ur{font-size:9px}
+  .logout-btn{padding:5px 10px;font-size:11px;border-radius:6px}
+
+  /* HQ content area */
+  .hq-scroll{height:auto;overflow:visible}
+  .hq-wrap{padding:16px 14px 100px}
+
+  /* HQ header */
+  .hq-hdr{flex-direction:column;align-items:flex-start;gap:12px;padding:14px 0 16px}
+  .hq-ttl{font-size:20px}
+  .hq-ttl-sub{font-size:12px}
+  .hq-date-lbl{font-size:11px}
+
+  /* Welcome strip */
+  .welcome-strip{padding:12px 14px;gap:10px;margin-bottom:14px}
+  .ws-av{width:36px;height:36px;font-size:13px}
+  .ws-name{font-size:15px}
+  .ws-detail{font-size:11px}
+
+  /* Nav tabs - stack vertically as full-width buttons */
+  .hq-nav{flex-direction:column;gap:4px;padding:4px;margin-bottom:16px}
+  .hq-tab{width:100%;justify-content:center;padding:12px 16px;font-size:14px;border-radius:8px}
+
+  /* Prospect strip */
+  .prospect-strip{padding:12px 14px;margin-bottom:16px}
+  .ps-empty{gap:10px;font-size:13px;padding-left:4px}
+  .ps-fields{grid-template-columns:1fr 1fr;gap:6px;padding-left:4px}
+  .psf-item{padding:6px 0;border-right:none;border-bottom:1px solid var(--border)}
+  .psf-item:last-child{border-bottom:none}
+
+  /* Section headings */
+  .sh{gap:8px;margin-bottom:12px}
+  .sh-ttl{font-size:16px}
+
+  /* Pipeline - horizontal scroll with larger touch targets */
+  .pipeline{padding:8px 0;gap:2px;-webkit-overflow-scrolling:touch}
+  .ps-node{min-width:72px}
+  .psn{width:38px;height:38px;font-size:14px}
+  .psl{font-size:8px;max-width:64px}
+
+  /* Tool cards - full width, more compact */
+  .tool-grid{grid-template-columns:1fr;gap:12px;margin-bottom:20px}
+  .tool-card{padding:16px;border-radius:var(--radius)}
+  .tc-icon{font-size:18px;margin-bottom:6px}
+  .tc-title{font-size:15px;margin-bottom:4px}
+  .tc-desc{font-size:11px;margin-bottom:10px}
+  .tc-note{padding:8px 10px;font-size:11px}
+  .tc-pills{gap:3px;margin-bottom:10px}
+  .tc-pill{font-size:9px;padding:2px 6px}
+
+  /* Buttons - larger touch targets */
+  .btn{padding:11px 16px;font-size:13px;border-radius:8px;width:100%;justify-content:center}
+  .btn-dark{padding:12px 18px;font-size:14px}
+
+  /* Score panel */
+  .sap{padding:16px;margin-bottom:20px}
+  .sc-row{grid-template-columns:1fr;gap:8px}
+
+  /* Section dividers */
+  .sdiv{margin:20px 0}
+
+  /* Modal - full screen on mobile */
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal{max-width:100%;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:92vh;padding:20px 16px}
+  .modal-footer{flex-direction:column;gap:8px}
+  .modal-footer .btn{width:100%;justify-content:center;padding:12px}
+
+  /* Toast - bottom center on mobile */
+  .toast{right:12px;left:12px;bottom:16px;max-width:none;text-align:center;justify-content:center}
+}
 </style>
 </head>
 <body>
@@ -739,7 +829,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
         <div class="demo-box">
           <div class="demo-label">Quick Demo Access</div>
           <div class="demo-creds">
-            <strong>Email:</strong> <code>demo@beyondpayroll.net</code><br>
+            <strong>Email:</strong> <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c9adaca4a689abacb0a6a7adb9a8b0bba6a5a5e7a7acbd">[email&#160;protected]</a></code><br>
             <strong>Password:</strong> <code>Demo1234!</code>
           </div>
         </div>
@@ -862,7 +952,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 </div>
 
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ══════════════════════════════════════════════════
 //  STORAGE
 // ══════════════════════════════════════════════════
@@ -3669,7 +3759,63 @@ function copyEmail(){
 </style>
 
 <script>
-function openTsPanel(){document.getElementById('ts-panel').classList.add('open');document.body.style.overflow='hidden';}
+function openTsPanel(){
+  document.getElementById('ts-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+
+  // ── Auto-populate TS tool fields from prospect data ──
+  var p=window._hqProspect;
+  if(!p) return;
+
+  // Company Name
+  if(p.company){var el=document.getElementById('companyName');if(el&&!el.value)el.value=p.company;}
+
+  // Contact Name
+  if(p.contact){var el=document.getElementById('contactName');if(el&&!el.value)el.value=p.contact.split(' ')[0];}
+
+  // Contact Title / Role (from persona)
+  if(p.persona){var el=document.getElementById('contactTitle');if(el&&!el.value)el.value=p.persona;}
+
+  // Number of Employees
+  if(p.headcount){var el=document.getElementById('numEE');if(el&&!el.value)el.value=p.headcount;}
+
+  // State — map abbreviations and partial matches to the full state name in the select
+  if(p.state){
+    var stEl=document.getElementById('hqState');
+    if(stEl&&!stEl.value){
+      var abbrevMap={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+      var input=p.state.trim().toUpperCase();
+      var fullName=abbrevMap[input]||null;
+      // If not an abbreviation, try matching as full name (case-insensitive)
+      if(!fullName){
+        var lower=p.state.trim().toLowerCase();
+        for(var i=0;i<stEl.options.length;i++){
+          if(stEl.options[i].value&&stEl.options[i].value.toLowerCase()===lower){fullName=stEl.options[i].value;break;}
+        }
+      }
+      if(fullName){
+        stEl.value=fullName;
+        // Trigger city dropdown population
+        if(typeof onStateChange==='function') onStateChange();
+      }
+    }
+  }
+
+  // Industry — keyword match to risk class
+  if(p.industry){
+    var indEl=document.getElementById('industry');
+    if(indEl&&!indEl.value){
+      var indLower=p.industry.trim().toLowerCase();
+      var lowKeys=['tech','software','consult','professional','finance','legal','accounting','insurance','bank','it ','saas','digital'];
+      var highKeys=['construct','manufactur','agricult','mining','transport','warehouse','logging','roofing','trucking'];
+      var matched='';
+      for(var k=0;k<lowKeys.length;k++){if(indLower.indexOf(lowKeys[k])!==-1){matched='low';break;}}
+      if(!matched){for(var k=0;k<highKeys.length;k++){if(indLower.indexOf(highKeys[k])!==-1){matched='high';break;}}}
+      if(!matched) matched='med';
+      indEl.value=matched;
+    }
+  }
+}
 function closeTsPanel(){document.getElementById('ts-panel').classList.remove('open');document.body.style.overflow='';}
 
 // ═══════════════════════════════════════════════════════
@@ -5036,14 +5182,4 @@ function generateEmail(){
 }
 
 function copyEmail(){
-  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBody').value;
-  navigator.clipboard.writeText(full).then(function(){
-    var m=document.getElementById('copyMsg'); m.style.display='inline';
-    setTimeout(function(){m.style.display='none';},2500);
-  });
-}
-
-</script>
-
-</body>
-</html>
+  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBo
