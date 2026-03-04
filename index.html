@@ -661,11 +661,17 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
   /* Section dividers */
   .sdiv{margin:20px 0}
 
-  /* Modal - full screen on mobile */
-  .modal-overlay{padding:0;align-items:flex-end}
-  .modal{max-width:100%;border-radius:var(--radius-lg) var(--radius-lg) 0 0;max-height:85vh;padding:20px 16px calc(20px + env(safe-area-inset-bottom, 16px));overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .modal-footer{flex-direction:column;gap:8px;position:sticky;bottom:0;background:var(--white);padding-top:14px;margin-top:18px;z-index:1}
+  /* Modal - full screen scrollable on mobile */
+  .modal-overlay{padding:0;align-items:stretch;justify-content:stretch}
+  .modal{max-width:100%;width:100%;border-radius:0;max-height:100vh;height:100%;padding:16px 16px calc(16px + env(safe-area-inset-bottom, 16px));padding-top:calc(12px + env(safe-area-inset-top, 0px));overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
+  .modal-title{font-size:18px}
+  .modal-sub{font-size:12px;margin-bottom:16px}
+  .modal-close{top:calc(10px + env(safe-area-inset-top, 0px));right:14px;font-size:24px;z-index:2}
+  .modal-footer{flex-direction:column;gap:8px;position:sticky;bottom:0;background:var(--white);padding:14px 0 0;margin-top:auto;z-index:1;border-top:1px solid var(--border)}
   .modal-footer .btn{width:100%;justify-content:center;padding:12px}
+  .modal .field-row{grid-template-columns:1fr!important}
+  .modal .modal-grid-2{grid-template-columns:1fr!important}
+  .modal .modal-grid-3{grid-template-columns:1fr 1fr!important}
 
   /* Toast - bottom center on mobile */
   .toast{right:12px;left:12px;bottom:16px;max-width:none;text-align:center;justify-content:center}
@@ -688,11 +694,11 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
       <div><label class="fl">Company Name *</label><input class="fi" id="f-company" placeholder="Acme Corp"></div>
       <div><label class="fl">Contact Name</label><input class="fi" id="f-contact" placeholder="Jane Smith"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="modal-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div><label class="fl">Email</label><input class="fi" id="f-email" type="email" placeholder="jane@acme.com"></div>
       <div><label class="fl">Phone</label><input class="fi" id="f-phone" placeholder="(555) 000-0000"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="modal-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
       <div><label class="fl">Industry</label><input class="fi" id="f-industry" placeholder="Manufacturing"></div>
       <div><label class="fl">State</label><input class="fi" id="f-state" placeholder="TX"></div>
       <div><label class="fl">Headcount</label><input class="fi" id="f-headcount" placeholder="75"></div>
