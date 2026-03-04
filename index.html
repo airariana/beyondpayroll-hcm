@@ -959,7 +959,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 </div>
 
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ══════════════════════════════════════════════════
 //  STORAGE
 // ══════════════════════════════════════════════════
@@ -1041,9 +1041,20 @@ function doRegister(){
   if(users.find(u=>u.email===email)){showBanner('reg-err','reg-err-msg','An account with this email already exists.');return}
   const nu={email,first,last,password:pass,role:selectedRole,created:new Date().toLocaleDateString('en-US')};
   users.push(nu);saveUsers(users);
-  const session={email,first,last,role:selectedRole};saveSession(session);
-  showToast('Account created! Welcome to Sales HQ ⚡');
-  setTimeout(()=>enterHQ(session),600);
+  showToast('Account created! Please sign in to continue.');
+  setTimeout(function(){
+    switchMode('signin');
+    document.getElementById('si-email').value=email;
+    document.getElementById('si-pass').value='';
+    document.getElementById('si-pass').focus();
+    // Clear registration form
+    document.getElementById('r-first').value='';
+    document.getElementById('r-last').value='';
+    document.getElementById('r-email').value='';
+    document.getElementById('r-pass').value='';
+    document.getElementById('r-pass2').value='';
+    document.getElementById('r-code').value='';
+  },800);
 }
 
 function doSignIn(){
