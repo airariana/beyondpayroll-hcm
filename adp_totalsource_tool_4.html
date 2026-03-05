@@ -148,17 +148,38 @@
   .scale-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
   .labor-note{font-size:11px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:12px;}
   .no-data-msg{text-align:center;padding:32px;color:var(--muted);font-size:13px;}
-  /* Email */
+  /* Email / Outlook Mock */
   .btn{background:var(--red);color:white;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;cursor:pointer;transition:background 0.2s;}
   .btn:hover{background:var(--red-light);}
   .btn.secondary{background:var(--surface);border:1px solid var(--border);color:var(--text);}
   .btn.secondary:hover{border-color:var(--red);}
-  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}
-  textarea.email-body{min-height:360px;line-height:1.7;font-size:14px;resize:vertical;}
-  .subject-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
-  .subject-row span{font-size:13px;color:var(--muted);white-space:nowrap;}
-  .subject-row input{flex:1;}
-  .copy-msg{font-size:12px;color:var(--green);display:none;margin-left:10px;}
+
+  /* Outlook mock */
+  .ec-outlook{background:#fff;border:1px solid #32363f;border-radius:8px;overflow:hidden;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .ec-ol-tb{background:#1a2460;padding:7px 12px;display:flex;align-items:center;gap:8px}
+  .ec-ol-ico{width:22px;height:22px;background:#0078d4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+  .ec-ol-bar{background:#e8ebf5;border-bottom:1px solid #dde1e8;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap}
+  .ec-fr{display:flex;align-items:flex-start;border-bottom:1px solid #dde1e8;min-height:34px}
+  .ec-fl{font-size:9px;color:#888;font-weight:700;padding:10px 8px;min-width:52px;flex-shrink:0;border-right:1px solid #dde1e8;letter-spacing:1px;text-transform:uppercase}
+  .ec-fi-box{width:100%;height:100%;background:transparent;border:none;padding:8px 10px;font-size:13px;color:#111;font-family:'DM Sans',sans-serif;outline:none;flex:1}
+  .ec-body-txt{min-height:200px;padding:12px;font-size:12px;line-height:1.8;color:#111;white-space:pre-wrap;font-family:'Calibri',sans-serif;border-top:1px solid #dde1e8;background:#fff}
+  .ec-ol-ft{background:#f5f6f8;border-top:1px solid #dde1e8;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+
+  /* Outlook button */
+  .ec-mto{background:#1e2025;border:1.5px solid #32363f;border-radius:8px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .ec-mto-hdr{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #32363f}
+  .ec-mto-btn{width:100%;background:#1a2460;border:none;border-radius:6px;padding:13px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'DM Sans',sans-serif;transition:opacity .15s;margin-bottom:10px;}
+  .ec-mto-btn:hover{opacity:.88}
+  .ec-tip{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:#8b8f9a;line-height:1.65}
+  .ec-or{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .ec-or-line{flex:1;height:1px;background:#32363f}
+  .ec-or-txt{font-size:10px;color:#8b8f9a;font-weight:500}
+  .ec-crow{background:#252830;border:1px solid #32363f;border-radius:6px;padding:8px;margin-bottom:7px}
+  .ec-cprev{font-size:10px;color:#8b8f9a;background:#1e2025;border:1px solid #32363f;border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5;max-height:46px;overflow:hidden;font-family:'Calibri',sans-serif;word-break:break-word}
+  .ec-cbtn{width:100%;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'DM Sans',sans-serif;transition:opacity .15s;background:transparent}
+  .ec-cbtn:hover{opacity:.8}
+  .smb{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid #32363f;background:#252830;color:#8b8f9a;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;margin:auto 8px auto 0;transition:all .15s}
+  .smb:hover{border-color:var(--red);color:var(--red)}
   .section-title{font-family:'DM Serif Display',serif;font-size:20px;font-weight:400;margin-bottom:16px;}
   .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
   .section-header .section-title{margin-bottom:0;}
@@ -638,15 +659,74 @@
   <button class="btn" onclick="generateEmail()">⟳ Generate Email</button>
 </div>
 <div class="card">
-  <div class="subject-row">
-    <span>Subject:</span>
-    <input type="text" id="emailSubject" placeholder="Generate email to populate subject line">
+
+  <!-- Outlook mock window -->
+  <div class="ec-outlook">
+    <div class="ec-ol-tb">
+      <div class="ec-ol-ico">O</div>
+      <span style="font-size:12px;font-weight:600;color:#fff">New Message — Outlook</span>
+    </div>
+    <div class="ec-ol-bar">
+      <button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="ecCopyAll()">⎘ Copy All</button>
+      <button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="ecCopy('to')">To</button>
+      <button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="ecCopy('subj')">Subject</button>
+      <button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="ecCopy('body')">Body</button>
+    </div>
+    <div class="ec-fr">
+      <div class="ec-fl">To</div>
+      <input class="ec-fi-box" id="ec-to-inp" placeholder="recipient@company.com">
+      <button class="smb" id="smb-to" onclick="ecCopy('to')">copy</button>
+    </div>
+    <div class="ec-fr">
+      <div class="ec-fl">Cc</div>
+      <input class="ec-fi-box" id="ec-cc-inp" placeholder="optional">
+    </div>
+    <div class="ec-fr">
+      <div class="ec-fl">Subject</div>
+      <div class="ec-fi-box" id="ec-subj-disp" style="font-weight:600;font-size:12px;display:flex;align-items:center;padding:8px 10px;flex:1;color:#111"></div>
+      <button class="smb" id="smb-subj" onclick="ecCopy('subj')">copy</button>
+    </div>
+    <div class="ec-body-txt" id="ec-body-disp"></div>
+    <div class="ec-ol-ft">
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#8b8f9a;cursor:pointer;font-weight:500">
+        <input type="checkbox" id="ec-sig" checked style="accent-color:var(--red)" onchange="ecRefreshBody()"> Include signature
+      </label>
+      <button class="btn secondary" style="padding:5px 12px;font-size:11px" onclick="ecCopyAll()">⎘ Copy All Fields</button>
+    </div>
   </div>
-  <textarea class="email-body" id="emailBody" placeholder="Click 'Generate Email' after calculating above..."></textarea>
-  <div class="btn-row">
-    <button class="btn secondary" onclick="copyEmail()">Copy Email</button>
-    <span class="copy-msg" id="copyMsg">✓ Copied to clipboard</span>
+
+  <!-- Open in Outlook button panel -->
+  <div class="ec-mto">
+    <div class="ec-mto-hdr">
+      <span style="font-size:22px;flex-shrink:0">📧</span>
+      <div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:2px;color:#e8e9ec">Open in Outlook</div>
+        <div style="font-size:11px;color:#8b8f9a;line-height:1.55">One tap launches Outlook with <strong style="color:#e8e9ec">To, Subject & Body pre-filled</strong>. Just review and hit Send.</div>
+      </div>
+    </div>
+    <button class="ec-mto-btn" id="ec-mto-btn" onclick="ecFireMailto()">
+      <span style="font-size:16px">✉️</span>
+      <span id="ec-mto-lbl">Open in Outlook — Pre-filled & Ready</span>
+    </button>
+    <div class="ec-tip">
+      <strong style="color:#f59e0b;font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
+      If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
+    </div>
+    <div class="ec-or"><div class="ec-or-line"></div><span class="ec-or-txt">or copy individually</span><div class="ec-or-line"></div></div>
+    <div class="ec-crow">
+      <div class="ec-cprev" id="prev-to"></div>
+      <button class="ec-cbtn" id="cpbtn-to" style="color:#e8e9ec;border-color:#32363f" onclick="ecCopy('to')">⎘ Copy To</button>
+    </div>
+    <div class="ec-crow">
+      <div class="ec-cprev" id="prev-subj"></div>
+      <button class="ec-cbtn" id="cpbtn-subj" style="color:#e8e9ec;border-color:#32363f" onclick="ecCopy('subj')">⎘ Copy Subject</button>
+    </div>
+    <div class="ec-crow">
+      <div class="ec-cprev" id="prev-body"></div>
+      <button class="ec-cbtn" id="cpbtn-body" style="color:#f59e0b;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06)" onclick="ecCopy('body')">⎘ Copy Body</button>
+    </div>
   </div>
+
 </div>
 
 </div><!-- /container -->
@@ -1999,8 +2079,8 @@ function generateEmail(){
   var sl=parseInt(bRate)>=75?'Your benefits participation rate of '+bRate+'% is a real strength — that opens up the full carrier field and typically produces the most competitive TotalSource pricing.':parseInt(bRate)<65?'One thing worth discussing is participation — at '+bRate+'%, some carriers may limit their offers, which is exactly what TotalSource\'s enrollment support is designed to address.':'Based on the profile I\'ve been working from, '+company+' looks like '+likelihood+' for TotalSource.';
   var pl=parseInt(prods)>=3?'You\'re already running '+prods+'+ ADP solutions, which makes a TotalSource migration seamless — no system overhaul required.':prods?'With your existing ADP footprint, TotalSource is a natural next step.':'';
 
-  document.getElementById('emailSubject').value='Following up — ADP TotalSource analysis for '+company;
-  document.getElementById('emailBody').value=
+  var subject='Following up — ADP TotalSource analysis for '+company;
+  var bodyRaw=
 'Hi '+contact+',\n\n'
 +'I\'ve been doing some analysis on '+company+' ahead of our next conversation and wanted to share what I\'m seeing.\n\n'
 +'Here\'s the data snapshot I\'m working from:\n'+dh+'\n\n'
@@ -2011,15 +2091,63 @@ function generateEmail(){
 +'The bottom line is that TotalSource can consolidate HR, payroll, benefits, and compliance under one umbrella — while giving your team access to Fortune 500-level benefit plans at pricing that works for a group your size.\n\n'
 +'I\'d love to get 20–30 minutes on the calendar to walk through a formal proposal'+(title?' for you as '+company+'\'s '+title:'')+'. No obligation — just want to make sure you have the full picture before renewal season.\n\n'
 +'Would [Day] or [Day] work?\n\n'
-+'Best,\n[Your Name]\nADP TotalSource | [Your Phone] | [Your Email]';
++'—\n[Your Name]\nADP TotalSource | [Your Phone] | [Your Email]';
+
+  _ecSubject=subject;
+  _ecBodyRaw=bodyRaw;
+  ecRefreshBody();
+  document.getElementById('ec-subj-disp').textContent=subject;
+  document.getElementById('prev-to').textContent=document.getElementById('ec-to-inp').value||'recipient@company.com';
+  document.getElementById('prev-subj').textContent=subject;
+  document.getElementById('ec-mto-lbl').textContent='Open in Outlook — Pre-filled & Ready';
 }
 
-function copyEmail(){
-  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBody').value;
-  navigator.clipboard.writeText(full).then(function(){
-    var m=document.getElementById('copyMsg'); m.style.display='inline';
-    setTimeout(function(){m.style.display='none';},2500);
+// ── Outlook mock helpers ───────────────────────────────
+var _ecSubject='';
+var _ecBody='';
+var _ecBodyRaw='';
+
+function ecRefreshBody(){
+  var sig=document.getElementById('ec-sig')&&document.getElementById('ec-sig').checked;
+  var body=sig?_ecBodyRaw:_ecBodyRaw.replace(/\n\n—[\s\S]*$/,'');
+  _ecBody=body;
+  document.getElementById('ec-body-disp').textContent=body;
+  document.getElementById('prev-body').textContent=body.substring(0,88)+'…';
+}
+
+function ecFireMailto(){
+  var toVal=(document.getElementById('ec-to-inp').value||'').trim();
+  if(!toVal){alert('Add a recipient email first');return;}
+  var uri='mailto:'+encodeURIComponent(toVal)+'?subject='+encodeURIComponent(_ecSubject)+'&body='+encodeURIComponent(_ecBody);
+  var a=document.createElement('a');a.href=uri;a.style.display='none';document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);},500);
+  document.getElementById('ec-mto-lbl').textContent='✓ Outlook Opened — Email Launched';
+}
+
+function ecCopyText(text,btnId,label){
+  navigator.clipboard.writeText(text).catch(function(){
+    var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
   });
+  if(btnId){
+    var btn=document.getElementById(btnId);if(!btn)return;
+    var orig=btn.textContent;btn.textContent='✓ Copied!';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';
+    setTimeout(function(){btn.textContent=label;btn.style.color='';btn.style.borderColor='';},1800);
+  }
+}
+
+function ecCopy(field){
+  var toVal=document.getElementById('ec-to-inp').value||'';
+  if(field==='to')ecCopyText(toVal,'cpbtn-to','⎘ Copy To');
+  else if(field==='subj'){
+    ecCopyText(_ecSubject,'cpbtn-subj','⎘ Copy Subject');
+    var smb=document.getElementById('smb-subj');if(smb){smb.textContent='✓';setTimeout(function(){smb.textContent='copy';},1800);}
+  } else if(field==='body')ecCopyText(_ecBody,'cpbtn-body','⎘ Copy Body');
+}
+
+function ecCopyAll(){
+  var toVal=document.getElementById('ec-to-inp').value||'';
+  ecCopyText('TO: '+toVal+'\nSUBJECT: '+_ecSubject+'\n\n'+_ecBody,null,'');
+  var btn=document.querySelector('.ec-ol-bar .btn.secondary');
 }
 </script>
 </body>
