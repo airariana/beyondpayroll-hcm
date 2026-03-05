@@ -561,9 +561,9 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .tokchip:hover{background:var(--light);border-color:var(--border-2)}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:16px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .modal-overlay.open{display:flex}
-.modal{background:var(--white);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;position:relative}
+.modal{background:var(--white);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;position:relative}
 .modal-title{font-family:var(--fd);font-size:20px;font-weight:600;margin-bottom:3px}
 .modal-sub{font-size:13px;color:var(--text-3);margin-bottom:22px}
 .modal-close{position:absolute;top:16px;right:18px;background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-3);line-height:1;padding:3px}
@@ -579,102 +579,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:700px){.left-panel{display:none}.right-panel{padding:24px 18px}}
 @media(max-width:800px){.tool-grid,.ec-2col,.rt-days{grid-template-columns:1fr}}
-
-/* ═══════════════════════════════════════
-   MOBILE HQ RESPONSIVE OVERRIDES
-   ═══════════════════════════════════════ */
-@media(max-width:600px){
-  /* Allow page to scroll naturally */
-  html,body{overflow:auto;height:auto}
-  .portal-view{height:auto;min-height:100vh}
-  #view-hq.portal-view.active{padding-top:52px}
-
-  /* Top bar - compact */
-  .top-bar{height:52px;padding:0 12px;gap:6px}
-  .tb-logo{width:26px;height:26px;font-size:10px;border-radius:5px}
-  .tb-name{font-size:12px}
-  .tb-sep{display:none}
-  .tb-sub{display:none}
-  .tb-right{gap:6px}
-  .user-chip{padding:4px 10px 4px 4px;gap:6px;border-radius:16px}
-  .ua{width:24px;height:24px;font-size:9px}
-  .un{font-size:11px}
-  .ur{font-size:9px}
-  .logout-btn{padding:5px 10px;font-size:11px;border-radius:6px}
-
-  /* HQ content area */
-  .hq-scroll{height:auto;overflow:visible}
-  .hq-wrap{padding:16px 14px 100px}
-
-  /* HQ header */
-  .hq-hdr{flex-direction:column;align-items:flex-start;gap:12px;padding:14px 0 16px}
-  .hq-ttl{font-size:20px}
-  .hq-ttl-sub{font-size:12px}
-  .hq-date-lbl{font-size:11px}
-
-  /* Welcome strip */
-  .welcome-strip{padding:12px 14px;gap:10px;margin-bottom:14px}
-  .ws-av{width:36px;height:36px;font-size:13px}
-  .ws-name{font-size:15px}
-  .ws-detail{font-size:11px}
-
-  /* Nav tabs - stack vertically as full-width buttons */
-  .hq-nav{flex-direction:column;gap:4px;padding:4px;margin-bottom:16px}
-  .hq-tab{width:100%;justify-content:center;padding:12px 16px;font-size:14px;border-radius:8px}
-
-  /* Prospect strip */
-  .prospect-strip{padding:12px 14px;margin-bottom:16px}
-  .ps-empty{gap:10px;font-size:13px;padding-left:4px}
-  .ps-fields{grid-template-columns:1fr 1fr;gap:6px;padding-left:4px}
-  .psf-item{padding:6px 0;border-right:none;border-bottom:1px solid var(--border)}
-  .psf-item:last-child{border-bottom:none}
-
-  /* Section headings */
-  .sh{gap:8px;margin-bottom:12px}
-  .sh-ttl{font-size:16px}
-
-  /* Pipeline - horizontal scroll with larger touch targets */
-  .pipeline{padding:8px 0;gap:2px;-webkit-overflow-scrolling:touch}
-  .ps-node{min-width:72px}
-  .psn{width:38px;height:38px;font-size:14px}
-  .psl{font-size:8px;max-width:64px}
-
-  /* Tool cards - full width, more compact */
-  .tool-grid{grid-template-columns:1fr;gap:12px;margin-bottom:20px}
-  .tool-card{padding:16px;border-radius:var(--radius)}
-  .tc-icon{font-size:18px;margin-bottom:6px}
-  .tc-title{font-size:15px;margin-bottom:4px}
-  .tc-desc{font-size:11px;margin-bottom:10px}
-  .tc-note{padding:8px 10px;font-size:11px}
-  .tc-pills{gap:3px;margin-bottom:10px}
-  .tc-pill{font-size:9px;padding:2px 6px}
-
-  /* Buttons - larger touch targets */
-  .btn{padding:11px 16px;font-size:13px;border-radius:8px;width:100%;justify-content:center}
-  .btn-dark{padding:12px 18px;font-size:14px}
-
-  /* Score panel */
-  .sap{padding:16px;margin-bottom:20px}
-  .sc-row{grid-template-columns:1fr;gap:8px}
-
-  /* Section dividers */
-  .sdiv{margin:20px 0}
-
-  /* Modal - full screen scrollable on mobile */
-  .modal-overlay{padding:0;align-items:stretch;justify-content:stretch}
-  .modal{max-width:100%;width:100%;border-radius:0;max-height:100vh;height:100%;padding:16px 16px calc(16px + env(safe-area-inset-bottom, 16px));padding-top:calc(12px + env(safe-area-inset-top, 0px));overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
-  .modal-title{font-size:18px}
-  .modal-sub{font-size:12px;margin-bottom:16px}
-  .modal-close{top:calc(10px + env(safe-area-inset-top, 0px));right:14px;font-size:24px;z-index:2}
-  .modal-footer{flex-direction:column;gap:8px;position:sticky;bottom:0;background:var(--white);padding:14px 0 0;margin-top:auto;z-index:1;border-top:1px solid var(--border)}
-  .modal-footer .btn{width:100%;justify-content:center;padding:12px}
-  .modal .field-row{grid-template-columns:1fr!important}
-  .modal .modal-grid-2{grid-template-columns:1fr!important}
-  .modal .modal-grid-3{grid-template-columns:1fr 1fr!important}
-
-  /* Toast - bottom center on mobile */
-  .toast{right:12px;left:12px;bottom:16px;max-width:none;text-align:center;justify-content:center}
-}
+@media(max-width:760px){.ts-ec-wrap{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -693,11 +598,11 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
       <div><label class="fl">Company Name *</label><input class="fi" id="f-company" placeholder="Acme Corp"></div>
       <div><label class="fl">Contact Name</label><input class="fi" id="f-contact" placeholder="Jane Smith"></div>
     </div>
-    <div class="modal-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div><label class="fl">Email</label><input class="fi" id="f-email" type="email" placeholder="jane@acme.com"></div>
       <div><label class="fl">Phone</label><input class="fi" id="f-phone" placeholder="(555) 000-0000"></div>
     </div>
-    <div class="modal-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
       <div><label class="fl">Industry</label><input class="fi" id="f-industry" placeholder="Manufacturing"></div>
       <div><label class="fl">State</label><input class="fi" id="f-state" placeholder="TX"></div>
       <div><label class="fl">Headcount</label><input class="fi" id="f-headcount" placeholder="75"></div>
@@ -869,6 +774,20 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
           </div>
 
           <div class="fg">
+            <label class="fl">Role / Track</label>
+            <div class="role-grid">
+              <div class="role-card sel-wfn" id="role-wfn" onclick="selectRole('WFN')">
+                <div class="rc-tag">Track A</div>
+                <div class="rc-name">ADP WorkforceNow</div>
+              </div>
+              <div class="role-card" id="role-ts" onclick="selectRole('TS')">
+                <div class="rc-tag">Track B</div>
+                <div class="rc-name">ADP TotalSource</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fg">
             <label class="fl">Password</label>
             <div class="pw-wrap">
               <input class="fi" id="r-pass" type="password" placeholder="Min. 8 characters" autocomplete="new-password" oninput="checkPwStrength(this.value)">
@@ -891,8 +810,15 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
             <div class="fe" id="r-pass2-err">Passwords do not match</div>
           </div>
 
+          <div class="fg">
+            <label class="fl">Access Code <span style="color:var(--text-3);font-size:10px;text-transform:none;letter-spacing:0">(from your manager)</span></label>
+            <input class="fi code-input" id="r-code" placeholder="BP-XXXX" maxlength="7" oninput="this.value=this.value.toUpperCase()">
+            <div class="fe" id="r-code-err">Invalid access code</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:5px">Demo code: <code>BP-2025</code></div>
+          </div>
+
           <button class="sub-btn" onclick="doRegister()">
-            <span>⚡</span> Create Account
+            <span>⚡</span> Create Account & Enter HQ
           </button>
 
           <div class="form-note">
@@ -981,6 +907,11 @@ function showFieldErr(id,msgId,msg){
 function showBanner(id,msgId,msg){document.getElementById(msgId).textContent=msg;document.getElementById(id).classList.add('show')}
 
 let selectedRole='WFN';
+function selectRole(r){
+  selectedRole=r;
+  document.getElementById('role-wfn').className='role-card'+(r==='WFN'?' sel-wfn':'');
+  document.getElementById('role-ts').className='role-card'+(r==='TS'?' sel-ts':'');
+}
 
 function checkPwStrength(pw){
   const cols=['#ef4444','#f97316','#eab308','#22c55e'];
@@ -993,6 +924,7 @@ function checkPwStrength(pw){
 }
 
 // ── AUTH ──
+const VALID_CODES=['BP-2025','BP-DEMO','BP-SALE','BP-2024'];
 
 function doRegister(){
   clearErrors();
@@ -1001,29 +933,21 @@ function doRegister(){
   const email=document.getElementById('r-email').value.trim().toLowerCase();
   const pass=document.getElementById('r-pass').value;
   const pass2=document.getElementById('r-pass2').value;
+  const code=document.getElementById('r-code').value.trim().toUpperCase();
   let valid=true;
   if(!first||!last){showToast('Please enter your full name',true);return}
   if(!email||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){showFieldErr('r-email','r-email-err','Valid email required');valid=false}
   if(pass.length<8){showFieldErr('r-pass','r-pass-err','Password must be at least 8 characters');valid=false}
   if(pass!==pass2){showFieldErr('r-pass2','r-pass2-err','Passwords do not match');valid=false}
+  if(!VALID_CODES.includes(code)){showFieldErr('r-code','r-code-err','Invalid access code — try BP-2025');valid=false}
   if(!valid)return;
   const users=getUsers();
   if(users.find(u=>u.email===email)){showBanner('reg-err','reg-err-msg','An account with this email already exists.');return}
-  const nu={email,first,last,password:pass,role:'WFN',created:new Date().toLocaleDateString('en-US')};
+  const nu={email,first,last,password:pass,role:selectedRole,created:new Date().toLocaleDateString('en-US')};
   users.push(nu);saveUsers(users);
-  showToast('Account created! Please sign in to continue.');
-  setTimeout(function(){
-    switchMode('signin');
-    document.getElementById('si-email').value=email;
-    document.getElementById('si-pass').value='';
-    document.getElementById('si-pass').focus();
-    // Clear registration form
-    document.getElementById('r-first').value='';
-    document.getElementById('r-last').value='';
-    document.getElementById('r-email').value='';
-    document.getElementById('r-pass').value='';
-    document.getElementById('r-pass2').value='';
-  },800);
+  const session={email,first,last,role:selectedRole};saveSession(session);
+  showToast('Account created! Welcome to Sales HQ ⚡');
+  setTimeout(()=>enterHQ(session),600);
 }
 
 function doSignIn(){
@@ -1033,7 +957,7 @@ function doSignIn(){
   if(!email||!pass){showBanner('signin-err','signin-err-msg','Please enter your email and password.');return}
   const user=getUsers().find(u=>u.email===email&&u.password===pass);
   if(!user){showBanner('signin-err','signin-err-msg','Email or password is incorrect. Please try again.');document.getElementById('si-pass').value='';return}
-  const session={email:user.email,first:user.first,last:user.last,role:user.role||'WFN'};
+  const session={email:user.email,first:user.first,last:user.last,role:user.role};
   saveSession(session);showToast('Welcome back, '+user.first+'!');
   setTimeout(()=>enterHQ(session),400);
 }
@@ -1048,31 +972,16 @@ function doLogout(){
 }
 
 function enterHQ(session){
-  // Ensure role has a default value
-  if(!session.role) session.role='WFN';
-  try{
-    document.getElementById('view-auth').classList.remove('active');
-    document.getElementById('view-hq').classList.add('active');
-    var initials=((session.first||'B')[0]+(session.last||'P')[0]).toUpperCase();
-    document.getElementById('top-avatar').textContent=initials;
-    document.getElementById('top-name').textContent=(session.first||'')+' '+(session.last||'');
-    document.getElementById('top-role').textContent=session.role==='TS'?'TRACK B · TS':'TRACK A · WFN';
-    if(!window._hqLoaded){window._hqLoaded=true;buildHQ(session)}
-  }catch(err){
-    console.error('enterHQ error:',err);
-    showToast('Error loading Sales HQ — please try again',true);
-  }
+  document.getElementById('view-auth').classList.remove('active');
+  document.getElementById('view-hq').classList.add('active');
+  const initials=(session.first[0]+session.last[0]).toUpperCase();
+  document.getElementById('top-avatar').textContent=initials;
+  document.getElementById('top-name').textContent=session.first+' '+session.last;
+  document.getElementById('top-role').textContent=session.role==='WFN'?'TRACK A · WFN':'TRACK B · TS';
+  if(!window._hqLoaded){window._hqLoaded=true;buildHQ(session)}
 }
 
-window.addEventListener('DOMContentLoaded',()=>{
-  const s=getSession();
-  if(s&&s.email&&s.first&&s.last){
-    enterHQ(s);
-  } else {
-    // Clear any corrupt/incomplete session
-    clearSession();
-  }
-});
+window.addEventListener('DOMContentLoaded',()=>{const s=getSession();if(s)enterHQ(s)});
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     const si=document.getElementById('form-signin');
@@ -1443,22 +1352,7 @@ window.hqTab=function(tab){
   document.getElementById('hq-container').scrollTop=0;
 };
 
-window.openModal=function(){
-  var p=window._hqProspect;
-  if(p){
-    document.getElementById('f-company').value=p.company||'';
-    document.getElementById('f-contact').value=p.contact||'';
-    document.getElementById('f-email').value=p.email||'';
-    document.getElementById('f-phone').value=p.phone||'';
-    document.getElementById('f-industry').value=p.industry||'';
-    document.getElementById('f-state').value=p.state||'';
-    document.getElementById('f-headcount').value=p.headcount||'';
-    document.getElementById('f-persona').value=p.persona||'CFO';
-    document.getElementById('f-linkedin').value=p.linkedin||'';
-    selectTrack(p.track||'WFN');
-  }
-  document.getElementById('prospectModal').classList.add('open');
-};
+window.openModal=function(){document.getElementById('prospectModal').classList.add('open')};
 window.closeModal=function(){document.getElementById('prospectModal').classList.remove('open')};
 window.selectTrack=function(t){
   selectedRole=t;
@@ -1469,7 +1363,6 @@ window.selectTrack=function(t){
 window.saveProspect=function(){
   const company=document.getElementById('f-company').value.trim();
   if(!company){showToast('Company name is required',true);return}
-  var isEdit=!!window._hqProspect;
   window._hqProspect={
     company,contact:document.getElementById('f-contact').value.trim(),
     persona:document.getElementById('f-persona').value,
@@ -1481,13 +1374,8 @@ window.saveProspect=function(){
     linkedin:document.getElementById('f-linkedin').value.trim(),
     track:selectedRole||'WFN'
   };
-  closeModal();hqRenderBanner();
-  if(!isEdit){hqAdvancePipeline(1);showToast('Pipeline initialized for '+company)}
-  else{
-    // Re-render composer if it's active so updated data carries through
-    try{ecRenderAll()}catch(e){}
-    showToast('Prospect updated — '+company);
-  }
+  closeModal();hqRenderBanner();hqAdvancePipeline(1);
+  showToast('Pipeline initialized for '+company);
 };
 
 function hqRenderBanner(){
@@ -2206,19 +2094,108 @@ window.ecExportCSV=function(){
 
 <!-- ── EMAIL ──────────────────────────────────────────── -->
 <div class="section-header">
-  <p class="section-title">Outreach Email</p>
+  <p class="section-title">Outreach Email &amp; Outlook Templates</p>
   <button class="btn" onclick="generateEmail()">⟳ Generate Email</button>
 </div>
-<div class="card">
-  <div class="subject-row">
-    <span>Subject:</span>
-    <input type="text" id="emailSubject" placeholder="Generate email to populate subject line">
+
+<!-- Cadence Touch Tabs -->
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="ts-touch-tabs"></div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start" class="ts-ec-wrap">
+
+  <!-- Left: Outlook mock + textarea -->
+  <div>
+    <!-- Outlook mock header -->
+    <div style="background:#1a1a2e;border:1px solid #2a2a3e;border-radius:8px;overflow:hidden;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.3)">
+      <div style="background:#0078d4;padding:8px 12px;display:flex;align-items:center;gap:8px">
+        <div style="width:22px;height:22px;background:#fff;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#0078d4;flex-shrink:0">O</div>
+        <span style="font-size:12px;font-weight:600;color:#fff">New Message — Outlook</span>
+        <span id="ts-touch-lbl" style="font-size:10px;color:rgba(255,255,255,.4);margin-left:auto"></span>
+      </div>
+      <div style="padding:6px 10px;border-bottom:1px solid #2a2a3e;display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn" style="padding:4px 10px;font-size:11px" onclick="tsCopyAll()">⎘ Copy All</button>
+        <button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="tsCopyField('to')">To</button>
+        <button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="tsCopyField('subj')">Subject</button>
+        <button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="tsCopyField('body')">Body</button>
+      </div>
+      <div style="display:flex;align-items:center;border-bottom:1px solid #2a2a3e">
+        <div style="width:52px;text-align:right;padding:8px 10px;font-size:11px;color:#888;font-weight:600;flex-shrink:0">To</div>
+        <input id="ts-to-inp" placeholder="recipient@company.com" style="flex:1;border:none;outline:none;padding:8px 10px;font-size:13px;background:transparent;color:#e8e8e8;font-family:inherit">
+      </div>
+      <div style="display:flex;align-items:center;border-bottom:1px solid #2a2a3e">
+        <div style="width:52px;text-align:right;padding:8px 10px;font-size:11px;color:#888;font-weight:600;flex-shrink:0">Subject</div>
+        <input type="text" id="emailSubject" placeholder="Generate email to populate subject line" style="flex:1;border:none;outline:none;padding:8px 10px;font-size:12px;font-weight:600;background:transparent;color:#e8e8e8;font-family:inherit">
+      </div>
+      <textarea class="email-body" id="emailBody" placeholder="Click '⟳ Generate Email' after running the analysis above..." style="background:transparent;color:#e8e8e8;border:none;border-radius:0;min-height:200px;resize:vertical"></textarea>
+      <div style="padding:8px 12px;border-top:1px solid #2a2a3e;display:flex;align-items:center;justify-content:space-between">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#aaa;cursor:pointer">
+          <input type="checkbox" id="ts-sig-chk" checked style="accent-color:#0078d4"> Include signature
+        </label>
+        <button class="btn secondary" style="padding:4px 12px;font-size:11px" onclick="tsCopyAll()">⎘ Copy All Fields</button>
+      </div>
+    </div>
+
+    <!-- Outlook launch button -->
+    <div style="background:var(--card-bg,#16161e);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:22px;flex-shrink:0">📧</span>
+        <div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:2px">Open in Outlook</div>
+          <div style="font-size:11px;color:var(--text-3);line-height:1.55">One tap launches Outlook with <strong style="color:var(--text)">To, Subject &amp; Body pre-filled</strong>. Just review and hit Send.</div>
+        </div>
+      </div>
+      <button id="ts-mto-btn" onclick="tsFireMailto()" style="width:100%;padding:13px 16px;background:#0078d4;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;letter-spacing:.3px">
+        <span style="font-size:16px">✉️</span>
+        <span id="ts-mto-lbl">Open in Outlook — Pre-filled &amp; Ready</span>
+      </button>
+      <div style="background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.18);border-radius:6px;padding:8px 10px;margin-top:10px;font-size:10px;color:#aaa;line-height:1.6">
+        <strong style="color:#f5c518;font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
+        If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:10px;color:var(--text-3);white-space:nowrap">or copy individually</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="ts-prev-to" style="flex:1;font-size:10px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          <button onclick="tsCopyField('to')" style="white-space:nowrap;padding:5px 12px;background:var(--off-white,#f5f5f5);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">⎘ Copy To</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="ts-prev-subj" style="flex:1;font-size:10px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          <button onclick="tsCopyField('subj')" style="white-space:nowrap;padding:5px 12px;background:var(--off-white,#f5f5f5);color:var(--text);border:1px solid var(--border);border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">⎘ Copy Subject</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="ts-prev-body" style="flex:1;font-size:10px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+          <button onclick="tsCopyField('body')" style="white-space:nowrap;padding:5px 12px;background:rgba(245,197,24,.1);color:#c9a800;border:1px solid rgba(245,197,24,.3);border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">⎘ Copy Body</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn secondary" onclick="copyEmail()">Copy Full Email</button>
+      <span class="copy-msg" id="copyMsg">✓ Copied to clipboard</span>
+    </div>
   </div>
-  <textarea class="email-body" id="emailBody" placeholder="Click 'Generate Email' after calculating above..."></textarea>
-  <div class="btn-row">
-    <button class="btn secondary" onclick="copyEmail()">Copy Email</button>
-    <span class="copy-msg" id="copyMsg">✓ Copied to clipboard</span>
+
+  <!-- Right: Cadence touch selector -->
+  <div>
+    <div style="background:var(--card-bg,#16161e);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-2);margin-bottom:10px">📅 Cadence Touches</div>
+      <div style="display:flex;flex-direction:column;gap:6px" id="ts-touch-list"></div>
+    </div>
+    <div style="background:var(--card-bg,#16161e);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-2);margin-bottom:10px">🎯 Tone Guide</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:#f5c518;flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Direct</strong> — Clear ask every email. Never leave without a CTA.</div></div>
+        <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Data-led</strong> — Anchor every point to a specific number.</div></div>
+        <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:#22c55e;flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Consultative</strong> — Bring insight, not a pitch.</div></div>
+        <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Avoid</strong> — Generic templates or 'checking in'.</div></div>
+      </div>
+    </div>
   </div>
+
 </div>
 
 </div><!-- /container -->
@@ -3593,6 +3570,157 @@ function copyEmail(){
     setTimeout(function(){m.style.display='none';},2500);
   });
 }
+
+// ════════════════════════════════════════════════
+//  TS PANEL — CADENCE TOUCHES & OUTLOOK LAUNCHER
+// ════════════════════════════════════════════════
+var _tsTouchIdx = 0;
+
+// 5-touch cadence for TotalSource prospects
+function tsBuildTouches(){
+  var company = (document.getElementById('companyName')||{}).value||'the prospect';
+  var contact = (document.getElementById('contactName')||{}).value||'there';
+  var title   = (document.getElementById('contactTitle')||{}).value||'';
+  var hc      = (document.getElementById('employeeCount')||{}).value||'[EE count]';
+  var ind     = (document.getElementById('industryClass')||{}).value||'your industry';
+  var sig     = '\n\nBest,\n[Your Name]\nADP TotalSource | [Your Phone] | [Your Email]';
+  var nm = contact; var co = company;
+  return [
+    {day:1, label:'Initial Outreach',
+     subject:'ADP TotalSource analysis for '+co+' — '+hc+' employees',
+     body:'Hi '+nm+',\n\nI ran '+co+'\'s profile through our TotalSource eligibility model and wanted to share what came back.\n\nBased on '+hc+' employees in '+ind+', your group looks like a strong candidate for ADP TotalSource — with estimated benefits discounts that could materially reduce your current PEPM.\n\nI\'d love to walk you through the full scorecard. Do you have 20 minutes this week?'+sig},
+    {day:2, label:'PEO Reality Check',
+     subject:'Is ADP TotalSource still the right model for '+co+' at '+hc+' employees?',
+     body:'Hi '+nm+',\n\nMost PEO clients evaluate alternatives somewhere between 75–150 employees. At '+hc+' employees in '+ind+', the PEPM math starts shifting in a way that surprises most CFOs — and the co-employment liability looks different than when you first signed.\n\nI\'d love to run a side-by-side comparison. 15 minutes, no commitment.\n\nDo you have any time this week?'+sig},
+    {day:8, label:'Cost Comparison',
+     subject:'The math on TotalSource at '+hc+' employees — what the data shows',
+     body:'Hi '+nm+',\n\nA PEO vs. HCM cost comparison built around '+co+'\'s profile.\n\n• Estimated TotalSource PEPM at '+hc+' EEs: $[X]–$[X]\n• Comparable HCM platform PEPM: $[X]–$[X]\n• Estimated annual delta: $[X]\n• Benefits markup on TotalSource (est.): [X]%\n\nI\'d love to run the real numbers with you. Can you share your current PEPM?'+sig},
+    {day:15, label:'Case Study',
+     subject:'How a '+ind+' company at '+hc+' employees restructured HCM and saved $[X]/year',
+     body:'Hi '+nm+',\n\nWanted to share a case study of a company similar to '+co+' — same industry, similar headcount, also on TotalSource.\n\nAt '+hc+' employees in '+ind+', the PEO model was costing them significantly more per year than a comparable HCM platform.\n\nI can run the same analysis for '+co+' in about 20 minutes. Want to take a look together?'+sig},
+    {day:22, label:'Breakup Email',
+     subject:'Last email from me, '+nm+' — with one final thought on '+co+'\'s TotalSource setup',
+     body:'Hi '+nm+',\n\nI\'ve shared a lot of data on '+co+'\'s PEO cost structure over the past few weeks.\n\nWhether you act now or at renewal, I hope it was useful.\n\nHere\'s everything in one place: [link]\nMy calendar: [calendar link]\n\nThanks for your time, '+nm+'.'+sig},
+    {day:30, label:'Community Invite',
+     subject:co+'\'s PEO Scorecard + invitation to BeyondPayroll HCM Intelligence Community',
+     body:'Hi '+nm+',\n\nFinal email from my end. Attaching your TotalSource Renewal Scorecard — yours to keep.\n\nI\'m enrolling you in our quarterly PEO & HCM Benchmarking Briefing — no commitment, no pitch, just data.\n\nJoin here: beyondpayroll.net\n\nThanks for your time.'+sig}
+  ];
+}
+
+function tsRenderTouches(){
+  var touches = tsBuildTouches();
+  // Tab bar
+  var tabs = document.getElementById('ts-touch-tabs');
+  var list = document.getElementById('ts-touch-list');
+  if(!tabs||!list) return;
+  tabs.innerHTML='';
+  list.innerHTML='';
+  touches.forEach(function(t,i){
+    // tab pill
+    var tb=document.createElement('button');
+    tb.className='btn'+(i===_tsTouchIdx?'':' secondary');
+    tb.style.cssText='padding:5px 12px;font-size:11px;'+(i===_tsTouchIdx?'background:#0078d4;border-color:#0078d4;color:#fff;':'');
+    tb.textContent='Day '+t.day+' · '+t.label;
+    tb.onclick=(function(idx){return function(){_tsTouchIdx=idx;tsRenderTouches();tsLoadTouch();};})(i);
+    tabs.appendChild(tb);
+    // side list item
+    var li=document.createElement('div');
+    li.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .12s;'+(i===_tsTouchIdx?'background:rgba(0,120,212,.12);border:1px solid rgba(0,120,212,.3);':'border:1px solid transparent;');
+    li.innerHTML='<div style="width:28px;height:28px;border-radius:50%;background:'+(i===_tsTouchIdx?'#0078d4':'rgba(255,255,255,.07)')+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0">'+t.day+'</div>'
+      +'<div><div style="font-size:11px;font-weight:600;color:var(--text)">'+t.label+'</div><div style="font-size:10px;color:var(--text-3)">Day '+t.day+'</div></div>';
+    li.onclick=(function(idx){return function(){_tsTouchIdx=idx;tsRenderTouches();tsLoadTouch();};})(i);
+    list.appendChild(li);
+  });
+}
+
+function tsLoadTouch(){
+  var touches = tsBuildTouches();
+  var t = touches[_tsTouchIdx];
+  if(!t) return;
+  var subj = document.getElementById('emailSubject');
+  var body = document.getElementById('emailBody');
+  var lbl  = document.getElementById('ts-touch-lbl');
+  if(subj) subj.value = t.subject;
+  if(body) body.value = t.body;
+  if(lbl)  lbl.textContent = 'Day '+t.day+' · '+t.label;
+  // update previews
+  var to = (document.getElementById('ts-to-inp')||{}).value||'';
+  var prev_to=document.getElementById('ts-prev-to');
+  var prev_subj=document.getElementById('ts-prev-subj');
+  var prev_body=document.getElementById('ts-prev-body');
+  if(prev_to)   prev_to.textContent  = to||'(add recipient above)';
+  if(prev_subj) prev_subj.textContent= t.subject;
+  if(prev_body) prev_body.textContent= t.body.substring(0,80)+'…';
+  // reset button label
+  var btnLbl=document.getElementById('ts-mto-lbl');
+  if(btnLbl) btnLbl.textContent='Open in Outlook — Day '+t.day+': '+t.label;
+}
+
+function tsFireMailto(){
+  var to    = (document.getElementById('ts-to-inp')||{}).value||'';
+  var subj  = document.getElementById('emailSubject').value||'';
+  var body  = document.getElementById('emailBody').value||'';
+  if(!subj&&!body){alert('Generate an email first before launching Outlook.');return;}
+  var mailto='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+  window.location.href=mailto;
+  setTimeout(function(){
+    var btnLbl=document.getElementById('ts-mto-lbl');
+    var touches=tsBuildTouches();
+    var t=touches[_tsTouchIdx]||{};
+    if(btnLbl) btnLbl.textContent='✓ Outlook Opened — Day '+(t.day||'')+(t.label?' · '+t.label:'')+' Sent';
+  },800);
+}
+
+function tsCopyField(field){
+  var val='';
+  if(field==='to')   val=(document.getElementById('ts-to-inp')||{}).value||'';
+  if(field==='subj') val=document.getElementById('emailSubject').value||'';
+  if(field==='body') val=document.getElementById('emailBody').value||'';
+  navigator.clipboard.writeText(val).then(function(){
+    var m=document.getElementById('copyMsg'); if(m){m.style.display='inline';setTimeout(function(){m.style.display='none';},2000);}
+  });
+}
+
+function tsCopyAll(){
+  var to   =(document.getElementById('ts-to-inp')||{}).value||'';
+  var subj =document.getElementById('emailSubject').value||'';
+  var body =document.getElementById('emailBody').value||'';
+  var full =(to?'TO: '+to+'\n':'')+'SUBJECT: '+subj+'\n\n'+body;
+  navigator.clipboard.writeText(full).then(function(){
+    var m=document.getElementById('copyMsg'); if(m){m.style.display='inline';setTimeout(function(){m.style.display='none';},2000);}
+  });
+}
+
+// Auto-init cadence touches when panel opens (hook into openTsPanel)
+var _origOpenTsPanel = window.openTsPanel;
+window.openTsPanel = function(){
+  if(_origOpenTsPanel) _origOpenTsPanel();
+  setTimeout(function(){
+    _tsTouchIdx=0;
+    tsRenderTouches();
+    // If email already generated, keep it; otherwise load touch 1 template
+    var body=document.getElementById('emailBody');
+    if(!body||!body.value.trim()) tsLoadTouch();
+  },120);
+};
+// Also re-render when generateEmail is called to sync the touch label
+var _origGenerateEmail = window.generateEmail;
+window.generateEmail = function(){
+  if(_origGenerateEmail) _origGenerateEmail();
+  setTimeout(function(){
+    tsRenderTouches();
+    var touches=tsBuildTouches();
+    var t=touches[_tsTouchIdx]||{};
+    var lbl=document.getElementById('ts-touch-lbl');
+    var prev_subj=document.getElementById('ts-prev-subj');
+    var prev_body=document.getElementById('ts-prev-body');
+    if(lbl) lbl.textContent='Custom · Generated from Profile';
+    var subj=(document.getElementById('emailSubject')||{}).value||'';
+    var body=(document.getElementById('emailBody')||{}).value||'';
+    if(prev_subj) prev_subj.textContent=subj;
+    if(prev_body) prev_body.textContent=body.substring(0,80)+'…';
+  },100);
+};
 </script>
     </div>
   </div>
@@ -3782,63 +3910,7 @@ function copyEmail(){
 </style>
 
 <script>
-function openTsPanel(){
-  document.getElementById('ts-panel').classList.add('open');
-  document.body.style.overflow='hidden';
-
-  // ── Auto-populate TS tool fields from prospect data ──
-  var p=window._hqProspect;
-  if(!p) return;
-
-  // Company Name
-  if(p.company){var el=document.getElementById('companyName');if(el&&!el.value)el.value=p.company;}
-
-  // Contact Name
-  if(p.contact){var el=document.getElementById('contactName');if(el&&!el.value)el.value=p.contact.split(' ')[0];}
-
-  // Contact Title / Role (from persona)
-  if(p.persona){var el=document.getElementById('contactTitle');if(el&&!el.value)el.value=p.persona;}
-
-  // Number of Employees
-  if(p.headcount){var el=document.getElementById('numEE');if(el&&!el.value)el.value=p.headcount;}
-
-  // State — map abbreviations and partial matches to the full state name in the select
-  if(p.state){
-    var stEl=document.getElementById('hqState');
-    if(stEl&&!stEl.value){
-      var abbrevMap={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
-      var input=p.state.trim().toUpperCase();
-      var fullName=abbrevMap[input]||null;
-      // If not an abbreviation, try matching as full name (case-insensitive)
-      if(!fullName){
-        var lower=p.state.trim().toLowerCase();
-        for(var i=0;i<stEl.options.length;i++){
-          if(stEl.options[i].value&&stEl.options[i].value.toLowerCase()===lower){fullName=stEl.options[i].value;break;}
-        }
-      }
-      if(fullName){
-        stEl.value=fullName;
-        // Trigger city dropdown population
-        if(typeof onStateChange==='function') onStateChange();
-      }
-    }
-  }
-
-  // Industry — keyword match to risk class
-  if(p.industry){
-    var indEl=document.getElementById('industry');
-    if(indEl&&!indEl.value){
-      var indLower=p.industry.trim().toLowerCase();
-      var lowKeys=['tech','software','consult','professional','finance','legal','accounting','insurance','bank','it ','saas','digital'];
-      var highKeys=['construct','manufactur','agricult','mining','transport','warehouse','logging','roofing','trucking'];
-      var matched='';
-      for(var k=0;k<lowKeys.length;k++){if(indLower.indexOf(lowKeys[k])!==-1){matched='low';break;}}
-      if(!matched){for(var k=0;k<highKeys.length;k++){if(indLower.indexOf(highKeys[k])!==-1){matched='high';break;}}}
-      if(!matched) matched='med';
-      indEl.value=matched;
-    }
-  }
-}
+function openTsPanel(){document.getElementById('ts-panel').classList.add('open');document.body.style.overflow='hidden';}
 function closeTsPanel(){document.getElementById('ts-panel').classList.remove('open');document.body.style.overflow='';}
 
 // ═══════════════════════════════════════════════════════
@@ -5211,6 +5283,8 @@ function copyEmail(){
     setTimeout(function(){m.style.display='none';},2500);
   });
 }
+
 </script>
+
 </body>
 </html>
