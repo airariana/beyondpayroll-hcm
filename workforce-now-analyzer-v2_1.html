@@ -761,6 +761,58 @@
     justify-content: flex-end;
   }
 
+  /* Outlook Email Section */
+  .email-section {
+    margin-top: 24px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .email-section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .email-section-title {
+    font-family: 'Archivo', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .email-section-body { padding: 20px; }
+  .ec-outlook{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .ec-ol-tb{background:#1a2460;padding:7px 12px;display:flex;align-items:center;gap:8px}
+  .ec-ol-ico{width:22px;height:22px;background:#0078d4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+  .ec-ol-bar{background:#e8ebf5;border-bottom:1px solid var(--line);padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap}
+  .ec-fr{display:flex;align-items:flex-start;border-bottom:1px solid var(--line);min-height:34px}
+  .ec-fl{font-size:9px;color:var(--muted);font-weight:700;padding:10px 8px;min-width:52px;flex-shrink:0;border-right:1px solid var(--line);letter-spacing:1px;text-transform:uppercase}
+  .ec-fi-box{width:100%;height:100%;background:transparent;border:none;padding:8px 10px;font-size:13px;color:var(--ink);font-family:'IBM Plex Sans',sans-serif;outline:none;flex:1}
+  .ec-body-txt{min-height:200px;padding:12px;font-size:12px;line-height:1.8;color:var(--ink);white-space:pre-wrap;font-family:'Calibri',sans-serif;border-top:1px solid var(--line);background:#fff}
+  .ec-ol-ft{background:#f8fafb;border-top:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+  .ec-mto{background:#f8fafb;border:1.5px solid var(--line);border-radius:8px;padding:16px}
+  .ec-mto-hdr{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .ec-mto-btn{width:100%;background:#0055A5;border:none;border-radius:6px;padding:13px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;margin-bottom:10px;}
+  .ec-mto-btn:hover{opacity:.88}
+  .ec-tip{background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:var(--slate);line-height:1.65}
+  .ec-or{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .ec-or-line{flex:1;height:1px;background:var(--line)}
+  .ec-or-txt{font-size:10px;color:var(--muted);font-weight:500}
+  .ec-crow{background:white;border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:7px}
+  .ec-cprev{font-size:10px;color:var(--muted);background:#f8fafb;border:1px solid var(--line);border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5;max-height:46px;overflow:hidden;font-family:'Calibri',sans-serif;word-break:break-word}
+  .ec-cbtn{width:100%;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;background:transparent;color:var(--ink);border-color:var(--line);}
+  .ec-cbtn:hover{opacity:.8}
+  .ec-smb{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:white;color:var(--muted);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;flex-shrink:0;margin:auto 8px auto 0;transition:all .15s}
+  .ec-smb:hover{border-color:var(--primary);color:var(--primary)}
+  .ec-gen-btn{padding:9px 18px;background:var(--primary);color:white;border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
+  .ec-gen-btn:hover{background:var(--primary-light)}
+  .ec-gen-btn:disabled{opacity:.5;cursor:not-allowed}
+  .ec-loading{font-size:12px;color:var(--muted);font-style:italic;padding:8px 0}
+
   .btn-export {
     padding: 10px 20px;
     background: white;
@@ -1209,6 +1261,84 @@ Example:
       </div>
     </div>
   </div>
+
+  <!-- ── OUTLOOK EMAIL SECTION ── -->
+  <div class="email-section" id="emailSection" style="display:none">
+    <div class="email-section-header">
+      <div class="email-section-title">✉️ Outreach Email</div>
+      <button class="ec-gen-btn" id="ecGenBtn" onclick="ecGenerate()">⟳ Generate Email via AI</button>
+    </div>
+    <div class="email-section-body">
+      <div id="ecLoadingMsg" class="ec-loading" style="display:none">⏳ Generating personalized email…</div>
+
+      <!-- Outlook mock -->
+      <div class="ec-outlook" id="ecOutlookWrap" style="display:none">
+        <div class="ec-ol-tb">
+          <div class="ec-ol-ico">O</div>
+          <span style="font-size:12px;font-weight:600;color:#fff">New Message — Outlook</span>
+        </div>
+        <div class="ec-ol-bar">
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopyAll()">⎘ Copy All</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopy('to')">To</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopy('subj')">Subject</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopy('body')">Body</button>
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">To</div>
+          <input class="ec-fi-box" id="ec-to-inp" placeholder="recipient@company.com">
+          <button class="ec-smb" id="smb-to" onclick="ecCopy('to')">copy</button>
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">Cc</div>
+          <input class="ec-fi-box" id="ec-cc-inp" placeholder="optional">
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">Subject</div>
+          <div class="ec-fi-box" id="ec-subj-disp" style="font-weight:600;font-size:12px;display:flex;align-items:center;padding:8px 10px;flex:1"></div>
+          <button class="ec-smb" id="smb-subj" onclick="ecCopy('subj')">copy</button>
+        </div>
+        <div class="ec-body-txt" id="ec-body-disp"></div>
+        <div class="ec-ol-ft">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--slate);cursor:pointer;font-weight:500">
+            <input type="checkbox" id="ec-sig" checked style="accent-color:var(--primary)" onchange="ecRefreshBody()"> Include signature
+          </label>
+          <button class="btn-export" style="padding:5px 12px;font-size:11px;margin:0" onclick="ecCopyAll()">⎘ Copy All Fields</button>
+        </div>
+      </div>
+
+      <!-- Outlook launch panel -->
+      <div class="ec-mto" id="ecMtoWrap" style="display:none">
+        <div class="ec-mto-hdr">
+          <span style="font-size:22px;flex-shrink:0">📧</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;color:var(--ink)">Open in Outlook</div>
+            <div style="font-size:11px;color:var(--slate);line-height:1.55">One tap launches Outlook with <strong style="color:var(--ink)">To, Subject & Body pre-filled</strong>. Just review and hit Send.</div>
+          </div>
+        </div>
+        <button class="ec-mto-btn" id="ec-mto-btn" onclick="ecFireMailto()">
+          <span style="font-size:16px">✉️</span>
+          <span id="ec-mto-lbl">Open in Outlook — Pre-filled & Ready</span>
+        </button>
+        <div class="ec-tip">
+          <strong style="color:var(--warning);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
+          If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
+        </div>
+        <div class="ec-or"><div class="ec-or-line"></div><span class="ec-or-txt">or copy individually</span><div class="ec-or-line"></div></div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="prev-to"></div>
+          <button class="ec-cbtn" onclick="ecCopy('to')" id="cpbtn-to">⎘ Copy To</button>
+        </div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="prev-subj"></div>
+          <button class="ec-cbtn" onclick="ecCopy('subj')" id="cpbtn-subj">⎘ Copy Subject</button>
+        </div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="prev-body"></div>
+          <button class="ec-cbtn" onclick="ecCopy('body')" id="cpbtn-body" style="color:#0055A5;border-color:rgba(0,85,165,.25);background:rgba(0,85,165,.05)">⎘ Copy Body</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </main>
 
 <!-- API CONFIGURATION -->
@@ -1563,6 +1693,22 @@ function renderResults(analysis, data) {
 
   // Show results
   document.getElementById('results').classList.add('active');
+  // Show email section and store data for AI generation
+  document.getElementById('emailSection').style.display = 'block';
+  _ecCurrentData = Object.assign({}, data, {
+    classification: analysis.classification,
+    fitScore: analysis.fitScore,
+    opportunityScore: analysis.opportunityScore,
+    signals: analysis.signals,
+    competitive: analysis.competitive,
+    crossSell: analysis.crossSell,
+    roi: analysis.roi
+  });
+  // Reset outlook mock
+  document.getElementById('ecOutlookWrap').style.display = 'none';
+  document.getElementById('ecMtoWrap').style.display = 'none';
+  document.getElementById('ecGenBtn').textContent = '⟳ Generate Email via AI';
+  document.getElementById('ecGenBtn').disabled = false;
 
   // Animate bars
   setTimeout(() => {
@@ -1598,6 +1744,132 @@ function copyReport() {
   navigator.clipboard.writeText(text).then(() => {
     alert('Report copied to clipboard!');
   });
+}
+
+// ── Outlook Email Mock ─────────────────────────────────
+var _ecSubject = '';
+var _ecBodyRaw = '';
+var _ecBody = '';
+var _ecCurrentData = null;
+
+function ecRefreshBody() {
+  const sig = document.getElementById('ec-sig') && document.getElementById('ec-sig').checked;
+  const body = sig ? _ecBodyRaw : _ecBodyRaw.replace(/\n\n—[\s\S]*$/, '');
+  _ecBody = body;
+  document.getElementById('ec-body-disp').textContent = body;
+  document.getElementById('prev-body').textContent = body.substring(0, 88) + '…';
+}
+
+function ecSetEmail(subject, bodyRaw) {
+  _ecSubject = subject;
+  _ecBodyRaw = bodyRaw;
+  ecRefreshBody();
+  document.getElementById('ec-subj-disp').textContent = subject;
+  document.getElementById('prev-to').textContent = document.getElementById('ec-to-inp').value || 'recipient@company.com';
+  document.getElementById('prev-subj').textContent = subject;
+  document.getElementById('ec-mto-lbl').textContent = 'Open in Outlook — Pre-filled & Ready';
+  document.getElementById('ecOutlookWrap').style.display = 'block';
+  document.getElementById('ecMtoWrap').style.display = 'block';
+}
+
+function ecFireMailto() {
+  const toVal = (document.getElementById('ec-to-inp').value || '').trim();
+  if (!toVal) { alert('Add a recipient email first'); return; }
+  const uri = 'mailto:' + encodeURIComponent(toVal) + '?subject=' + encodeURIComponent(_ecSubject) + '&body=' + encodeURIComponent(_ecBody);
+  const a = document.createElement('a'); a.href = uri; a.style.display = 'none'; document.body.appendChild(a); a.click();
+  setTimeout(() => document.body.removeChild(a), 500);
+  document.getElementById('ec-mto-lbl').textContent = '✓ Outlook Opened — Email Launched';
+}
+
+function ecCopyText(text, btnId, label) {
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  if (btnId) {
+    const btn = document.getElementById(btnId); if (!btn) return;
+    const orig = btn.textContent; btn.textContent = '✓ Copied!'; btn.style.color = 'var(--success)'; btn.style.borderColor = 'var(--success)';
+    setTimeout(() => { btn.textContent = label; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
+  }
+}
+
+function ecCopy(field) {
+  const toVal = document.getElementById('ec-to-inp').value || '';
+  if (field === 'to') ecCopyText(toVal, 'cpbtn-to', '⎘ Copy To');
+  else if (field === 'subj') {
+    ecCopyText(_ecSubject, 'cpbtn-subj', '⎘ Copy Subject');
+    const smb = document.getElementById('smb-subj'); if (smb) { smb.textContent = '✓'; setTimeout(() => smb.textContent = 'copy', 1800); }
+  } else if (field === 'body') ecCopyText(_ecBody, 'cpbtn-body', '⎘ Copy Body');
+}
+
+function ecCopyAll() {
+  const toVal = document.getElementById('ec-to-inp').value || '';
+  ecCopyText('TO: ' + toVal + '\nSUBJECT: ' + _ecSubject + '\n\n' + _ecBody, null, '');
+}
+
+async function ecGenerate() {
+  if (!_ecCurrentData) { alert('Run an analysis first'); return; }
+  const d = _ecCurrentData;
+  const btn = document.getElementById('ecGenBtn');
+  const loading = document.getElementById('ecLoadingMsg');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+  loading.style.display = 'block';
+  document.getElementById('ecOutlookWrap').style.display = 'none';
+  document.getElementById('ecMtoWrap').style.display = 'none';
+
+  const prompt = `You are an elite B2B sales rep for ADP Workforce Now. Write a short, punchy cold outreach email to a prospect based on this analysis.
+
+COMPANY: ${d.company}
+EMPLOYEES: ${d.employees}
+INDUSTRY: ${d.industry || 'Not specified'}
+CURRENT PLATFORM: ${d.primaryPlatform}
+CLASSIFICATION: ${d.classification}
+FIT SCORE: ${d.fitScore}/100
+OPPORTUNITY SCORE: ${d.opportunityScore}/100
+TOP SIGNALS: ${(d.signals || []).slice(0,2).join('; ')}
+COMPETITIVE ANGLES: ${(d.competitive || []).slice(0,2).join('; ')}
+TOP CROSS-SELL MODULES: ${(d.crossSell || []).slice(0,3).join(', ')}
+ROI: ${d.roi ? d.roi.annualSavings + ' annual savings, ' + d.roi.payback + ' payback' : 'not calculated'}
+
+Write a concise, specific, value-driven email. Lead with insight, not a pitch. 
+Reference their current platform's weaknesses. Include 1 compelling stat or data point.
+End with a soft CTA (15-min call, not a demo request).
+
+Respond ONLY with valid JSON (no markdown):
+{
+  "subject": "compelling subject line under 60 chars",
+  "body": "full email body with proper line breaks. Include a signature placeholder: \\n\\n—\\n[Your Name]\\nADP Workforce Now | [Your Phone]\\nbeyondpayroll.net"
+}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const result = await response.json();
+    const raw = result.content.map(i => i.text || '').join('');
+    const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); } catch(e) {
+      const m = clean.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null;
+    }
+    if (parsed && parsed.subject && parsed.body) {
+      ecSetEmail(parsed.subject, parsed.body);
+    } else {
+      throw new Error('Could not parse email response');
+    }
+  } catch(err) {
+    alert('Email generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⟳ Regenerate Email';
+    loading.style.display = 'none';
+  }
 }
 </script>
 
