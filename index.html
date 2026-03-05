@@ -1033,7 +1033,7 @@ function doSignIn(){
   if(!email||!pass){showBanner('signin-err','signin-err-msg','Please enter your email and password.');return}
   const user=getUsers().find(u=>u.email===email&&u.password===pass);
   if(!user){showBanner('signin-err','signin-err-msg','Email or password is incorrect. Please try again.');document.getElementById('si-pass').value='';return}
-  const session={email:user.email,first:user.first,last:user.last,role:user.role};
+  const session={email:user.email,first:user.first,last:user.last,role:user.role||'WFN'};
   saveSession(session);showToast('Welcome back, '+user.first+'!');
   setTimeout(()=>enterHQ(session),400);
 }
@@ -1048,16 +1048,31 @@ function doLogout(){
 }
 
 function enterHQ(session){
-  document.getElementById('view-auth').classList.remove('active');
-  document.getElementById('view-hq').classList.add('active');
-  const initials=(session.first[0]+session.last[0]).toUpperCase();
-  document.getElementById('top-avatar').textContent=initials;
-  document.getElementById('top-name').textContent=session.first+' '+session.last;
-  document.getElementById('top-role').textContent=session.role==='WFN'?'TRACK A · WFN':'TRACK B · TS';
-  if(!window._hqLoaded){window._hqLoaded=true;buildHQ(session)}
+  // Ensure role has a default value
+  if(!session.role) session.role='WFN';
+  try{
+    document.getElementById('view-auth').classList.remove('active');
+    document.getElementById('view-hq').classList.add('active');
+    var initials=((session.first||'B')[0]+(session.last||'P')[0]).toUpperCase();
+    document.getElementById('top-avatar').textContent=initials;
+    document.getElementById('top-name').textContent=(session.first||'')+' '+(session.last||'');
+    document.getElementById('top-role').textContent=session.role==='TS'?'TRACK B · TS':'TRACK A · WFN';
+    if(!window._hqLoaded){window._hqLoaded=true;buildHQ(session)}
+  }catch(err){
+    console.error('enterHQ error:',err);
+    showToast('Error loading Sales HQ — please try again',true);
+  }
 }
 
-window.addEventListener('DOMContentLoaded',()=>{const s=getSession();if(s)enterHQ(s)});
+window.addEventListener('DOMContentLoaded',()=>{
+  const s=getSession();
+  if(s&&s.email&&s.first&&s.last){
+    enterHQ(s);
+  } else {
+    // Clear any corrupt/incomplete session
+    clearSession();
+  }
+});
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     const si=document.getElementById('form-signin');
@@ -5190,4 +5205,12 @@ function generateEmail(){
 }
 
 function copyEmail(){
-  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBo
+  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBody').value;
+  navigator.clipboard.writeText(full).then(function(){
+    var m=document.getElementById('copyMsg'); m.style.display='inline';
+    setTimeout(function(){m.style.display='none';},2500);
+  });
+}
+</script>
+</body>
+</html>
