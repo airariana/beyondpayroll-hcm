@@ -949,9 +949,10 @@ function setSheetsUrl(url){localStorage.setItem(SHEETS_KEY,url.trim())}
 
 async function syncToSheets(prospect){
   const url=getSheetsUrl();
-  if(!url){return} // silently skip if not configured
+  if(!url){return}
   try{
-    const payload={
+    // GET + query params avoids CORS preflight — Apps Script handles both GET and POST
+    const params=new URLSearchParams({
       company:prospect.company||'',
       contact:prospect.contact||'',
       email:prospect.email||'',
@@ -961,15 +962,13 @@ async function syncToSheets(prospect){
       headcount:prospect.headcount||'',
       persona:prospect.persona||'',
       linkedin:prospect.linkedin||'',
-      track:prospect.track||'',
+      track:prospect.track||'WFN',
       saved:new Date().toLocaleDateString('en-US'),
       time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
-    };
-    await fetch(url,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
+    });
+    await fetch(url+'?'+params.toString(),{
+      method:'GET',
+      mode:'no-cors'
     });
     showSheetsStatus('✓ Synced to Google Sheets','#22c55e');
   }catch(e){
