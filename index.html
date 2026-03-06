@@ -1875,16 +1875,45 @@ window.ecExportCSV=function(){
 //  Uses: Google News RSS · CORS Proxy · Built-in Intel
 // ════════════════════════════════════════════════════════
 
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+// ── MULTI-PROXY FALLBACK SYSTEM ──
+const CORS_PROXIES = [
+  { name: 'allorigins', url: 'https://api.allorigins.win/raw?url=' },
+  { name: 'corsproxy', url: 'https://corsproxy.io/?' },
+  { name: 'corsanywhere', url: 'https://api.codetabs.com/v1/proxy?quest=' }
+];
+let activeProxyIdx = 0;
 
-// Fetch Google News RSS for a competitor
+async function fetchWithFallback(targetUrl, timeoutMs) {
+  const timeout = timeoutMs || 10000;
+  for (let attempt = 0; attempt < CORS_PROXIES.length; attempt++) {
+    const proxyIdx = (activeProxyIdx + attempt) % CORS_PROXIES.length;
+    const proxy = CORS_PROXIES[proxyIdx];
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+      const resp = await fetch(proxy.url + encodeURIComponent(targetUrl), { signal: controller.signal });
+      clearTimeout(timer);
+      if (!resp.ok) throw new Error(resp.status);
+      activeProxyIdx = proxyIdx; // remember which one worked
+      return await resp.text();
+    } catch (err) {
+      console.warn('Proxy ' + proxy.name + ' failed for ' + targetUrl.substring(0, 60) + '...:', err.message);
+      if (attempt === CORS_PROXIES.length - 1) {
+        console.error('All proxies failed for: ' + targetUrl.substring(0, 80));
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+// Fetch Google News RSS for a competitor (with fallback)
 async function fetchCompetitorNews(companyName, keywords) {
   const query = encodeURIComponent(companyName + ' ' + keywords);
   const rssUrl = 'https://news.google.com/rss/search?q=' + query + '+when:14d&hl=en-US&gl=US&ceid=US:en';
   try {
-    const resp = await fetch(CORS_PROXY + encodeURIComponent(rssUrl));
-    if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
-    const xml = await resp.text();
+    const xml = await fetchWithFallback(rssUrl, 12000);
+    if (!xml) return [];
     const parser = new DOMParser();
     const doc = parser.parseFromString(xml, 'text/xml');
     const items = doc.querySelectorAll('item');
@@ -1904,13 +1933,11 @@ async function fetchCompetitorNews(companyName, keywords) {
   }
 }
 
-// Fetch competitor blog/press page via CORS proxy
+// Fetch competitor blog/press page (with fallback)
 async function fetchCompetitorPage(url) {
   try {
-    const resp = await fetch(CORS_PROXY + encodeURIComponent(url), { signal: AbortSignal.timeout(8000) });
-    if (!resp.ok) return '';
-    const html = await resp.text();
-    // Strip tags, get readable text
+    const html = await fetchWithFallback(url, 8000);
+    if (!html) return '';
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
     return tmp.textContent.substring(0, 3000);
