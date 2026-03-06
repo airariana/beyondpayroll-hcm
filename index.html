@@ -810,19 +810,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
             <div class="fe" id="r-email-err">Please enter a valid email address</div>
           </div>
 
-          <div class="fg">
-            <label class="fl">Role / Track</label>
-            <div class="role-grid">
-              <div class="role-card sel-wfn" id="role-wfn" onclick="selectRole('WFN')">
-                <div class="rc-tag">Track A</div>
-                <div class="rc-name">ADP WorkforceNow</div>
-              </div>
-              <div class="role-card" id="role-ts" onclick="selectRole('TS')">
-                <div class="rc-tag">Track B</div>
-                <div class="rc-name">ADP TotalSource</div>
-              </div>
-            </div>
-          </div>
+
 
           <div class="fg">
             <label class="fl">Password</label>
@@ -1070,8 +1058,7 @@ function renderProspectBar(){
     return;
   }
   list.innerHTML=arr.map(p=>{
-    const trackCls=p.track==='WFN'?'wfn':'ts';
-    const trackLbl=p.track==='WFN'?'WFN':'TS';
+  
     const isActive=p._id===activeId;
     return `<div class="sp-chip${isActive?' sp-active':''}" onclick="loadProspect('${p._id}')" title="${p.company} · ${p.contact||''} · ${p.industry||''} · ${p.state||''}">
       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px">${p.company}</span>
@@ -1558,7 +1545,7 @@ function initHQ(session){
   const ini=(session.first[0]+session.last[0]).toUpperCase();
   const a=document.getElementById('hq-wb-av');if(a)a.textContent=ini;
   const n=document.getElementById('hq-wb-name');if(n)n.textContent='Welcome back, '+session.first;
-  const de=document.getElementById('hq-wb-detail');if(de)de.textContent=session.role==='WFN'?'Track A · ADP WorkforceNow Specialist':'Track B · ADP TotalSource Specialist';
+  const de=document.getElementById('hq-wb-detail');if(de)de.textContent='ADP Sales Specialist';
   window._hqProspect=null;window._hqPipelineStep=0;window._hqApproved=false;
   window._ecActiveIdx=0;window._ecStatuses={};window._ecNotes={};window._ecLaunched={};window._ecChecks={};
 
@@ -1630,8 +1617,6 @@ function hqRenderBanner(){
   const p=window._hqProspect;if(!p)return;
   document.getElementById('hq-pe').style.display='none';
   const pf=document.getElementById('hq-pf');pf.style.display='grid';
-  const tc=p.track==='WFN'?'wfn':'ts';
-  const tl=p.track==='WFN'?'Track A — WorkforceNow':'Track B — TotalSource';
   pf.innerHTML=`
     <div class="psf-item"><div class="psf-lbl">Company</div><div class="psf-val co">${p.company}</div></div>
     <div class="psf-item"><div class="psf-lbl">Contact</div><div class="psf-val">${p.contact||'—'}</div></div>
@@ -1723,7 +1708,7 @@ function buildTouches(p){
     {day:22,label:'Breakup Email',subject:`Last email from me, ${nm} — with one final thought on ${co}'s TotalSource setup`,body:`Hi ${nm},\n\nI've shared a lot of data on ${co}'s PEO cost structure over the past few weeks.\n\nWhether you act now or at renewal, I hope it was useful.\n\nHere's everything in one place: [link]\nMy calendar: [calendar link]\n\nThanks for your time, ${nm}.${sig}`},
     {day:30,label:'Community Invite',subject:`${co}'s PEO Scorecard + invitation to BeyondPayroll HCM Intelligence Community`,body:`Hi ${nm},\n\nFinal email from my end. Attaching your TotalSource Renewal Scorecard — yours to keep.\n\nI'm enrolling you in our quarterly PEO & HCM Benchmarking Briefing — no commitment, no pitch, just data.\n\nJoin here: beyondpayroll.net\n\nThanks for your time.${sig}`},
   ];
-  return p.track==='WFN'?wfn:ts;
+  return wfn;
 }
 
 function ecRenderAll(){
@@ -1732,8 +1717,7 @@ function ecRenderAll(){
   document.getElementById('ecs-co').textContent=p.company;
   document.getElementById('ecs-contact').textContent=p.contact||'—';
   document.getElementById('ecs-email').textContent=p.email||'—';
-  document.getElementById('ecs-track').textContent=p.track==='WFN'?'Track A':'Track B';
-  document.getElementById('ecs-track').style.color=p.track==='WFN'?'var(--blue)':'var(--red)';
+
   document.getElementById('ecs-profile').textContent=`${p.industry||'—'} · ${p.state||'—'} · ${p.headcount||'—'} EEs`;
   const tabsEl=document.getElementById('ec-tabs');
   tabsEl.innerHTML=touches.map((t,i)=>{
