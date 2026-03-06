@@ -667,19 +667,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
       <label class="fl">LinkedIn URL</label>
       <input class="fi" id="f-linkedin" placeholder="linkedin.com/in/janesmith">
     </div>
-    <div>
-      <label class="fl">Track / Product</label>
-      <div class="track-grid">
-        <div class="track-opt sel-wfn" id="trackOptWFN" onclick="selectTrack('WFN')">
-          <div style="font-size:9px;color:var(--text-3);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;font-weight:600">Track A</div>
-          <div style="font-size:13px;font-weight:700;color:var(--blue)">ADP WorkforceNow</div>
-        </div>
-        <div class="track-opt" id="trackOptTS" onclick="selectTrack('TS')">
-          <div style="font-size:9px;color:var(--text-3);letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;font-weight:600">Track B</div>
-          <div style="font-size:13px;font-weight:700;color:var(--text-2)">ADP TotalSource</div>
-        </div>
-      </div>
-    </div>
+
 
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
@@ -1048,7 +1036,6 @@ function loadProspect(id){
   document.getElementById('f-headcount').value=p.headcount||'';
   document.getElementById('f-persona').value=p.persona||'CFO';
   document.getElementById('f-linkedin').value=p.linkedin||'';
-  if(typeof selectTrack==='function') selectTrack(p.track||'WFN');
   window._hqProspect=Object.assign({},p);
   setActiveProspectId(id);
   closeModal();
@@ -1087,8 +1074,7 @@ function renderProspectBar(){
     const trackLbl=p.track==='WFN'?'WFN':'TS';
     const isActive=p._id===activeId;
     return `<div class="sp-chip${isActive?' sp-active':''}" onclick="loadProspect('${p._id}')" title="${p.company} · ${p.contact||''} · ${p.industry||''} · ${p.state||''}">
-      <span class="sp-chip-track ${trackCls}">${trackLbl}</span>
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px">${p.company}</span>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px">${p.company}</span>
       ${p.headcount?`<span style="font-size:10px;color:var(--text-3)">${p.headcount}ee</span>`:''}
       <button class="sp-chip-del" onclick="event.stopPropagation();deleteProspect('${p._id}')" title="Remove">×</button>
     </div>`;
@@ -1478,7 +1464,7 @@ function getHQHTML(session){
       <div class="ec-si"><div class="ec-sl">Company</div><div class="ec-sv co" id="ecs-co">—</div></div>
       <div class="ec-si"><div class="ec-sl">Contact</div><div class="ec-sv" id="ecs-contact">—</div></div>
       <div class="ec-si"><div class="ec-sl">Email</div><div class="ec-sv" id="ecs-email" style="font-size:10px">—</div></div>
-      <div class="ec-si"><div class="ec-sl">Track</div><div class="ec-sv" id="ecs-track">—</div></div>
+    
       <div class="ec-si"><div class="ec-sl">Profile</div><div class="ec-sv" id="ecs-profile" style="font-size:10px">—</div></div>
     </div>
 
@@ -1615,16 +1601,10 @@ window.openModal=function(){
     document.getElementById('f-headcount').value=p.headcount||'';
     document.getElementById('f-persona').value=p.persona||'CFO';
     document.getElementById('f-linkedin').value=p.linkedin||'';
-    if(typeof selectTrack==='function') selectTrack(p.track||'WFN');
   }
   document.getElementById('prospectModal').classList.add('open');
 };
 window.closeModal=function(){document.getElementById('prospectModal').classList.remove('open')};
-window.selectTrack=function(t){
-  selectedRole=t;
-  document.getElementById('trackOptWFN').className='track-opt'+(t==='WFN'?' sel-wfn':'');
-  document.getElementById('trackOptTS').className='track-opt'+(t==='TS'?' sel-ts':'');
-};
 
 window.saveProspect=function(){
   const company=document.getElementById('f-company').value.trim();
@@ -1638,7 +1618,7 @@ window.saveProspect=function(){
     email:document.getElementById('f-email').value.trim(),
     phone:document.getElementById('f-phone').value.trim(),
     linkedin:document.getElementById('f-linkedin').value.trim(),
-    track:selectedRole||'WFN'
+    track:'WFN'
   };
   const saved=persistProspect(p);
   window._hqProspect=Object.assign({},saved);
@@ -1658,7 +1638,6 @@ function hqRenderBanner(){
     <div class="psf-item"><div class="psf-lbl">Persona</div><div class="psf-val" style="font-size:11px">${p.persona}</div></div>
     <div class="psf-item"><div class="psf-lbl">Industry</div><div class="psf-val">${p.industry||'—'}</div></div>
     <div class="psf-item"><div class="psf-lbl">State / HC</div><div class="psf-val">${(p.state||'—')+' · '+(p.headcount||'—')+' EEs'}</div></div>
-    <div class="psf-item"><div class="psf-lbl">Track</div><div class="psf-val ${tc}">${tl}</div></div>
     <div class="psf-item" style="border-right:none"><button onclick="openModal()" style="background:var(--off-white);border:1px solid var(--border);color:var(--text-2);border-radius:5px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:var(--fb);font-weight:600">✏ Edit</button></div>
   `;
 }
