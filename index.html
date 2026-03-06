@@ -5339,7 +5339,38 @@ function copyEmail(){
   </div>
 </div>
 <script>
-var AGENT_CORS='https://api.allorigins.win/get?url=';
+var AGENT_CORS_PROXIES=[
+  'https://api.allorigins.win/get?url=',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://corsproxy.io/?'
+];
+
+async function agFetchWithProxy(feedUrl){
+  // Try each proxy in order
+  for(var i=0;i<AGENT_CORS_PROXIES.length;i++){
+    try{
+      var proxy=AGENT_CORS_PROXIES[i];
+      var isAllOrigins=proxy.indexOf('allorigins')>-1;
+      var isCorsproxy=proxy.indexOf('corsproxy.io')>-1;
+      var reqUrl=proxy+encodeURIComponent(feedUrl);
+      var res=await fetch(reqUrl,{signal:AbortSignal.timeout(8000)});
+      if(!res.ok)continue;
+      if(isAllOrigins){
+        var json=await res.json();
+        if(!json||!json.contents)continue;
+        return json.contents;
+      } else {
+        var text=await res.text();
+        if(!text||text.length<100)continue;
+        return text;
+      }
+    }catch(e){
+      console.warn('Proxy '+i+' failed:',e.message);
+      continue;
+    }
+  }
+  throw new Error('All proxies failed. Try refreshing in a moment.');
+}
 var AGENT_FEEDS={
   market:[
     {key:'adp_news',label:'ADP News',icon:'🔵',url:'https://news.google.com/rss/search?q=ADP+payroll+HCM&hl=en-US&gl=US&ceid=US:en'},
@@ -5411,12 +5442,8 @@ window.agRefreshFeed=function(){
 
 async function agFetchFeed(feedUrl){
   try{
-    var proxyUrl=AGENT_CORS+encodeURIComponent(feedUrl);
-    var res=await fetch(proxyUrl);
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    var json=await res.json();
-    if(!json.contents)throw new Error('Empty response');
-    return agParseRSS(json.contents);
+    var xml=await agFetchWithProxy(feedUrl);
+    return agParseRSS(xml);
   }catch(e){return {error:e.message};}
 }
 
