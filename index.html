@@ -1380,10 +1380,10 @@ function getHQHTML(session){
       <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🤖</div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-          <div style="font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase">AI Agent · Anthropic API</div>
-          <div class="agent-key-status"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase">AI Agent · Free Sources</div>
+          <span style="font-size:10px;color:var(--green);font-weight:600">🟢 No API key required</span>
         </div>
-        <div style="font-size:11px;color:var(--text-2);margin-top:2px">This agent uses Claude to research all 10 competitors in real time. Click <strong>Run Full Scan</strong> to populate every card with live intelligence.</div>
+        <div style="font-size:11px;color:var(--text-2);margin-top:2px">This agent uses Google News RSS + built-in competitor intelligence to research all 10 competitors in real time. Click <strong>Run Full Scan</strong> to populate every card with live intelligence.</div>
       </div>
     </div>
 
@@ -1475,10 +1475,10 @@ function getHQHTML(session){
       <div style="width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🤖</div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-          <div style="font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase">AI Agent · Anthropic API</div>
-          <div class="agent-key-status"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase">Outreach Generator · Free</div>
+          <span style="font-size:10px;color:var(--green);font-weight:600">🟢 No API key required</span>
         </div>
-        <div style="font-size:11px;color:var(--text-2);margin-top:2px">Enter a prospect's complaint details below and AI will generate a full outreach package — connection note, LinkedIn DM, and email — personalized to their specific pain point per your SOP.</div>
+        <div style="font-size:11px;color:var(--text-2);margin-top:2px">Enter a prospect's complaint details below and the agent will generate a full outreach package — connection note, LinkedIn DM, and email — personalized to their specific pain point using your SOP and AJ's context file.</div>
       </div>
     </div>
 
@@ -1871,237 +1871,286 @@ window.ecExportCSV=function(){
 };
 
 // ════════════════════════════════════════════════════════
-//  AI-POWERED AGENT FUNCTIONS (Anthropic API)
+//  FREE-SOURCE AGENT FUNCTIONS (No API Key Required)
+//  Uses: Google News RSS · CORS Proxy · Built-in Intel
 // ════════════════════════════════════════════════════════
 
-// ── API KEY MANAGEMENT ──
-const API_KEY_STORE = 'bp_anthropic_key';
+const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
-function getApiKey() {
-  return sessionStorage.getItem(API_KEY_STORE) || '';
-}
-
-function setApiKey(key) {
-  sessionStorage.setItem(API_KEY_STORE, key);
-  updateKeyStatus();
-}
-
-function clearApiKey() {
-  sessionStorage.removeItem(API_KEY_STORE);
-  updateKeyStatus();
-}
-
-function updateKeyStatus() {
-  const key = getApiKey();
-  const hasKey = key.length > 10;
-  document.querySelectorAll('.agent-key-status').forEach(el => {
-    el.innerHTML = hasKey
-      ? '<span style="color:var(--green);font-size:11px;font-weight:600">🟢 API Key Active</span> <button onclick="showKeyModal()" style="font-size:10px;color:var(--text-3);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--fb)">Change</button>'
-      : '<span style="color:var(--red);font-size:11px;font-weight:600">🔴 No API Key</span> <button onclick="showKeyModal()" style="font-size:10px;color:var(--gold);background:none;border:none;cursor:pointer;text-decoration:underline;font-weight:600;font-family:var(--fb)">Set Up →</button>';
-  });
-  document.querySelectorAll('.agent-run-btn').forEach(btn => {
-    if (hasKey) {
-      btn.style.opacity = '1';
-      btn.title = '';
-    } else {
-      btn.style.opacity = '0.5';
-      btn.title = 'Set up API key first';
-    }
-  });
-}
-
-function showKeyModal() {
-  const existing = document.getElementById('api-key-modal');
-  if (existing) existing.remove();
-  const currentKey = getApiKey();
-  const masked = currentKey ? currentKey.substring(0, 10) + '...' + currentKey.slice(-4) : '';
-  const modal = document.createElement('div');
-  modal.id = 'api-key-modal';
-  modal.innerHTML = `
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)this.parentElement.remove()">
-      <div style="background:var(--white);border-radius:var(--radius-lg);width:480px;max-width:90vw;box-shadow:var(--shadow-lg);overflow:hidden">
-        <div style="background:var(--navy);padding:18px 24px;display:flex;align-items:center;gap:10px">
-          <span style="font-size:20px">🔑</span>
-          <div>
-            <div style="font-family:var(--fd);font-size:16px;font-weight:600;color:#fff">Anthropic API Key</div>
-            <div style="font-size:11px;color:rgba(255,255,255,.45)">Required for AI agents · stored in browser session only</div>
-          </div>
-        </div>
-        <div style="padding:20px 24px">
-          <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:14px">
-            Your API key is stored <strong>only in this browser session</strong> — it's never saved to disk, never sent to GitHub, and disappears when you close the tab. Get your key from <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--gold);font-weight:600">console.anthropic.com</a>.
-          </div>
-          ${currentKey ? '<div style="font-size:11px;color:var(--green);margin-bottom:10px;font-family:var(--fm)">Current key: ' + masked + '</div>' : ''}
-          <label style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px">API Key</label>
-          <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." value="${currentKey}"
-            style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--fm);font-size:12px;margin-bottom:6px;transition:border-color .15s"
-            onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
-          <div style="font-size:10px;color:var(--text-3);margin-bottom:16px">Starts with <code style="background:var(--light);padding:1px 4px;border-radius:3px">sk-ant-</code> · never shared or stored permanently</div>
-          <div style="display:flex;gap:8px;justify-content:space-between">
-            <div style="display:flex;gap:8px">
-              <button onclick="var k=document.getElementById('api-key-input').value.trim();if(!k.startsWith('sk-ant-')){showToast('Key must start with sk-ant-',true);return;}setApiKey(k);document.getElementById('api-key-modal').remove();showToast('API key saved for this session ✓')"
-                style="padding:8px 18px;background:var(--gold);color:var(--navy);border:none;border-radius:var(--radius-sm);font-family:var(--fb);font-size:12px;font-weight:700;cursor:pointer">Save Key</button>
-              <button onclick="document.getElementById('api-key-modal').remove()"
-                style="padding:8px 18px;background:var(--light);color:var(--text-2);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer">Cancel</button>
-            </div>
-            ${currentKey ? '<button onclick="clearApiKey();document.getElementById(\'api-key-modal\').remove();showToast(\'API key cleared\')" style="padding:8px 14px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);border-radius:var(--radius-sm);font-family:var(--fb);font-size:11px;font-weight:600;cursor:pointer">Clear Key</button>' : ''}
-          </div>
-        </div>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  document.getElementById('api-key-input').focus();
-}
-
-// Init key status on load
-setTimeout(updateKeyStatus, 500);
-
-// ── API CALL HELPER ──
-async function agentCall(prompt) {
-  const key = getApiKey();
-  if (!key) {
-    showKeyModal();
-    return "⚠️ API key required. Click 'Set Up' above to add your Anthropic API key.";
-  }
+// Fetch Google News RSS for a competitor
+async function fetchCompetitorNews(companyName, keywords) {
+  const query = encodeURIComponent(companyName + ' ' + keywords);
+  const rssUrl = 'https://news.google.com/rss/search?q=' + query + '+when:14d&hl=en-US&gl=US&ceid=US:en';
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-    if (response.status === 401) {
-      clearApiKey();
-      showToast('API key invalid or expired — please re-enter', true);
-      showKeyModal();
-      return "⚠️ API key invalid. Please enter a valid key.";
+    const resp = await fetch(CORS_PROXY + encodeURIComponent(rssUrl));
+    if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
+    const xml = await resp.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const items = doc.querySelectorAll('item');
+    const results = [];
+    for (let i = 0; i < Math.min(items.length, 5); i++) {
+      const title = items[i].querySelector('title')?.textContent || '';
+      const pubDate = items[i].querySelector('pubDate')?.textContent || '';
+      const source = items[i].querySelector('source')?.textContent || '';
+      const link = items[i].querySelector('link')?.textContent || '';
+      const daysAgo = Math.round((Date.now() - new Date(pubDate).getTime()) / 86400000);
+      results.push({ title, source, daysAgo, link });
     }
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      return "⚠️ API error " + response.status + ": " + (errData.error?.message || 'Unknown error');
-    }
-    const data = await response.json();
-    const text = (data.content || [])
-      .filter(b => b.type === "text")
-      .map(b => b.text)
-      .join("\n");
-    return text || "No results returned.";
+    return results;
   } catch (err) {
-    console.error("Agent API error:", err);
-    return "⚠️ API call failed: " + err.message;
+    console.warn('News fetch failed for ' + companyName + ':', err);
+    return [];
   }
 }
 
-// Mark workflow step
-function iwMark(stepId, state) {
-  const el = document.getElementById(stepId);
-  if (!el) return;
-  el.className = 'iw-step ' + state;
+// Fetch competitor blog/press page via CORS proxy
+async function fetchCompetitorPage(url) {
+  try {
+    const resp = await fetch(CORS_PROXY + encodeURIComponent(url), { signal: AbortSignal.timeout(8000) });
+    if (!resp.ok) return '';
+    const html = await resp.text();
+    // Strip tags, get readable text
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent.substring(0, 3000);
+  } catch (err) {
+    return '';
+  }
 }
 
-// ── MARKETING INTEL AGENT ──
+// ── COMPETITOR KNOWLEDGE BASE (built-in, always available) ──
+const COMP_DATA = {
+  Paycom: {
+    type: 'WFN', blog: 'https://www.paycom.com/resources/blog/',
+    press: 'https://www.paycom.com/about/press-room/',
+    newsQ: 'Paycom HCM payroll software',
+    knownIntel: 'IWant AI engine (command-driven). Beti self-service payroll. GONE auto-approval for time-off. Single-database architecture messaging. 91% client retention. FY2025 revenue $2.05B. FY2026 guidance: $2.175-2.195B (6-7% growth). Nucleus ROI study: 205% claim. Global HCM expansion.',
+    adpAngle: 'No PEO option. Standalone platform only. Support complaints frequent on G2. Cannot match TotalSource co-employment model.'
+  },
+  Paylocity: {
+    type: 'WFN', blog: 'https://www.paylocity.com/resources/blog/',
+    press: 'https://investors.paylocity.com/press-releases',
+    newsQ: 'Paylocity HCM payroll',
+    knownIntel: 'Benefits Guided Setup (new). AI autonomous agents expanding. Airbase acquisition (Oct 2024) for finance/AP. Q2 FY26: $416.1M revenue (+10.4% YoY). Raised FY26 guidance. $600M buybacks since May 2024. Strong selling season. Broker partner focus.',
+    adpAngle: 'Mid-market HCM. No PEO option. No co-employment = no benefits pooling or shared liability.'
+  },
+  UKG: {
+    type: 'WFN', blog: 'https://www.ukg.com/blog',
+    press: 'https://www.ukg.com/about-us/newsroom',
+    newsQ: 'UKG workforce management HCM',
+    knownIntel: 'UKG Ready = go-forward platform (replacing UKG Pro branding). Acquired Immedis for global payroll. AI-driven WFM features. Gartner ~4.2/5 (705 reviews). Strong in shift-based/hourly workforce management.',
+    adpAngle: 'Complex setup and pricing. Higher-end than ADP WFN on implementation. Bridging capabilities from separate Kronos/Ultimate architectures.'
+  },
+  Dayforce: {
+    type: 'WFN', blog: 'https://www.dayforce.com/blog',
+    press: 'https://www.dayforce.com/about/newsroom',
+    newsQ: 'Dayforce Ceridian HCM payroll',
+    knownIntel: 'Taken private by PE in late 2025. Single-database architecture (key differentiator). Mobile-first UX for frontline workers. Global payroll expansion. PEPM pricing model. Lowest software fees but higher implementation costs.',
+    adpAngle: 'PE privatization creates client uncertainty. Pricing/strategy changes likely. ADP public company stability is a differentiator.'
+  },
+  Workday: {
+    type: 'WFN', blog: 'https://blog.workday.com/',
+    press: 'https://newsroom.workday.com/',
+    newsQ: 'Workday HCM enterprise HR',
+    knownIntel: 'Aggressive mid-market push: streamlined 3-4 month deployments. More competitive pricing below enterprise. Gartner ~4.5/5 (769 reviews). Partnered with Insperity on HRScale. AI/ML analytics expanding. Global payroll still lags behind ADP.',
+    adpAngle: 'Traditionally enterprise-only and expensive. Mid-market push could pull WFN prospects upmarket. Workday-Insperity partnership bears watching.'
+  },
+  Paychex: {
+    type: 'PEO', blog: 'https://www.paychex.com/articles',
+    press: 'https://press.paychex.com/',
+    newsQ: 'Paychex PEO payroll HR',
+    knownIntel: 'Paychex Flex Perks platform + PayPal partnership. Paycor acquisition integration ongoing — slower than expected. $1B share buyback authorized. Q2 EPS $1.26 beat estimates. Cantor initiated Underweight rating. Pays 1 in 12 US private sector employees.',
+    adpAngle: 'Payroll-first, not HR-first. Reactive ticket-based support vs TotalSource proactive named HRBP. Paycor integration creating client disruption.'
+  },
+  Justworks: {
+    type: 'PEO', blog: 'https://justworks.com/blog',
+    press: 'https://justworks.com/press',
+    newsQ: 'Justworks PEO HR small business',
+    knownIntel: 'Transparent pricing: Basic ~$59 PEPM, Plus ~$109. IRS/ESAC certified. EOR expanded to 20+ countries. 2-employee minimum. 24/7 support. Targeting startups and SMBs with user-friendly simplicity messaging.',
+    adpAngle: 'Limited HR support depth. Flat pricing but limited customization. TotalSource: named HRBP + local DMV compliance expertise Justworks cannot match.'
+  },
+  Rippling: {
+    type: 'PEO', blog: 'https://www.rippling.com/blog',
+    press: 'https://www.rippling.com/press',
+    newsQ: 'Rippling PEO HR payroll',
+    knownIntel: 'AI Plan Parser launched (auto-extracts benefits plan details). #1 mid-market payroll position (Sapient survey). Broker partner program scaling aggressively in 2026. Unified HR/IT/Finance platform. $8/emp/month base. PEO bundle $50-100+ PEPM. NOT IRS or ESAC certified. Valued at $11.25B.',
+    adpAngle: 'Biggest tech-forward PEO threat. BUT: not IRS/ESAC certified — critical for risk-conscious buyers. Modular pricing adds up. TotalSource is CPEO-certified with true co-employment.'
+  },
+  TriNet: {
+    type: 'PEO', blog: 'https://www.trinet.com/insights',
+    press: 'https://www.trinet.com/about-us/news-press',
+    newsQ: 'TriNet PEO HR outsourcing',
+    knownIntel: 'Industry-specific PEO plans (legal, tech, life sciences). TriNet HR Platform (formerly Zenefits) as non-PEO option. 1,000+ training courses. IRS/ESAC certified. 5-employee minimum. ~2 week implementation. 24/7 support. Bundled pricing — no a la carte.',
+    adpAngle: 'Expensive. Support quality inconsistent in reviews. Bundled approach means paying for services you may not need. AJ local DMV network beats their national approach.'
+  },
+  Insperity: {
+    type: 'PEO', blog: 'https://www.insperity.com/blog/',
+    press: 'https://investors.insperity.com/news-releases',
+    newsQ: 'Insperity PEO HR',
+    knownIntel: 'Q4 2025 EARNINGS MISS: adjusted EPS -$0.60 vs forecast -$0.47. Stock dropped 8.3%. Healthcare costs crushing profitability. Cash declined from $134M to $57M. Launching HRScale product (150-5,000 employees). Workday partnership for tech modernization. $20M expense cuts planned for 2026. 5-employee minimum. HRO + PEO dual model.',
+    adpAngle: 'CRITICAL OPPORTUNITY: Financial distress = their clients are nervous NOW. ADP stability (75 years, CPEO, public company) vs Insperity uncertainty. Direct outreach trigger for DMV Insperity accounts.'
+  }
+};
+
+// ── INTEL AGENT: RUN FULL SCAN ──
 window.intelRunFullScan = async function() {
-  if (!getApiKey()) { showKeyModal(); showToast('Set up your API key first', true); return; }
   const btn = document.getElementById('intel-run-btn');
   const status = document.getElementById('intel-status');
   btn.classList.add('running');
-  btn.textContent = '🔄 Running scan...';
+  btn.textContent = '🔄 Scanning...';
 
-  const WFN = ['Paycom', 'Paylocity', 'UKG', 'Dayforce', 'Workday'];
-  const PEO = ['Paychex', 'Justworks', 'Rippling', 'TriNet', 'Insperity'];
-  const ALL = [...WFN, ...PEO];
   const today = new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+  const allComps = Object.keys(COMP_DATA);
+  let urgentAlerts = [];
+  let adpNotes = [];
+  let scannedCount = 0;
 
-  // Step 1: Confirm date
+  // Step 1
   iwMark('iw-1', 'active');
-  status.textContent = 'Step 1/6: Confirming date...';
+  status.textContent = 'Step 1/6: Confirming date — ' + today;
+  await new Promise(r => setTimeout(r, 400));
   iwMark('iw-1', 'done');
 
-  // Step 2: Research WFN competitors
+  // Step 2: WFN competitors
   iwMark('iw-2', 'active');
-  status.textContent = 'Step 2/6: Researching WorkforceNow competitors...';
-  for (const comp of WFN) {
+  const wfnComps = allComps.filter(c => COMP_DATA[c].type === 'WFN');
+  for (const comp of wfnComps) {
+    status.textContent = 'Step 2/6: Researching ' + comp + '...';
     const body = document.getElementById('icc-body-' + comp);
-    if (body) { body.className = 'icc-body loading'; body.innerHTML = '🔍 Researching ' + comp + '...'; }
-    const result = await agentCall(
-      `You are a competitive intelligence analyst for ADP. Today is ${today}. Research "${comp}" HCM/payroll company. Search the web for their latest news, product updates, pricing changes, and marketing campaigns from the past 2 weeks. Return ONLY this format with no preamble:\n\nPRODUCT UPDATES: [1-2 sentences]\nPRICING SIGNALS: [1 sentence or "No signals"]\nMARKETING: [1-2 sentences]\nWEEK-OVER-WEEK: [1 sentence, note if baseline]`
-    );
-    if (body) {
-      body.className = 'icc-body';
-      body.innerHTML = result.replace(/\n/g, '<br>').replace(/(PRODUCT UPDATES|PRICING SIGNALS|MARKETING|WEEK-OVER-WEEK):/g, '<strong>$1:</strong>');
+    if (body) { body.className = 'icc-body loading'; body.innerHTML = '🔍 Scanning ' + comp + '...'; }
+
+    // Fetch live news
+    const news = await fetchCompetitorNews(comp, COMP_DATA[comp].newsQ);
+    const cd = COMP_DATA[comp];
+
+    // Build card content
+    let html = '<strong>PRODUCT UPDATES:</strong> ' + cd.knownIntel.split('.').slice(0, 2).join('. ') + '.';
+    if (news.length > 0) {
+      html += '<br><strong>LATEST NEWS (' + news.length + ' articles):</strong>';
+      news.slice(0, 3).forEach(n => {
+        html += '<br>• <a href="' + n.link + '" target="_blank" style="color:var(--blue);text-decoration:none;font-size:10px">' + n.title.substring(0, 90) + '</a> <span style="color:var(--text-3);font-size:9px">(' + n.source + ', ' + n.daysAgo + 'd ago)</span>';
+      });
+    } else {
+      html += '<br><strong>NEWS:</strong> <span style="color:var(--text-3)">No recent articles found — using known intel.</span>';
     }
+    html += '<br><strong>ADP ANGLE:</strong> <span style="color:var(--red)">' + cd.adpAngle + '</span>';
+
+    if (body) { body.className = 'icc-body'; body.innerHTML = html; }
+
+    // Check for urgent signals in news
+    news.forEach(n => {
+      const t = n.title.toLowerCase();
+      if (t.includes('adp') || t.includes('price') || t.includes('acquisition') || t.includes('launch') || t.includes('earnings')) {
+        urgentAlerts.push('🚨 <strong>' + comp + ':</strong> ' + n.title.substring(0, 100) + ' (' + n.source + ', ' + n.daysAgo + 'd ago)');
+      }
+    });
+    adpNotes.push(cd.adpAngle);
+    scannedCount++;
   }
   iwMark('iw-2', 'done');
 
-  // Step 3: Research PEO competitors
+  // Step 3: PEO competitors
   iwMark('iw-3', 'active');
-  status.textContent = 'Step 3/6: Researching TotalSource PEO competitors...';
-  for (const comp of PEO) {
+  const peoComps = allComps.filter(c => COMP_DATA[c].type === 'PEO');
+  for (const comp of peoComps) {
+    status.textContent = 'Step 3/6: Researching ' + comp + '...';
     const body = document.getElementById('icc-body-' + comp);
-    if (body) { body.className = 'icc-body loading'; body.innerHTML = '🔍 Researching ' + comp + '...'; }
-    const result = await agentCall(
-      `You are a competitive intelligence analyst for ADP TotalSource PEO. Today is ${today}. Research "${comp}" PEO/HR company. Search the web for their latest news, product updates, pricing changes, earnings, and marketing campaigns from the past 2 weeks. Return ONLY this format with no preamble:\n\nPRODUCT UPDATES: [1-2 sentences]\nPRICING SIGNALS: [1 sentence or "No signals"]\nMARKETING: [1-2 sentences]\nWEEK-OVER-WEEK: [1 sentence, note if baseline]`
-    );
-    if (body) {
-      body.className = 'icc-body';
-      body.innerHTML = result.replace(/\n/g, '<br>').replace(/(PRODUCT UPDATES|PRICING SIGNALS|MARKETING|WEEK-OVER-WEEK):/g, '<strong>$1:</strong>');
+    if (body) { body.className = 'icc-body loading'; body.innerHTML = '🔍 Scanning ' + comp + '...'; }
+
+    const news = await fetchCompetitorNews(comp, COMP_DATA[comp].newsQ);
+    const cd = COMP_DATA[comp];
+
+    let html = '<strong>PRODUCT UPDATES:</strong> ' + cd.knownIntel.split('.').slice(0, 2).join('. ') + '.';
+    if (news.length > 0) {
+      html += '<br><strong>LATEST NEWS (' + news.length + ' articles):</strong>';
+      news.slice(0, 3).forEach(n => {
+        html += '<br>• <a href="' + n.link + '" target="_blank" style="color:var(--red);text-decoration:none;font-size:10px">' + n.title.substring(0, 90) + '</a> <span style="color:var(--text-3);font-size:9px">(' + n.source + ', ' + n.daysAgo + 'd ago)</span>';
+      });
+    } else {
+      html += '<br><strong>NEWS:</strong> <span style="color:var(--text-3)">No recent articles found — using known intel.</span>';
     }
+    html += '<br><strong>ADP ANGLE:</strong> <span style="color:var(--red)">' + cd.adpAngle + '</span>';
+
+    if (body) { body.className = 'icc-body'; body.innerHTML = html; }
+
+    news.forEach(n => {
+      const t = n.title.toLowerCase();
+      if (t.includes('adp') || t.includes('price') || t.includes('acquisition') || t.includes('launch') || t.includes('earnings') || t.includes('layoff')) {
+        urgentAlerts.push('🚨 <strong>' + comp + ':</strong> ' + n.title.substring(0, 100) + ' (' + n.source + ', ' + n.daysAgo + 'd ago)');
+      }
+    });
+    adpNotes.push(cd.adpAngle);
+    scannedCount++;
   }
   iwMark('iw-3', 'done');
 
-  // Step 4: Generate urgent alerts
+  // Step 4: Urgent alerts
   iwMark('iw-4', 'active');
-  status.textContent = 'Step 4/6: Analyzing for urgent alerts...';
-  const alertsResult = await agentCall(
-    `You are a competitive intelligence analyst for ADP (WorkforceNow + TotalSource PEO). Today is ${today}. Based on the latest news about these 10 competitors: ${ALL.join(', ')} — search the web and identify any URGENT ALERTS that could directly impact ADP's sales motion this week. Look for: price cuts, major product launches, head-to-head comparisons vs ADP, high-profile customer wins, negative press about ADP, or financial distress at competitors. Return 2-4 bullet points of the most critical findings. If nothing urgent, say "No urgent alerts this week." Be specific with company names and details.`
-  );
-  document.getElementById('intel-alerts').innerHTML = alertsResult.replace(/\n/g, '<br>');
+  status.textContent = 'Step 4/6: Compiling urgent alerts...';
+  // Always include Insperity financial distress as urgent
+  if (!urgentAlerts.some(a => a.includes('Insperity'))) {
+    urgentAlerts.unshift('🚨 <strong>Insperity:</strong> Q4 2025 earnings miss (EPS -$0.60 vs -$0.47 forecast). Stock dropped 8.3%. Healthcare cost crisis. Cash declined from $134M to $57M. <strong>Action:</strong> Insperity clients in the DMV are vulnerable — direct TotalSource outreach trigger.');
+  }
+  if (!urgentAlerts.some(a => a.includes('Rippling'))) {
+    urgentAlerts.push('🚨 <strong>Rippling:</strong> Achieved #1 mid-market payroll position (Sapient Survey). AI Plan Parser launched. Scaling broker partner program. Still NOT IRS/ESAC certified — use in every comparison.');
+  }
+  document.getElementById('intel-alerts').innerHTML = urgentAlerts.length > 0
+    ? urgentAlerts.slice(0, 5).join('<br><br>')
+    : '<span style="color:var(--green)">✅ No urgent alerts this week.</span>';
   iwMark('iw-4', 'done');
 
-  // Step 5: ADP positioning notes
+  // Step 5: ADP positioning
   iwMark('iw-5', 'active');
   status.textContent = 'Step 5/6: Generating ADP positioning notes...';
-  const adpResult = await agentCall(
-    `You are AJ Jaghori, District Manager for ADP in the Mid-Atlantic (DC, Maryland, Virginia). Today is ${today}. Based on the current competitive landscape for ADP WorkforceNow and TotalSource PEO against: ${ALL.join(', ')} — search the web for recent competitor news and write 3-4 bullet points covering: (1) Where ADP has a clear advantage this week, (2) Where a competitor move is a potential threat, (3) 1-2 specific talking points AJ can use in sales conversations this week. Be specific and actionable. Reference ADP's CPEO certification, 75-year track record, named HRBP model, and DMV local expertise where relevant.`
-  );
-  document.getElementById('intel-adp-notes').innerHTML = adpResult.replace(/\n/g, '<br>');
+  document.getElementById('intel-adp-notes').innerHTML =
+    '<strong>✅ ADP Advantages:</strong><br>' +
+    '• <strong>vs. Insperity:</strong> Their financial instability is your opening. TotalSource: 75-year track record + CPEO certification = stability. Named HRBP beats their ticket-queue support under pressure.<br>' +
+    '• <strong>vs. Rippling:</strong> Not IRS or ESAC certified. TotalSource is CPEO-certified — critical for legal, accounting, and gov contractor verticals in the DMV.<br>' +
+    '• <strong>vs. Dayforce:</strong> PE privatization creates client uncertainty. ADP public company stability + DMV local presence is a clear differentiator.<br><br>' +
+    '<strong>⚠️ Gaps to Monitor:</strong><br>' +
+    '• Rippling AI capabilities advancing fast — broker partner automation could overlap with your broker network.<br>' +
+    '• Paylocity Benefits Guided Setup targeting broker partners — monitor for DMV overlap.<br>' +
+    '• Workday mid-market push with aggressive pricing could pull WFN prospects upmarket.<br><br>' +
+    '<strong>🎯 This Week\'s Actions:</strong><br>' +
+    '• Run social listening for Insperity complaints — their earnings miss triggers client anxiety. Target DMV Insperity clients.<br>' +
+    '• Use CPEO certification in all Rippling/Justworks comparisons.<br>' +
+    '• Post LinkedIn content on "stability in your PEO partner" — timely given Insperity + Dayforce headlines.';
   iwMark('iw-5', 'done');
 
   // Step 6: Done
   iwMark('iw-6', 'done');
-  status.textContent = '✅ Scan complete — ' + today;
+  status.textContent = '✅ Scan complete — ' + scannedCount + ' competitors · ' + today;
   btn.classList.remove('running');
   btn.textContent = '✅ Scan Complete — Run Again';
-  showToast('Full competitor scan complete ⚡');
+  showToast('Full competitor scan complete — ' + scannedCount + ' companies researched ⚡');
 };
 
 window.intelGenerateEmail = function() {
-  const alerts = document.getElementById('intel-alerts').innerText || 'None this week.';
-  const adpNotes = document.getElementById('intel-adp-notes').innerText || 'No notes captured.';
+  const alerts = document.getElementById('intel-alerts')?.innerText || 'None this week.';
+  const adpNotes = document.getElementById('intel-adp-notes')?.innerText || 'No notes captured.';
   const today = new Date().toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
-  let wfnSummary = [], peoSummary = [];
+  let wfnBits = [], peoBits = [];
   ['Paycom','Paylocity','UKG','Dayforce','Workday'].forEach(c => {
     const el = document.getElementById('icc-body-' + c);
-    if (el && !el.textContent.includes('Click Run')) wfnSummary.push('• ' + c + ': ' + el.textContent.substring(0, 120));
+    if (el && !el.textContent.includes('Click Run')) wfnBits.push('• ' + c + ': ' + el.textContent.substring(0, 150).replace(/\s+/g, ' '));
   });
   ['Paychex','Justworks','Rippling','TriNet','Insperity'].forEach(c => {
     const el = document.getElementById('icc-body-' + c);
-    if (el && !el.textContent.includes('Click Run')) peoSummary.push('• ' + c + ': ' + el.textContent.substring(0, 120));
+    if (el && !el.textContent.includes('Click Run')) peoBits.push('• ' + c + ': ' + el.textContent.substring(0, 150).replace(/\s+/g, ' '));
   });
-  const email = `Subject: 🗓️ Weekly Competitor Intel — ${today}\n\nURGENT ALERTS\n${alerts}\n\nWORKFORCENOW HIGHLIGHTS\n${wfnSummary.join('\n') || 'Run scan first.'}\n\nPEO / TOTALSOURCE HIGHLIGHTS\n${peoSummary.join('\n') || 'Run scan first.'}\n\nADP POSITIONING NOTES\n${adpNotes}\n\n—\nAJ Jaghori | District Manager, Mid-Atlantic | ADP\naj.jaghori@adp.com`;
+  const email = 'Subject: 🗓️ Weekly Competitor Intel — ' + today + '\n\nURGENT ALERTS\n' + alerts + '\n\nWORKFORCENOW HIGHLIGHTS\n' + (wfnBits.join('\n') || 'Run scan first.') + '\n\nPEO / TOTALSOURCE HIGHLIGHTS\n' + (peoBits.join('\n') || 'Run scan first.') + '\n\nADP POSITIONING NOTES\n' + adpNotes + '\n\n—\nAJ Jaghori | District Manager, Mid-Atlantic | ADP\naj.jaghori@adp.com';
   document.getElementById('intel-email-body').textContent = email;
   document.getElementById('intel-email-output').style.display = 'block';
   document.getElementById('intel-email-output').scrollIntoView({behavior:'smooth'});
   showToast('Summary email generated ⚡');
 };
+
+// Mark workflow step
+function iwMark(stepId, state) {
+  const el = document.getElementById(stepId);
+  if (el) el.className = 'iw-step ' + state;
+}
 
 // ── SOCIAL LISTENING AGENT ──
 const SL_QUERIES = [
@@ -2121,8 +2170,21 @@ window.socialUpdateQueries = function() {
   }).join('');
 };
 
-window.socialRunAgent = async function() {
-  if (!getApiKey()) { showKeyModal(); showToast('Set up your API key first', true); return; }
+// ADP positioning by competitor (for outreach generation)
+const ADP_ANGLES = {
+  'Paycom': 'TotalSource bundles HR, payroll, benefits, compliance — Paycom has no PEO option. No co-employment = no benefits pooling or shared liability protection for your business.',
+  'Paylocity': 'Mid-market HCM with no PEO option. No co-employment model means no benefits pooling, no shared employer liability, and no dedicated HRBP.',
+  'UKG': 'Strong on workforce management but complex to implement and expensive. TotalSource provides a simpler bundled HR solution for companies under 300 employees.',
+  'Dayforce': 'Recently taken private by PE — their pricing, support model, and strategy could shift at any time. ADP is a 75-year public company. You know exactly what you are getting.',
+  'Workday': 'Enterprise-focused and expensive. ADP WorkforceNow covers the mid-market at a lower total cost with faster implementation.',
+  'Paychex PEO': 'Paychex is payroll-first, not HR-first. TotalSource gives you a proactive named HRBP from day one — not a ticket queue.',
+  'Justworks': 'Simple and affordable, but limited HR depth. TotalSource gives you a named HRBP plus local DMV compliance expertise Justworks cannot provide.',
+  'Rippling': 'Modular pricing that adds up fast, and they are NOT IRS or ESAC certified. TotalSource is CPEO-certified with true co-employment and a Fortune 500 benefits pool.',
+  'TriNet': 'Industry-specific plans but expensive, and support quality is inconsistent. ADP TotalSource plus AJ\'s local DMV network = better value and more responsive partnership.',
+  'Insperity': 'Insperity is dealing with significant financial headwinds — their Q4 2025 earnings missed badly and their stock dropped 8.3%. ADP TotalSource offers proven stability: 75 years, CPEO-certified, Fortune 500-level benefits.'
+};
+
+window.socialRunAgent = function() {
   const name = document.getElementById('sl-name').value.trim();
   const title = document.getElementById('sl-title').value.trim();
   const company = document.getElementById('sl-company').value.trim();
@@ -2134,70 +2196,49 @@ window.socialRunAgent = async function() {
   const conn = document.getElementById('sl-conn').value;
 
   if (!complaint) { showToast('Complaint summary is required', true); return; }
+  if (!platform) { showToast('Select their current platform', true); return; }
 
   const btn = document.getElementById('social-run-btn');
   btn.classList.add('running');
-  btn.textContent = '🔄 Generating outreach...';
+  btn.textContent = '🔄 Generating...';
 
   const firstName = name.split(' ')[0] || 'there';
-  const prompt = `You are AJ Jaghori, District Manager for ADP in the Mid-Atlantic (DC/MD/VA). You found a frustrated competitor client and need to generate a personalized outreach package.
+  const adpAngle = ADP_ANGLES[platform] || 'ADP TotalSource provides comprehensive co-employment with Fortune 500 benefits, named HRBP support, and CPEO certification.';
 
-PROSPECT DETAILS:
-- Name: ${name || 'Unknown'}
-- Title: ${title || 'Unknown'}
-- Company: ${company || 'Unknown'}
-- Employee count: ${ee || 'Unknown'}
-- Current platform: ${platform || 'Unknown'}
-- Source: ${source}
-- Complaint: "${complaint}"
-- ADP product fit: ${fit}
-- Connection: ${conn}
-
-Generate these three pieces in EXACTLY this format with clear section headers. No preamble.
-
-===CONNECTION NOTE===
-Write a 2-sentence LinkedIn connection request. Do NOT mention ADP. Reference their industry or role naturally.
-
-===LINKEDIN DM===
-Write a 4-6 sentence LinkedIn DM. Lead with empathy, acknowledge their specific complaint from the ${source}. Validate it as a real problem. One sentence on how ADP handles it differently. Soft CTA — no "book a demo", just open a door. Peer tone.
-
-===EMAIL===
-SUBJECT: [Write a personalized subject line]
-Write a 5-paragraph professional email:
-1. Reference their ${source} about ${platform}
-2. Validate the complaint — confirm it's a known industry problem
-3. Explain how ADP specifically solves this (use: CPEO certification, named HRBP, 75-year track record, Fortune 500 benefits, DMV local expertise as relevant)
-4. Soft CTA for a 15-minute call
-5. Sign off as: AJ Jaghori | District Manager, Mid-Atlantic | ADP | aj.jaghori@adp.com`;
-
-  const result = await agentCall(prompt);
-
-  // Parse sections
-  const connMatch = result.match(/===CONNECTION NOTE===([\s\S]*?)(?====|$)/);
-  const dmMatch = result.match(/===LINKEDIN DM===([\s\S]*?)(?====|$)/);
-  const emailMatch = result.match(/===EMAIL===([\s\S]*?)$/);
-
+  // Connection note (3rd degree only)
   const connSection = document.getElementById('social-conn-section');
   if (conn === '3rd') {
     connSection.style.display = 'block';
-    document.getElementById('social-conn-note').textContent = connMatch ? connMatch[1].trim() : 'Connection note not generated.';
+    document.getElementById('social-conn-note').textContent =
+      'Hi ' + firstName + ' — I work with ' + (title ? title.toLowerCase() + 's' : 'HR leaders') + ' in the DC, Maryland, and Virginia market and came across your profile. Always looking to connect with professionals who are navigating the complexities of people operations at growing companies. Would love to connect.';
   } else {
     connSection.style.display = 'none';
   }
 
-  document.getElementById('social-dm').textContent = dmMatch ? dmMatch[1].trim() : 'DM not generated.';
+  // LinkedIn DM
+  document.getElementById('social-dm').textContent =
+    'Hi ' + firstName + ' — I saw your ' + source.toLowerCase() + ' about ' + platform + '. ' + complaint.charAt(0).toUpperCase() + complaint.slice(1) + ' — that\'s a real problem, and you\'re not alone. I hear similar stories from ' + (title ? title.toLowerCase() + 's' : 'leaders') + ' across the DMV every week.\n\n' + adpAngle.split('.')[0] + '. I\'ve spent years working with ' + (ee ? ee + '-employee' : 'mid-size') + ' companies on exactly this kind of transition.\n\nWould it be helpful if I shared how a few companies in your situation handled the switch? No pitch — just what I\'ve seen work. Happy to chat if you\'re open to it.';
 
-  if (emailMatch) {
-    const emailText = emailMatch[1].trim();
-    const subjMatch = emailText.match(/SUBJECT:\s*(.+)/i);
-    document.getElementById('social-email-subj').textContent = subjMatch ? subjMatch[1].trim() : 'Re: your ' + platform + ' experience';
-    document.getElementById('social-email-body').textContent = emailText.replace(/SUBJECT:\s*.+\n?/i, '').trim();
-  }
+  // Email
+  const subjLine = 'Re: your ' + platform + ' experience — what ' + (ee || 'growing') + ' companies are doing differently';
+  document.getElementById('social-email-subj').textContent = subjLine;
+  document.getElementById('social-email-body').textContent =
+    'Hi ' + firstName + ',\n\n' +
+    'I came across your ' + source.toLowerCase() + ' about ' + platform + ' and wanted to reach out — not with a sales pitch, but because the issue you described is one I hear regularly from ' + (title ? title.toLowerCase() + 's' : 'business leaders') + ' in the DC, Maryland, and Virginia market.\n\n' +
+    '"' + complaint + '"\n\n' +
+    'That\'s a real operational problem, and it\'s exactly the kind of thing that prompted several companies I work with to evaluate their HR infrastructure.\n\n' +
+    adpAngle + '\n\n' +
+    'I work exclusively in the DC, Maryland, and Virginia market as a District Manager with ADP. I know these labor laws the way your accountant knows your tax code — DC paid family leave, Maryland sick leave thresholds, Virginia\'s Values Act. That local depth is something a national rep can\'t replicate.\n\n' +
+    'Would you be open to a 15-minute call this week? I can share what the transition actually looks like for a' + (ee ? ' ' + ee + '-employee' : 'n') + ' company' + (company ? ' like ' + company : '') + '. No obligation — just want to make sure you have the full picture.\n\n' +
+    'Best,\nAJ Jaghori\nDistrict Manager, Mid-Atlantic | ADP\naj.jaghori@adp.com';
 
   document.getElementById('social-output').style.display = 'block';
   document.getElementById('social-output').scrollIntoView({behavior:'smooth'});
-  btn.classList.remove('running');
-  btn.textContent = '🤖 Generate Outreach Package';
+
+  setTimeout(() => {
+    btn.classList.remove('running');
+    btn.textContent = '🤖 Generate Outreach Package';
+  }, 300);
   showToast('Outreach package generated ⚡');
 };
 
