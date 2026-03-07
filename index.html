@@ -27,13 +27,13 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
-body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit-font-smoothing:antialiased}
+html,body{height:100%;overflow:hidden;max-width:100vw}
+body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit-font-smoothing:antialiased;overflow-x:hidden;width:100%;box-sizing:border-box}
 
 /* ── VIEWS ── */
-.portal-view{display:none;height:100vh}
+.portal-view{display:none;height:100vh;max-width:100vw;overflow-x:hidden}
 .portal-view.active{display:flex}
-#view-hq.portal-view.active{display:block;padding-top:58px}
+#view-hq.portal-view.active{display:block;padding-top:58px;overflow-x:hidden}
 
 /* ── TOAST ── */
 .toast{
@@ -132,7 +132,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 
 /* Right auth panel */
 .right-panel{
-  flex:1;overflow-y:auto;background:var(--off-white);
+  flex:1;overflow-y:auto;overflow-x:hidden;background:var(--off-white);
   display:flex;align-items:center;justify-content:center;padding:40px 32px;
   position:relative;
 }
@@ -234,6 +234,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
   background:rgba(255,255,255,.95);border-bottom:1px solid var(--border);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   display:flex;align-items:center;padding:0 28px;height:58px;gap:12px;
+  max-width:100vw;overflow:hidden;box-sizing:border-box;
 }
 .tb-brand{display:flex;align-items:center;gap:10px}
 .tb-logo{width:30px;height:30px;background:var(--navy);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:12px;color:var(--gold);font-weight:700}
@@ -279,7 +280,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 /* ════════════════════════
    HQ INNER
    ════════════════════════ */
-.hq-scroll{height:100%;overflow-y:auto}
+.hq-scroll{height:100%;overflow-y:auto;overflow-x:hidden;width:100%;box-sizing:border-box}
 .hq-wrap{max-width:1120px;margin:0 auto;padding:28px 36px 80px}
 
 /* HQ header */
@@ -598,7 +599,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 .tokchip:hover{background:var(--light);border-color:var(--border-2)}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);overflow-x:hidden}
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;position:relative}
 .modal-title{font-family:var(--fd);font-size:20px;font-weight:600;margin-bottom:3px}
@@ -708,7 +709,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 .agent-feed-btn:hover,.agent-feed-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
 .agent-refresh-btn{margin-left:auto;padding:5px 14px;background:var(--gold);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--fb);cursor:pointer}
 .agent-refresh-btn:disabled{opacity:.5;cursor:not-allowed}
-.agent-body{flex:1;overflow-y:auto;padding:0}
+.agent-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:0;width:100%;box-sizing:border-box}
 .agent-loading{padding:40px;text-align:center;color:var(--text-3);font-size:13px}
 .agent-loading-dot{display:inline-block;animation:agentPulse 1.4s ease-in-out infinite}
 .agent-loading-dot:nth-child(2){animation-delay:.2s}
@@ -1954,27 +1955,15 @@ function getHQHTML(session){
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
           <div>
             <div class="card-section-title" style="margin-bottom:3px;">📝 Additional Notes</div>
-            <div style="font-size:11px;color:#9ca3af;line-height:1.5;">Paste call notes, Gong transcript snippets, or type freeform observations — or <strong style="color:#60a5fa">upload a screenshot</strong> to extract text automatically.</div>
+            <div style="font-size:11px;color:#9ca3af;line-height:1.5;">Paste call notes, Gong transcript snippets, or type freeform observations.</div>
           </div>
           <div style="display:flex;gap:7px;flex-shrink:0;">
             <!-- Hidden file input -->
-            <input type="file" id="sre-img-upload" accept="image/*" style="display:none" onchange="sreExtractFromImage(this)">
-            <button onclick="document.getElementById('sre-img-upload').click()" id="sre-upload-btn"
-              style="font-size:11px;padding:4px 10px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);border-radius:5px;color:#60a5fa;cursor:pointer;font-family:var(--fb);font-weight:600;transition:all .15s;display:flex;align-items:center;gap:5px;"
-              onmouseover="this.style.background='rgba(96,165,250,.22)'" onmouseout="this.style.background='rgba(96,165,250,.12)'">
-              <span id="sre-upload-icon">📷</span><span id="sre-upload-lbl">Upload Screenshot</span>
-            </button>
+            
             <button onclick="sreClearNotes()" style="flex-shrink:0;font-size:11px;padding:4px 10px;background:transparent;border:1px solid #2a3142;border-radius:5px;color:#9ca3af;cursor:pointer;font-family:var(--fb);transition:all .15s;" onmouseover="this.style.borderColor='#4b5563';this.style.color='#e5e7eb'" onmouseout="this.style.borderColor='#2a3142';this.style.color='#9ca3af'">Clear</button>
           </div>
         </div>
         <!-- Image preview strip (hidden until image loaded) -->
-        <div id="sre-img-preview-wrap" style="display:none;margin-bottom:10px;padding:8px 10px;background:#0d1117;border:1px solid #2a3142;border-radius:6px;display:flex;align-items:center;gap:10px;">
-          <img id="sre-img-thumb" style="height:40px;width:auto;border-radius:4px;border:1px solid #2a3142;object-fit:cover;" src="" alt="screenshot">
-          <div style="flex:1;min-width:0;">
-            <div id="sre-img-status" style="font-size:11px;color:#60a5fa;font-family:var(--fb);">Extracting text from screenshot…</div>
-            <div id="sre-img-name" style="font-size:10px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-          </div>
-          <button onclick="sreDismissImage()" style="background:transparent;border:none;color:#6b7280;cursor:pointer;font-size:14px;padding:2px 6px;" title="Remove">×</button>
         </div>
         <textarea
           id="sre-notes"
@@ -5125,7 +5114,7 @@ Example:
 .wfn-back:hover{background:rgba(255,255,255,.13);color:#fff;}
 .wfn-panel-title{font-size:14px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:.3px;}
 .wfn-panel-badge{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#60a5fa;background:rgba(0,85,165,.15);border:1px solid rgba(0,85,165,.35);padding:3px 10px;border-radius:20px;white-space:nowrap;}
-#wfn-body{flex:1;overflow-y:auto;background:#F8FAFB;}
+#wfn-body{flex:1;overflow-y:auto;overflow-x:hidden;background:#F8FAFB;width:100%;box-sizing:border-box}
 #wfn-body-inner{padding:40px 20px;max-width:1200px;margin:0 auto;}
 
 /* Scoped WFN styles */
@@ -6642,7 +6631,7 @@ Respond ONLY with valid JSON (no markdown):
 .ts-back:hover{background:rgba(255,255,255,.13);color:#fff;}
 .ts-panel-title{font-size:14px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:.3px;}
 .ts-panel-badge{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#f87171;background:rgba(192,39,29,.12);border:1px solid rgba(192,39,29,.25);padding:3px 10px;border-radius:20px;white-space:nowrap;}
-#ts-body{flex:1;overflow-y:auto;background:#111214;}
+#ts-body{flex:1;overflow-y:auto;overflow-x:hidden;background:#111214;width:100%;box-sizing:border-box}
 #ts-body-inner{padding:40px 20px;max-width:1000px;margin:0 auto;}
 
 
@@ -8607,112 +8596,10 @@ window.runEmbeddedAnalysis = function(){
 // ══════════════════════════════════════════════════
 
 // ── Gong Screenshot → Notes extractor ───────────────────────────────────────
-window.sreExtractFromImage = async function(input) {
-  var file = input.files[0];
-  if (!file) return;
-
-  // Reset input so same file can be re-uploaded if needed
-  input.value = '';
-
-  // Show preview strip
-  var wrap   = document.getElementById('sre-img-preview-wrap');
-  var thumb  = document.getElementById('sre-img-thumb');
-  var status = document.getElementById('sre-img-status');
-  var fname  = document.getElementById('sre-img-name');
-  var btn    = document.getElementById('sre-upload-btn');
-  var lbl    = document.getElementById('sre-upload-lbl');
-  var icon   = document.getElementById('sre-upload-icon');
-
-  // Read as base64 for both preview and API
-  var base64 = await new Promise(function(res, rej) {
-    var reader = new FileReader();
-    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
-  });
-
-  // Show thumbnail
-  thumb.src = 'data:' + file.type + ';base64,' + base64;
-  fname.textContent = file.name;
-  status.textContent = '⏳ Extracting text from screenshot…';
-  status.style.color = '#60a5fa';
-  wrap.style.display = 'flex';
-
-  // Disable button while processing
-  btn.disabled = true;
-  lbl.textContent = 'Extracting…';
-  icon.textContent = '⏳';
-
-  try {
-    var res = await fetch('https://claude-vision-proxy.aj-3ab.workers.dev', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: file.type, data: base64 }
-            },
-            {
-              type: 'text',
-              text: 'Extract ALL visible text from this screenshot exactly as written. This may be a Gong AI summary, CRM notes, call transcript, email, or any other business content. Preserve bullet points, line breaks, and structure. Return ONLY the extracted text with no preamble, no explanation, and no commentary. Include everything visible — company names, questions, answers, bullet points, labels, everything.'
-            }
-          ]
-        }]
-      })
-    });
-
-    var data = await res.json();
-    var extracted = '';
-    if (data.content && data.content.length > 0) {
-      extracted = data.content.filter(function(b){ return b.type === 'text'; })
-                              .map(function(b){ return b.text; }).join('\n').trim();
-    }
-
-    if (extracted) {
-      var notesEl = document.getElementById('sre-notes');
-      if (notesEl) {
-        // Append to any existing notes with a separator
-        var existing = notesEl.value.trim();
-        notesEl.value = existing ? existing + '\n\n--- From Screenshot ---\n' + extracted : extracted;
-        if (typeof sreUpdateNotesTags === 'function') sreUpdateNotesTags();
-        notesEl.dispatchEvent(new Event('input'));
-      }
-      status.textContent = '✅ Text extracted successfully';
-      status.style.color = '#22c55e';
-    } else {
-      status.textContent = '⚠️ No text found in image — try a clearer screenshot';
-      status.style.color = '#f59e0b';
-    }
-
-  } catch(err) {
-    console.error('Image extraction error:', err);
-    status.textContent = '❌ Extraction failed — paste notes manually';
-    status.style.color = '#ef4444';
-  }
-
-  // Re-enable button
-  btn.disabled = false;
-  lbl.textContent = 'Upload Screenshot';
-  icon.textContent = '📷';
-};
-
-window.sreDismissImage = function() {
-  var wrap = document.getElementById('sre-img-preview-wrap');
-  if (wrap) wrap.style.display = 'none';
-  var thumb = document.getElementById('sre-img-thumb');
-  if (thumb) thumb.src = '';
-};
-// ── End image extractor ───────────────────────────────────────────────────────
 
 window.sreClearNotes = function(){
   var el = document.getElementById('sre-notes');
   if(el){ el.value = ''; sreUpdateNotesTags(); }
-  if(typeof sreDismissImage === 'function') sreDismissImage();
 };
 
 // Signal keyword map → { product: 'peo'|'wfn'|'both', score: points, label: factor string }
@@ -9115,12 +9002,12 @@ document.addEventListener('DOMContentLoaded',function(){
   </div>
 
   <!-- List view -->
-  <div id="profiles-list-view" style="flex:1;overflow-y:auto;padding:12px 20px">
+  <div id="profiles-list-view" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 20px;width:100%;box-sizing:border-box">
     <div id="profiles-list-inner"></div>
   </div>
 
   <!-- Detail view (hidden by default) -->
-  <div id="profiles-detail-view" style="display:none;flex:1;overflow-y:auto"></div>
+  <div id="profiles-detail-view" style="display:none;flex:1;overflow-y:auto;overflow-x:hidden;width:100%;box-sizing:border-box"></div>
 </div>
 
 <style>
