@@ -9086,7 +9086,7 @@ document.addEventListener('DOMContentLoaded',function(){
   <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div>
       <div style="font-family:var(--fd);font-size:16px;font-weight:600;color:var(--text)">📁 Prospect Profiles</div>
-      <div style="font-size:11px;color:var(--text-3);margin-top:2px">Full workflow history · saved to a JSON file on your machine</div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:2px">Full workflow history · synced across all your devices</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px">
       <button onclick="exportProfilesCSV()" style="font-size:11px;font-weight:700;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--off-white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">⬇ Export CSV</button>
@@ -9094,20 +9094,14 @@ document.addEventListener('DOMContentLoaded',function(){
     </div>
   </div>
 
-  <!-- File connection bar -->
-  <div style="padding:10px 20px;background:#f8faff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
-    <button id="fs-file-btn" onclick="showFsMenu()" style="font-size:11px;font-weight:700;padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--off-white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap;transition:all .15s">📂 Open / Create Data File</button>
-    <div style="min-width:0;flex:1">
-      <div id="fs-file-name" style="font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">No file connected — data saving to browser only</div>
-      <div id="fs-status" style="font-size:10px;color:var(--text-3);margin-top:1px"></div>
+  <!-- Firebase sync status bar -->
+  <div style="padding:8px 20px;background:#f0fdf4;border-bottom:1px solid #bbf7d0;display:flex;align-items:center;gap:8px;flex-shrink:0">
+    <span style="font-size:13px">☁️</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:11px;font-weight:600;color:#166534">Firebase Cloud Sync</div>
+      <div style="font-size:10px;color:#4ade80;margin-top:1px">Prospects saved to cloud — available on all devices</div>
     </div>
-  </div>
-
-  <!-- File action menu (hidden by default) -->
-  <div id="fs-menu" style="display:none;position:absolute;top:118px;left:20px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);z-index:100;min-width:220px;overflow:hidden">
-    <div style="padding:8px 14px;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface)">Data File</div>
-    <button onclick="fsOpenFile();hideFsMenu()" style="width:100%;text-align:left;padding:10px 14px;font-size:12px;font-weight:600;background:none;border:none;cursor:pointer;font-family:var(--fb);color:var(--text);border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='none'">📂 Open existing file…<div style="font-size:10px;color:var(--text-3);font-weight:400;margin-top:1px">Load a previously saved prospects_data.json</div></button>
-    <button onclick="fsCreateFile();hideFsMenu()" style="width:100%;text-align:left;padding:10px 14px;font-size:12px;font-weight:600;background:none;border:none;cursor:pointer;font-family:var(--fb);color:var(--text)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='none'">✨ Create new file…<div style="font-size:10px;color:var(--text-3);font-weight:400;margin-top:1px">Start fresh — saves as prospects_data.json</div></button>
+    <div id="fb-sync-status" style="font-size:11px;font-weight:700;color:#22c55e;white-space:nowrap">⏳ Connecting…</div>
   </div>
 
   <!-- Search + filter bar -->
@@ -9165,137 +9159,198 @@ document.addEventListener('DOMContentLoaded',function(){
 <script>
 // ═══════════════════════════════════════════════════════
 //  PROSPECT PROFILE SYSTEM
-//  Storage: File System Access API → prospects_data.json
-//  Falls back to localStorage if API unavailable
+//  Storage: Firebase Firestore — real-time cross-device sync
 // ═══════════════════════════════════════════════════════
 
-var _fsFileHandle  = null;   // FileSystemFileHandle once user picks file
-var _profilesCache = null;   // in-memory cache — source of truth while app is open
-var _fsSaveTimer   = null;   // debounce timer for disk writes
-var _fsReady       = false;  // true once file is open/created
-var _fsSupported   = ('showOpenFilePicker' in window);
+// ═══════════════════════════════════════════════════════
+//  FIRESTORE via REST API
+//  Plain fetch() — works on GitHub Pages, no SDK needed
+// ═══════════════════════════════════════════════════════
 
-// ── localStorage fallback key (used only when FS API unavailable) ──
+var FB_API_KEY   = 'AIzaSyBU_bHIfG5dj2KDqk7cMr-12gSJlH37KDk';
+var FB_PROJECT   = 'beyondpayroll-hcm';
+var FB_BASE      = 'https://firestore.googleapis.com/v1/projects/' + FB_PROJECT + '/databases/(default)/documents';
+var FB_DOC_PATH  = FB_BASE + '/prospects/all_prospects';
+
+var _fbReady       = false;
+var _profilesCache = null;
+var _fbSaveTimer   = null;
+var _fbPollTimer   = null;
+var _fbLastSaved   = 0;      // timestamp of last successful write
+
 const PROFILE_KEY = 'bp_prospect_profiles_v1';
 
-// ── Always-synchronous in-memory read ────────────────
-function getProfiles(){
-  if(_profilesCache !== null) return _profilesCache;
-  // Cold start before file is loaded — pull from localStorage as temp bridge
-  try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]'); }catch(e){ return []; }
-}
-
-// ── Write: update cache immediately, flush to disk async ──
-function saveProfiles(arr){
-  _profilesCache = arr;
-  // Always keep localStorage in sync as a safety net
-  try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(arr)); }catch(e){}
-  // Debounce disk write by 400ms so rapid sequential saves don't thrash
-  clearTimeout(_fsSaveTimer);
-  _fsSaveTimer = setTimeout(function(){ _flushToDisk(); }, 400);
-}
-
-// ── Actual disk write ─────────────────────────────────
-async function _flushToDisk(){
-  if(!_fsFileHandle){ return; }
-  try{
-    var writable = await _fsFileHandle.createWritable();
-    await writable.write(JSON.stringify(_profilesCache || [], null, 2));
-    await writable.close();
-    _showFsStatus('✓ Saved to file', false);
-  }catch(e){
-    console.warn('File write failed:', e);
-    _showFsStatus('⚠ File write failed — data in localStorage', true);
+// ── Firestore REST helpers ────────────────────────────
+// Encode a JS value into Firestore's typed JSON format
+function _fbEncode(val) {
+  if (val === null || val === undefined) return { nullValue: null };
+  if (typeof val === 'boolean') return { booleanValue: val };
+  if (typeof val === 'number')  return { integerValue: String(val) };
+  if (typeof val === 'string')  return { stringValue: val };
+  if (Array.isArray(val)) {
+    return { arrayValue: { values: val.map(_fbEncode) } };
   }
+  if (typeof val === 'object') {
+    var fields = {};
+    Object.keys(val).forEach(function(k) { fields[k] = _fbEncode(val[k]); });
+    return { mapValue: { fields: fields } };
+  }
+  return { stringValue: String(val) };
 }
 
-// ── Load profiles from disk into cache ───────────────
-async function _loadFromDisk(){
-  if(!_fsFileHandle) return;
-  try{
-    var file = await _fsFileHandle.getFile();
-    var text = await file.text();
-    var data = JSON.parse(text||'[]');
-    _profilesCache = Array.isArray(data) ? data : [];
-    // Sync localStorage with what's on disk
-    try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(_profilesCache)); }catch(e){}
+// Decode a Firestore typed value back to a plain JS value
+function _fbDecode(fv) {
+  if (!fv) return null;
+  if ('nullValue'    in fv) return null;
+  if ('booleanValue' in fv) return fv.booleanValue;
+  if ('integerValue' in fv) return Number(fv.integerValue);
+  if ('doubleValue'  in fv) return fv.doubleValue;
+  if ('stringValue'  in fv) return fv.stringValue;
+  if ('arrayValue'   in fv) return (fv.arrayValue.values || []).map(_fbDecode);
+  if ('mapValue'     in fv) {
+    var obj = {}, f = fv.mapValue.fields || {};
+    Object.keys(f).forEach(function(k) { obj[k] = _fbDecode(f[k]); });
+    return obj;
+  }
+  return null;
+}
+
+// GET the document from Firestore REST
+async function _fbGet() {
+  var url = FB_DOC_PATH + '?key=' + FB_API_KEY;
+  var res = await fetch(url);
+  if (res.status === 404) return null;          // doc doesn't exist yet
+  if (!res.ok) throw new Error('GET ' + res.status + ' ' + res.statusText);
+  var body = await res.json();
+  var fields = body.fields || {};
+  return fields.profiles ? _fbDecode(fields.profiles) : [];
+}
+
+// PATCH (upsert) the document via REST
+async function _fbPatch(arr) {
+  var url = FB_DOC_PATH + '?key=' + FB_API_KEY + '&updateMask.fieldPaths=profiles';
+  var body = { fields: { profiles: _fbEncode(arr) } };
+  var res = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    var err = await res.json().catch(function(){ return {}; });
+    throw new Error('PATCH ' + res.status + ': ' + (err.error && err.error.message || res.statusText));
+  }
+  return true;
+}
+
+// ── Boot ──────────────────────────────────────────────
+async function _initFirebase() {
+  try {
+    _fbSetStatus('⏳ Connecting…', false);
+
+    // Try to read — if this succeeds we have network + Firestore access
+    var data = await _fbGet();
+
+    if (data === null) {
+      // First time — migrate localStorage data if any exists
+      var local = _fbGetLocal();
+      _profilesCache = local;
+      if (local.length) {
+        await _fbPatch(local);
+      }
+    } else {
+      _profilesCache = data;
+      try { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch(e) {}
+    }
+
+    _fbReady = true;
+    _fbSetStatus('☁️ Synced', false);
     updateProfilesBadge();
-    _showFsStatus('✓ Loaded '+_profilesCache.length+' prospects from file', false);
-  }catch(e){
-    console.warn('File read failed:', e);
-    _profilesCache = getProfiles(); // fall back to localStorage
+    renderProfilesList && renderProfilesList();
+
+    // Poll every 30s to pick up changes from other devices
+    _fbStartPolling();
+
+  } catch(err) {
+    var msg = (err && err.message) ? err.message : String(err);
+    console.warn('Firestore REST init failed:', msg);
+    // Show full error visibly in the sync bar so it's readable without dev tools
+    _fbSetStatus('❌ ' + msg, true);
+    // Also show a toast with the error
+    setTimeout(function(){
+      showToast && showToast('Firebase error: ' + msg, true);
+    }, 500);
+    _profilesCache = _fbGetLocal();
+    updateProfilesBadge && updateProfilesBadge();
   }
 }
 
-// ── Status indicator (small toast near the button) ───
-function _showFsStatus(msg, isErr){
-  var el = document.getElementById('fs-status');
-  if(!el) return;
+// ── Poll Firestore every 30s for cross-device updates ─
+function _fbStartPolling() {
+  clearInterval(_fbPollTimer);
+  _fbPollTimer = setInterval(async function() {
+    try {
+      var data = await _fbGet();
+      if (!data) return;
+      // Only update cache if the cloud version is different
+      var cloud = JSON.stringify(data);
+      var local = JSON.stringify(_profilesCache);
+      if (cloud !== local) {
+        _profilesCache = data;
+        try { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch(e) {}
+        updateProfilesBadge && updateProfilesBadge();
+        var drawer = document.getElementById('profiles-drawer');
+        if (drawer && drawer.style.display !== 'none') {
+          renderProfilesList && renderProfilesList();
+        }
+        _fbSetStatus('☁️ Synced', false);
+      }
+    } catch(e) {
+      // Silent — don't bother user if a background poll fails
+    }
+  }, 30000);
+}
+
+// ── Debounced write to Firestore ──────────────────────
+function _fbSave(arr) {
+  clearTimeout(_fbSaveTimer);
+  _fbSaveTimer = setTimeout(async function() {
+    if (!_fbReady) return;
+    try {
+      await _fbPatch(arr);
+      _fbLastSaved = Date.now();
+      _fbSetStatus('☁️ Synced', false);
+    } catch(err) {
+      var msg = (err && err.message) ? err.message : String(err);
+      console.warn('Firestore write failed:', msg);
+      _fbSetStatus('⚠️ Saved locally', true);
+    }
+  }, 800);
+}
+
+// ── localStorage helpers ──────────────────────────────
+function _fbGetLocal() {
+  try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '[]'); } catch(e) { return []; }
+}
+
+// ── Sync status indicator ─────────────────────────────
+function _fbSetStatus(msg, isErr) {
+  var el = document.getElementById('fb-sync-status');
+  if (!el) return;
   el.textContent = msg;
-  el.style.color = isErr ? 'var(--red)' : 'var(--text-3)';
-  clearTimeout(el._t);
-  if(!isErr) el._t = setTimeout(function(){ el.textContent = ''; }, 3000);
+  el.style.color = isErr ? 'var(--red)' : '#22c55e';
 }
 
-// ── Open existing file ────────────────────────────────
-async function fsOpenFile(){
-  if(!_fsSupported){ showToast('File System API not supported in this browser. Use Chrome.', true); return; }
-  try{
-    var handles = await window.showOpenFilePicker({
-      id: 'bp-prospects',
-      startIn: 'documents',
-      types: [{ description: 'BeyondPayroll Prospects', accept: {'application/json': ['.json']} }]
-    });
-    _fsFileHandle = handles[0];
-    _fsReady = true;
-    await _loadFromDisk();
-    _updateFsBtn();
-    renderProfilesList();
-    showToast('📂 Prospects file loaded');
-  }catch(e){
-    if(e.name !== 'AbortError') showToast('Could not open file: '+e.message, true);
-  }
+// ── Public API (called by the rest of the app) ────────
+function getProfiles() {
+  if (_profilesCache !== null) return _profilesCache;
+  return _fbGetLocal();
 }
 
-// ── Create new file ───────────────────────────────────
-async function fsCreateFile(){
-  if(!_fsSupported){ showToast('File System API not supported in this browser. Use Chrome.', true); return; }
-  try{
-    _fsFileHandle = await window.showSaveFilePicker({
-      id: 'bp-prospects',
-      startIn: 'documents',
-      suggestedName: 'prospects_data.json',
-      types: [{ description: 'BeyondPayroll Prospects', accept: {'application/json': ['.json']} }]
-    });
-    // Write current in-memory data (or empty array) to new file
-    _profilesCache = getProfiles();
-    _fsReady = true;
-    await _flushToDisk();
-    _updateFsBtn();
-    showToast('✅ New prospects file created');
-  }catch(e){
-    if(e.name !== 'AbortError') showToast('Could not create file: '+e.message, true);
-  }
-}
-
-// ── Update the file button state ─────────────────────
-function _updateFsBtn(){
-  var btn = document.getElementById('fs-file-btn');
-  var status = document.getElementById('fs-file-name');
-  if(!btn) return;
-  if(_fsReady && _fsFileHandle){
-    btn.textContent = '📂 Change File';
-    btn.style.borderColor = 'rgba(22,163,74,.4)';
-    btn.style.color = '#166534';
-    btn.style.background = 'rgba(22,163,74,.07)';
-    if(status) status.textContent = _fsFileHandle.name;
-  } else {
-    btn.textContent = '📂 Open / Create Data File';
-    btn.style.borderColor = 'var(--border)';
-    btn.style.color = 'var(--text-2)';
-    btn.style.background = 'var(--off-white)';
-    if(status) status.textContent = _fsSupported ? 'No file connected — data saving to browser only' : 'File API unavailable — using browser storage';
-  }
+function saveProfiles(arr) {
+  _profilesCache = arr;
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(arr)); } catch(e) {}
+  _fbSetStatus('⏳ Saving…', false);
+  _fbSave(arr);
 }
 
 function getProfileById(id){ return getProfiles().find(function(p){return p._id===id})||null }
@@ -9846,26 +9901,8 @@ function profileRelTime(iso){
 </script>
 
 <script>
-// ── Fs menu helpers ──────────────────────────────────
-function showFsMenu(){
-  var m=document.getElementById('fs-menu');
-  if(m) m.style.display=m.style.display==='none'?'block':'none';
-}
-function hideFsMenu(){
-  var m=document.getElementById('fs-menu');
-  if(m) m.style.display='none';
-}
-document.addEventListener('click',function(e){
-  var m=document.getElementById('fs-menu');
-  var btn=document.getElementById('fs-file-btn');
-  if(m&&btn&&!m.contains(e.target)&&!btn.contains(e.target)) m.style.display='none';
-});
-
-// ── Boot ──────────────────────────────────────────────
+// ── Boot: initialise Firebase on page load ────────────
 document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    updateProfilesBadge();
-    _updateFsBtn();
-  }, 400);
+  _initFirebase();
 });
 </script>
