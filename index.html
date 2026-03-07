@@ -738,6 +738,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeSheetsConfig()">Cancel</button>
+      <button id="sheets-test-btn" class="btn btn-outline" onclick="testSheetsSync()" style="padding:10px 16px;font-size:13px">Send Test Row</button>
       <button class="btn btn-dark" onclick="saveSheetsUrl()" style="padding:10px 22px;font-size:13px">Save URL →</button>
     </div>
   </div>
@@ -1018,33 +1019,46 @@ const SHEETS_KEY='bp_sheets_url_v1';
 function getSheetsUrl(){return localStorage.getItem(SHEETS_KEY)||''}
 function setSheetsUrl(url){localStorage.setItem(SHEETS_KEY,url.trim())}
 
-async function syncToSheets(prospect){
+function syncToSheets(prospect, onDone){
   const url=getSheetsUrl();
-  if(!url){return}
-  try{
-    // GET + query params avoids CORS preflight — Apps Script handles both GET and POST
-    const params=new URLSearchParams({
-      company:prospect.company||'',
-      contact:prospect.contact||'',
-      email:prospect.email||'',
-      phone:prospect.phone||'',
-      industry:prospect.industry||'',
-      state:prospect.state||'',
-      headcount:prospect.headcount||'',
-      persona:prospect.persona||'',
-      linkedin:prospect.linkedin||'',
-      track:prospect.track||'WFN',
-      saved:new Date().toLocaleDateString('en-US'),
-      time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
-    });
-    await fetch(url+'?'+params.toString(),{
-      method:'GET',
-      mode:'no-cors'
-    });
-    showSheetsStatus('✓ Synced to Google Sheets','#22c55e');
-  }catch(e){
-    showSheetsStatus('⚠ Sheets sync failed — check URL','#ef4444');
-  }
+  if(!url){ return; }
+  const params=new URLSearchParams({
+    company:   prospect.company||'',
+    contact:   prospect.contact||'',
+    email:     prospect.email||'',
+    phone:     prospect.phone||'',
+    industry:  prospect.industry||'',
+    state:     prospect.state||'',
+    headcount: prospect.headcount||'',
+    persona:   prospect.persona||'',
+    linkedin:  prospect.linkedin||'',
+    track:     prospect.track||'WFN',
+    saved:     new Date().toLocaleDateString('en-US'),
+    time:      new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
+  });
+  // Apps Script redirects break fetch no-cors — use Image ping which follows redirects natively
+  const ping = new Image();
+  const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+  ping.onload = ping.onerror = function(){
+    showSheetsStatus('\u2713 Synced to Google Sheets','#22c55e');
+    if(typeof onDone === 'function') onDone(true);
+  };
+  ping.src = fullUrl;
+}
+
+function testSheetsSync(){
+  const url = getSheetsUrl();
+  if(!url){ showToast('No Sheets URL configured — add one first', true); return; }
+  const btn = document.getElementById('sheets-test-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Sending\u2026'; }
+  syncToSheets({
+    company:'\u2713 TEST ROW', contact:'Sheets Test', email:'test@test.com',
+    phone:'555-0000', industry:'Test Industry', state:'VA',
+    headcount:'1', persona:'Test', linkedin:'', track:'TEST'
+  }, function(){
+    if(btn){ btn.disabled=false; btn.textContent='Send Test Row'; }
+    showToast('Test row sent — check your Google Sheet \u2713');
+  });
 }
 
 function showSheetsStatus(msg,color){
@@ -1447,6 +1461,22 @@ function getHQHTML(session){
         </div>
       </div>
 
+      <!-- PROSPECT TYPE TOGGLE -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:14px 18px;background:#131824;border:1px solid #2a3142;border-radius:8px;">
+        <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;white-space:nowrap;">Prospect Type</span>
+        <div style="display:flex;background:#0d1117;border:1px solid #2a3142;border-radius:6px;padding:3px;gap:3px;flex:1;max-width:380px;">
+          <button id="toggle-adp" onclick="sreSetProspectType('adp')"
+            style="flex:1;padding:8px 14px;border-radius:4px;border:none;font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:#cc0000;color:#fff;">
+            🔴 Existing ADP Client
+          </button>
+          <button id="toggle-nonadp" onclick="sreSetProspectType('nonadp')"
+            style="flex:1;padding:8px 14px;border-radius:4px;border:none;font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:#9ca3af;">
+            🟡 Non-ADP / Competitive
+          </button>
+        </div>
+        <div id="prospect-type-badge" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#cc0000;background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.25);padding:3px 10px;border-radius:20px;white-space:nowrap;">ADP Client</div>
+      </div>
+
       <!-- PROSPECT OVERVIEW -->
       <div class="section-title-dark">Prospect Overview <span style="font-size:11px;font-weight:400;color:var(--dark-text-muted);font-family:var(--fb);">— auto-populated from New Prospect</span></div>
       <div class="dark-card">
@@ -1488,6 +1518,9 @@ function getHQHTML(session){
 
       <!-- PAIN POINTS -->
       <div class="section-title-dark">Client Pain Points</div>
+
+      <!-- ── ADP CLIENT PAIN POINTS (existing) ── -->
+      <div id="pain-panel-adp">
       <div class="dark-card">
         <div class="card-section-title" style="margin-bottom:20px;">
           Select all issues the prospect is experiencing — critical for accurate routing
@@ -1570,6 +1603,155 @@ function getHQHTML(session){
           </div>
         </div>
       </div>
+      </div><!-- /pain-panel-adp -->
+
+      <!-- ── NON-ADP / COMPETITIVE PROSPECT PANEL ── -->
+      <div id="pain-panel-nonadp" style="display:none;">
+      <div class="dark-card" style="border-color:#b45309;border-left:3px solid #f59e0b;">
+
+        <!-- Competitor info banner -->
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;padding:12px 14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:6px;">
+          <span style="font-size:18px;flex-shrink:0;">🟡</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Competitive Prospect Mode</div>
+            <div style="font-size:12px;color:#9ca3af;line-height:1.55;">You don't have access to their ADP system data — use observable signals, discovery call intel, and inferred pain points based on their current platform and company profile.</div>
+          </div>
+        </div>
+
+        <!-- Current Platform -->
+        <div style="margin-bottom:18px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:10px;">📍 Current Payroll / HCM Platform</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="competitor-platform-grid">
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-paychex" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>Paychex Flex</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-paycom" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>Paycom</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-paylocity" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>Paylocity</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-rippling" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>Rippling</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-gusto" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>Gusto</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-bamboo" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>BambooHR</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-qb" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>QuickBooks Payroll</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-isolved" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>isolved</span>
+            </label>
+            <label class="pain-checkbox-dark" style="border-color:#2a3142;">
+              <input type="checkbox" id="plat-other" name="platform" onchange="sreExclusivePlatform(this)">
+              <span>Other / Unknown</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Inferred / Observable Pain Points — PEO signals -->
+        <div class="pain-section-dark peo" style="margin-bottom:16px;">
+          <div class="pain-section-header-dark">
+            <span>🔴</span>
+            <span>PEO Displacement Signals</span>
+            <span style="opacity:0.5;">— Observable / Discovery Intel</span>
+          </div>
+          <div class="pain-grid-dark">
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-benefits-cost">
+              <span>Struggling with benefits costs / carrier access</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-wc-rates">
+              <span>High or rising Workers Comp rates</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-hr-burden">
+              <span>Owner/CFO doing HR admin themselves</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-compliance-risk">
+              <span>Compliance concerns (state law, OSHA, EPLI)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- WFN displacement signals -->
+        <div class="pain-section-dark wfn" style="margin-bottom:16px;">
+          <div class="pain-section-header-dark">
+            <span>🔵</span>
+            <span>WFN Displacement Signals</span>
+            <span style="opacity:0.5;">— Platform Limitations</span>
+          </div>
+          <div class="pain-grid-dark">
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-reporting">
+              <span>Weak reporting / no real-time dashboards</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-integrations">
+              <span>Poor ERP / GL integrations</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-multistate">
+              <span>Growing into multi-state complexity</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-support">
+              <span>Unresponsive vendor support</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- General competitive signals -->
+        <div class="pain-section-dark general">
+          <div class="pain-section-header-dark">
+            <span>⚪</span>
+            <span>General Competitive Signals</span>
+            <span style="opacity:0.5;">— Universal Displacement Drivers</span>
+          </div>
+          <div class="pain-grid-dark three-col">
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-growth">
+              <span>Rapid headcount growth</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-renewal">
+              <span>Contract renewal coming up</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-manual">
+              <span>Heavy manual / spreadsheet use</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-price">
+              <span>Unhappy with pricing / value</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-newleader">
+              <span>New HR / Finance leader</span>
+            </label>
+            <label class="pain-checkbox-dark">
+              <input type="checkbox" id="np-pain-acquisition">
+              <span>Recent acquisition / merger</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+      </div><!-- /pain-panel-nonadp -->
 
       <!-- ANALYZE BUTTON -->
       <div class="analyze-action-dark">
@@ -5961,8 +6143,166 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 // ══════════════════════════════════════════════════
-//  ADMIN PANEL
+//  PROSPECT TYPE TOGGLE — ADP vs Non-ADP
 // ══════════════════════════════════════════════════
+var _sreProspectType = 'adp'; // 'adp' | 'nonadp'
+
+window.sreSetProspectType = function(type){
+  _sreProspectType = type;
+  var isAdp = type === 'adp';
+
+  // Toggle panels
+  document.getElementById('pain-panel-adp').style.display    = isAdp ? '' : 'none';
+  document.getElementById('pain-panel-nonadp').style.display = isAdp ? 'none' : '';
+
+  // Toggle button styles
+  var btnAdp    = document.getElementById('toggle-adp');
+  var btnNonAdp = document.getElementById('toggle-nonadp');
+  if(btnAdp){
+    btnAdp.style.background = isAdp ? '#cc0000' : 'transparent';
+    btnAdp.style.color      = isAdp ? '#fff'    : '#9ca3af';
+  }
+  if(btnNonAdp){
+    btnNonAdp.style.background = isAdp ? 'transparent' : '#b45309';
+    btnNonAdp.style.color      = isAdp ? '#9ca3af'     : '#fff';
+  }
+
+  // Badge
+  var badge = document.getElementById('prospect-type-badge');
+  if(badge){
+    badge.textContent   = isAdp ? 'ADP Client' : 'Competitive';
+    badge.style.color   = isAdp ? '#cc0000' : '#f59e0b';
+    badge.style.background   = isAdp ? 'rgba(204,0,0,.1)' : 'rgba(245,158,11,.1)';
+    badge.style.borderColor  = isAdp ? 'rgba(204,0,0,.25)' : 'rgba(245,158,11,.25)';
+  }
+
+  // Update analyze button label
+  var btnLabel = document.querySelector('.analyze-btn-dark span:nth-child(2)');
+  if(btnLabel) btnLabel.textContent = isAdp ? 'Run Smart Routing Analysis' : 'Run Competitive Displacement Analysis';
+
+  // Hide old results when switching
+  var resultsEl = document.getElementById('embedded-results');
+  if(resultsEl) resultsEl.classList.remove('show');
+};
+
+// Only one platform checkbox at a time (radio-like)
+window.sreExclusivePlatform = function(cb){
+  if(cb.checked){
+    document.querySelectorAll('#competitor-platform-grid input[type="checkbox"]').forEach(function(other){
+      if(other !== cb){ other.checked = false; other.closest('.pain-checkbox-dark').classList.remove('checked'); }
+    });
+    cb.closest('.pain-checkbox-dark').classList.add('checked');
+  } else {
+    cb.closest('.pain-checkbox-dark').classList.remove('checked');
+  }
+};
+
+// ── Non-ADP scoring engine ──────────────────────────────
+function sreCalculateNonAdpFit(data){
+  var peoScore = 0, wfnScore = 0, peoFactors = [], wfnFactors = [];
+  var headcount = data.headcount, industry = (data.industry||'').toLowerCase(), pp = data.painPoints;
+
+  // Headcount signals
+  if(headcount >= 10 && headcount <= 150){ peoScore += 30; peoFactors.push(headcount+' EEs — prime PEO displacement range'); }
+  if(headcount >= 50 && headcount <= 999){ wfnScore += 25; wfnFactors.push(headcount+' EEs — WFN mid-market sweet spot'); }
+  if(headcount > 150){ wfnScore += 15; wfnFactors.push('Larger org benefits more from enterprise WFN platform'); }
+
+  // Industry
+  var peoInd = ['plumbing','hvac','electrical','contractor','construction','law','legal','accounting','landscaping','staffing'];
+  var wfnInd  = ['manufacturing','healthcare','medical','professional services','finance','retail','technology','hospitality'];
+  if(peoInd.some(function(i){ return industry.indexOf(i)>-1; })){ peoScore += 20; peoFactors.push(data.industry+' — strong PEO co-employment fit'); }
+  if(wfnInd.some(function(i){ return industry.indexOf(i)>-1; })){ wfnScore += 20; wfnFactors.push(data.industry+' — WFN compliance & reporting strengths'); }
+
+  // Platform-specific displacement intelligence
+  var platform = data.platform;
+  if(platform === 'plat-paychex'){ wfnScore += 20; peoScore += 10; wfnFactors.push('Paychex → ADP WFN superior reporting & integration'); peoFactors.push('Paychex PEO → TotalSource stronger benefits buying power'); }
+  if(platform === 'plat-paycom'){ wfnScore += 15; wfnFactors.push('Paycom → WFN wins on GL integration and multi-entity support'); }
+  if(platform === 'plat-paylocity'){ wfnScore += 15; wfnFactors.push('Paylocity → WFN has deeper compliance and tax filing tools'); }
+  if(platform === 'plat-rippling'){ wfnScore += 20; wfnFactors.push('Rippling → WFN wins on dedicated service model and compliance depth'); }
+  if(platform === 'plat-gusto'){ peoScore += 25; wfnScore += 15; peoFactors.push('Gusto → TotalSource offers far superior benefits access for growing teams'); wfnFactors.push('Gusto → WFN scales better for 50+ employees'); }
+  if(platform === 'plat-qb'){ peoScore += 30; wfnScore += 20; peoFactors.push('QuickBooks Payroll → PEO is a major upgrade in HR infrastructure'); wfnFactors.push('QuickBooks Payroll → WFN gives enterprise-grade payroll compliance'); }
+  if(platform === 'plat-bamboo'){ wfnScore += 20; wfnFactors.push('BambooHR → WFN adds payroll + compliance they currently lack'); }
+  if(platform === 'plat-isolved'){ wfnScore += 15; peoScore += 10; wfnFactors.push('isolved → WFN offers stronger mid-market scalability'); }
+
+  // PEO displacement signals
+  if(pp.benefitsCost)  { peoScore += 25; peoFactors.push('Benefits cost pain → TotalSource group buying power is key differentiator'); }
+  if(pp.wcRates)       { peoScore += 25; peoFactors.push('High WC rates → TotalSource owns liability and negotiates rates'); }
+  if(pp.hrBurden)      { peoScore += 20; peoFactors.push('Owner doing HR admin → PEO offloads entire HR function'); }
+  if(pp.complianceRisk){ peoScore += 20; peoFactors.push('Compliance risk → TotalSource provides dedicated HR specialist + EPLI'); }
+
+  // WFN displacement signals
+  if(pp.reporting)     { wfnScore += 20; wfnFactors.push('Weak reporting → WFN real-time dashboards & 200+ standard reports'); }
+  if(pp.integrations)  { wfnScore += 25; wfnFactors.push('Poor ERP/GL integrations → WFN native connectors for 80+ systems'); }
+  if(pp.multistate)    { wfnScore += 25; wfnFactors.push('Multi-state growth → WFN handles all registrations automatically'); }
+  if(pp.support)       { wfnScore += 15; peoScore += 10; wfnFactors.push('Unresponsive support → ADP dedicated service team'); }
+
+  // General signals
+  if(pp.growth)        { wfnScore += 15; peoScore += 10; wfnFactors.push('Rapid growth → WFN scales without re-implementation'); peoFactors.push('Growth stage → PEO can grow benefits sophistication with them'); }
+  if(pp.renewal)       { wfnScore += 20; peoScore += 20; wfnFactors.push('Renewal window → optimal switching moment'); peoFactors.push('Renewal window → ideal time to present TotalSource'); }
+  if(pp.manual)        { wfnScore += 20; peoScore += 5; wfnFactors.push('Spreadsheet use → WFN automates workflows end-to-end'); }
+  if(pp.price)         { wfnScore += 10; peoScore += 15; peoFactors.push('Price dissatisfaction → TotalSource ROI story on benefits savings'); }
+  if(pp.newLeader)     { wfnScore += 15; peoScore += 15; wfnFactors.push('New leader → decision-maker is open to change'); peoFactors.push('New HR/Finance leader → receptive to PEO evaluation'); }
+  if(pp.acquisition)   { wfnScore += 20; wfnFactors.push('Post-acquisition → WFN consolidates multiple EINs on one platform'); }
+
+  peoScore = Math.min(100, peoScore);
+  wfnScore = Math.min(100, wfnScore);
+  var total = peoScore + wfnScore || 1;
+  var recommendation = peoScore > wfnScore ? 'TotalSource PEO' : 'Workforce Now';
+  var confidence = Math.round((Math.max(peoScore, wfnScore) / total) * 100);
+
+  return { recommendation:recommendation, confidence:confidence, peoScore:peoScore, wfnScore:wfnScore, peoFactors:peoFactors, wfnFactors:wfnFactors };
+}
+
+// ── Patch runEmbeddedAnalysis to route based on type ───
+var _sreOrigRunAnalysis = window.runEmbeddedAnalysis;
+window.runEmbeddedAnalysis = function(){
+  if(_sreProspectType !== 'nonadp'){ _sreOrigRunAnalysis(); return; }
+
+  var p = sreGetProspect();
+  if(!p || !p.company){ showToast('Add a prospect first using + New Prospect', true); return; }
+
+  // Identify selected platform
+  var platform = null;
+  document.querySelectorAll('#competitor-platform-grid input[type="checkbox"]').forEach(function(cb){
+    if(cb.checked) platform = cb.id;
+  });
+
+  var pp = {
+    benefitsCost:  document.getElementById('np-pain-benefits-cost') ? document.getElementById('np-pain-benefits-cost').checked : false,
+    wcRates:       document.getElementById('np-pain-wc-rates')      ? document.getElementById('np-pain-wc-rates').checked      : false,
+    hrBurden:      document.getElementById('np-pain-hr-burden')     ? document.getElementById('np-pain-hr-burden').checked     : false,
+    complianceRisk:document.getElementById('np-pain-compliance-risk')? document.getElementById('np-pain-compliance-risk').checked: false,
+    reporting:     document.getElementById('np-pain-reporting')     ? document.getElementById('np-pain-reporting').checked     : false,
+    integrations:  document.getElementById('np-pain-integrations')  ? document.getElementById('np-pain-integrations').checked  : false,
+    multistate:    document.getElementById('np-pain-multistate')    ? document.getElementById('np-pain-multistate').checked    : false,
+    support:       document.getElementById('np-pain-support')       ? document.getElementById('np-pain-support').checked       : false,
+    growth:        document.getElementById('np-pain-growth')        ? document.getElementById('np-pain-growth').checked        : false,
+    renewal:       document.getElementById('np-pain-renewal')       ? document.getElementById('np-pain-renewal').checked       : false,
+    manual:        document.getElementById('np-pain-manual')        ? document.getElementById('np-pain-manual').checked        : false,
+    price:         document.getElementById('np-pain-price')         ? document.getElementById('np-pain-price').checked         : false,
+    newLeader:     document.getElementById('np-pain-newleader')     ? document.getElementById('np-pain-newleader').checked     : false,
+    acquisition:   document.getElementById('np-pain-acquisition')   ? document.getElementById('np-pain-acquisition').checked   : false
+  };
+
+  var result = sreCalculateNonAdpFit({
+    company:   p.company,
+    industry:  p.industry  || '',
+    state:     p.state     || '',
+    headcount: parseInt(p.headcount) || 0,
+    platform:  platform,
+    painPoints: pp
+  });
+
+  sreCurrentAnalysis = result;
+  sreDisplayResults(result);
+
+  var n0b = document.getElementById('psn0b'), l0b = document.getElementById('psl0b');
+  if(n0b){ n0b.classList.remove('active'); n0b.classList.add('done'); }
+  if(l0b){ l0b.classList.remove('active'); l0b.classList.add('done'); }
+
+  showToast('🎯 Competitive routing complete — ' + result.recommendation + ' recommended (' + result.confidence + '% confidence)');
+};
+// ══ End Prospect Type Logic ══
 window.openAdminPanel = function(){
   document.getElementById('admin-email-display').textContent = ADMIN.email;
   renderAdminPanel();
