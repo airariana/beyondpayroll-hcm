@@ -750,8 +750,14 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
       <div>6. Copy the Web App URL and paste it above</div>
       <div style="margin-top:6px;color:#f87171;font-weight:600">⚠ If you already deployed: go to Deploy → Manage deployments → edit → create new version to pick up any script changes.</div>
     </div>
-    <div class="modal-footer">
+    <!-- Debug panel -->
+    <div id="sheets-debug-panel" style="display:none;margin-bottom:12px;background:#0d1117;border:1px solid #2a3142;border-radius:6px;padding:10px 12px;font-size:11px;font-family:monospace;color:#7dd3fc;line-height:1.7;max-height:160px;overflow-y:auto;word-break:break-all;">
+      <div style="color:#f87171;font-weight:700;margin-bottom:4px">🔍 Diagnostic Output</div>
+      <div id="sheets-debug-log"></div>
+    </div>
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px;">
       <button class="btn btn-outline" onclick="closeSheetsConfig()">Cancel</button>
+      <button id="sheets-diag-btn" class="btn btn-outline" onclick="diagSheetsUrl()" style="padding:10px 16px;font-size:13px;border-color:#f87171;color:#f87171;">🔍 Diagnose</button>
       <button id="sheets-test-btn" class="btn btn-outline" onclick="testSheetsSync()" style="padding:10px 16px;font-size:13px">Send Test Row</button>
       <button class="btn btn-dark" onclick="saveSheetsUrl()" style="padding:10px 22px;font-size:13px">Save URL →</button>
     </div>
@@ -1094,15 +1100,46 @@ function testSheetsSync(){
   const url = getSheetsUrl();
   if(!url){ showToast('No Sheets URL configured — add one first', true); return; }
   const btn = document.getElementById('sheets-test-btn');
-  if(btn){ btn.disabled=true; btn.textContent='Sending\u2026'; }
+  if(btn){ btn.disabled=true; btn.textContent='Sending…'; }
   syncToSheets({
-    company:'\u2713 TEST ROW', contact:'Sheets Test', email:'test@test.com',
+    company:'✓ TEST ROW', contact:'Sheets Test', email:'test@test.com',
     phone:'555-0000', industry:'Test Industry', state:'VA',
     headcount:'1', persona:'Test', linkedin:'', track:'TEST'
-  }, function(){
+  }, function(ok){
     if(btn){ btn.disabled=false; btn.textContent='Send Test Row'; }
-    showToast('Test row sent — check your Google Sheet \u2713');
+    if(ok) showToast('Test row sent ✓ — check your Google Sheet');
   });
+}
+
+function diagSheetsUrl(){
+  const inp = document.getElementById('sheets-url-inp');
+  const url = (inp ? inp.value.trim() : '') || getSheetsUrl();
+  if(!url){ showToast('Enter a URL first', true); return; }
+  const panel = document.getElementById('sheets-debug-panel');
+  const log   = document.getElementById('sheets-debug-log');
+  panel.style.display = 'block';
+  log.innerHTML = '';
+  function dbg(msg, color){
+    const d = document.createElement('div');
+    d.style.color = color||'#7dd3fc';
+    d.textContent = msg;
+    log.appendChild(d);
+  }
+  const params = new URLSearchParams({
+    company:'DIAG TEST', contact:'Diag', email:'diag@test.com',
+    phone:'', industry:'Test', state:'VA', headcount:'1',
+    persona:'', linkedin:'', track:'DIAG',
+    saved: new Date().toLocaleDateString('en-US'),
+    time:  new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
+  });
+  const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+  dbg('URL: ' + url, '#9ca3af');
+  dbg('Opening in new tab...', '#fbbf24');
+  window.open(fullUrl, '_blank');
+  dbg('→ New tab opened. You should see the plain text: ok', '#22c55e');
+  dbg('If you see an error or login page: redeploy the Apps Script.', '#f87171');
+  dbg('If tab shows ok: script works — a row was just written to your sheet.', '#22c55e');
+  dbg('Also check: Deploy → Manage → edit → bump version after any code changes.', '#fbbf24');
 }
 
 function showSheetsStatus(msg,color){
