@@ -1826,6 +1826,34 @@ function getHQHTML(session){
       </div>
       </div><!-- /pain-panel-nonadp -->
 
+      <!-- ADDITIONAL NOTES -->
+      <div class="dark-card" style="margin-bottom:24px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+          <div>
+            <div class="card-section-title" style="margin-bottom:3px;">📝 Additional Notes</div>
+            <div style="font-size:11px;color:#9ca3af;line-height:1.5;">Paste call notes, Gong transcript snippets, or type freeform observations — the routing engine will parse these for extra signals and include matched insights in the results.</div>
+          </div>
+          <button onclick="sreClearNotes()" style="flex-shrink:0;font-size:11px;padding:4px 10px;background:transparent;border:1px solid #2a3142;border-radius:5px;color:#9ca3af;cursor:pointer;font-family:var(--fb);transition:all .15s;" onmouseover="this.style.borderColor='#4b5563';this.style.color='#e5e7eb'" onmouseout="this.style.borderColor='#2a3142';this.style.color='#9ca3af'">Clear</button>
+        </div>
+        <textarea
+          id="sre-notes"
+          placeholder="Examples:
+• Prospect mentioned they're switching off Paychex because of poor support
+• CFO said benefits costs are killing them — up 22% this year
+• They have employees in 8 states and tax filing is a nightmare
+• Renewal is in April, they're actively evaluating options
+• Owner is doing all HR admin manually using spreadsheets
+• Recent acquisition added 40 employees in Texas"
+          style="width:100%;min-height:130px;resize:vertical;background:#0d1117;border:1px solid #2a3142;border-radius:6px;padding:12px 14px;font-size:12px;line-height:1.75;color:#e5e7eb;font-family:'JetBrains Mono',monospace;outline:none;transition:border-color .15s;"
+          onfocus="this.style.borderColor='#4b5563'"
+          onblur="this.style.borderColor='#2a3142'"
+        ></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:10px;color:#6b7280;font-style:italic;">Tip: the more detail you add, the more accurate the routing signal.</div>
+          <div id="sre-notes-tags" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+        </div>
+      </div>
+
       <!-- ANALYZE BUTTON -->
       <div class="analyze-action-dark">
         <button class="analyze-btn-dark" onclick="runEmbeddedAnalysis()">
@@ -1834,7 +1862,7 @@ function getHQHTML(session){
           <span>→</span>
         </button>
         <div class="btn-subtext">
-          Analyzes headcount, industry, state, and pain points — then routes to recommended product
+          Analyzes headcount, industry, state, pain points, and notes — then routes to recommended product
         </div>
       </div>
 
@@ -7998,7 +8026,8 @@ window.runEmbeddedAnalysis = function(){
     industry:  p.industry  || '',
     state:     p.state     || '',
     headcount: parseInt(p.headcount) || 0,
-    painPoints: painPoints
+    painPoints: painPoints,
+    notes: sreParseNotes(document.getElementById('sre-notes') ? document.getElementById('sre-notes').value : '')
   });
 
   sreCurrentAnalysis = result;
@@ -8038,6 +8067,14 @@ function sreCalculateProductFit(data){
 
   peoScore = Math.min(100, peoScore);
   wfnScore = Math.min(100, wfnScore);
+
+  // Apply notes signals
+  if(data.notes){
+    peoScore = Math.min(100, peoScore + data.notes.peoScore);
+    wfnScore = Math.min(100, wfnScore + data.notes.wfnScore);
+    data.notes.peoFactors.forEach(function(f){ peoFactors.push(f); });
+    data.notes.wfnFactors.forEach(function(f){ wfnFactors.push(f); });
+  }
 
   var total = peoScore + wfnScore || 1;
   var recommendation = peoScore > wfnScore ? 'TotalSource PEO' : 'Workforce Now';
@@ -8218,6 +8255,15 @@ function sreCalculateNonAdpFit(data){
 
   peoScore = Math.min(100, peoScore);
   wfnScore = Math.min(100, wfnScore);
+
+  // Apply notes signals
+  if(data.notes){
+    peoScore = Math.min(100, peoScore + data.notes.peoScore);
+    wfnScore = Math.min(100, wfnScore + data.notes.wfnScore);
+    data.notes.peoFactors.forEach(function(f){ peoFactors.push(f); });
+    data.notes.wfnFactors.forEach(function(f){ wfnFactors.push(f); });
+  }
+
   var total = peoScore + wfnScore || 1;
   var recommendation = peoScore > wfnScore ? 'TotalSource PEO' : 'Workforce Now';
   var confidence = Math.round((Math.max(peoScore, wfnScore) / total) * 100);
@@ -8262,7 +8308,8 @@ window.runEmbeddedAnalysis = function(){
     state:     p.state     || '',
     headcount: parseInt(p.headcount) || 0,
     platform:  platform,
-    painPoints: pp
+    painPoints: pp,
+    notes: sreParseNotes(document.getElementById('sre-notes') ? document.getElementById('sre-notes').value : '')
   });
 
   sreCurrentAnalysis = result;
@@ -8274,7 +8321,96 @@ window.runEmbeddedAnalysis = function(){
 
   showToast('🎯 Competitive routing complete — ' + result.recommendation + ' recommended (' + result.confidence + '% confidence)');
 };
-// ══ End Prospect Type Logic ══
+// ══════════════════════════════════════════════════
+//  NOTES PARSER — extracts scoring signals from
+//  freeform text and feeds both routing engines
+// ══════════════════════════════════════════════════
+
+window.sreClearNotes = function(){
+  var el = document.getElementById('sre-notes');
+  if(el){ el.value = ''; sreUpdateNotesTags(); }
+};
+
+// Signal keyword map → { product: 'peo'|'wfn'|'both', score: points, label: factor string }
+var SRE_NOTE_SIGNALS = [
+  // PEO signals
+  { pattern: /\b(401k|401\(k\)|retirement plan|pension)\b/i,          product:'peo', score:20, label:'Notes: 401K / retirement plan pain → PEO eliminates admin burden' },
+  { pattern: /\bworkers.?comp\b|\bwc rate|\bwc claim/i,               product:'peo', score:20, label:'Notes: Workers Comp issues → PEO owns liability' },
+  { pattern: /\bbenefits.{0,25}(cost|expensive|rising|high|increas)/i, product:'peo', score:20, label:'Notes: Rising benefits costs → TotalSource group buying power' },
+  { pattern: /\bepli\b|\bemployment.?practic/i,                        product:'peo', score:15, label:'Notes: EPLI / employment practices risk → PEO includes coverage' },
+  { pattern: /\b(owner|ceo|founder).{0,30}(doing|handling|managing).{0,20}hr\b/i, product:'peo', score:20, label:'Notes: Owner handling HR → PEO offloads entire function' },
+  { pattern: /\bco.?employ/i,                                          product:'peo', score:25, label:'Notes: Co-employment mentioned → PEO is the natural fit' },
+  { pattern: /\bosha\b|\bsafety.?compliance\b/i,                       product:'peo', score:15, label:'Notes: OSHA / safety compliance concern → PEO HR specialist' },
+  { pattern: /\bsmall.?group.?benefits|\bbenefits.{0,20}(access|carrier|options)/i, product:'peo', score:15, label:'Notes: Benefits access issues → TotalSource carrier relationships' },
+  { pattern: /\bhigh.?turnover|\battrit/i,                             product:'peo', score:10, label:'Notes: High turnover → PEO improves benefits competitiveness' },
+
+  // WFN signals
+  { pattern: /\bmulti.?state|\b\d+\s*states?\b/i,                     product:'wfn', score:25, label:'Notes: Multi-state operations → WFN handles all registrations' },
+  { pattern: /\b(gl|general.?ledger).{0,20}(integrat|sync|error|issue)/i, product:'wfn', score:20, label:'Notes: GL integration pain → WFN native connectors' },
+  { pattern: /\b(erp|sage|netsuite|quickbooks|intacct).{0,20}(integrat|connect|sync)/i, product:'wfn', score:20, label:'Notes: ERP integration need → WFN 80+ system connectors' },
+  { pattern: /\breporting.{0,30}(weak|bad|limited|poor|manual)/i,     product:'wfn', score:18, label:'Notes: Reporting gaps → WFN 200+ real-time dashboards' },
+  { pattern: /\bplatform.{0,20}(fail|crash|down|slow|broken)/i,       product:'wfn', score:22, label:'Notes: Platform reliability issues → Enterprise-grade WFN' },
+  { pattern: /\b(time.?attend|time.?track|punch|clock.?in)/i,         product:'wfn', score:15, label:'Notes: Time & attendance pain → WFN integrated T&A module' },
+  { pattern: /\b(payroll.?error|tax.?error|misfil|penalty|irs.?notice)/i, product:'wfn', score:22, label:'Notes: Payroll/tax errors → WFN accuracy and compliance guarantee' },
+  { pattern: /\bworkforce.?manager\b|\badp.?classic\b|\badp.?run\b/i, product:'wfn', score:30, label:'Notes: On ADP Classic/RUN → prime WFN upgrade candidate' },
+  { pattern: /\bself.?service|\bemployee.?portal|\bapp\b.{0,20}(employees|staff)/i, product:'wfn', score:12, label:'Notes: Employee self-service need → WFN mobile app' },
+
+  // Both / general
+  { pattern: /\brenewal.{0,30}(april|may|june|july|aug|sept|oct|nov|dec|jan|feb|mar|\d{1,2}\/\d{1,2}|\d{4})/i, product:'both', score:20, label:'Notes: Contract renewal window identified → optimal switching moment' },
+  { pattern: /\brenewal\b/i,                                           product:'both', score:15, label:'Notes: Renewal discussion → evaluate timing for switch' },
+  { pattern: /\b(switching|evaluating|shopping|looking.{0,15}(for|at)|rfp|vendor.?eval)/i, product:'both', score:18, label:'Notes: Actively evaluating vendors → high opportunity' },
+  { pattern: /\b(acqui|merger|m&a|bought|acquired|combined)/i,        product:'wfn', score:18, label:'Notes: M&A activity → WFN consolidates multiple EINs' },
+  { pattern: /\b(hiring|growing|headcount.{0,15}(grow|increas|up|add))/i, product:'both', score:12, label:'Notes: Headcount growth → scalability is key factor' },
+  { pattern: /\b(spreadsheet|manual.{0,15}(process|entry|payroll)|excel.{0,15}(payroll|hr))/i, product:'wfn', score:18, label:'Notes: Manual/spreadsheet processes → WFN automation' },
+  { pattern: /\b(new.{0,10}(hr|finance|cfo|controller)|just.{0,10}hired.{0,10}(hr|cfo))/i, product:'both', score:15, label:'Notes: New HR/Finance leader → receptive to platform change' },
+  { pattern: /\b(unhappy|frustrated|hate|terrible|awful|switching).{0,25}(support|service|vendor|platform)/i, product:'both', score:15, label:'Notes: Dissatisfied with current vendor → displacement opportunity' },
+  { pattern: /\bprice.{0,20}(too.?high|expensive|increas|gone.?up|unhappy)/i, product:'peo', score:12, label:'Notes: Price dissatisfaction → TotalSource ROI story' },
+  { pattern: /\b(i.?9|onboard|new.?hire.{0,15}(process|paperwork))/i, product:'peo', score:12, label:'Notes: I-9 / onboarding issues → PEO dedicated HR support' },
+];
+
+function sreParseNotes(text){
+  if(!text || !text.trim()) return { peoScore:0, wfnScore:0, peoFactors:[], wfnFactors:[], tags:[] };
+  var peoScore = 0, wfnScore = 0, peoFactors = [], wfnFactors = [], tags = [];
+
+  SRE_NOTE_SIGNALS.forEach(function(sig){
+    if(sig.pattern.test(text)){
+      if(sig.product === 'peo' || sig.product === 'both'){
+        peoScore += sig.score;
+        peoFactors.push(sig.label);
+      }
+      if(sig.product === 'wfn' || sig.product === 'both'){
+        wfnScore += sig.score;
+        wfnFactors.push(sig.label);
+      }
+      // Build a short tag from the label
+      var tag = sig.label.replace(/^Notes:\s*/,'').split('→')[0].trim().substring(0,32);
+      tags.push({ text: tag, product: sig.product });
+    }
+  });
+
+  return { peoScore: Math.min(40, peoScore), wfnScore: Math.min(40, wfnScore), peoFactors: peoFactors, wfnFactors: wfnFactors, tags: tags };
+}
+
+// Live tag preview as user types
+function sreUpdateNotesTags(){
+  var el = document.getElementById('sre-notes');
+  var tagsEl = document.getElementById('sre-notes-tags');
+  if(!el || !tagsEl) return;
+  var parsed = sreParseNotes(el.value);
+  if(!parsed.tags.length){ tagsEl.innerHTML = ''; return; }
+  tagsEl.innerHTML = parsed.tags.map(function(t){
+    var col = t.product === 'peo' ? 'rgba(204,0,0,.15);border-color:rgba(204,0,0,.3);color:#f87171' :
+              t.product === 'wfn' ? 'rgba(59,130,246,.12);border-color:rgba(59,130,246,.3);color:#60a5fa' :
+                                    'rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fbbf24';
+    return '<span style="font-size:10px;padding:2px 8px;border-radius:12px;border:1px solid;background:'+col+';white-space:nowrap;">✓ '+t.text+'</span>';
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var notesEl = document.getElementById('sre-notes');
+  if(notesEl) notesEl.addEventListener('input', sreUpdateNotesTags);
+});
+// ══ End Notes Parser ══
 window.openAdminPanel = function(){
   document.getElementById('admin-email-display').textContent = ADMIN.email;
   renderAdminPanel();
