@@ -6,6 +6,7 @@
 <title>BeyondPayroll HCM — Sales Intelligence Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Archivo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --white:#ffffff; --off-white:#f8f8f6; --light:#f0f0ed;
@@ -1558,8 +1559,6 @@ function getHQHTML(session){
       <span class="sp-title">📁 Saved Prospects</span>
       <span class="sp-count" id="sp-count">0 saved</span>
       <span class="sp-restored" id="sp-restored">✓ Prospect restored</span>
-      <span id="sheets-status"></span>
-      <button class="sheets-cfg-btn" onclick="openSheetsConfig()">🔗 Google Sheets <span id="sheets-badge" style="font-size:10px;color:var(--text-3)">○ Not set</span></button>
     </div>
     <div class="sp-list" id="sp-list">
       <span class="sp-empty">No saved prospects yet — click + New Prospect to begin</span>
@@ -4628,6 +4627,16 @@ function ts_ecFireMailto(){
   </div>
   <div id="wfn-body">
     <div id="wfn-body-inner">
+<header>
+  <div class="logo">
+    <div class="logo-icon">WN</div>
+    <div>
+      <div class="logo-text">Workforce Now Analyzer v2</div>
+      <div class="logo-sub">Fit &amp; Upgrade Intelligence</div>
+    </div>
+  </div>
+  <div class="header-badge">STEP 01A · TRACK A</div>
+</header>
 <main>
   <div class="hero">
     <div class="hero-content">
@@ -8085,123 +8094,6 @@ function updateLabor(){
   document.getElementById('laborNote').textContent='Estimates based on BLS OES 2023, SHRM Hiring Benchmarking Survey, Tax Foundation 2023. Approximate figures for sales context.  '+cn;
 }
 
-// ═══════════════════════════════════════════════════════
-//  EMAIL GENERATOR
-// ═══════════════════════════════════════════════════════
-function generateEmail(){
-  var company=gv('companyName')||'[Company Name]', contact=gv('contactName')||'there';
-  var title=gv('contactTitle')||'', state=gv('hqState'), metro=gv('hqMetro');
-  var num=getRaw('numEE'), avg=getRaw('avgWages'), total=getRaw('totalWages')||(num&&avg?num*avg:null);
-  var bRate=document.getElementById('benefitsRate').value, carrierKey=gv('carrier');
-  var locs=gv('numLocations'), prods=gv('adpProducts'), ind=gv('industry');
-  var renewal=getRaw('renewalIncrease'), asi=getRaw('asiScore');
-  var score=parseInt(document.getElementById('scorePct').textContent)||0;
-
-  // Benefits paragraph
-  var benefitsLine='';
-  if(carrierKey&&CARRIERS[carrierKey]){
-    var cd=CARRIERS[carrierKey];
-    var participation=parseInt(bRate,10)/100;
-    var disc=estimateDiscount(num, participation, asi, ind, state, carrierKey);
-    var clientAvg=getRaw('premAvg');
-    var enrolled=num?Math.round(num*participation):null;
-    var mS=parseInt(gv('mixSingle')||'40',10)/100, mSp=parseInt(gv('mixSpouse')||'20',10)/100;
-    var mC=parseInt(gv('mixChild')||'15',10)/100, mF=parseInt(gv('mixFamily')||'25',10)/100;
-    var mT=mS+mSp+mC+mF||1; var nS=mS/mT,nSp=mSp/mT,nC=mC/mT,nF=mF/mT;
-    var natAvgBlendedEmail=(cd.single.avg*0.40+cd.spouse.avg*0.20+cd.child.avg*0.15+cd.family.avg*0.25);
-    var blendedClientMo=clientAvg||null;
-    var blendedTSLow=Math.round(natAvgBlendedEmail*(1+disc.low));
-    var blendedTSHigh=Math.round(natAvgBlendedEmail*(1+disc.high));
-    var cPct=getRaw('contribPct'), empRate=cPct?cPct/100:null;
-    var savLow=blendedClientMo&&enrolled&&empRate?Math.round((blendedClientMo-blendedTSLow)*empRate*enrolled*12):null;
-    var savHigh=blendedClientMo&&enrolled&&empRate?Math.round((blendedClientMo-blendedTSHigh)*empRate*enrolled*12):null;
-
-    benefitsLine='\nOn the benefits side, I ran your '+getCarrierDisplayName(cd)+' plan through our underwriting comparison model — which is grounded in real conditionally-approved TotalSource outcomes for similar groups.';
-    if(clientAvg) benefitsLine+=' Your current blended average premium of '+ff(clientAvg)+'/month compares to the carrier\'s national blended average of '+ff(natAvgBlendedEmail)+'/month.';
-    benefitsLine+=' Based on your group\'s participation rate, ASI profile, and industry class, our model estimates TotalSource could bring your blended average premium to somewhere between '+ff(blendedTSHigh)+' and '+ff(blendedTSLow)+'/month — a '+fp(disc.high)+' to '+fp(disc.low)+' discount range.';
-    if(renewal) benefitsLine+=' Against your carrier\'s '+renewal+'% renewal increase, that\'s a meaningful swing in the other direction.';
-    if(savHigh&&savHigh>0) benefitsLine+=' Running the numbers on your enrolled population, the estimated annual employer savings range is '+ff(savHigh)+' to '+ff(savLow||0)+' — and over five years, that compounds to '+ff(savHigh*5)+' to '+ff((savLow||0)*5)+' before accounting for trend increases.';
-    benefitsLine+='\n\nThese are illustrative estimates based on real underwriting data — the actual quote from ADP will give us the definitive number, but this gives us a solid foundation to have the conversation.';
-  }
-
-  // Labor paragraph
-  var laborLine='';
-  if(state&&LD[state]){
-    var sd=LD[state], md2=(metro&&sd.metros&&sd.metros[metro])?sd.metros[metro]:null;
-    var median=md2?md2.m:sd.m, col=md2?md2.col:sd.col;
-    var hc=Math.round(median*totalHF), loc=metro||state;
-    var annualHC=num?ff(Math.round(num*0.15)*hc):null;
-    laborLine='\nOn the talent and HR side, the '+loc+' market median wage runs about '+ff(median)+'/year, and the fully-loaded cost to bring on a single new employee averages around '+ff(hc)+'.'+(annualHC?' At 15% annual turnover, that\'s roughly '+annualHC+' per year in hiring costs alone — a number TotalSource\'s HR infrastructure directly helps reduce.':'');
-  }
-
-  var likelihood=score>=80?'an excellent candidate':score>=60?'a strong candidate':score>=40?'a potential candidate':'worth a closer look';
-  var locsStr=locs==='1'?'single location':locs==='2'?'2–3 locations':locs==='4'?'4–9 locations':'10+ locations';
-  var dh='';
-  if(num) dh+='\n  • Employees (eligible): '+num.toLocaleString();
-  if(avg) dh+='\n  • Avg gross wages: '+ff(avg)+'/employee annually';
-  if(total) dh+='\n  • Total annual wages: '+ff(total);
-  if(bRate) dh+='\n  • Benefits participation: '+bRate+'%';
-  if(asi) dh+='\n  • ASI score: '+asi;
-  if(locs) dh+='\n  • Locations: '+locsStr;
-  if(prods) dh+='\n  • Existing ADP products: '+prods;
-  if(state) dh+='\n  • HQ: '+(metro?metro+', ':'')+state;
-  if(carrierKey&&CARRIERS[carrierKey]) dh+='\n  • Current carrier: '+CARRIERS[carrierKey].name+(renewal?' ('+renewal+'% renewal offered)':'');
-  var omStatus=gv('openMarketClient');
-  var rdStr=document.getElementById('medicalRenewalDate').value;
-  var rdLabel=formatRenewalDate(rdStr);
-  var rdDays=daysUntilRenewal(rdStr);
-  if(omStatus==='yes') dh+='\n  • ADP Open Market client: Yes'+(rdLabel?' · Medical renewal: '+rdLabel+(rdDays!==null?' ('+rdDays+' days away)':''):'');
-  else if(omStatus==='no') dh+='\n  • ADP Open Market client: No';
-  var renewalNotes=gv('renewalNotes');
-
-  // Open market paragraph for email
-  var openMarketLine='';
-  if(omStatus==='yes'){
-    openMarketLine='\n\nOne thing I also want to flag — since '+company+' is currently an ADP Open Market health benefits client';
-    if(rdLabel){
-      openMarketLine+=', with your medical renewal coming up on '+rdLabel;
-      if(rdDays!==null&&rdDays<=90) openMarketLine+=' (just '+rdDays+' days away)';
-    }
-    openMarketLine+=', the timing is ideal to evaluate whether TotalSource\'s fully-bundled benefits platform could replace your current Open Market arrangement at a lower total cost.';
-    if(renewalNotes) openMarketLine+=' Noted: '+renewalNotes+'.';
-    // Inject live ACA benchmark data if available
-    if(window.acaAvgSilver&&window.acaLocation){
-      var acaFF=function(n){ return n?'$'+Math.round(n).toLocaleString('en-US'):'—'; };
-      openMarketLine+='\n\nI pulled live '+window.acaYear+' ACA marketplace rates for your area ('+window.acaLocation+'). The lowest-cost Silver plan in that market is running '+acaFF(window.acaAvgSilver)+'/month per person, with Gold at '+acaFF(window.acaAvgGold)+'/month.';
-      var clientAvgEmail=getRaw('premAvg');
-      if(clientAvgEmail&&window.acaAvgSilver){
-        var diff2=clientAvgEmail-window.acaAvgSilver;
-        var diffPct2=Math.round(Math.abs(diff2/window.acaAvgSilver)*100);
-        if(diff2>0) openMarketLine+=' Your current blended premium of '+acaFF(clientAvgEmail)+'/month sits '+diffPct2+'% above the benchmark lowest-cost Silver — which suggests meaningful room for TotalSource to deliver savings.';
-        else openMarketLine+=' Your current blended premium of '+acaFF(clientAvgEmail)+'/month is actually competitive vs. the open market, so the TotalSource value story is really about the bundled HR/compliance infrastructure and the reduced administrative lift.';
-      }
-    }
-    openMarketLine+=' I can run both scenarios side-by-side so you have a clean comparison before your renewal deadline.';
-  }
-
-  var sl=parseInt(bRate)>=75?'Your benefits participation rate of '+bRate+'% is a real strength — that opens up the full carrier field and typically produces the most competitive TotalSource pricing.':parseInt(bRate)<65?'One thing worth discussing is participation — at '+bRate+'%, some carriers may limit their offers, which is exactly what TotalSource\'s enrollment support is designed to address.':'Based on the profile I\'ve been working from, '+company+' looks like '+likelihood+' for TotalSource.';
-  var pl=parseInt(prods)>=3?'You\'re already running '+prods+'+ ADP solutions, which makes a TotalSource migration seamless — no system overhaul required.':prods?'With your existing ADP footprint, TotalSource is a natural next step.':'';
-
-  document.getElementById('emailSubject').value='Following up — ADP TotalSource analysis for '+company;
-  document.getElementById('emailBody').value=
-'Hi '+contact+',\n\n'
-+'I\'ve been doing some analysis on '+company+' ahead of our next conversation and wanted to share what I\'m seeing.\n\n'
-+'Here\'s the data snapshot I\'m working from:\n'+dh+'\n\n'
-+sl+' '+pl
-+benefitsLine
-+openMarketLine
-+laborLine+'\n\n'
-+'The bottom line is that TotalSource can consolidate HR, payroll, benefits, and compliance under one umbrella — while giving your team access to Fortune 500-level benefit plans at pricing that works for a group your size.\n\n'
-+'I\'d love to get 20–30 minutes on the calendar to walk through a formal proposal'+(title?' for you as '+company+'\'s '+title:'')+'. No obligation — just want to make sure you have the full picture before renewal season.\n\n'
-+'Would [Day] or [Day] work?\n\n'
-+'Best,\n[Your Name]\nADP TotalSource | [Your Phone] | [Your Email]';
-}
-
-function copyEmail(){
-  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBody').value;
-  var el=document.getElementById('emailBody');
-  if(el){el.select();try{document.execCommand('copy');}catch(e){}}
-}
 </script>
 
 <!-- ════════════════════════════════════════
