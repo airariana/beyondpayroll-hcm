@@ -8644,7 +8644,7 @@ window.sreExtractFromImage = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
+    var res = await fetch('https://claude-vision-proxy.aj-3ab.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
