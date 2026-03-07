@@ -732,14 +732,19 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
       <div style="font-family:monospace;background:var(--surface);padding:4px 8px;border-radius:4px;margin:4px 0;font-size:10px;color:var(--gold)">Company | Contact | Email | Phone | Industry | State | Headcount | Persona | LinkedIn | Track | Date Saved | Time</div>
       <div>2. In your Sheet → <strong>Extensions → Apps Script</strong></div>
       <div>3. Paste this exact code (replaces everything):</div>
-      <div style="font-family:monospace;background:#0d1117;border:1px solid #2a3142;border-radius:6px;padding:8px 10px;margin:6px 0;font-size:10px;color:#7dd3fc;line-height:1.8;white-space:pre;overflow-x:auto">function doGet(e){
+      <div style="font-family:monospace;background:#0d1117;border:1px solid #2a3142;border-radius:6px;padding:8px 10px;margin:6px 0;font-size:10px;color:#7dd3fc;line-height:1.8;white-space:pre;overflow-x:auto">function doGet(e)  { return handleRequest(e); }
+function doPost(e) { return handleRequest(e); }
+
+function handleRequest(e){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheets()[0];
-  var p  = e.parameter;
+  var p  = (e.parameter && Object.keys(e.parameter).length)
+           ? e.parameter
+           : JSON.parse(e.postData.contents||'{}');
   sh.appendRow([
-    p.company, p.contact, p.email, p.phone,
-    p.industry, p.state, p.headcount, p.persona,
-    p.linkedin, p.track, p.saved, p.time
+    p.company||'', p.contact||'', p.email||'',   p.phone||'',
+    p.industry||'', p.state||'', p.headcount||'', p.persona||'',
+    p.linkedin||'', p.track||'', p.saved||'',     p.time||''
   ]);
   return ContentService
     .createTextOutput('ok')
@@ -1058,7 +1063,8 @@ function setSheetsUrl(url){localStorage.setItem(SHEETS_KEY,url.trim())}
 function syncToSheets(prospect, onDone){
   const url=getSheetsUrl();
   if(!url){ return; }
-  const params=new URLSearchParams({
+
+  const fields={
     company:   prospect.company||'',
     contact:   prospect.contact||'',
     email:     prospect.email||'',
@@ -1071,29 +1077,57 @@ function syncToSheets(prospect, onDone){
     track:     prospect.track||'WFN',
     saved:     new Date().toLocaleDateString('en-US'),
     time:      new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
-  });
-  const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+  };
 
-  // fetch with no-cors is the correct method for Apps Script web apps.
-  // no-cors means we cannot read the response body, but the GET request
-  // reaches the server and the doGet() function executes — that is all we need.
-  fetch(fullUrl, { method: 'GET', mode: 'no-cors' })
-    .then(function(){
-      showSheetsStatus('\u2713 Synced to Google Sheets','#22c55e');
-      if(typeof onDone === 'function') onDone(true);
-    })
-    .catch(function(err){
-      // fetch failed entirely (offline, bad URL) — try sendBeacon as fallback
-      if(navigator.sendBeacon){
-        navigator.sendBeacon(fullUrl);
-        showSheetsStatus('\u2713 Synced (beacon)','#22c55e');
-        if(typeof onDone === 'function') onDone(true);
-      } else {
-        showSheetsStatus('\u26a0 Sheets sync failed — check URL','#f87171');
-        console.warn('Sheets sync failed:',err);
-        if(typeof onDone === 'function') onDone(false);
-      }
+  // Use a hidden iframe + form POST — this is the most reliable method for
+  // Apps Script web apps because it follows all redirects without CORS issues.
+  try {
+    const iframeName = 'sheets_sink_' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = iframeName;
+    form.style.display = 'none';
+
+    Object.keys(fields).forEach(function(key){
+      const inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = key;
+      inp.value = fields[key];
+      form.appendChild(inp);
     });
+
+    document.body.appendChild(form);
+    form.submit();
+
+    // Clean up after submission completes
+    setTimeout(function(){
+      try { document.body.removeChild(form); } catch(e){}
+      try { document.body.removeChild(iframe); } catch(e){}
+    }, 5000);
+
+    showSheetsStatus('\u2713 Synced to Google Sheets','#22c55e');
+    if(typeof onDone === 'function') onDone(true);
+
+  } catch(err) {
+    // Fallback: plain fetch no-cors
+    const params = new URLSearchParams(fields);
+    const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+    fetch(fullUrl, { method: 'GET', mode: 'no-cors' })
+      .then(function(){
+        showSheetsStatus('\u2713 Synced to Google Sheets','#22c55e');
+        if(typeof onDone === 'function') onDone(true);
+      })
+      .catch(function(){
+        showSheetsStatus('\u26a0 Sheets sync failed','#f87171');
+        if(typeof onDone === 'function') onDone(false);
+      });
+  }
 }
 
 function testSheetsSync(){
