@@ -256,6 +256,29 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 }
 .logout-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
 
+/* ── Top bar mobile ── */
+@media(max-width:600px){
+  .top-bar{padding:0 12px;height:52px;gap:8px}
+  .tb-name{display:none}
+  .tb-sep{display:none}
+  .tb-sub{display:none}
+  /* Hide Profiles button text label, keep icon + badge */
+  .profiles-btn-label{display:none}
+  #profiles-drawer-btn{padding:5px 8px;gap:4px;font-size:11px}
+  /* Hide admin panel button text on mobile */
+  #admin-panel-btn{padding:5px 8px;font-size:11px}
+  /* Compact user chip — show avatar only, hide name/role text */
+  .user-chip{padding:4px;border-radius:50%;background:var(--off-white)}
+  .un{display:none}
+  .ur{display:none}
+  /* Make sign out smaller */
+  .logout-btn{padding:6px 10px;font-size:11px}
+}
+@media(max-width:400px){
+  .logout-btn span{display:none}
+  .logout-btn::after{content:'Out'}
+}
+
 /* ════════════════════════
    HQ INNER
    ════════════════════════ */
@@ -1019,7 +1042,7 @@ function handleRequest(e){
         🔑 Admin Panel
       </button>
       <button onclick="openProfilesDrawer()" style="display:flex;align-items:center;gap:7px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);color:var(--blue);border-radius:var(--radius-sm);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb);transition:all .15s;" onmouseover="this.style.background='rgba(96,165,250,.18)'" onmouseout="this.style.background='rgba(96,165,250,.1)'" id="profiles-drawer-btn">
-        📁 Prospect Profiles <span id="profiles-count-badge" style="background:var(--blue);color:#fff;border-radius:9px;padding:1px 6px;font-size:10px;margin-left:2px">0</span>
+        <span class="profiles-btn-label">📁 Prospect Profiles</span> <span id="profiles-count-badge" style="background:var(--blue);color:#fff;border-radius:9px;padding:1px 6px;font-size:10px;margin-left:2px">0</span>
       </button>
       <div class="user-chip">
         <div class="ua" id="top-avatar">—</div>
