@@ -731,10 +731,24 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
       <div>1. Create a new Google Sheet with these column headers in Row 1:</div>
       <div style="font-family:monospace;background:var(--surface);padding:4px 8px;border-radius:4px;margin:4px 0;font-size:10px;color:var(--gold)">Company | Contact | Email | Phone | Industry | State | Headcount | Persona | LinkedIn | Track | Date Saved | Time</div>
       <div>2. In your Sheet → <strong>Extensions → Apps Script</strong></div>
-      <div>3. Replace all code with the script provided separately</div>
+      <div>3. Paste this exact code (replaces everything):</div>
+      <div style="font-family:monospace;background:#0d1117;border:1px solid #2a3142;border-radius:6px;padding:8px 10px;margin:6px 0;font-size:10px;color:#7dd3fc;line-height:1.8;white-space:pre;overflow-x:auto">function doGet(e){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheets()[0];
+  var p  = e.parameter;
+  sh.appendRow([
+    p.company, p.contact, p.email, p.phone,
+    p.industry, p.state, p.headcount, p.persona,
+    p.linkedin, p.track, p.saved, p.time
+  ]);
+  return ContentService
+    .createTextOutput('ok')
+    .setMimeType(ContentService.MimeType.TEXT);
+}</div>
       <div>4. Click <strong>Deploy → New deployment → Web App</strong></div>
       <div>5. Set <em>Execute as: Me</em> · <em>Who has access: Anyone</em></div>
       <div>6. Copy the Web App URL and paste it above</div>
+      <div style="margin-top:6px;color:#f87171;font-weight:600">⚠ If you already deployed: go to Deploy → Manage deployments → edit → create new version to pick up any script changes.</div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeSheetsConfig()">Cancel</button>
@@ -1052,14 +1066,28 @@ function syncToSheets(prospect, onDone){
     saved:     new Date().toLocaleDateString('en-US'),
     time:      new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})
   });
-  // Apps Script redirects break fetch no-cors — use Image ping which follows redirects natively
-  const ping = new Image();
   const fullUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
-  ping.onload = ping.onerror = function(){
-    showSheetsStatus('\u2713 Synced to Google Sheets','#22c55e');
-    if(typeof onDone === 'function') onDone(true);
-  };
-  ping.src = fullUrl;
+
+  // fetch with no-cors is the correct method for Apps Script web apps.
+  // no-cors means we cannot read the response body, but the GET request
+  // reaches the server and the doGet() function executes — that is all we need.
+  fetch(fullUrl, { method: 'GET', mode: 'no-cors' })
+    .then(function(){
+      showSheetsStatus('\u2713 Synced to Google Sheets','#22c55e');
+      if(typeof onDone === 'function') onDone(true);
+    })
+    .catch(function(err){
+      // fetch failed entirely (offline, bad URL) — try sendBeacon as fallback
+      if(navigator.sendBeacon){
+        navigator.sendBeacon(fullUrl);
+        showSheetsStatus('\u2713 Synced (beacon)','#22c55e');
+        if(typeof onDone === 'function') onDone(true);
+      } else {
+        showSheetsStatus('\u26a0 Sheets sync failed — check URL','#f87171');
+        console.warn('Sheets sync failed:',err);
+        if(typeof onDone === 'function') onDone(false);
+      }
+    });
 }
 
 function testSheetsSync(){
@@ -5785,17 +5813,84 @@ Example:
 window.openWfnPanel = function(){
   document.getElementById('wfn-panel').classList.add('open');
   document.body.style.overflow='hidden';
-  // Auto-fill from active prospect
-  var p = window._hqProspect;
-  if(p){
-    var cn = document.getElementById('wfn-companyName');
-    var ec = document.getElementById('wfn-employeeCount');
-    var ind = document.getElementById('wfn-industry');
-    if(cn && !cn.value) cn.value = p.company || '';
-    if(ec && !ec.value) ec.value = p.headcount || '';
-    if(ind && !ind.value) ind.value = p.industry || '';
+
+  var p = window._hqProspect || {};
+
+  // ── Helper: set field only if currently empty ──
+  function fill(id, val){
+    var el = document.getElementById(id);
+    if(el && !el.value && val) el.value = val;
   }
+  function forceSet(id, val){
+    var el = document.getElementById(id);
+    if(el && val) el.value = val;
+  }
+
+  // ── Core firmographic fields ──
+  fill('wfn-companyName',   p.company   || '');
+  fill('wfn-employeeCount', p.headcount || '');
+  fill('wfn-industry',      p.industry  || '');
+  fill('wfn-states',        p.state     || '');
+
+  // ── Map selected SRE platform → primaryPlatform dropdown ──
+  var platMap = {
+    'plat-paychex':   'Paychex',
+    'plat-paycom':    'Other',
+    'plat-paylocity': 'Paylocity',
+    'plat-rippling':  'Rippling',
+    'plat-gusto':     'Gusto',
+    'plat-bamboo':    'BambooHR',
+    'plat-qb':        'Other',
+    'plat-isolved':   'Other',
+    'plat-other':     'Other'
+  };
+  var selPlat = null;
+  document.querySelectorAll('#competitor-platform-grid input[type="checkbox"]').forEach(function(cb){
+    if(cb.checked) selPlat = cb.id;
+  });
+  // Also handle ADP mode toggles
+  if(!selPlat && typeof _sreProspectType !== 'undefined'){
+    if(_sreProspectType === 'adp'){
+      // Try to infer from pain points — ADP RUN vs Classic
+      selPlat = '_adp';
+    }
+  }
+  var platEl = document.getElementById('wfn-primaryPlatform');
+  if(platEl && !platEl.value){
+    if(selPlat === '_adp'){
+      platEl.value = 'ADP RUN';
+    } else if(selPlat && platMap[selPlat]){
+      platEl.value = platMap[selPlat];
+      // Also tick the matching competitor checkbox
+      var wfnCompMap = {
+        'Paylocity': 'wfn-comp-paylocity',
+        'Paychex':   'wfn-comp-paychex',
+        'BambooHR':  'wfn-comp-bamboo'
+      };
+      var compId = wfnCompMap[platMap[selPlat]];
+      if(compId){
+        var compCb = document.getElementById(compId);
+        if(compCb) compCb.checked = true;
+      }
+    }
+  }
+
+  // ── Copy SRE notes → WFN call transcript (append if already has content) ──
+  var notesEl  = document.getElementById('sre-notes');
+  var transcEl = document.getElementById('wfn-callTranscript');
+  if(notesEl && notesEl.value.trim() && transcEl){
+    if(!transcEl.value){
+      transcEl.value = notesEl.value.trim();
+    } else if(transcEl.value.indexOf(notesEl.value.trim()) === -1){
+      transcEl.value = transcEl.value + '\n\n— From Routing Engine Notes —\n' + notesEl.value.trim();
+    }
+  }
+
+  // ── Pre-fill email to field from prospect ──
+  var ecTo = document.getElementById('wfn-ec-to-inp');
+  if(ecTo && !ecTo.value && p.email) ecTo.value = p.email;
 };
+
 window.closeWfnPanel = function(){
   document.getElementById('wfn-panel').classList.remove('open');
   document.body.style.overflow='';
@@ -6481,7 +6576,64 @@ Respond ONLY with valid JSON (no markdown):
 </style>
 
 <script>
-function openTsPanel(){document.getElementById('ts-panel').classList.add('open');document.body.style.overflow='hidden';}
+function openTsPanel(){
+  document.getElementById('ts-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+
+  var p = window._hqProspect || {};
+
+  function fill(id, val){
+    var el = document.getElementById(id);
+    if(el && !el.value && val) el.value = val;
+  }
+
+  // ── Core firmographic fields ──
+  fill('companyName',  p.company   || '');
+  fill('contactName',  (p.contact  || '').split(' ')[0]); // first name only
+  fill('contactTitle', p.persona   || '');
+  fill('numEE',        p.headcount || '');
+
+  // ── State dropdown — trigger onStateChange so metro populates ──
+  var stateEl = document.getElementById('hqState');
+  if(stateEl && !stateEl.value && p.state){
+    // Match state abbreviation or full name against options
+    var stateVal = p.state.trim();
+    var matched = false;
+    for(var i = 0; i < stateEl.options.length; i++){
+      var opt = stateEl.options[i];
+      if(opt.value === stateVal || opt.text === stateVal ||
+         opt.value.toUpperCase() === stateVal.toUpperCase()){
+        stateEl.value = opt.value;
+        matched = true;
+        break;
+      }
+    }
+    if(matched && typeof onStateChange === 'function') onStateChange();
+  }
+
+  // ── Industry dropdown ──
+  var indEl = document.getElementById('industry');
+  if(indEl && !indEl.value && p.industry){
+    var indLower = p.industry.toLowerCase();
+    for(var j = 0; j < indEl.options.length; j++){
+      if(indEl.options[j].text.toLowerCase().indexOf(indLower) > -1 ||
+         indLower.indexOf(indEl.options[j].text.toLowerCase()) > -1){
+        indEl.value = indEl.options[j].value;
+        break;
+      }
+    }
+  }
+
+  // ── Copy SRE notes → renewalNotes field ──
+  var notesEl   = document.getElementById('sre-notes');
+  var renewEl   = document.getElementById('renewalNotes');
+  if(notesEl && notesEl.value.trim() && renewEl && !renewEl.value){
+    // Show the renewal notes row if hidden
+    var renewRow = document.getElementById('renewalNotesRow');
+    if(renewRow) renewRow.style.display = '';
+    renewEl.value = notesEl.value.trim().substring(0, 200); // cap at 200 chars
+  }
+}
 function closeTsPanel(){document.getElementById('ts-panel').classList.remove('open');document.body.style.overflow='';}
 
 // ═══════════════════════════════════════════════════════
