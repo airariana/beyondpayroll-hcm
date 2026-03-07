@@ -771,8 +771,24 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
       </select>
     </div>
     <div style="margin-bottom:14px">
-      <label class="fl">LinkedIn URL</label>
-      <input class="fi" id="f-linkedin" placeholder="linkedin.com/in/janesmith">
+      <label class="fl" style="display:flex;align-items:center;justify-content:space-between;">
+        LinkedIn URL
+        <span style="font-size:10px;font-weight:400;color:var(--text-3);letter-spacing:0;text-transform:none;">auto-suggested from name</span>
+      </label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input class="fi" id="f-linkedin" placeholder="linkedin.com/in/jane-smith" style="flex:1;margin-bottom:0">
+        <button type="button" id="btn-li-search" onclick="openLinkedInSearch()" title="Search LinkedIn for this contact"
+          style="flex-shrink:0;height:38px;padding:0 12px;background:#0a66c2;color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:opacity .15s;"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Search
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;padding:8px 12px;background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--radius-sm);font-size:11px;color:var(--gold);display:flex;align-items:center;gap:7px;">
+      <span>💡</span>
+      <span>LinkedIn URL is <strong>auto-suggested</strong> from the contact name. Use the <strong>Search</strong> button to find & verify the real profile, then paste the exact URL.</span>
     </div>
 
 
@@ -1192,6 +1208,63 @@ function renderProspectBar(){
 }
 
 // No demo seed — admin approval required
+
+// ── LinkedIn Auto-Suggest ──────────────────────────────
+(function(){
+  var _liUserEdited = false;
+
+  function slugify(name){
+    return name.trim().toLowerCase()
+      .replace(/[^a-z0-9\s-]/g,'')
+      .replace(/\s+/g,'-')
+      .replace(/-+/g,'-');
+  }
+
+  function autoFillLinkedIn(){
+    if(_liUserEdited) return;
+    var contact = (document.getElementById('f-contact')||{}).value||'';
+    var liField  = document.getElementById('f-linkedin');
+    if(!liField) return;
+    if(!contact.trim()){
+      liField.placeholder = 'linkedin.com/in/jane-smith';
+      liField.value = '';
+      return;
+    }
+    var slug = slugify(contact);
+    if(slug) liField.value = 'linkedin.com/in/' + slug;
+  }
+
+  window.openLinkedInSearch = function(){
+    var contact = (document.getElementById('f-contact')||{}).value.trim();
+    var company = (document.getElementById('f-company')||{}).value.trim();
+    var query   = [contact, company].filter(Boolean).join(' ');
+    if(!query){ showToast('Enter a contact name first', true); return; }
+    var url = 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(query);
+    window.open(url, '_blank', 'noopener');
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var contactField = document.getElementById('f-contact');
+    var liField      = document.getElementById('f-linkedin');
+    if(contactField) contactField.addEventListener('input', autoFillLinkedIn);
+    if(liField){
+      liField.addEventListener('input', function(){
+        _liUserEdited = liField.value.trim() !== '';
+        var contactVal = (document.getElementById('f-contact')||{}).value.trim();
+        var expected   = contactVal ? 'linkedin.com/in/' + slugify(contactVal) : '';
+        if(liField.value && liField.value !== expected) _liUserEdited = true;
+        else if(!liField.value) _liUserEdited = false;
+      });
+    }
+  });
+
+  var _origOpenModal = window.openModal;
+  window.openModal = function(){
+    _liUserEdited = false;
+    if(_origOpenModal) _origOpenModal.apply(this, arguments);
+  };
+})();
+// ── End LinkedIn Auto-Suggest ──────────────────────────
 
 // ── TOAST ──
 function showToast(msg,isErr=false){
@@ -1860,7 +1933,7 @@ function getHQHTML(session){
           <span>⚡</span><span>Copy <strong>Fit Score, Opportunity, and Urgency</strong> into Score Approval panel below after running.</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <a href="workforce-now-analyzer-v2_1.html" target="_blank" class="btn btn-blue">Launch WFN →</a>
+          <button class="btn btn-blue" onclick="openWfnPanel()">Launch WFN →</button>
           <button class="btn btn-outline" onclick="hqMarkDone(1,'WFN Analyzer');hqOpenScore('WFN')">✓ Mark as Run</button>
         </div>
       </div>
@@ -4297,6 +4370,1905 @@ function copyEmail(){
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     WFN ANALYZER — FULL-SCREEN OVERLAY
+     ════════════════════════════════════════ -->
+<div id="wfn-panel">
+  <div id="wfn-topbar">
+    <button class="wfn-back" onclick="closeWfnPanel()">&#8592; Back to Command Center</button>
+    <span class="wfn-panel-title">ADP Workforce Now &mdash; Fit &amp; Upgrade Analyzer</span>
+    <span class="wfn-panel-badge">STEP 01A &middot; TRACK A</span>
+  </div>
+  <div id="wfn-body">
+    <div id="wfn-body-inner">
+<main>
+  <div class="hero">
+    <div class="hero-content">
+      <h1>Workforce Now Fit & Upgrade Analysis</h1>
+      <p>Identify upgrade candidates from ADP Classic/RUN, detect competitive displacement opportunities with review-backed intelligence, and calculate switching ROI for mid-market prospects.</p>
+    </div>
+  </div>
+
+  <!-- CLIENT INFO -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-icon">🏢</div>
+      <div>
+        <div class="section-title">Client Information</div>
+        <div class="section-subtitle">Basic firmographic and account details</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label required">Company Name</label>
+          <input type="text" class="form-input" id="wfn-companyName" placeholder="e.g., Acme Corporation">
+        </div>
+        <div class="form-field">
+          <label class="form-label required">Employee Count</label>
+          <input type="number" class="form-input" id="wfn-employeeCount" placeholder="e.g., 350">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Industry</label>
+          <input type="text" class="form-input" id="wfn-industry" placeholder="e.g., Technology, Manufacturing">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Annual Revenue</label>
+          <input type="text" class="form-input" id="wfn-revenue" placeholder="e.g., $45M">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Number of Locations</label>
+          <input type="number" class="form-input" id="wfn-locations" placeholder="e.g., 5">
+        </div>
+        <div class="form-field">
+          <label class="form-label">States Operating In</label>
+          <input type="text" class="form-input" id="wfn-states" placeholder="e.g., CA, TX, NY">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CURRENT SYSTEM & COMPETITOR SELECTION -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-icon">💻</div>
+      <div>
+        <div class="section-title">Current HCM/Payroll System</div>
+        <div class="section-subtitle">Select all systems currently in use (with third-party ratings)</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-field">
+        <label class="form-label required">Primary HCM/Payroll Platform</label>
+        <select class="form-select" id="wfn-primaryPlatform">
+          <option value="">Select primary platform...</option>
+          <option value="ADP Classic">ADP Classic / Workforce Manager (UPGRADE CANDIDATE)</option>
+          <option value="ADP RUN">ADP RUN (UPGRADE CANDIDATE)</option>
+          <option value="Paylocity">Paylocity</option>
+          <option value="Paychex">Paychex Flex</option>
+          <option value="Ceridian">Ceridian Dayforce</option>
+          <option value="UKG">UKG (Ultimate Kronos)</option>
+          <option value="Workday">Workday</option>
+          <option value="BambooHR">BambooHR</option>
+          <option value="Gusto">Gusto</option>
+          <option value="Rippling">Rippling</option>
+          <option value="Other">Other / Multiple Systems</option>
+        </select>
+      </div>
+
+      <div class="form-field" style="margin-top:20px;">
+        <label class="form-label">Additional Systems/Modules (Select all that apply)</label>
+        <div class="competitor-grid">
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="wfn-comp-paylocity" value="Paylocity">
+            <label class="competitor-label" for="wfn-comp-paylocity">
+              <span class="competitor-name">Paylocity</span>
+              <span class="competitor-rating">⭐ 4.4 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="wfn-comp-paychex" value="Paychex">
+            <label class="competitor-label" for="wfn-comp-paychex">
+              <span class="competitor-name">Paychex</span>
+              <span class="competitor-rating">⭐ 4.1 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="wfn-comp-ceridian" value="Ceridian">
+            <label class="competitor-label" for="wfn-comp-ceridian">
+              <span class="competitor-name">Ceridian</span>
+              <span class="competitor-rating">⭐ 4.2 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="wfn-comp-workday" value="Workday">
+            <label class="competitor-label" for="wfn-comp-workday">
+              <span class="competitor-name">Workday</span>
+              <span class="competitor-rating">⭐ 4.0 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="wfn-comp-ukg" value="UKG">
+            <label class="competitor-label" for="wfn-comp-ukg">
+              <span class="competitor-name">UKG</span>
+              <span class="competitor-rating">⭐ 4.1 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="wfn-comp-bamboo" value="BambooHR">
+            <label class="competitor-label" for="wfn-comp-bamboo">
+              <span class="competitor-name">BambooHR</span>
+              <span class="competitor-rating">⭐ 4.5 G2</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-field" style="margin-top:20px;">
+        <label class="form-label">ADP Usage Data (if existing ADP client)</label>
+        <textarea class="form-textarea" id="wfn-adpUsageData" placeholder="Paste ADP usage data here...
+
+Example:
+Current Product: ADP RUN
+Modules: Payroll only
+Employees in System: 180
+Time & Attendance: Manual spreadsheets
+Benefits Admin: Not using ADP
+Last Upgrade Discussion: 2022
+Pain Points Noted: Manual time entry, no integration with benefits"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALL TRANSCRIPT -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-icon">📞</div>
+      <div>
+        <div class="section-title">Call Notes / Transcript</div>
+        <div class="section-subtitle">Conversation insights and stated needs</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-field">
+        <label class="form-label">Gong Transcript or Call Summary</label>
+        <textarea class="form-textarea" id="wfn-callTranscript" style="min-height:180px;" placeholder="Paste Gong call transcript or summary here...
+
+Example:
+[Prospect mentioned they're struggling with manual time entry across 3 locations]
+[Currently using Paychex Flex but frustrated with reporting]
+[Needs better integration between payroll and time tracking]
+[Interested in self-service portal for employees]
+[Budget approved for Q2 implementation]"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYZE -->
+  <div class="analyze-section">
+    <button class="btn-analyze" id="wfn-analyzeBtn" onclick="wfn_analyzeClient()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      Analyze Fit & Opportunity
+    </button>
+    <button class="btn-clear" onclick="wfn_clearForm()">Clear Form</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading" id="wfn-loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Analyzing client data and generating recommendations...</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="wfn-errorBox" style="display:none;background:#fff0f0;border:1px solid #e63946;border-radius:8px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:#c0392b;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <strong>Analysis failed.</strong> <span id="wfn-errorMsg"></span>
+    <div style="margin-top:6px;font-size:12px;color:#888;">Open browser console (Option+Cmd+J) for full details.</div>
+  </div>
+  <div id="wfn-results">
+    <div class="results-header">
+      <div class="results-meta">
+        <h2 id="wfn-resultCompany">—</h2>
+        <p id="wfn-resultMeta">Analysis complete</p>
+      </div>
+      <div class="classification-badge">
+        <div class="classification-label">Classification</div>
+        <div class="classification-type" id="wfn-classificationType">—</div>
+      </div>
+    </div>
+
+    <!-- SCORES -->
+    <div class="score-grid">
+      <div class="score-card fit">
+        <div class="score-header">
+          <div class="score-label">WFN Fit Score</div>
+          <div class="score-value score-fit" id="wfn-fitScore">—</div>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill fill-fit" id="wfn-fitBar"></div>
+        </div>
+        <div class="score-description" id="wfn-fitReason">—</div>
+      </div>
+
+      <div class="score-card opportunity">
+        <div class="score-header">
+          <div class="score-label">Revenue Opportunity</div>
+          <div class="score-value score-opportunity" id="wfn-opportunityScore">—</div>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill fill-opportunity" id="wfn-opportunityBar"></div>
+        </div>
+        <div class="score-description" id="wfn-opportunityReason">—</div>
+      </div>
+
+      <div class="score-card urgency">
+        <div class="score-header">
+          <div class="score-label">Urgency Level</div>
+          <div class="score-value score-urgency" id="wfn-urgencyScore">—</div>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill fill-urgency" id="wfn-urgencyBar"></div>
+        </div>
+        <div class="score-description" id="wfn-urgencyReason">—</div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#E7F5F0;color:var(--success)">✓</div>
+          <div class="insight-title">Cross-Sell Opportunities</div>
+        </div>
+        <ul class="insight-list" id="wfn-crossSellList"></ul>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#FFF4E6;color:var(--warning)">⚠️</div>
+          <div class="insight-title">Key Signals Detected</div>
+        </div>
+        <ul class="insight-list" id="wfn-signalsList"></ul>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#E8F4FD;color:var(--primary)">🎯</div>
+          <div class="insight-title">Competitive Angles</div>
+        </div>
+        <ul class="insight-list" id="wfn-competitiveList"></ul>
+        <div id="wfn-competitorReviews"></div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#FDE8EB;color:var(--danger)">🚩</div>
+          <div class="insight-title">Risk Factors</div>
+        </div>
+        <ul class="insight-list" id="wfn-risksList"></ul>
+      </div>
+    </div>
+
+    <!-- ROI CALCULATOR -->
+    <div class="roi-section">
+      <div class="roi-header">
+        <div class="roi-title">💰 Estimated Switching ROI</div>
+        <div class="roi-subtitle">Projected value of moving to Workforce Now</div>
+      </div>
+      <div class="roi-metrics">
+        <div class="roi-metric">
+          <div class="roi-metric-label">Annual Savings</div>
+          <div class="roi-metric-value" id="wfn-roiSavings">—</div>
+        </div>
+        <div class="roi-metric">
+          <div class="roi-metric-label">Efficiency Gain</div>
+          <div class="roi-metric-value" id="wfn-roiEfficiency">—</div>
+        </div>
+        <div class="roi-metric">
+          <div class="roi-metric-label">Payback Period</div>
+          <div class="roi-metric-value" id="wfn-roiPayback">—</div>
+        </div>
+        <div class="roi-metric">
+          <div class="roi-metric-label">3-Year Value</div>
+          <div class="roi-metric-value" id="wfn-roi3Year">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK -->
+    <div class="playbook-section">
+      <div class="playbook-header">
+        <div class="playbook-title">📋 Recommended Sales Playbook</div>
+      </div>
+      <div class="playbook-steps" id="wfn-playbookSteps"></div>
+      
+      <div class="export-bar">
+        <button class="btn-export" onclick="wfn_copyReport()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:6px;">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy Report
+        </button>
+        <button class="btn-export" onclick="window.print()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:6px;">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Print / PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OUTLOOK EMAIL SECTION ── -->
+  <div class="email-section" id="wfn-emailSection" style="display:none">
+    <div class="email-section-header">
+      <div class="email-section-title">✉️ Outreach Email</div>
+      <button class="ec-gen-btn" id="wfn-ecGenBtn" onclick="wfn_ecGenerate()">⟳ Generate Email via AI</button>
+    </div>
+    <div class="email-section-body">
+      <div id="wfn-ecLoadingMsg" class="ec-loading" style="display:none">⏳ Generating personalized email…</div>
+
+      <!-- Outlook mock -->
+      <div class="ec-outlook" id="wfn-ecOutlookWrap" style="display:none">
+        <div class="ec-ol-tb">
+          <div class="ec-ol-ico">O</div>
+          <span style="font-size:12px;font-weight:600;color:#fff">New Message — Outlook</span>
+        </div>
+        <div class="ec-ol-bar">
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="wfn_ecCopyAll()">⎘ Copy All</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="wfn_ecCopy('to')">To</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="wfn_ecCopy('subj')">Subject</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="wfn_ecCopy('body')">Body</button>
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">To</div>
+          <input class="ec-fi-box" id="wfn-ec-to-inp" placeholder="recipient@company.com">
+          <button class="ec-smb" id="wfn-smb-to" onclick="wfn_ecCopy('to')">copy</button>
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">Cc</div>
+          <input class="ec-fi-box" id="wfn-ec-cc-inp" placeholder="optional">
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">Subject</div>
+          <div class="ec-fi-box" id="wfn-ec-subj-disp" style="font-weight:600;font-size:12px;display:flex;align-items:center;padding:8px 10px;flex:1"></div>
+          <button class="ec-smb" id="wfn-smb-subj" onclick="wfn_ecCopy('subj')">copy</button>
+        </div>
+        <div class="ec-body-txt" id="wfn-ec-body-disp"></div>
+        <div class="ec-ol-ft">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--slate);cursor:pointer;font-weight:500">
+            <input type="checkbox" id="wfn-ec-sig" checked style="accent-color:var(--primary)" onchange="wfn_ecRefreshBody()"> Include signature
+          </label>
+          <button class="btn-export" style="padding:5px 12px;font-size:11px;margin:0" onclick="wfn_ecCopyAll()">⎘ Copy All Fields</button>
+        </div>
+      </div>
+
+      <!-- Outlook launch panel -->
+      <div class="ec-mto" id="wfn-ecMtoWrap" style="display:none">
+        <div class="ec-mto-hdr">
+          <span style="font-size:22px;flex-shrink:0">📧</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;color:var(--ink)">Open in Outlook</div>
+            <div style="font-size:11px;color:var(--slate);line-height:1.55">One tap launches Outlook with <strong style="color:var(--ink)">To, Subject & Body pre-filled</strong>. Just review and hit Send.</div>
+          </div>
+        </div>
+        <button class="ec-mto-btn" id="wfn-ec-mto-btn" onclick="wfn_ecFireMailto()">
+          <span style="font-size:16px">✉️</span>
+          <span id="wfn-ec-mto-lbl">Open in Outlook — Pre-filled & Ready</span>
+        </button>
+        <div class="ec-tip">
+          <strong style="color:var(--warning);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
+          If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
+        </div>
+        <div class="ec-or"><div class="ec-or-line"></div><span class="ec-or-txt">or copy individually</span><div class="ec-or-line"></div></div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="wfn-prev-to"></div>
+          <button class="ec-cbtn" onclick="wfn_ecCopy('to')" id="wfn-cpbtn-to">⎘ Copy To</button>
+        </div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="wfn-prev-subj"></div>
+          <button class="ec-cbtn" onclick="wfn_ecCopy('subj')" id="wfn-cpbtn-subj">⎘ Copy Subject</button>
+        </div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="wfn-prev-body"></div>
+          <button class="ec-cbtn" onclick="wfn_ecCopy('body')" id="wfn-cpbtn-body" style="color:#0055A5;border-color:rgba(0,85,165,.25);background:rgba(0,85,165,.05)">⎘ Copy Body</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- API CONFIGURATION -->
+<div class="api-config">
+  <button class="api-config-toggle" onclick="wfn_toggleApiConfig()" title="API Configuration">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6"/>
+    </svg>
+  </button>
+  <div class="api-config-panel" id="wfn-apiConfigPanel">
+    <div class="api-config-title">🔑 Data Enrichment APIs</div>
+    
+    <!-- CRUNCHBASE API -->
+    <div style="margin-bottom:16px;">
+      <label class="form-label" style="margin-bottom:6px;">Crunchbase API Key (Optional)</label>
+      <input 
+        type="password" 
+        class="api-key-input" 
+        id="wfn-crunchbaseApiKey" 
+        placeholder="Enter Crunchbase API key">
+      <div class="api-hint">
+        <strong>Free Tier:</strong> 200 lookups/month<br>
+        Get key at <a href="https://data.crunchbase.com/docs" target="_blank">Crunchbase API</a>
+      </div>
+    </div>
+
+    <button class="api-save-btn" onclick="wfn_saveApiKeys()">💾 Save API Key</button>
+
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);">
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;">
+        <strong>Current Data Sources:</strong><br>
+        ✅ AI Intelligence (Claude)<br>
+        ✅ Manual competitor selection<br>
+        ✅ Third-party review data (G2, TrustRadius)<br>
+        ✅ Crunchbase (if API key set)
+      </div>
+    </div>
+  </div>
+</div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ══════════════════════════════════
+   WFN TOOL FULL-SCREEN OVERLAY
+══════════════════════════════════ */
+#wfn-panel{position:fixed;inset:0;z-index:10000;display:none;flex-direction:column;}
+#wfn-panel.open{display:flex;}
+#wfn-topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:#0d1535;border-bottom:1px solid rgba(255,255,255,.09);flex-shrink:0;gap:16px;min-height:52px;}
+.wfn-back{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.75);font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;cursor:pointer;transition:all .15s;font-family:inherit;}
+.wfn-back:hover{background:rgba(255,255,255,.13);color:#fff;}
+.wfn-panel-title{font-size:14px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:.3px;}
+.wfn-panel-badge{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#60a5fa;background:rgba(0,85,165,.15);border:1px solid rgba(0,85,165,.35);padding:3px 10px;border-radius:20px;white-space:nowrap;}
+#wfn-body{flex:1;overflow-y:auto;background:#F8FAFB;}
+#wfn-body-inner{padding:40px 20px;max-width:1200px;margin:0 auto;}
+
+/* Scoped WFN styles */
+
+  #wfn-panel :root {
+    --primary: #0055A5;
+    --primary-light: #0066CC;
+    --primary-dim: rgba(0, 85, 165, 0.1);
+    --secondary: #00A3E0;
+    --success: #00C389;
+    --success-dim: rgba(0, 195, 137, 0.12);
+    --warning: #FF9500;
+    --warning-dim: rgba(255, 149, 0, 0.12);
+    --danger: #E63946;
+    --danger-dim: rgba(230, 57, 70, 0.12);
+    --ink: #0D1B2A;
+    --ink2: #1B263B;
+    --slate: #415A77;
+    --muted: #778DA9;
+    --ghost: #B0B8C4;
+    --line: #E0E5EB;
+    --surface: #F8FAFB;
+    --white: #FFFFFF;
+  }
+
+  
+
+  
+
+  /* HEADER */
+  #wfn-panel header {
+    background: var(--ink);
+    color: white;
+    padding: 0 40px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--primary);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  }
+
+  #wfn-panel .logo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  #wfn-panel .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    color: white;
+    letter-spacing: -1px;
+  }
+
+  #wfn-panel .logo-text {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+
+  #wfn-panel .logo-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--secondary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  #wfn-panel .header-badge {
+    background: rgba(0, 163, 224, 0.2);
+    border: 1px solid rgba(0, 163, 224, 0.4);
+    color: var(--secondary);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* MAIN */
+  #wfn-panel main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  #wfn-panel .hero {
+    margin-bottom: 40px;
+    padding: 32px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    border-radius: 12px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #wfn-panel .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  #wfn-panel .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  #wfn-panel .hero h1 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 36px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+  }
+
+  #wfn-panel .hero p {
+    font-size: 16px;
+    opacity: 0.95;
+    max-width: 700px;
+    line-height: 1.6;
+  }
+
+  /* SECTION */
+  #wfn-panel .section {
+    margin-bottom: 32px;
+  }
+
+  #wfn-panel .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  #wfn-panel .section-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-dim);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 18px;
+  }
+
+  #wfn-panel .section-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  #wfn-panel .section-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* FORM */
+  #wfn-panel .card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  #wfn-panel .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  #wfn-panel .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #wfn-panel .form-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--slate);
+    font-weight: 600;
+  }
+
+  #wfn-panel .form-label.required::after {
+    content: ' *';
+    color: var(--danger);
+  }
+
+  .form-input,
+  .form-select,
+  #wfn-panel .form-textarea {
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: white;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    transition: all 0.2s;
+    outline: none;
+  }
+
+  .form-input:focus,
+  .form-select:focus,
+  #wfn-panel .form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-dim);
+  }
+
+  #wfn-panel .form-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  /* COMPETITOR SELECTION */
+  #wfn-panel .competitor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .competitor-grid { grid-template-columns: 1fr; }
+  }
+
+  #wfn-panel .competitor-option {
+    position: relative;
+  }
+
+  #wfn-panel .competitor-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #wfn-panel .competitor-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border: 2px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  #wfn-panel .competitor-checkbox:checked + .competitor-label {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+  }
+
+  #wfn-panel .competitor-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  #wfn-panel .competitor-rating {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--warning);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  /* BUTTONS */
+  #wfn-panel .btn-analyze {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    padding: 16px 36px;
+    border-radius: 8px;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 85, 165, 0.3);
+  }
+
+  #wfn-panel .btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 85, 165, 0.4);
+  }
+
+  #wfn-panel .btn-analyze:disabled {
+    background: var(--ghost);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  #wfn-panel .btn-clear {
+    padding: 16px 24px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  #wfn-panel .btn-clear:hover {
+    border-color: var(--slate);
+    color: var(--ink);
+  }
+
+  #wfn-panel .analyze-section {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin: 32px 0;
+  }
+
+  /* LOADING */
+  #wfn-panel .loading {
+    display: none;
+    text-align: center;
+    padding: 60px 0;
+  }
+
+  #wfn-panel .loading.active { display: block; }
+
+  #wfn-panel .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--line);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #wfn-panel .loading-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* RESULTS */
+  #wfn-panel #results {
+    display: none;
+  }
+
+  #wfn-panel #results.active { display: block; }
+
+  #wfn-panel .results-header {
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  #wfn-panel .results-meta h2 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  #wfn-panel .results-meta p {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  #wfn-panel .classification-badge {
+    text-align: right;
+  }
+
+  #wfn-panel .classification-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  #wfn-panel .classification-type {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  #wfn-panel .type-upgrade { color: var(--success); }
+  #wfn-panel .type-new-sale { color: var(--primary); }
+  #wfn-panel .type-competitive { color: var(--warning); }
+
+  /* SCORE GRID */
+  #wfn-panel .score-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 900px) {
+    .score-grid { grid-template-columns: 1fr; }
+  }
+
+  #wfn-panel .score-card {
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #wfn-panel .score-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+
+  #wfn-panel .score-card.fit::before { background: var(--success); }
+  #wfn-panel .score-card.opportunity::before { background: var(--warning); }
+  #wfn-panel .score-card.urgency::before { background: var(--danger); }
+
+  #wfn-panel .score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  #wfn-panel .score-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  #wfn-panel .score-value {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 42px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  #wfn-panel .score-fit { color: var(--success); }
+  #wfn-panel .score-opportunity { color: var(--warning); }
+  #wfn-panel .score-urgency { color: var(--danger); }
+
+  #wfn-panel .score-bar {
+    height: 8px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  #wfn-panel .score-fill {
+    height: 100%;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0;
+  }
+
+  #wfn-panel .fill-fit { background: var(--success); }
+  #wfn-panel .fill-opportunity { background: var(--warning); }
+  #wfn-panel .fill-urgency { background: var(--danger); }
+
+  #wfn-panel .score-description {
+    font-size: 13px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  /* INSIGHTS */
+  #wfn-panel .insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 900px) {
+    .insights-grid { grid-template-columns: 1fr; }
+  }
+
+  #wfn-panel .insight-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+  }
+
+  #wfn-panel .insight-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  #wfn-panel .insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  #wfn-panel .insight-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+  }
+
+  #wfn-panel .insight-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #wfn-panel .insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  #wfn-panel .insight-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  #wfn-panel .dot-success { background: var(--success); }
+  #wfn-panel .dot-warning { background: var(--warning); }
+  #wfn-panel .dot-primary { background: var(--primary); }
+  #wfn-panel .dot-danger { background: var(--danger); }
+
+  /* REVIEW BADGE */
+  #wfn-panel .review-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--warning-dim);
+    border: 1px solid var(--warning);
+    margin-top: 8px;
+  }
+
+  #wfn-panel .review-badge-rating {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--warning);
+  }
+
+  #wfn-panel .review-badge-source {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ROI CALCULATOR */
+  #wfn-panel .roi-section {
+    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+    border: 2px solid var(--secondary);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 32px;
+  }
+
+  #wfn-panel .roi-header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  #wfn-panel .roi-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  #wfn-panel .roi-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  #wfn-panel .roi-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .roi-metrics { grid-template-columns: 1fr 1fr; }
+  }
+
+  #wfn-panel .roi-metric {
+    text-align: center;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 163, 224, 0.2);
+  }
+
+  #wfn-panel .roi-metric-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  #wfn-panel .roi-metric-value {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: var(--primary);
+    line-height: 1;
+  }
+
+  /* PLAYBOOK */
+  #wfn-panel .playbook-section {
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 32px;
+  }
+
+  #wfn-panel .playbook-header {
+    margin-bottom: 24px;
+  }
+
+  #wfn-panel .playbook-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  #wfn-panel .playbook-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  #wfn-panel .playbook-step {
+    display: flex;
+    gap: 20px;
+  }
+
+  #wfn-panel .step-number {
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  #wfn-panel .step-content h4 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  #wfn-panel .step-content p {
+    font-size: 14px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  /* EXPORT */
+  #wfn-panel .export-bar {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  /* Outlook Email Section */
+  #wfn-panel .email-section {
+    margin-top: 24px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  #wfn-panel .email-section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  #wfn-panel .email-section-title {
+    font-family: 'Archivo', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  #wfn-panel .email-section-body { padding: 20px; }
+  #wfn-panel .ec-outlook {background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  #wfn-panel .ec-ol-tb {background:#1a2460;padding:7px 12px;display:flex;align-items:center;gap:8px}
+  #wfn-panel .ec-ol-ico {width:22px;height:22px;background:#0078d4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+  #wfn-panel .ec-ol-bar {background:#e8ebf5;border-bottom:1px solid var(--line);padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap}
+  #wfn-panel .ec-fr {display:flex;align-items:flex-start;border-bottom:1px solid var(--line);min-height:34px}
+  #wfn-panel .ec-fl {font-size:9px;color:var(--muted);font-weight:700;padding:10px 8px;min-width:52px;flex-shrink:0;border-right:1px solid var(--line);letter-spacing:1px;text-transform:uppercase}
+  #wfn-panel .ec-fi-box {width:100%;height:100%;background:transparent;border:none;padding:8px 10px;font-size:13px;color:var(--ink);font-family:'IBM Plex Sans',sans-serif;outline:none;flex:1}
+  #wfn-panel .ec-body-txt {min-height:200px;padding:12px;font-size:12px;line-height:1.8;color:var(--ink);white-space:pre-wrap;font-family:'Calibri',sans-serif;border-top:1px solid var(--line);background:#fff}
+  #wfn-panel .ec-ol-ft {background:#f8fafb;border-top:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+  #wfn-panel .ec-mto {background:#f8fafb;border:1.5px solid var(--line);border-radius:8px;padding:16px}
+  #wfn-panel .ec-mto-hdr {display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  #wfn-panel .ec-mto-btn {width:100%;background:#0055A5;border:none;border-radius:6px;padding:13px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;margin-bottom:10px;}
+  #wfn-panel .ec-mto-btn:hover {opacity:.88}
+  #wfn-panel .ec-tip {background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:var(--slate);line-height:1.65}
+  #wfn-panel .ec-or {display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  #wfn-panel .ec-or-line {flex:1;height:1px;background:var(--line)}
+  #wfn-panel .ec-or-txt {font-size:10px;color:var(--muted);font-weight:500}
+  #wfn-panel .ec-crow {background:white;border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:7px}
+  #wfn-panel .ec-cprev {font-size:10px;color:var(--muted);background:#f8fafb;border:1px solid var(--line);border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5;max-height:46px;overflow:hidden;font-family:'Calibri',sans-serif;word-break:break-word}
+  #wfn-panel .ec-cbtn {width:100%;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;background:transparent;color:var(--ink);border-color:var(--line);}
+  #wfn-panel .ec-cbtn:hover {opacity:.8}
+  #wfn-panel .ec-smb {font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:white;color:var(--muted);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;flex-shrink:0;margin:auto 8px auto 0;transition:all .15s}
+  #wfn-panel .ec-smb:hover {border-color:var(--primary);color:var(--primary)}
+  #wfn-panel .ec-gen-btn {padding:9px 18px;background:var(--primary);color:white;border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
+  #wfn-panel .ec-gen-btn:hover {background:var(--primary-light)}
+  #wfn-panel .ec-gen-btn:disabled {opacity:.5;cursor:not-allowed}
+  #wfn-panel .ec-loading {font-size:12px;color:var(--muted);font-style:italic;padding:8px 0}
+
+  #wfn-panel .btn-export {
+    padding: 10px 20px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  #wfn-panel .btn-export:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  /* API CONFIG */
+  #wfn-panel .api-config { display: none; }
+
+  #wfn-panel .api-config-toggle {
+    width: 48px;
+    height: 48px;
+    background: var(--slate);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+  }
+
+  #wfn-panel .api-config-toggle:hover {
+    background: var(--primary);
+    transform: scale(1.05);
+  }
+
+  #wfn-panel .api-config-panel {
+    position: absolute;
+    bottom: 60px;
+    right: 0;
+    width: 320px;
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    padding: 20px;
+    display: none;
+  }
+
+  #wfn-panel .api-config-panel.open {
+    display: block;
+  }
+
+  #wfn-panel .api-config-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  #wfn-panel .api-key-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+
+  #wfn-panel .api-save-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  #wfn-panel .api-save-btn:hover {
+    background: var(--primary-light);
+  }
+
+  #wfn-panel .api-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  #wfn-panel .api-hint a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  #wfn-panel .api-hint a:hover {
+    text-decoration: underline;
+  }
+
+</style>
+
+<script>
+
+// ── WFN Panel auto-populate from prospect ──
+window.openWfnPanel = function(){
+  document.getElementById('wfn-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+  // Auto-fill from active prospect
+  var p = window._hqProspect;
+  if(p){
+    var cn = document.getElementById('wfn-companyName');
+    var ec = document.getElementById('wfn-employeeCount');
+    var ind = document.getElementById('wfn-industry');
+    if(cn && !cn.value) cn.value = p.company || '';
+    if(ec && !ec.value) ec.value = p.headcount || '';
+    if(ind && !ind.value) ind.value = p.industry || '';
+  }
+};
+window.closeWfnPanel = function(){
+  document.getElementById('wfn-panel').classList.remove('open');
+  document.body.style.overflow='';
+};
+
+
+// ─── COMPETITOR REVIEW DATABASE ──────────────────────────────────────────────
+const COMPETITOR_REVIEWS = {
+  'Paylocity': {
+    g2Rating: 4.4,
+    g2Reviews: 2800,
+    trustRadiusRating: 8.2,
+    trustRadiusReviews: 450,
+    commonComplaints: ['Complex reporting', 'Limited customization', 'Steep learning curve'],
+    wfnAdvantages: ['Better analytics', 'More flexible reporting', 'Easier implementation']
+  },
+  'Paychex': {
+    g2Rating: 4.1,
+    g2Reviews: 1900,
+    trustRadiusRating: 7.8,
+    trustRadiusReviews: 380,
+    commonComplaints: ['Outdated UI', 'Poor customer service', 'Limited integrations'],
+    wfnAdvantages: ['Modern interface', 'Better support', 'Robust integration options']
+  },
+  'Ceridian': {
+    g2Rating: 4.2,
+    g2Reviews: 1500,
+    trustRadiusRating: 8.0,
+    trustRadiusReviews: 320,
+    commonComplaints: ['Expensive', 'Complex setup', 'Slow support response'],
+    wfnAdvantages: ['Better value', 'Faster implementation', 'Responsive support']
+  },
+  'Workday': {
+    g2Rating: 4.0,
+    g2Reviews: 1200,
+    trustRadiusRating: 7.5,
+    trustRadiusReviews: 290,
+    commonComplaints: ['Very expensive', 'Slow updates', 'Complex for mid-market'],
+    wfnAdvantages: ['Cost-effective for mid-market', 'Faster updates', 'Right-sized for 100-10K employees']
+  },
+  'UKG': {
+    g2Rating: 4.1,
+    g2Reviews: 1100,
+    trustRadiusRating: 7.9,
+    trustRadiusReviews: 260,
+    commonComplaints: ['Integration challenges', 'Reporting limitations', 'Support inconsistency'],
+    wfnAdvantages: ['Seamless integrations', 'Advanced analytics', 'Consistent support quality']
+  },
+  'BambooHR': {
+    g2Rating: 4.5,
+    g2Reviews: 1800,
+    trustRadiusRating: 8.5,
+    trustRadiusReviews: 410,
+    commonComplaints: ['Limited payroll features', 'Not scalable for growth', 'Basic reporting'],
+    wfnAdvantages: ['Full payroll + HCM', 'Scales with growth', 'Enterprise-grade analytics']
+  }
+};
+
+// ─── API CONFIGURATION ───────────────────────────────────────────────────────
+function wfn_toggleApiConfig() {
+  const panel = document.getElementById('wfn-apiConfigPanel');
+  panel.classList.toggle('open');
+}
+
+function wfn_saveApiKeys() {
+  const crunchbaseKey = document.getElementById('wfn-crunchbaseApiKey').value.trim();
+  try {
+    if (crunchbaseKey) { localStorage.setItem('crunchbaseApiKey', crunchbaseKey); }
+    else { localStorage.removeItem('crunchbaseApiKey'); }
+  } catch(e) {}
+  alert('Settings saved!');
+  document.getElementById('wfn-apiConfigPanel').classList.remove('open');
+}
+
+document.addEventListener('DOMContentLoaded', /* wfn */ () => {
+  try {
+    const savedCrunchbase = localStorage.getItem('crunchbaseApiKey');
+    if (savedCrunchbase) { document.getElementById('wfn-crunchbaseApiKey').value = savedCrunchbase; }
+  } catch(e) {}
+});
+
+// ─── FORM HANDLING ───────────────────────────────────────────────────────────
+function wfn_clearForm() {
+  document.getElementById('wfn-companyName').value = '';
+  document.getElementById('wfn-employeeCount').value = '';
+  document.getElementById('wfn-industry').value = '';
+  document.getElementById('wfn-revenue').value = '';
+  document.getElementById('wfn-locations').value = '';
+  document.getElementById('wfn-states').value = '';
+  document.getElementById('wfn-primaryPlatform').value = '';
+  document.querySelectorAll('#wfn-panel .competitor-checkbox').forEach(cb => cb.checked = false);
+  document.getElementById('wfn-adpUsageData').value = '';
+  document.getElementById('wfn-callTranscript').value = '';
+  document.getElementById('wfn-results').classList.remove('active');
+}
+
+function wfn_getSelectedCompetitors() {
+  const selected = [];
+  document.querySelectorAll('.competitor-checkbox:checked').forEach(cb => {
+    selected.push(cb.value);
+  });
+  return selected;
+}
+
+// ─── ANALYSIS ────────────────────────────────────────────────────────────────
+async function wfn_analyzeClient() {
+  const companyName = document.getElementById('wfn-companyName').value.trim();
+  const employeeCount = document.getElementById('wfn-employeeCount').value.trim();
+  const primaryPlatform = document.getElementById('wfn-primaryPlatform').value;
+
+  if (!companyName || !employeeCount || !primaryPlatform) {
+    alert('Please fill in Company Name, Employee Count, and Primary Platform');
+    return;
+  }
+
+  document.getElementById('wfn-loading').classList.add('active');
+  document.getElementById('wfn-results').classList.remove('active');
+  document.getElementById('wfn-errorBox').style.display = 'none';
+  document.getElementById('wfn-analyzeBtn').disabled = true;
+
+  const selectedCompetitors = wfn_getSelectedCompetitors();
+
+  const data = {
+    company: companyName,
+    employees: employeeCount,
+    industry: document.getElementById('wfn-industry').value.trim(),
+    revenue: document.getElementById('wfn-revenue').value.trim(),
+    locations: document.getElementById('wfn-locations').value.trim(),
+    states: document.getElementById('wfn-states').value.trim(),
+    primaryPlatform: primaryPlatform,
+    additionalSystems: selectedCompetitors,
+    adpUsageData: document.getElementById('wfn-adpUsageData').value.trim(),
+    callTranscript: document.getElementById('wfn-callTranscript').value.trim()
+  };
+
+  try {
+    // Build competitor intelligence context
+    const competitorContext = selectedCompetitors.map(comp => {
+      const reviewData = COMPETITOR_REVIEWS[comp];
+      if (!reviewData) return '';
+      return `${comp}: G2 ${reviewData.g2Rating}/5 (${reviewData.g2Reviews} reviews), TrustRadius ${reviewData.trustRadiusRating}/10. Common complaints: ${reviewData.commonComplaints.join(', ')}. WFN advantages: ${reviewData.wfnAdvantages.join(', ')}.`;
+    }).filter(Boolean).join(' ');
+
+    const prompt = `You are an ADP Workforce Now sales analyst. Analyze this prospect for WFN fit and opportunities.
+
+COMPANY DATA:
+Company: ${data.company}
+Employees: ${data.employees}
+Industry: ${data.industry || 'Not provided'}
+Revenue: ${data.revenue || 'Not provided'}
+Locations: ${data.locations || 'Not provided'}
+States: ${data.states || 'Not provided'}
+
+CURRENT SYSTEM:
+Primary Platform: ${data.primaryPlatform}
+Additional Systems: ${data.additionalSystems.join(', ') || 'None selected'}
+
+${competitorContext ? `COMPETITOR INTELLIGENCE (from G2/TrustRadius):
+${competitorContext}
+
+Use this review data to inform competitive angles and identify weaknesses in their current systems.
+` : ''}
+
+${data.adpUsageData ? `ADP USAGE DATA:
+${data.adpUsageData}
+` : ''}
+
+${data.callTranscript ? `CALL NOTES:
+${data.callTranscript}
+` : ''}
+
+Return ONLY valid JSON (no markdown):
+
+{
+  "classification": "UPGRADE" | "NEW SALE" | "COMPETITIVE DISPLACEMENT",
+  "fitScore": 0-100,
+  "fitReason": "One sentence why they fit WFN",
+  "opportunityScore": 0-100,
+  "opportunityReason": "One sentence on revenue potential",
+  "urgencyScore": 0-100,
+  "urgencyReason": "One sentence on timing",
+  "crossSell": ["Module 1", "Module 2", "Module 3"],
+  "signals": ["Signal 1", "Signal 2", "Signal 3"],
+  "competitive": ["Angle 1 (reference review data)", "Angle 2", "Angle 3"],
+  "risks": ["Risk 1", "Risk 2"],
+  "roi": {
+    "annualSavings": "$XX,XXX",
+    "efficiencyGain": "XX hrs/mo",
+    "payback": "X months",
+    "threeYear": "$XXX,XXX"
+  },
+  "playbook": [
+    {"step": "Action", "detail": "How to execute"},
+    {"step": "Action", "detail": "How to execute"},
+    {"step": "Action", "detail": "How to execute"}
+  ]
+}
+
+CLASSIFICATION LOGIC:
+- UPGRADE if currently on ADP Classic or ADP RUN
+- COMPETITIVE DISPLACEMENT if on Paylocity, Paychex, Ceridian, UKG, Workday, BambooHR, etc.
+- NEW SALE if on other/multiple systems
+
+COMPETITIVE ANGLES:
+- Reference specific weaknesses from review data (e.g., "Paylocity users complain about complex reporting - WFN has better analytics")
+- Use G2/TrustRadius ratings to build credibility
+- Focus on pain points mentioned in reviews
+
+SCORING:
+FIT: 100-10K employees ideal, multi-state, unified platform need
+OPPORTUNITY: Revenue potential, cross-sell, competitive switch
+URGENCY: Contract timing, pain points, budget
+
+Keep all text concise (under 100 chars per field).`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": "ignored", "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 3500,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error('API error ' + response.status + ': ' + errBody.substring(0, 300));
+    }
+
+    const result = await response.json();
+
+    if (!result.content || result.content.length === 0) {
+      throw new Error('Empty response: ' + JSON.stringify(result).substring(0, 200));
+    }
+
+    const raw = result.content.map(i => i.text || "").join("");
+    const clean = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    let analysis;
+    try {
+      analysis = JSON.parse(clean);
+    } catch(parseErr) {
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+      if (jsonMatch) { analysis = JSON.parse(jsonMatch[0]); }
+      else { throw new Error('Could not parse response: ' + clean.substring(0, 200)); }
+    }
+
+    wfn_renderResults(analysis, data);
+
+  } catch (err) {
+    console.error('Analysis error:', err);
+    document.getElementById('wfn-errorMsg').textContent = err.message;
+    document.getElementById('wfn-errorBox').style.display = 'block';
+  } finally {
+    document.getElementById('wfn-loading').classList.remove('active');
+    document.getElementById('wfn-analyzeBtn').disabled = false;
+  }
+}
+
+// ─── RENDER RESULTS ──────────────────────────────────────────────────────────
+function wfn_renderResults(analysis, data) {
+  // Header
+  document.getElementById('wfn-resultCompany').textContent = data.company;
+  document.getElementById('wfn-resultMeta').textContent = `${data.employees} employees · ${data.primaryPlatform}`;
+  
+  const classEl = document.getElementById('wfn-classificationType');
+  classEl.textContent = analysis.classification;
+  classEl.className = 'classification-type type-' + analysis.classification.toLowerCase().replace(' ', '-');
+
+  // Scores
+  wfn_setScore('fit', analysis.fitScore, analysis.fitReason);
+  wfn_setScore('opportunity', analysis.opportunityScore, analysis.opportunityReason);
+  wfn_setScore('urgency', analysis.urgencyScore, analysis.urgencyReason);
+
+  // Insights
+  wfn_renderList('crossSellList', analysis.crossSell, 'dot-success');
+  wfn_renderList('signalsList', analysis.signals, 'dot-warning');
+  wfn_renderList('competitiveList', analysis.competitive, 'dot-primary');
+  wfn_renderList('risksList', analysis.risks, 'dot-danger');
+
+  // Add competitor review badges
+  const competitorReviewsEl = document.getElementById('wfn-competitorReviews');
+  competitorReviewsEl.innerHTML = '';
+  
+  data.additionalSystems.forEach(comp => {
+    const reviewData = COMPETITOR_REVIEWS[comp];
+    if (reviewData) {
+      competitorReviewsEl.innerHTML += `
+        <div class="review-badge">
+          <span class="review-badge-rating">⭐ ${reviewData.g2Rating}/5</span>
+          <span class="review-badge-source">${comp} on G2</span>
+        </div>
+      `;
+    }
+  });
+
+  // ROI
+  document.getElementById('wfn-roiSavings').textContent = analysis.roi.annualSavings;
+  document.getElementById('wfn-roiEfficiency').textContent = analysis.roi.efficiencyGain;
+  document.getElementById('wfn-roiPayback').textContent = analysis.roi.payback;
+  document.getElementById('wfn-roi3Year').textContent = analysis.roi.threeYear;
+
+  // Playbook
+  const playbookEl = document.getElementById('wfn-playbookSteps');
+  playbookEl.innerHTML = '';
+  analysis.playbook.forEach((step, i) => {
+    playbookEl.innerHTML += `
+      <div class="playbook-step">
+        <div class="step-number">${i + 1}</div>
+        <div class="step-content">
+          <h4>${step.step}</h4>
+          <p>${step.detail}</p>
+        </div>
+      </div>`;
+  });
+
+  // Show results
+  document.getElementById('wfn-results').classList.add('active');
+  // Show email section and store data for AI generation
+  document.getElementById('wfn-emailSection').style.display = 'block';
+  _ecCurrentData = Object.assign({}, data, {
+    classification: analysis.classification,
+    fitScore: analysis.fitScore,
+    opportunityScore: analysis.opportunityScore,
+    signals: analysis.signals,
+    competitive: analysis.competitive,
+    crossSell: analysis.crossSell,
+    roi: analysis.roi
+  });
+  // Reset outlook mock
+  document.getElementById('wfn-ecOutlookWrap').style.display = 'none';
+  document.getElementById('wfn-ecMtoWrap').style.display = 'none';
+  document.getElementById('wfn-ecGenBtn').textContent = '⟳ Generate Email via AI';
+  document.getElementById('wfn-ecGenBtn').disabled = false;
+
+  // Animate bars
+  setTimeout(() => {
+    document.getElementById('wfn-fitBar').style.width = analysis.fitScore + '%';
+    document.getElementById('wfn-opportunityBar').style.width = analysis.opportunityScore + '%';
+    document.getElementById('wfn-urgencyBar').style.width = analysis.urgencyScore + '%';
+  }, 100);
+}
+
+function wfn_setScore(type, score, reason) {
+  document.getElementById(`${type}Score`).textContent = score;
+  document.getElementById(`${type}Reason`).textContent = reason;
+}
+
+function wfn_renderList(containerId, items, dotClass) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  if (!items || items.length === 0) {
+    el.innerHTML = '<li class="insight-item" style="color:var(--ghost);font-style:italic;">None detected</li>';
+    return;
+  }
+  items.forEach(item => {
+    el.innerHTML += `
+      <li class="insight-item">
+        <div class="insight-dot ${dotClass}"></div>
+        <span>${item}</span>
+      </li>`;
+  });
+}
+
+function wfn_copyReport() {
+  const text = document.getElementById('wfn-results').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Report copied to clipboard!');
+  });
+}
+
+// ── Outlook Email Mock ─────────────────────────────────
+var _ecSubject = '';
+var _ecBodyRaw = '';
+var _ecBody = '';
+var _ecCurrentData = null;
+
+function wfn_ecRefreshBody() {
+  const sig = document.getElementById('wfn-ec-sig') && document.getElementById('wfn-ec-sig').checked;
+  const body = sig ? _ecBodyRaw : _ecBodyRaw.replace(/\n\n—[\s\S]*$/, '');
+  _ecBody = body;
+  document.getElementById('wfn-ec-body-disp').textContent = body;
+  document.getElementById('wfn-prev-body').textContent = body.substring(0, 88) + '…';
+}
+
+function wfn_ecSetEmail(subject, bodyRaw) {
+  _ecSubject = subject;
+  _ecBodyRaw = bodyRaw;
+  wfn_ecRefreshBody();
+  document.getElementById('wfn-ec-subj-disp').textContent = subject;
+  document.getElementById('wfn-prev-to').textContent = document.getElementById('wfn-ec-to-inp').value || 'recipient@company.com';
+  document.getElementById('wfn-prev-subj').textContent = subject;
+  document.getElementById('wfn-ec-mto-lbl').textContent = 'Open in Outlook — Pre-filled & Ready';
+  document.getElementById('wfn-ecOutlookWrap').style.display = 'block';
+  document.getElementById('wfn-ecMtoWrap').style.display = 'block';
+}
+
+function wfn_ecFireMailto() {
+  const toVal = (document.getElementById('wfn-ec-to-inp').value || '').trim();
+  if (!toVal) { alert('Add a recipient email first'); return; }
+  const uri = 'mailto:' + encodeURIComponent(toVal) + '?subject=' + encodeURIComponent(_ecSubject) + '&body=' + encodeURIComponent(_ecBody);
+  const a = document.createElement('a'); a.href = uri; a.style.display = 'none'; document.body.appendChild(a); a.click();
+  setTimeout(() => document.body.removeChild(a), 500);
+  document.getElementById('wfn-ec-mto-lbl').textContent = '✓ Outlook Opened — Email Launched';
+}
+
+function wfn_ecCopyText(text, btnId, label) {
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  if (btnId) {
+    const btn = document.getElementById(btnId); if (!btn) return;
+    const orig = btn.textContent; btn.textContent = '✓ Copied!'; btn.style.color = 'var(--success)'; btn.style.borderColor = 'var(--success)';
+    setTimeout(() => { btn.textContent = label; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
+  }
+}
+
+function wfn_ecCopy(field) {
+  const toVal = document.getElementById('wfn-ec-to-inp').value || '';
+  if (field === 'to') wfn_ecCopyText(toVal, 'cpbtn-to', '⎘ Copy To');
+  else if (field === 'subj') {
+    wfn_ecCopyText(_ecSubject, 'cpbtn-subj', '⎘ Copy Subject');
+    const smb = document.getElementById('wfn-smb-subj'); if (smb) { smb.textContent = '✓'; setTimeout(() => smb.textContent = 'copy', 1800); }
+  } else if (field === 'body') wfn_ecCopyText(_ecBody, 'cpbtn-body', '⎘ Copy Body');
+}
+
+function wfn_ecCopyAll() {
+  const toVal = document.getElementById('wfn-ec-to-inp').value || '';
+  wfn_ecCopyText('TO: ' + toVal + '\nSUBJECT: ' + _ecSubject + '\n\n' + _ecBody, null, '');
+}
+
+async function wfn_ecGenerate() {
+  if (!_ecCurrentData) { alert('Run an analysis first'); return; }
+  const d = _ecCurrentData;
+  const btn = document.getElementById('wfn-ecGenBtn');
+  const loading = document.getElementById('wfn-ecLoadingMsg');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+  loading.style.display = 'block';
+  document.getElementById('wfn-ecOutlookWrap').style.display = 'none';
+  document.getElementById('wfn-ecMtoWrap').style.display = 'none';
+
+  const prompt = `You are an elite B2B sales rep for ADP Workforce Now. Write a short, punchy cold outreach email to a prospect based on this analysis.
+
+COMPANY: ${d.company}
+EMPLOYEES: ${d.employees}
+INDUSTRY: ${d.industry || 'Not specified'}
+CURRENT PLATFORM: ${d.primaryPlatform}
+CLASSIFICATION: ${d.classification}
+FIT SCORE: ${d.fitScore}/100
+OPPORTUNITY SCORE: ${d.opportunityScore}/100
+TOP SIGNALS: ${(d.signals || []).slice(0,2).join('; ')}
+COMPETITIVE ANGLES: ${(d.competitive || []).slice(0,2).join('; ')}
+TOP CROSS-SELL MODULES: ${(d.crossSell || []).slice(0,3).join(', ')}
+ROI: ${d.roi ? d.roi.annualSavings + ' annual savings, ' + d.roi.payback + ' payback' : 'not calculated'}
+
+Write a concise, specific, value-driven email. Lead with insight, not a pitch. 
+Reference their current platform's weaknesses. Include 1 compelling stat or data point.
+End with a soft CTA (15-min call, not a demo request).
+
+Respond ONLY with valid JSON (no markdown):
+{
+  "subject": "compelling subject line under 60 chars",
+  "body": "full email body with proper line breaks. Include a signature placeholder: \\n\\n—\\n[Your Name]\\nADP Workforce Now | [Your Phone]\\nbeyondpayroll.net"
+}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const result = await response.json();
+    const raw = result.content.map(i => i.text || '').join('');
+    const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); } catch(e) {
+      const m = clean.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null;
+    }
+    if (parsed && parsed.subject && parsed.body) {
+      wfn_ecSetEmail(parsed.subject, parsed.body);
+    } else {
+      throw new Error('Could not parse email response');
+    }
+  } catch(err) {
+    alert('Email generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⟳ Regenerate Email';
+    loading.style.display = 'none';
+  }
+}
+
+</script>
+
+
 <style>
 
 /* ══════════════════════════════════
@@ -6109,7 +8081,7 @@ function sreDisplayResults(result){
 window.proceedToRecommendedTool = function(){
   if(!sreCurrentAnalysis) return;
   if(sreCurrentAnalysis.recommendation === 'Workforce Now'){
-    window.open('workforce-now-analyzer-v2_1.html','_blank');
+    openWfnPanel();
     if(typeof hqMarkDone === 'function'){ hqMarkDone(1,'Smart Routing → WFN'); hqOpenScore('WFN'); }
   } else {
     if(typeof openTsPanel === 'function') openTsPanel();
@@ -6123,7 +8095,7 @@ window.overrideRecommendation = function(){
   var override = sreCurrentAnalysis.recommendation === 'TotalSource PEO' ? 'Workforce Now' : 'TotalSource PEO';
   if(confirm('Override AI recommendation and use '+override+' instead?')){
     if(override === 'Workforce Now'){
-      window.open('workforce-now-analyzer-v2_1.html','_blank');
+      openWfnPanel();
       if(typeof hqMarkDone === 'function'){ hqMarkDone(1,'Override → WFN'); hqOpenScore('WFN'); }
     } else {
       if(typeof openTsPanel === 'function') openTsPanel();
