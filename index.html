@@ -555,6 +555,8 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 .ec-cprev{font-size:10px;color:var(--text-3);background:var(--white);border:1px solid var(--border);border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5;max-height:46px;overflow:hidden;font-family:'Calibri',sans-serif;word-break:break-word}
 .ec-cbtn{width:100%;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--fb);transition:opacity .15s;background:transparent}
 .ec-cbtn:hover{opacity:.8}
+.ec-smb{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--off-white);color:var(--text-3);cursor:pointer;font-family:var(--fb);flex-shrink:0;margin:auto 8px auto 0;transition:all .15s}
+.ec-smb:hover{border-color:var(--blue);color:var(--blue)}
 .ec-mkbtn{width:100%;background:var(--text);border:none;color:#fff;border-radius:var(--radius-sm);padding:11px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--fb);transition:opacity .15s;margin-top:10px}
 .ec-mkbtn.done{background:var(--green)}
 .ec-mkbtn:hover{opacity:.85}
@@ -1014,6 +1016,9 @@ function handleRequest(e){
     <div class="tb-right">
       <button id="admin-panel-btn" onclick="openAdminPanel()" style="display:none;align-items:center;gap:7px;background:rgba(184,146,10,.1);border:1px solid var(--gold-border);color:var(--gold);border-radius:var(--radius-sm);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb);transition:all .15s;" onmouseover="this.style.background='rgba(184,146,10,.18)'" onmouseout="this.style.background='rgba(184,146,10,.1)'">
         🔑 Admin Panel
+      </button>
+      <button onclick="openProfilesDrawer()" style="display:flex;align-items:center;gap:7px;background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);color:var(--blue);border-radius:var(--radius-sm);padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb);transition:all .15s;" onmouseover="this.style.background='rgba(96,165,250,.18)'" onmouseout="this.style.background='rgba(96,165,250,.1)'" id="profiles-drawer-btn">
+        📁 Prospect Profiles <span id="profiles-count-badge" style="background:var(--blue);color:#fff;border-radius:9px;padding:1px 6px;font-size:10px;margin-left:2px">0</span>
       </button>
       <div class="user-chip">
         <div class="ua" id="top-avatar">—</div>
@@ -3108,16 +3113,75 @@ window.ecExportCSV=function(){
   <p class="section-title">Outreach Email</p>
   <button class="btn" onclick="generateEmail()">⟳ Generate Email</button>
 </div>
-<div class="card">
-  <div class="subject-row">
-    <span>Subject:</span>
-    <input type="text" id="emailSubject" placeholder="Generate email to populate subject line">
+<div class="card" id="ts-email-card" style="display:none">
+
+  <!-- Outlook mock -->
+  <div class="ec-outlook" id="ts-ecOutlookWrap">
+    <div class="ec-ol-tb">
+      <div class="ec-ol-ico">O</div>
+      <span style="font-size:12px;font-weight:600;color:#fff">New Message — Outlook</span>
+    </div>
+    <div class="ec-ol-bar">
+      <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ts_ecCopyAll()">⎘ Copy All</button>
+      <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ts_ecCopy('to')">To</button>
+      <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ts_ecCopy('subj')">Subject</button>
+      <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ts_ecCopy('body')">Body</button>
+    </div>
+    <div class="ec-fr">
+      <div class="ec-fl">To</div>
+      <input class="ec-fi-box" id="ts-ec-to-inp" placeholder="recipient@company.com">
+      <button class="ec-smb" onclick="ts_ecCopy('to')">copy</button>
+    </div>
+    <div class="ec-fr">
+      <div class="ec-fl">Cc</div>
+      <input class="ec-fi-box" id="ts-ec-cc-inp" placeholder="optional">
+    </div>
+    <div class="ec-fr">
+      <div class="ec-fl">Subject</div>
+      <div class="ec-fi-box" id="ts-ec-subj-disp" style="font-weight:600;font-size:12px;display:flex;align-items:center;padding:8px 10px;flex:1"></div>
+      <button class="ec-smb" onclick="ts_ecCopy('subj')">copy</button>
+    </div>
+    <div class="ec-body-txt" id="ts-ec-body-disp"></div>
+    <div class="ec-ol-ft">
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-3);cursor:pointer;font-weight:500">
+        <input type="checkbox" id="ts-ec-sig" checked style="accent-color:var(--red)" onchange="ts_ecRefreshBody()"> Include signature
+      </label>
+      <button class="btn-export" style="padding:5px 12px;font-size:11px;margin:0" onclick="ts_ecCopyAll()">⎘ Copy All Fields</button>
+    </div>
   </div>
-  <textarea class="email-body" id="emailBody" placeholder="Click 'Generate Email' after calculating above..."></textarea>
-  <div class="btn-row">
-    <button class="btn secondary" onclick="copyEmail()">Copy Email</button>
-    <span class="copy-msg" id="copyMsg">✓ Copied to clipboard</span>
+
+  <!-- Outlook launch panel -->
+  <div class="ec-mto" id="ts-ecMtoWrap">
+    <div class="ec-mto-hdr">
+      <span style="font-size:22px;flex-shrink:0">📧</span>
+      <div>
+        <div style="font-weight:700;font-size:14px;margin-bottom:2px">Open in Outlook</div>
+        <div style="font-size:11px;color:var(--text-3);line-height:1.55">One tap launches Outlook with <strong style="color:var(--text)">To, Subject & Body pre-filled</strong>. Just review and hit Send.</div>
+      </div>
+    </div>
+    <button class="ec-mto-btn" id="ts-ec-mto-btn" onclick="ts_ecFireMailto()">
+      <span style="font-size:16px">✉️</span>
+      <span id="ts-ec-mto-lbl">Open in Outlook — Pre-filled & Ready</span>
+    </button>
+    <div class="ec-tip">
+      <strong style="color:var(--gold);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
+      If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
+    </div>
+    <div class="ec-or"><div class="ec-or-line"></div><span class="ec-or-txt">or copy individually</span><div class="ec-or-line"></div></div>
+    <div class="ec-crow">
+      <div class="ec-cprev" id="ts-prev-to"></div>
+      <button class="ec-cbtn" onclick="ts_ecCopy('to')" id="ts-cpbtn-to">⎘ Copy To</button>
+    </div>
+    <div class="ec-crow">
+      <div class="ec-cprev" id="ts-prev-subj"></div>
+      <button class="ec-cbtn" onclick="ts_ecCopy('subj')" id="ts-cpbtn-subj">⎘ Copy Subject</button>
+    </div>
+    <div class="ec-crow">
+      <div class="ec-cprev" id="ts-prev-body"></div>
+      <button class="ec-cbtn" onclick="ts_ecCopy('body')" id="ts-cpbtn-body" style="color:#cc0000;border-color:rgba(204,0,0,.25);background:rgba(204,0,0,.05)">⎘ Copy Body</button>
+    </div>
   </div>
+
 </div>
 
 </div><!-- /container -->
@@ -4470,8 +4534,8 @@ function generateEmail(){
   var sl=parseInt(bRate)>=75?'Your benefits participation rate of '+bRate+'% is a real strength — that opens up the full carrier field and typically produces the most competitive TotalSource pricing.':parseInt(bRate)<65?'One thing worth discussing is participation — at '+bRate+'%, some carriers may limit their offers, which is exactly what TotalSource\'s enrollment support is designed to address.':'Based on the profile I\'ve been working from, '+company+' looks like '+likelihood+' for TotalSource.';
   var pl=parseInt(prods)>=3?'You\'re already running '+prods+'+ ADP solutions, which makes a TotalSource migration seamless — no system overhaul required.':prods?'With your existing ADP footprint, TotalSource is a natural next step.':'';
 
-  document.getElementById('emailSubject').value='Following up — ADP TotalSource analysis for '+company;
-  document.getElementById('emailBody').value=
+  // Build final body text
+  var bodyText=
 'Hi '+contact+',\n\n'
 +'I\'ve been doing some analysis on '+company+' ahead of our next conversation and wanted to share what I\'m seeing.\n\n'
 +'Here\'s the data snapshot I\'m working from:\n'+dh+'\n\n'
@@ -4483,14 +4547,70 @@ function generateEmail(){
 +'I\'d love to get 20–30 minutes on the calendar to walk through a formal proposal'+(title?' for you as '+company+'\'s '+title:'')+'. No obligation — just want to make sure you have the full picture before renewal season.\n\n'
 +'Would [Day] or [Day] work?\n\n'
 +'Best,\n[Your Name]\nADP TotalSource | [Your Phone] | [Your Email]';
+
+  // Store for Outlook functions
+  window._tsEcSubject = 'Following up — ADP TotalSource analysis for '+company;
+  window._tsEcBody = bodyText;
+  window._tsEcTo = document.getElementById('ts-ec-to-inp').value||'';
+
+  // Populate Outlook mock
+  document.getElementById('ts-ec-subj-disp').textContent = window._tsEcSubject;
+  document.getElementById('ts-ec-body-disp').textContent = bodyText;
+  document.getElementById('ts-prev-to').textContent = window._tsEcTo||'(no email on file)';
+  document.getElementById('ts-prev-subj').textContent = window._tsEcSubject;
+  document.getElementById('ts-prev-body').textContent = bodyText.substring(0,120)+'…';
+
+  // Pre-fill To field from prospect if available
+  var p=window._hqProspect;
+  if(p&&p.email&&!document.getElementById('ts-ec-to-inp').value){
+    document.getElementById('ts-ec-to-inp').value=p.email;
+    window._tsEcTo=p.email;
+    document.getElementById('ts-prev-to').textContent=p.email;
+  }
+
+  // Show the email card
+  document.getElementById('ts-email-card').style.display='block';
+  document.getElementById('ts-ec-mto-lbl').textContent='Open in Outlook — Pre-filled & Ready';
+  document.getElementById('ts-email-card').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function copyEmail(){
-  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBody').value;
-  navigator.clipboard.writeText(full).then(function(){
-    var m=document.getElementById('copyMsg'); m.style.display='inline';
-    setTimeout(function(){m.style.display='none';},2500);
+// ── TS Outlook helpers ────────────────────────────────
+function ts_ecRefreshBody(){
+  var sig=document.getElementById('ts-ec-sig').checked;
+  var body=window._tsEcBody||'';
+  document.getElementById('ts-ec-body-disp').textContent=body;
+}
+
+function ts_ecCopy(field){
+  var txt='';
+  if(field==='to') txt=document.getElementById('ts-ec-to-inp').value||window._tsEcTo||'';
+  else if(field==='subj') txt=window._tsEcSubject||'';
+  else if(field==='body') txt=window._tsEcBody||'';
+  if(!txt) return;
+  navigator.clipboard.writeText(txt).then(function(){
+    var id=field==='to'?'ts-cpbtn-to':field==='subj'?'ts-cpbtn-subj':'ts-cpbtn-body';
+    var btn=document.getElementById(id); if(!btn)return;
+    var orig=btn.textContent; btn.textContent='✓ Copied!';
+    setTimeout(function(){btn.textContent=orig;},1800);
   });
+}
+
+function ts_ecCopyAll(){
+  var to=document.getElementById('ts-ec-to-inp').value||window._tsEcTo||'';
+  var full='TO: '+to+'\nSUBJECT: '+(window._tsEcSubject||'')+'\n\n'+(window._tsEcBody||'');
+  navigator.clipboard.writeText(full).then(function(){
+    var btn=document.getElementById('ts-ec-mto-btn');
+    if(btn){var orig=btn.querySelector('#ts-ec-mto-lbl').textContent;btn.querySelector('#ts-ec-mto-lbl').textContent='✓ All Fields Copied';setTimeout(function(){btn.querySelector('#ts-ec-mto-lbl').textContent=orig;},1800);}
+  });
+}
+
+function ts_ecFireMailto(){
+  var toVal=document.getElementById('ts-ec-to-inp').value||window._tsEcTo||'';
+  var subj=window._tsEcSubject||'';
+  var body=window._tsEcBody||'';
+  var uri='mailto:'+encodeURIComponent(toVal)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body);
+  window.location.href=uri;
+  document.getElementById('ts-ec-mto-lbl').textContent='✓ Outlook Opened — Email Launched';
 }
 </script>
     </div>
@@ -6704,6 +6824,13 @@ function openTsPanel(){
     if(renewRow) renewRow.style.display = '';
     renewEl.value = notesEl.value.trim().substring(0, 200); // cap at 200 chars
   }
+
+  // ── Pre-fill Outlook To field with prospect email ──
+  if(p.email){
+    var tsToInp = document.getElementById('ts-ec-to-inp');
+    if(tsToInp && !tsToInp.value) tsToInp.value = p.email;
+    window._tsEcTo = p.email;
+  }
 }
 function closeTsPanel(){document.getElementById('ts-panel').classList.remove('open');document.body.style.overflow='';}
 
@@ -8912,5 +9039,746 @@ function agFormatAge(dateStr){
 document.addEventListener('DOMContentLoaded',function(){
   var overlay=document.getElementById('agentOverlay');
   if(overlay)overlay.addEventListener('click',function(e){if(e.target===this)closeAgentPanel();});
+});
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PROSPECT PROFILES DRAWER
+═══════════════════════════════════════════════════════ -->
+<div id="profiles-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9100;backdrop-filter:blur(2px)" onclick="if(event.target===this)closeProfilesDrawer()"></div>
+<div id="profiles-drawer" style="display:none;position:fixed;top:0;right:0;width:520px;max-width:100vw;height:100vh;background:var(--white);border-left:1px solid var(--border);box-shadow:-4px 0 32px rgba(0,0,0,.12);z-index:9200;flex-direction:column;overflow:hidden">
+
+  <!-- Drawer header -->
+  <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div style="font-family:var(--fd);font-size:16px;font-weight:600;color:var(--text)">📁 Prospect Profiles</div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:2px">Full workflow history · saved to a JSON file on your machine</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="exportProfilesCSV()" style="font-size:11px;font-weight:700;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--off-white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">⬇ Export CSV</button>
+      <button onclick="closeProfilesDrawer()" style="font-size:18px;line-height:1;background:none;border:none;cursor:pointer;color:var(--text-3);padding:4px 8px">✕</button>
+    </div>
+  </div>
+
+  <!-- File connection bar -->
+  <div style="padding:10px 20px;background:#f8faff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <button id="fs-file-btn" onclick="showFsMenu()" style="font-size:11px;font-weight:700;padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--off-white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap;transition:all .15s">📂 Open / Create Data File</button>
+    <div style="min-width:0;flex:1">
+      <div id="fs-file-name" style="font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">No file connected — data saving to browser only</div>
+      <div id="fs-status" style="font-size:10px;color:var(--text-3);margin-top:1px"></div>
+    </div>
+  </div>
+
+  <!-- File action menu (hidden by default) -->
+  <div id="fs-menu" style="display:none;position:absolute;top:118px;left:20px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);z-index:100;min-width:220px;overflow:hidden">
+    <div style="padding:8px 14px;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface)">Data File</div>
+    <button onclick="fsOpenFile();hideFsMenu()" style="width:100%;text-align:left;padding:10px 14px;font-size:12px;font-weight:600;background:none;border:none;cursor:pointer;font-family:var(--fb);color:var(--text);border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='none'">📂 Open existing file…<div style="font-size:10px;color:var(--text-3);font-weight:400;margin-top:1px">Load a previously saved prospects_data.json</div></button>
+    <button onclick="fsCreateFile();hideFsMenu()" style="width:100%;text-align:left;padding:10px 14px;font-size:12px;font-weight:600;background:none;border:none;cursor:pointer;font-family:var(--fb);color:var(--text)" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='none'">✨ Create new file…<div style="font-size:10px;color:var(--text-3);font-weight:400;margin-top:1px">Start fresh — saves as prospects_data.json</div></button>
+  </div>
+
+  <!-- Search + filter bar -->
+  <div style="padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0">
+    <input id="profiles-search" placeholder="Search company, contact, industry…" oninput="renderProfilesList()" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:var(--fb);background:var(--off-white);outline:none;color:var(--text)">
+    <select id="profiles-filter-track" onchange="renderProfilesList()" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:var(--fb);background:var(--off-white);color:var(--text);cursor:pointer">
+      <option value="">All Tracks</option>
+      <option value="WFN">WFN Track</option>
+      <option value="TS">TotalSource Track</option>
+    </select>
+  </div>
+
+  <!-- List view -->
+  <div id="profiles-list-view" style="flex:1;overflow-y:auto;padding:12px 20px">
+    <div id="profiles-list-inner"></div>
+  </div>
+
+  <!-- Detail view (hidden by default) -->
+  <div id="profiles-detail-view" style="display:none;flex:1;overflow-y:auto"></div>
+</div>
+
+<style>
+.pcard{background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:all .15s;position:relative}
+.pcard:hover{border-color:var(--blue);background:#f0f6ff}
+.pcard-co{font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px}
+.pcard-sub{font-size:11px;color:var(--text-3);margin-bottom:8px}
+.pcard-pills{display:flex;gap:5px;flex-wrap:wrap}
+.pcard-pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;border:1px solid}
+.pcard-pill.wfn{color:var(--blue);border-color:rgba(96,165,250,.3);background:rgba(96,165,250,.08)}
+.pcard-pill.ts{color:var(--red);border-color:rgba(204,0,0,.2);background:rgba(204,0,0,.06)}
+.pcard-pill.score{color:#166534;border-color:rgba(22,101,52,.25);background:rgba(22,101,52,.07)}
+.pcard-pill.stage{color:var(--gold);border-color:var(--gold-border);background:var(--gold-bg)}
+.pcard-del{position:absolute;top:10px;right:10px;background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-3);opacity:0;transition:opacity .15s;padding:2px 5px}
+.pcard:hover .pcard-del{opacity:1}
+.pcard-del:hover{color:var(--red)}
+/* Detail view */
+.pd-back{display:flex;align-items:center;gap:8px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;cursor:pointer}
+.pd-section{margin-bottom:0}
+.pd-sh{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);padding:14px 20px 6px;border-top:1px solid var(--border);background:var(--surface)}
+.pd-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.pd-field{padding:10px 20px;border-bottom:1px solid var(--border)}
+.pd-label{font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+.pd-val{font-size:13px;color:var(--text);font-weight:500}
+.pd-val.empty{color:var(--text-3);font-style:italic}
+.pd-score-row{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border)}
+.pd-score-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.pd-score-fill{height:100%;border-radius:3px;transition:width .4s}
+.pd-tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:5px;margin:2px 2px 0 0;border:1px solid}
+.pd-notes-box{margin:0 20px 14px;padding:10px 12px;background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;color:var(--text-2);line-height:1.65;white-space:pre-wrap}
+.pd-factor{font-size:11px;color:var(--text-2);padding:3px 20px;line-height:1.5}
+.pd-factor::before{content:'→ ';color:var(--blue)}
+.pd-action-row{padding:14px 20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--surface)}
+</style>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  PROSPECT PROFILE SYSTEM
+//  Storage: File System Access API → prospects_data.json
+//  Falls back to localStorage if API unavailable
+// ═══════════════════════════════════════════════════════
+
+var _fsFileHandle  = null;   // FileSystemFileHandle once user picks file
+var _profilesCache = null;   // in-memory cache — source of truth while app is open
+var _fsSaveTimer   = null;   // debounce timer for disk writes
+var _fsReady       = false;  // true once file is open/created
+var _fsSupported   = ('showOpenFilePicker' in window);
+
+// ── localStorage fallback key (used only when FS API unavailable) ──
+const PROFILE_KEY = 'bp_prospect_profiles_v1';
+
+// ── Always-synchronous in-memory read ────────────────
+function getProfiles(){
+  if(_profilesCache !== null) return _profilesCache;
+  // Cold start before file is loaded — pull from localStorage as temp bridge
+  try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)||'[]'); }catch(e){ return []; }
+}
+
+// ── Write: update cache immediately, flush to disk async ──
+function saveProfiles(arr){
+  _profilesCache = arr;
+  // Always keep localStorage in sync as a safety net
+  try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(arr)); }catch(e){}
+  // Debounce disk write by 400ms so rapid sequential saves don't thrash
+  clearTimeout(_fsSaveTimer);
+  _fsSaveTimer = setTimeout(function(){ _flushToDisk(); }, 400);
+}
+
+// ── Actual disk write ─────────────────────────────────
+async function _flushToDisk(){
+  if(!_fsFileHandle){ return; }
+  try{
+    var writable = await _fsFileHandle.createWritable();
+    await writable.write(JSON.stringify(_profilesCache || [], null, 2));
+    await writable.close();
+    _showFsStatus('✓ Saved to file', false);
+  }catch(e){
+    console.warn('File write failed:', e);
+    _showFsStatus('⚠ File write failed — data in localStorage', true);
+  }
+}
+
+// ── Load profiles from disk into cache ───────────────
+async function _loadFromDisk(){
+  if(!_fsFileHandle) return;
+  try{
+    var file = await _fsFileHandle.getFile();
+    var text = await file.text();
+    var data = JSON.parse(text||'[]');
+    _profilesCache = Array.isArray(data) ? data : [];
+    // Sync localStorage with what's on disk
+    try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(_profilesCache)); }catch(e){}
+    updateProfilesBadge();
+    _showFsStatus('✓ Loaded '+_profilesCache.length+' prospects from file', false);
+  }catch(e){
+    console.warn('File read failed:', e);
+    _profilesCache = getProfiles(); // fall back to localStorage
+  }
+}
+
+// ── Status indicator (small toast near the button) ───
+function _showFsStatus(msg, isErr){
+  var el = document.getElementById('fs-status');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? 'var(--red)' : 'var(--text-3)';
+  clearTimeout(el._t);
+  if(!isErr) el._t = setTimeout(function(){ el.textContent = ''; }, 3000);
+}
+
+// ── Open existing file ────────────────────────────────
+async function fsOpenFile(){
+  if(!_fsSupported){ showToast('File System API not supported in this browser. Use Chrome.', true); return; }
+  try{
+    var handles = await window.showOpenFilePicker({
+      id: 'bp-prospects',
+      startIn: 'documents',
+      types: [{ description: 'BeyondPayroll Prospects', accept: {'application/json': ['.json']} }]
+    });
+    _fsFileHandle = handles[0];
+    _fsReady = true;
+    await _loadFromDisk();
+    _updateFsBtn();
+    renderProfilesList();
+    showToast('📂 Prospects file loaded');
+  }catch(e){
+    if(e.name !== 'AbortError') showToast('Could not open file: '+e.message, true);
+  }
+}
+
+// ── Create new file ───────────────────────────────────
+async function fsCreateFile(){
+  if(!_fsSupported){ showToast('File System API not supported in this browser. Use Chrome.', true); return; }
+  try{
+    _fsFileHandle = await window.showSaveFilePicker({
+      id: 'bp-prospects',
+      startIn: 'documents',
+      suggestedName: 'prospects_data.json',
+      types: [{ description: 'BeyondPayroll Prospects', accept: {'application/json': ['.json']} }]
+    });
+    // Write current in-memory data (or empty array) to new file
+    _profilesCache = getProfiles();
+    _fsReady = true;
+    await _flushToDisk();
+    _updateFsBtn();
+    showToast('✅ New prospects file created');
+  }catch(e){
+    if(e.name !== 'AbortError') showToast('Could not create file: '+e.message, true);
+  }
+}
+
+// ── Update the file button state ─────────────────────
+function _updateFsBtn(){
+  var btn = document.getElementById('fs-file-btn');
+  var status = document.getElementById('fs-file-name');
+  if(!btn) return;
+  if(_fsReady && _fsFileHandle){
+    btn.textContent = '📂 Change File';
+    btn.style.borderColor = 'rgba(22,163,74,.4)';
+    btn.style.color = '#166534';
+    btn.style.background = 'rgba(22,163,74,.07)';
+    if(status) status.textContent = _fsFileHandle.name;
+  } else {
+    btn.textContent = '📂 Open / Create Data File';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--text-2)';
+    btn.style.background = 'var(--off-white)';
+    if(status) status.textContent = _fsSupported ? 'No file connected — data saving to browser only' : 'File API unavailable — using browser storage';
+  }
+}
+
+function getProfileById(id){ return getProfiles().find(function(p){return p._id===id})||null }
+
+// Create or update a profile
+function upsertProfile(updates){
+  var arr = getProfiles();
+  var co  = (updates.company||'').trim().toLowerCase();
+  var idx = arr.findIndex(function(p){ return p.company.trim().toLowerCase()===co });
+  var now = new Date().toISOString();
+  if(idx>=0){
+    // Merge — never overwrite non-empty existing fields with empty values
+    var existing = arr[idx];
+    Object.keys(updates).forEach(function(k){
+      if(updates[k]!==undefined && updates[k]!==null && updates[k]!=='' ){
+        // For objects/arrays, merge deeply
+        if(typeof updates[k]==='object' && !Array.isArray(updates[k]) && typeof existing[k]==='object' && existing[k]){
+          existing[k] = Object.assign({}, existing[k], updates[k]);
+        } else {
+          existing[k] = updates[k];
+        }
+      }
+    });
+    existing._updatedAt = now;
+    arr[idx] = existing;
+  } else {
+    var newProfile = Object.assign({
+      _id: 'prof_'+(co.replace(/[^a-z0-9]/g,'_'))+'_'+Date.now(),
+      _createdAt: now,
+      _updatedAt: now,
+      stage: 'New',
+      // Firmographics
+      company:'', contact:'', email:'', phone:'', linkedin:'', persona:'', industry:'', state:'', headcount:'',
+      // Workflow
+      track:'', notes:'',
+      // SRE outputs
+      sre:null,
+      // Score panel inputs (from manual entry after running tools)
+      scoreApproval:null,
+      // WFN tool outputs
+      wfn:null,
+      // TS tool outputs
+      ts:null,
+      // Cadence
+      cadence:{ tone:'', touchesSent:[] }
+    }, updates, { _createdAt: now, _updatedAt: now });
+    arr.unshift(newProfile);
+    if(arr.length>50) arr.splice(50);
+  }
+  saveProfiles(arr);
+  updateProfilesBadge();
+  return idx>=0 ? arr[idx] : arr[0];
+}
+
+function deleteProfile(id){
+  saveProfiles(getProfiles().filter(function(p){return p._id!==id}));
+  updateProfilesBadge();
+  renderProfilesList();
+}
+
+function updateProfilesBadge(){
+  var n = getProfiles().length;
+  var b = document.getElementById('profiles-count-badge');
+  if(b) b.textContent = n;
+}
+
+// ── Hook into saveProspect ────────────────────────────
+// We patch after the original runs to capture all form fields
+var _origSaveProspect = window.saveProspect;
+window.saveProspect = function(){
+  _origSaveProspect && _origSaveProspect.apply(this, arguments);
+  // Capture from form
+  var p = {
+    company:   (document.getElementById('f-company')||{}).value||'',
+    contact:   (document.getElementById('f-contact')||{}).value||'',
+    email:     (document.getElementById('f-email')||{}).value||'',
+    phone:     (document.getElementById('f-phone')||{}).value||'',
+    linkedin:  (document.getElementById('f-linkedin')||{}).value||'',
+    persona:   (document.getElementById('f-persona')||{}).value||'',
+    industry:  (document.getElementById('f-industry')||{}).value||'',
+    state:     (document.getElementById('f-state')||{}).value||'',
+    headcount: (document.getElementById('f-headcount')||{}).value||'',
+    track:     'WFN',
+    stage:     'Prospect Created'
+  };
+  if(p.company) upsertProfile(p);
+};
+
+// ── Hook into runEmbeddedAnalysis (SRE) ──────────────
+// Called after SRE runs to capture routing result
+var _origSreDisplay = window.sreDisplayResults || function(){};
+// We patch sreDisplayResults which always gets the result object
+window.sreDisplayResults = function(result){
+  _origSreDisplay.apply(this, arguments);
+  var p = window._hqProspect; if(!p||!p.company) return;
+  // Capture pain point checkboxes
+  var pp = {};
+  ['pain401k-embed','painWC-embed','painACA-embed','painBenefits-embed',
+   'painMultiStateTax-embed','painPlatform-embed','painGL-embed','painSupport-embed',
+   'painI9-embed','painMultiEntity-embed','painManualProcesses-embed','painTurnover-embed'].forEach(function(id){
+    var el=document.getElementById(id); if(el) pp[id.replace('-embed','').replace('pain','')] = el.checked;
+  });
+  var notes = (document.getElementById('sre-notes')||{}).value||'';
+  upsertProfile({
+    company: p.company,
+    stage:   'SRE Complete',
+    notes:   notes,
+    sre: {
+      recommendation: result.recommendation,
+      confidence:     result.confidence,
+      peoScore:       result.peoScore,
+      wfnScore:       result.wfnScore,
+      peoFactors:     result.peoFactors||[],
+      wfnFactors:     result.wfnFactors||[],
+      painPoints:     pp,
+      ranAt:          new Date().toISOString()
+    }
+  });
+};
+
+// ── Hook into hqApprove (Score panel) ───────────────
+var _origHqApprove = window.hqApprove;
+window.hqApprove = function(){
+  _origHqApprove && _origHqApprove.apply(this, arguments);
+  var p = window._hqProspect; if(!p||!p.company) return;
+  var fitEl=document.getElementById('sc-fit'), oppEl=document.getElementById('sc-opp')||document.getElementById('sc-disc');
+  var urgEl=document.getElementById('sc-urg')||document.getElementById('sc-risk');
+  var tone = (document.querySelector('input[name="hq-tone"]:checked')||{}).value||'';
+  upsertProfile({
+    company: p.company,
+    track: (document.getElementById('sap-badge')||{}).textContent||'',
+    stage: 'Cadence Approved',
+    scoreApproval:{
+      fitScore:   fitEl ? fitEl.value : '',
+      score2:     oppEl ? oppEl.value : '',
+      score3:     urgEl ? urgEl.value : '',
+      tone:       tone,
+      approvedAt: new Date().toISOString()
+    },
+    cadence:{ tone:tone, touchesSent:[] }
+  });
+};
+
+// ── Hook into TS generateEmail ───────────────────────
+var _origTsGenEmail = window.generateEmail;
+window.generateEmail = function(){
+  _origTsGenEmail && _origTsGenEmail.apply(this, arguments);
+  var p = window._hqProspect; if(!p||!p.company) return;
+  // Grab TS score and key fields
+  var scorePctEl = document.getElementById('scorePct');
+  var companyName= (document.getElementById('companyName')||{}).value||p.company;
+  var numEE      = (document.getElementById('numEE')||{}).value||p.headcount;
+  var carrier    = (document.getElementById('carrier')||{}).value||'';
+  var renewal    = (document.getElementById('renewalIncrease')||{}).value||'';
+  var openMarket = (document.getElementById('openMarketClient')||{}).value||'';
+  var renewalDate= (document.getElementById('medicalRenewalDate')||{}).value||'';
+  var asi        = (document.getElementById('asiScore')||{}).value||'';
+  upsertProfile({
+    company: p.company,
+    stage:   'TS Email Generated',
+    ts:{
+      eligibilityScore: scorePctEl ? scorePctEl.textContent : '',
+      numEE:       numEE,
+      carrier:     carrier,
+      renewalIncrease: renewal,
+      openMarket:  openMarket,
+      renewalDate: renewalDate,
+      asiScore:    asi,
+      emailSubject: window._tsEcSubject||'',
+      ranAt:       new Date().toISOString()
+    }
+  });
+};
+
+// ── Hook into WFN ecGenerate ──────────────────────────
+// wfn_ecGenerate populates _wfnEcSubject etc
+var _origWfnEcGenerate = window.wfn_ecGenerate;
+window.wfn_ecGenerate = function(){
+  _origWfnEcGenerate && _origWfnEcGenerate.apply(this, arguments);
+  setTimeout(function(){
+    var p = window._hqProspect; if(!p||!p.company) return;
+    var companyEl = document.getElementById('wfn-companyName');
+    var eeEl      = document.getElementById('wfn-employeeCount');
+    var indEl     = document.getElementById('wfn-industry');
+    var platEl    = document.getElementById('wfn-primaryPlatform');
+    upsertProfile({
+      company: p.company,
+      stage:   'WFN Email Generated',
+      wfn:{
+        company:    companyEl?companyEl.value:'',
+        employeeCount: eeEl?eeEl.value:'',
+        industry:   indEl?indEl.value:'',
+        platform:   platEl?platEl.value:'',
+        emailSubject: window._wfnEcSubject||'',
+        ranAt:      new Date().toISOString()
+      }
+    });
+  }, 800);
+};
+
+// ── Hook into ecMarkSent (main composer cadence) ─────
+var _origEcMarkSent = window.ecMarkSent;
+window.ecMarkSent = function(){
+  _origEcMarkSent && _origEcMarkSent.apply(this, arguments);
+  var p = window._hqProspect; if(!p||!p.company) return;
+  var profile = getProfiles().find(function(pr){return pr.company.trim().toLowerCase()===p.company.trim().toLowerCase()});
+  if(!profile) return;
+  var touch = window._ecActiveIdx !== undefined ? window._ecActiveIdx : null;
+  var cadence = profile.cadence || {tone:'',touchesSent:[]};
+  if(touch!==null && !cadence.touchesSent.includes(touch)){
+    cadence.touchesSent.push(touch);
+    upsertProfile({ company:p.company, stage:'Cadence Active', cadence:cadence });
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  DRAWER UI
+// ═══════════════════════════════════════════════════════
+function openProfilesDrawer(){
+  updateProfilesBadge();
+  renderProfilesList();
+  document.getElementById('profiles-overlay').style.display='block';
+  var d=document.getElementById('profiles-drawer');
+  d.style.display='flex';
+  // Show list, hide detail
+  document.getElementById('profiles-list-view').style.display='block';
+  document.getElementById('profiles-detail-view').style.display='none';
+}
+function closeProfilesDrawer(){
+  document.getElementById('profiles-overlay').style.display='none';
+  document.getElementById('profiles-drawer').style.display='none';
+}
+
+function renderProfilesList(){
+  var q=(document.getElementById('profiles-search')||{}).value||'';
+  var track=(document.getElementById('profiles-filter-track')||{}).value||'';
+  var all=getProfiles();
+  var filtered=all.filter(function(p){
+    var qMatch=!q || [p.company,p.contact,p.email,p.industry,p.state].join(' ').toLowerCase().indexOf(q.toLowerCase())>-1;
+    var tMatch=!track || (p.track||'').toUpperCase().indexOf(track)>-1 || (p.sre&&p.sre.recommendation&&p.sre.recommendation.toUpperCase().indexOf(track)>-1);
+    return qMatch&&tMatch;
+  });
+  var c=document.getElementById('profiles-list-inner');
+  if(!filtered.length){
+    c.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px">'+(all.length?'No prospects match your search.':'No prospect profiles yet.<br><br>Create a new prospect to get started.')+'</div>';
+    return;
+  }
+  c.innerHTML=filtered.map(function(p){
+    var pills='';
+    var track=p.track||'';
+    if(p.sre) track=p.sre.recommendation.indexOf('TotalSource')>-1?'TS':'WFN';
+    pills+='<span class="pcard-pill '+(track==='TS'?'ts':'wfn')+'">'+(track==='TS'?'TotalSource':'WFN')+'</span>';
+    if(p.sre) pills+='<span class="pcard-pill score">PEO '+p.sre.peoScore+' · WFN '+p.sre.wfnScore+'</span>';
+    if(p.scoreApproval) pills+='<span class="pcard-pill score">Fit '+p.scoreApproval.fitScore+'</span>';
+    if(p.stage) pills+='<span class="pcard-pill stage">'+p.stage+'</span>';
+    var sub=[p.contact,p.industry,p.state,p.headcount?p.headcount+' EE':''].filter(Boolean).join(' · ');
+    var relTime=profileRelTime(p._updatedAt);
+    return '<div class="pcard" onclick="openProfileDetail(\''+p._id+'\')">'
+      +'<div class="pcard-co">'+esc(p.company)+'</div>'
+      +'<div class="pcard-sub">'+esc(sub)+(relTime?' <span style="float:right;color:var(--text-3)">'+relTime+'</span>':'')+'</div>'
+      +'<div class="pcard-pills">'+pills+'</div>'
+      +'<button class="pcard-del" onclick="event.stopPropagation();deleteProfile(\''+p._id+'\')" title="Delete">🗑</button>'
+      +'</div>';
+  }).join('');
+}
+
+function openProfileDetail(id){
+  var p=getProfileById(id); if(!p) return;
+  document.getElementById('profiles-list-view').style.display='none';
+  var dv=document.getElementById('profiles-detail-view');
+  dv.style.display='block';
+
+  function field(label,val,span){
+    var cls=val?'pd-val':'pd-val empty';
+    var v=val||'—';
+    return '<div class="pd-field'+(span?' pd-field-full':'')+'">'
+      +'<div class="pd-label">'+label+'</div>'
+      +'<div class="'+cls+'">'+esc(v)+'</div></div>';
+  }
+  function scoreBar(label,score,color){
+    var pct=Math.min(100,parseInt(score)||0);
+    return '<div class="pd-score-row">'
+      +'<div style="min-width:130px;font-size:12px;font-weight:600;color:var(--text)">'+label+'</div>'
+      +'<div class="pd-score-bar"><div class="pd-score-fill" style="width:'+pct+'%;background:'+color+'"></div></div>'
+      +'<div style="font-size:13px;font-weight:700;min-width:36px;text-align:right;color:'+color+'">'+score+'</div>'
+      +'</div>';
+  }
+
+  var html='';
+
+  // Back button
+  html+='<div style="position:sticky;top:0;z-index:10">'
+    +'<div class="pd-back" onclick="showProfilesList()">'
+    +'<span style="color:var(--blue);font-size:14px">←</span>'
+    +'<span style="font-size:12px;font-weight:600;color:var(--blue)">Back to All Profiles</span>'
+    +'<span style="margin-left:auto;font-size:11px;color:var(--text-3)">Updated '+profileRelTime(p._updatedAt)+'</span>'
+    +'</div>'
+    +'</div>';
+
+  // Header
+  html+='<div style="padding:16px 20px;border-bottom:1px solid var(--border)">'
+    +'<div style="font-family:var(--fd);font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px">'+esc(p.company)+'</div>'
+    +'<div style="font-size:12px;color:var(--text-3)">Created '+profileRelTime(p._createdAt)+'</div>'
+    +'<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px">';
+  if(p.stage) html+='<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;background:var(--gold-bg);border:1px solid var(--gold-border);color:var(--gold)">'+esc(p.stage)+'</span>';
+  var tcolor=p.sre&&p.sre.recommendation.indexOf('TotalSource')>-1?'var(--red)':'var(--blue)';
+  var tLabel=p.sre?(p.sre.recommendation.indexOf('TotalSource')>-1?'Track B · TotalSource':'Track A · WFN'):(p.track||'');
+  if(tLabel) html+='<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;border:1px solid;color:'+tcolor+';border-color:'+tcolor+';background:rgba(0,0,0,.04)">'+esc(tLabel)+'</span>';
+  html+='</div></div>';
+
+  // Firmographics
+  html+='<div class="pd-sh">Contact Information</div>'
+    +'<div class="pd-grid">'
+    +field('Contact Name',p.contact)
+    +field('Job Title / Persona',p.persona)
+    +field('Email',p.email)
+    +field('Phone',p.phone)
+    +'</div>'
+    +'<div class="pd-grid">'
+    +field('LinkedIn',p.linkedin)
+    +'</div>';
+
+  html+='<div class="pd-sh">Company Profile</div>'
+    +'<div class="pd-grid">'
+    +field('Industry',p.industry)
+    +field('State / HQ',p.state)
+    +field('Headcount',p.headcount?p.headcount+' employees':'')
+    +'</div>';
+
+  // SRE Results
+  if(p.sre){
+    html+='<div class="pd-sh">Smart Routing Engine — Results</div>'
+      +'<div style="padding:12px 20px;background:var(--off-white);border-bottom:1px solid var(--border)">'
+      +'<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">Recommendation: <span style="color:'+tcolor+'">'+esc(p.sre.recommendation)+'</span></div>'
+      +'<div style="font-size:11px;color:var(--text-3)">Confidence: '+p.sre.confidence+'% · Run '+profileRelTime(p.sre.ranAt)+'</div>'
+      +'</div>';
+    html+=scoreBar('PEO Score',p.sre.peoScore,'#cc0000');
+    html+=scoreBar('WFN Score',p.sre.wfnScore,'#1e40af');
+    if(p.sre.peoFactors&&p.sre.peoFactors.length){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase">PEO Signals</div>';
+      p.sre.peoFactors.forEach(function(f){html+='<div class="pd-factor" style="color:var(--text-2)">'+esc(f)+'</div>'});
+    }
+    if(p.sre.wfnFactors&&p.sre.wfnFactors.length){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.5px;text-transform:uppercase">WFN Signals</div>';
+      p.sre.wfnFactors.forEach(function(f){html+='<div class="pd-factor" style="color:var(--text-2)">'+esc(f)+'</div>'});
+    }
+  }
+
+  // Score Approval
+  if(p.scoreApproval){
+    html+='<div class="pd-sh">Score Approval</div>'
+      +'<div class="pd-grid">'
+      +field('Fit Score',p.scoreApproval.fitScore)
+      +field('Score 2',p.scoreApproval.score2)
+      +field('Score 3',p.scoreApproval.score3)
+      +field('Cadence Tone',p.scoreApproval.tone)
+      +'</div>';
+  }
+
+  // TotalSource Results
+  if(p.ts){
+    html+='<div class="pd-sh">TotalSource PEO Tool — Results</div>'
+      +'<div class="pd-grid">'
+      +field('Eligibility Score',p.ts.eligibilityScore)
+      +field('Employees (EE)',p.ts.numEE)
+      +field('Current Carrier',p.ts.carrier)
+      +field('Renewal Increase',p.ts.renewalIncrease?p.ts.renewalIncrease+'%':'')
+      +field('Open Market Client',p.ts.openMarket)
+      +field('Medical Renewal Date',p.ts.renewalDate)
+      +field('ASI Score',p.ts.asiScore)
+      +'</div>';
+    if(p.ts.emailSubject) html+='<div class="pd-sh">TS Outreach Email</div><div class="pd-notes-box">'+esc(p.ts.emailSubject)+'</div>';
+  }
+
+  // WFN Results
+  if(p.wfn){
+    html+='<div class="pd-sh">WFN Analyzer — Results</div>'
+      +'<div class="pd-grid">'
+      +field('Company (WFN)',p.wfn.company)
+      +field('Employees',p.wfn.employeeCount)
+      +field('Industry (WFN)',p.wfn.industry)
+      +field('Current Platform',p.wfn.platform)
+      +'</div>';
+    if(p.wfn.emailSubject) html+='<div class="pd-sh">WFN Outreach Email</div><div class="pd-notes-box">'+esc(p.wfn.emailSubject)+'</div>';
+  }
+
+  // Cadence Status
+  if(p.cadence&&(p.cadence.tone||p.cadence.touchesSent&&p.cadence.touchesSent.length)){
+    html+='<div class="pd-sh">Cadence</div>'
+      +'<div class="pd-grid">'
+      +field('Tone',p.cadence.tone)
+      +field('Touches Sent',p.cadence.touchesSent.length ? 'Day '+p.cadence.touchesSent.map(function(i){return [2,8,15,22,30][i]||i}).join(', Day ') : '0')
+      +'</div>';
+  }
+
+  // Notes
+  if(p.notes){
+    html+='<div class="pd-sh">Intel Notes (SRE)</div>'
+      +'<div class="pd-notes-box">'+esc(p.notes)+'</div>';
+  }
+
+  // Actions
+  html+='<div class="pd-action-row">'
+    +'<button onclick="loadProspectFromProfile(\''+p._id+'\')" style="padding:8px 14px;font-size:12px;font-weight:700;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb)">↩ Load as Active Prospect</button>'
+    +'<button onclick="exportSingleProfile(\''+p._id+'\')" style="padding:8px 14px;font-size:12px;font-weight:700;background:var(--off-white);color:var(--text-2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb)">⬇ Export Profile</button>'
+    +'<button onclick="deleteProfile(\''+p._id+'\');showProfilesList()" style="padding:8px 14px;font-size:12px;font-weight:700;background:var(--off-white);color:var(--red);border:1px solid rgba(204,0,0,.2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb)">🗑 Delete</button>'
+    +'</div><div style="height:40px"></div>';
+
+  dv.innerHTML=html;
+}
+
+function showProfilesList(){
+  document.getElementById('profiles-list-view').style.display='block';
+  document.getElementById('profiles-detail-view').style.display='none';
+  renderProfilesList();
+}
+
+function loadProspectFromProfile(id){
+  var p = getProfileById(id); if(!p) return;
+  // Set as active hq prospect
+  window._hqProspect = {
+    company:   p.company,
+    contact:   p.contact,
+    email:     p.email,
+    phone:     p.phone,
+    linkedin:  p.linkedin,
+    persona:   p.persona,
+    industry:  p.industry,
+    state:     p.state,
+    headcount: p.headcount,
+    track:     p.track||'WFN',
+    _id:       p._id
+  };
+  // Also save to prospects array so it appears in the bar
+  if(typeof persistProspect==='function') persistProspect(window._hqProspect);
+  if(typeof hqRenderBanner==='function') hqRenderBanner();
+  closeProfilesDrawer();
+  showToast('✅ '+p.company+' loaded as active prospect');
+}
+
+// ── Export utilities ────────────────────────────────
+function exportProfilesCSV(){
+  var all = getProfiles();
+  if(!all.length){showToast('No profiles to export',true);return}
+  var rows = [['Company','Contact','Email','Phone','LinkedIn','Persona','Industry','State','Headcount','Track','Stage',
+    'SRE Recommendation','SRE Confidence','PEO Score','WFN Score',
+    'Fit Score Approved','Cadence Tone','Touches Sent',
+    'TS Eligibility','TS Carrier','TS Renewal %','TS Renewal Date',
+    'WFN Platform','Notes','Created','Updated']];
+  all.forEach(function(p){
+    rows.push([
+      p.company, p.contact, p.email, p.phone, p.linkedin, p.persona, p.industry, p.state, p.headcount,
+      p.track, p.stage,
+      p.sre?p.sre.recommendation:'', p.sre?p.sre.confidence:'', p.sre?p.sre.peoScore:'', p.sre?p.sre.wfnScore:'',
+      p.scoreApproval?p.scoreApproval.fitScore:'', p.cadence?p.cadence.tone:'', p.cadence?p.cadence.touchesSent.length:'',
+      p.ts?p.ts.eligibilityScore:'', p.ts?p.ts.carrier:'', p.ts?p.ts.renewalIncrease:'', p.ts?p.ts.renewalDate:'',
+      p.wfn?p.wfn.platform:'', (p.notes||'').replace(/\n/g,' '),
+      p._createdAt, p._updatedAt
+    ].map(function(v){return '"'+(v||'').toString().replace(/"/g,'""')+'"'}));
+  });
+  var csv = rows.map(function(r){return r.join(',')}).join('\n');
+  var blob = new Blob([csv],{type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'beyondpayroll_prospects_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+function exportSingleProfile(id){
+  var p = getProfileById(id); if(!p) return;
+  var json = JSON.stringify(p, null, 2);
+  var blob = new Blob([json],{type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'prospect_'+(p.company||'unknown').replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+
+// ── Helpers ─────────────────────────────────────────
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function profileRelTime(iso){
+  if(!iso) return '';
+  try{
+    var d=new Date(iso), diff=Date.now()-d.getTime();
+    var mins=Math.floor(diff/60000), hrs=Math.floor(diff/3600000), days=Math.floor(diff/86400000);
+    if(mins<1) return 'just now';
+    if(mins<60) return mins+'m ago';
+    if(hrs<24) return hrs+'h ago';
+    if(days<7) return days+'d ago';
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  }catch(e){return ''}
+}
+
+// (badge init moved to file-system boot block below)
+</script>
+
+<script>
+// ── Fs menu helpers ──────────────────────────────────
+function showFsMenu(){
+  var m=document.getElementById('fs-menu');
+  if(m) m.style.display=m.style.display==='none'?'block':'none';
+}
+function hideFsMenu(){
+  var m=document.getElementById('fs-menu');
+  if(m) m.style.display='none';
+}
+document.addEventListener('click',function(e){
+  var m=document.getElementById('fs-menu');
+  var btn=document.getElementById('fs-file-btn');
+  if(m&&btn&&!m.contains(e.target)&&!btn.contains(e.target)) m.style.display='none';
+});
+
+// ── Boot ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    updateProfilesBadge();
+    _updateFsBtn();
+  }, 400);
 });
 </script>
