@@ -258,25 +258,22 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 
 /* ── Top bar mobile ── */
 @media(max-width:600px){
-  .top-bar{padding:0 12px;height:52px;gap:8px}
-  .tb-name{display:none}
-  .tb-sep{display:none}
-  .tb-sub{display:none}
-  /* Hide Profiles button text label, keep icon + badge */
-  .profiles-btn-label{display:none}
-  #profiles-drawer-btn{padding:5px 8px;gap:4px;font-size:11px}
-  /* Hide admin panel button text on mobile */
-  #admin-panel-btn{padding:5px 8px;font-size:11px}
-  /* Compact user chip — show avatar only, hide name/role text */
-  .user-chip{padding:4px;border-radius:50%;background:var(--off-white)}
-  .un{display:none}
-  .ur{display:none}
-  /* Make sign out smaller */
-  .logout-btn{padding:6px 10px;font-size:11px}
-}
-@media(max-width:400px){
-  .logout-btn span{display:none}
-  .logout-btn::after{content:'Out'}
+  .top-bar{padding:0 10px;height:52px;gap:6px;overflow:visible}
+  .tb-name{display:none!important}
+  .tb-sep{display:none!important}
+  .tb-sub{display:none!important}
+  /* Hide Profiles button text, keep icon+badge */
+  .profiles-btn-label{display:none!important}
+  #profiles-drawer-btn{padding:5px 8px!important;gap:3px!important;font-size:11px!important;min-width:0}
+  /* Hide admin panel button entirely on mobile */
+  #admin-panel-btn{display:none!important}
+  /* Compact user chip — avatar only */
+  .user-chip{padding:3px!important;border-radius:50%!important}
+  .un{display:none!important}
+  .ur{display:none!important}
+  /* Sign out compact */
+  .logout-btn{padding:6px 10px!important;font-size:12px!important;white-space:nowrap}
+  .tb-right{gap:6px!important}
 }
 
 /* ════════════════════════
@@ -1957,9 +1954,27 @@ function getHQHTML(session){
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
           <div>
             <div class="card-section-title" style="margin-bottom:3px;">📝 Additional Notes</div>
-            <div style="font-size:11px;color:#9ca3af;line-height:1.5;">Paste call notes, Gong transcript snippets, or type freeform observations — the routing engine will parse these for extra signals and include matched insights in the results.</div>
+            <div style="font-size:11px;color:#9ca3af;line-height:1.5;">Paste call notes, Gong transcript snippets, or type freeform observations — or <strong style="color:#60a5fa">upload a screenshot</strong> to extract text automatically.</div>
           </div>
-          <button onclick="sreClearNotes()" style="flex-shrink:0;font-size:11px;padding:4px 10px;background:transparent;border:1px solid #2a3142;border-radius:5px;color:#9ca3af;cursor:pointer;font-family:var(--fb);transition:all .15s;" onmouseover="this.style.borderColor='#4b5563';this.style.color='#e5e7eb'" onmouseout="this.style.borderColor='#2a3142';this.style.color='#9ca3af'">Clear</button>
+          <div style="display:flex;gap:7px;flex-shrink:0;">
+            <!-- Hidden file input -->
+            <input type="file" id="sre-img-upload" accept="image/*" style="display:none" onchange="sreExtractFromImage(this)">
+            <button onclick="document.getElementById('sre-img-upload').click()" id="sre-upload-btn"
+              style="font-size:11px;padding:4px 10px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.3);border-radius:5px;color:#60a5fa;cursor:pointer;font-family:var(--fb);font-weight:600;transition:all .15s;display:flex;align-items:center;gap:5px;"
+              onmouseover="this.style.background='rgba(96,165,250,.22)'" onmouseout="this.style.background='rgba(96,165,250,.12)'">
+              <span id="sre-upload-icon">📷</span><span id="sre-upload-lbl">Upload Screenshot</span>
+            </button>
+            <button onclick="sreClearNotes()" style="flex-shrink:0;font-size:11px;padding:4px 10px;background:transparent;border:1px solid #2a3142;border-radius:5px;color:#9ca3af;cursor:pointer;font-family:var(--fb);transition:all .15s;" onmouseover="this.style.borderColor='#4b5563';this.style.color='#e5e7eb'" onmouseout="this.style.borderColor='#2a3142';this.style.color='#9ca3af'">Clear</button>
+          </div>
+        </div>
+        <!-- Image preview strip (hidden until image loaded) -->
+        <div id="sre-img-preview-wrap" style="display:none;margin-bottom:10px;padding:8px 10px;background:#0d1117;border:1px solid #2a3142;border-radius:6px;display:flex;align-items:center;gap:10px;">
+          <img id="sre-img-thumb" style="height:40px;width:auto;border-radius:4px;border:1px solid #2a3142;object-fit:cover;" src="" alt="screenshot">
+          <div style="flex:1;min-width:0;">
+            <div id="sre-img-status" style="font-size:11px;color:#60a5fa;font-family:var(--fb);">Extracting text from screenshot…</div>
+            <div id="sre-img-name" style="font-size:10px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          </div>
+          <button onclick="sreDismissImage()" style="background:transparent;border:none;color:#6b7280;cursor:pointer;font-size:14px;padding:2px 6px;" title="Remove">×</button>
         </div>
         <textarea
           id="sre-notes"
@@ -8591,9 +8606,113 @@ window.runEmbeddedAnalysis = function(){
 //  freeform text and feeds both routing engines
 // ══════════════════════════════════════════════════
 
+// ── Gong Screenshot → Notes extractor ───────────────────────────────────────
+window.sreExtractFromImage = async function(input) {
+  var file = input.files[0];
+  if (!file) return;
+
+  // Reset input so same file can be re-uploaded if needed
+  input.value = '';
+
+  // Show preview strip
+  var wrap   = document.getElementById('sre-img-preview-wrap');
+  var thumb  = document.getElementById('sre-img-thumb');
+  var status = document.getElementById('sre-img-status');
+  var fname  = document.getElementById('sre-img-name');
+  var btn    = document.getElementById('sre-upload-btn');
+  var lbl    = document.getElementById('sre-upload-lbl');
+  var icon   = document.getElementById('sre-upload-icon');
+
+  // Read as base64 for both preview and API
+  var base64 = await new Promise(function(res, rej) {
+    var reader = new FileReader();
+    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+
+  // Show thumbnail
+  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  fname.textContent = file.name;
+  status.textContent = '⏳ Extracting text from screenshot…';
+  status.style.color = '#60a5fa';
+  wrap.style.display = 'flex';
+
+  // Disable button while processing
+  btn.disabled = true;
+  lbl.textContent = 'Extracting…';
+  icon.textContent = '⏳';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: file.type, data: base64 }
+            },
+            {
+              type: 'text',
+              text: 'This is a screenshot of account notes or call notes (likely from Gong, Salesforce, or a CRM). Extract ALL visible text from the notes exactly as written — preserve bullet points, line breaks, and structure. Return ONLY the extracted text with no preamble, no explanation, and no commentary. If you see timestamps or speaker labels, include them too.'
+            }
+          ]
+        }]
+      })
+    });
+
+    var data = await res.json();
+    var extracted = '';
+    if (data.content && data.content.length > 0) {
+      extracted = data.content.filter(function(b){ return b.type === 'text'; })
+                              .map(function(b){ return b.text; }).join('\n').trim();
+    }
+
+    if (extracted) {
+      var notesEl = document.getElementById('sre-notes');
+      if (notesEl) {
+        // Append to any existing notes with a separator
+        var existing = notesEl.value.trim();
+        notesEl.value = existing ? existing + '\n\n--- From Screenshot ---\n' + extracted : extracted;
+        if (typeof sreUpdateNotesTags === 'function') sreUpdateNotesTags();
+        notesEl.dispatchEvent(new Event('input'));
+      }
+      status.textContent = '✅ Text extracted successfully';
+      status.style.color = '#22c55e';
+    } else {
+      status.textContent = '⚠️ No text found in image — try a clearer screenshot';
+      status.style.color = '#f59e0b';
+    }
+
+  } catch(err) {
+    console.error('Image extraction error:', err);
+    status.textContent = '❌ Extraction failed — paste notes manually';
+    status.style.color = '#ef4444';
+  }
+
+  // Re-enable button
+  btn.disabled = false;
+  lbl.textContent = 'Upload Screenshot';
+  icon.textContent = '📷';
+};
+
+window.sreDismissImage = function() {
+  var wrap = document.getElementById('sre-img-preview-wrap');
+  if (wrap) wrap.style.display = 'none';
+  var thumb = document.getElementById('sre-img-thumb');
+  if (thumb) thumb.src = '';
+};
+// ── End image extractor ───────────────────────────────────────────────────────
+
 window.sreClearNotes = function(){
   var el = document.getElementById('sre-notes');
   if(el){ el.value = ''; sreUpdateNotesTags(); }
+  if(typeof sreDismissImage === 'function') sreDismissImage();
 };
 
 // Signal keyword map → { product: 'peo'|'wfn'|'both', score: points, label: factor string }
@@ -9596,25 +9715,78 @@ function showProfilesList(){
 
 function loadProspectFromProfile(id){
   var p = getProfileById(id); if(!p) return;
-  // Set as active hq prospect
-  window._hqProspect = {
-    company:   p.company,
-    contact:   p.contact,
-    email:     p.email,
-    phone:     p.phone,
-    linkedin:  p.linkedin,
-    persona:   p.persona,
-    industry:  p.industry,
-    state:     p.state,
-    headcount: p.headcount,
-    track:     p.track||'WFN',
+
+  // Build the prospect object
+  var prospect = {
+    company:   p.company   || '',
+    contact:   p.contact   || '',
+    email:     p.email     || '',
+    phone:     p.phone     || '',
+    linkedin:  p.linkedin  || '',
+    persona:   p.persona   || 'CFO',
+    industry:  p.industry  || '',
+    state:     p.state     || '',
+    headcount: p.headcount || '',
+    track:     p.track     || 'WFN',
     _id:       p._id
   };
-  // Also save to prospects array so it appears in the bar
-  if(typeof persistProspect==='function') persistProspect(window._hqProspect);
+  window._hqProspect = prospect;
+
+  // 1. Populate the New Prospect modal fields (so Edit works correctly)
+  var fmap = {
+    'f-company':  prospect.company,
+    'f-contact':  prospect.contact,
+    'f-email':    prospect.email,
+    'f-phone':    prospect.phone,
+    'f-industry': prospect.industry,
+    'f-state':    prospect.state,
+    'f-headcount':prospect.headcount,
+    'f-persona':  prospect.persona,
+    'f-linkedin': prospect.linkedin
+  };
+  Object.keys(fmap).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.value = fmap[id];
+  });
+
+  // 2. Persist to saved prospects bar + set active
+  if(typeof persistProspect==='function') persistProspect(prospect);
+  if(typeof setActiveProspectId==='function') setActiveProspectId(prospect._id);
+
+  // 3. Render the prospect banner
   if(typeof hqRenderBanner==='function') hqRenderBanner();
+
+  // 4. Advance pipeline to the right step
+  var step = 1;
+  if(p.sre && p.sre.recommendation) step = Math.max(step, 1);
+  if(p.scoreApproval && p.scoreApproval.fitScore) step = Math.max(step, 2);
+  if(p.cadence && p.cadence.tone) step = Math.max(step, 3);
+  if(typeof hqAdvancePipeline==='function') hqAdvancePipeline(step);
+
+  // 5. Set the prospect type toggle (ADP vs non-ADP)
+  if(typeof sreSetProspectType==='function'){
+    var isNonAdp = p.sre && p.sre.recommendation && 
+      (p.sre.recommendation.toLowerCase().indexOf('competitive') >= 0 ||
+       (p.nonadp === true));
+    sreSetProspectType(isNonAdp ? 'nonadp' : 'adp');
+  }
+
+  // 6. Populate SRE notes field
+  if(p.notes){
+    var notesEl = document.getElementById('sre-notes');
+    if(notesEl){ notesEl.value = p.notes; if(typeof sreUpdateNotesTags==='function') sreUpdateNotesTags(); }
+  }
+
+  // 7. Update the saved prospects chip bar
+  if(typeof renderProspectBar==='function') renderProspectBar();
+
+  // 8. Close drawer and confirm
   closeProfilesDrawer();
   showToast('✅ '+p.company+' loaded as active prospect');
+  
+  // 9. Scroll to top of page so user sees the loaded state
+  var hqScroll = document.getElementById('hq-container');
+  if(hqScroll) hqScroll.scrollTo({top:0, behavior:'smooth'});
 }
 
 // ── Export utilities ────────────────────────────────
