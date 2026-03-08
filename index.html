@@ -10651,6 +10651,8 @@ window.npExtractFromImage = async function(input) {
   icon.textContent = '⏳';
 
   try {
+    console.log('[NP IMG] Step1 start, base64 len:', base64.length, 'worker:', VISION_WORKER_URL);
+    status.textContent = '⏳ OCR Step 1…';
     // Step 1: Google Cloud Vision OCR via Worker (free, no CORS issues)
     var visionRes = await fetch(VISION_WORKER_URL, {
       method: 'POST',
@@ -10674,6 +10676,8 @@ window.npExtractFromImage = async function(input) {
         ? visionData.responses[0].error.message : 'No text detected in image'
     );
 
+    console.log('[NP IMG] Step2 start, ocrText len:', ocrText.length);
+    status.textContent = '⏳ Claude Step 2…';
     // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
