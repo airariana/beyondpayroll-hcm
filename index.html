@@ -10505,14 +10505,29 @@ window.sreExtractFromImage = async function(input) {
 
   // Read file as base64
   var base64 = await new Promise(function(res, rej) {
-    var reader = new FileReader();
-    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      var MAX = 1200;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        var scale = Math.min(MAX/w, MAX/h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      res(dataUrl.split(',')[1]);
+    };
+    img.onerror = rej;
+    img.src = url;
   });
 
   // Show preview
-  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  thumb.src = 'data:image/jpeg;base64,' + base64;
   fname.textContent = file.name;
   status.textContent = '⏳ Extracting text…';
   status.style.color = '#60a5fa';
@@ -10605,13 +10620,28 @@ window.npExtractFromImage = async function(input) {
   var icon   = document.getElementById('np-upload-icon');
 
   var base64 = await new Promise(function(res, rej) {
-    var reader = new FileReader();
-    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      var MAX = 1200;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        var scale = Math.min(MAX/w, MAX/h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      res(dataUrl.split(',')[1]);
+    };
+    img.onerror = rej;
+    img.src = url;
   });
 
-  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  thumb.src = 'data:image/jpeg;base64,' + base64;
   fname.textContent = file.name;
   status.textContent = '⏳ Analyzing image…';
   status.style.color = 'var(--blue)';
@@ -10742,13 +10772,28 @@ window.wfnExtractFromSalesforce = async function(input) {
   var icon   = document.getElementById('wfn-sf-upload-icon');
 
   var base64 = await new Promise(function(res, rej) {
-    var reader = new FileReader();
-    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      var MAX = 1200;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        var scale = Math.min(MAX/w, MAX/h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      res(dataUrl.split(',')[1]);
+    };
+    img.onerror = rej;
+    img.src = url;
   });
 
-  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  thumb.src = 'data:image/jpeg;base64,' + base64;
   fname.textContent = file.name;
   status.textContent = '⏳ Reading Salesforce data…';
   status.style.color = '#1e40af';
@@ -10875,13 +10920,28 @@ window.tsExtractFromSalesforce = async function(input) {
   var icon   = document.getElementById('ts-sf-upload-icon');
 
   var base64 = await new Promise(function(res, rej) {
-    var reader = new FileReader();
-    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      var MAX = 1200;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        var scale = Math.min(MAX/w, MAX/h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      res(dataUrl.split(',')[1]);
+    };
+    img.onerror = rej;
+    img.src = url;
   });
 
-  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  thumb.src = 'data:image/jpeg;base64,' + base64;
   fname.textContent = file.name;
   status.textContent = '⏳ Reading Salesforce data…';
   status.style.color = '#1e40af';
