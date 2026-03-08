@@ -11962,6 +11962,8 @@ document.addEventListener('DOMContentLoaded',function(){
 .pd-factor{font-size:11px;color:var(--text-2);padding:3px 20px;line-height:1.5}
 .pd-factor::before{content:'→ ';color:var(--blue)}
 .pd-action-row{padding:14px 20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--surface)}
+.pcard-cad-btn{position:absolute;bottom:10px;right:36px;padding:4px 10px;font-size:10px;font-weight:700;background:var(--navy);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--fb);opacity:0;transition:opacity .15s;}
+.pcard:hover .pcard-cad-btn{opacity:1}
 </style>
 
 <script>
@@ -12461,10 +12463,12 @@ function renderProfilesList(){
     if(p.stage) pills+='<span class="pcard-pill stage">'+p.stage+'</span>';
     var sub=[p.contact,p.industry,p.state,p.headcount?p.headcount+' EE':''].filter(Boolean).join(' · ');
     var relTime=profileRelTime(p._updatedAt);
+    var hasAnalysis = !!(p.sre || (p.wfn && p.wfn.fitScore));
     return '<div class="pcard" onclick="openProfileDetail(\''+p._id+'\')">'
       +'<div class="pcard-co">'+esc(p.company)+'</div>'
       +'<div class="pcard-sub">'+esc(sub)+(relTime?' <span style="float:right;color:var(--text-3)">'+relTime+'</span>':'')+'</div>'
       +'<div class="pcard-pills">'+pills+'</div>'
+      +(hasAnalysis ? '<button class="pcard-cad-btn" onclick="event.stopPropagation();launchCadenceFromProfile(\\\''+p._id+'\\\')" title="Launch 30-Day Cadence">⚡ Launch Cadence</button>' : '')
       +'<button class="pcard-del" onclick="event.stopPropagation();deleteProfile(\''+p._id+'\')" title="Delete">🗑</button>'
       +'</div>';
   }).join('');
@@ -12582,21 +12586,83 @@ function openProfileDetail(id){
   if(p.wfn){
     html+='<div class="pd-sh">WFN Analyzer — Results</div>'
       +'<div class="pd-grid">'
-      +field('Company (WFN)',p.wfn.company)
+      +field('Company',p.wfn.company)
       +field('Employees',p.wfn.employeeCount)
-      +field('Industry (WFN)',p.wfn.industry)
+      +field('Industry',p.wfn.industry)
       +field('Current Platform',p.wfn.platform)
+      +field('Classification',p.wfn.classification)
+      +field('Run',p.wfn.ranAt?profileRelTime(p.wfn.ranAt):'')
       +'</div>';
+    // Score bars
+    if(p.wfn.fitScore){
+      html+=scoreBar('Fit Score',p.wfn.fitScore,'#1e40af');
+      if(p.wfn.fitReason) html+='<div class="pd-factor">'+esc(p.wfn.fitReason)+'</div>';
+    }
+    if(p.wfn.opportunityScore) html+=scoreBar('Opportunity',p.wfn.opportunityScore,'#d97706');
+    if(p.wfn.urgencyScore)     html+=scoreBar('Urgency',p.wfn.urgencyScore,'#dc2626');
+    // Signals
+    if(p.wfn.signals&&p.wfn.signals.length){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.5px;text-transform:uppercase">Intent Signals</div>';
+      p.wfn.signals.forEach(function(s){html+='<div class="pd-factor">'+esc(s)+'</div>';});
+    }
+    // Competitive angles
+    if(p.wfn.competitive&&p.wfn.competitive.length){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.5px;text-transform:uppercase">Competitive Angles</div>';
+      p.wfn.competitive.forEach(function(s){html+='<div class="pd-factor">'+esc(s)+'</div>';});
+    }
+    // Risks
+    if(p.wfn.risks&&p.wfn.risks.length){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:var(--red);letter-spacing:.5px;text-transform:uppercase">Risk Factors</div>';
+      p.wfn.risks.forEach(function(s){html+='<div class="pd-factor">'+esc(s)+'</div>';});
+    }
+    // Cross-sell
+    if(p.wfn.crossSell&&p.wfn.crossSell.length){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:#166534;letter-spacing:.5px;text-transform:uppercase">Cross-Sell Modules</div>';
+      p.wfn.crossSell.forEach(function(s){html+='<div class="pd-factor" style="color:#166534">'+esc(s)+'</div>';});
+    }
+    // ROI
+    if(p.wfn.roi&&p.wfn.roi.annualSavings){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:.5px;text-transform:uppercase">ROI Estimates</div>'
+        +'<div class="pd-grid" style="padding:0 20px 12px">'
+        +'<div class="pd-field"><div class="pd-label">Annual Savings</div><div class="pd-val">'+esc(p.wfn.roi.annualSavings||'—')+'</div></div>'
+        +'<div class="pd-field"><div class="pd-label">Efficiency Gain</div><div class="pd-val">'+esc(p.wfn.roi.efficiencyGain||'—')+'</div></div>'
+        +'<div class="pd-field"><div class="pd-label">Payback Period</div><div class="pd-val">'+esc(p.wfn.roi.payback||'—')+'</div></div>'
+        +'<div class="pd-field"><div class="pd-label">3-Year Value</div><div class="pd-val">'+esc(p.wfn.roi.threeYear||'—')+'</div></div>'
+        +'</div>';
+    }
+    // Playbook
+    if(p.wfn.playbook&&p.wfn.playbook.length){
+      html+='<div style="padding:8px 20px 4px;font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:.5px;text-transform:uppercase">Sales Playbook</div>';
+      p.wfn.playbook.forEach(function(step,i){
+        html+='<div style="padding:4px 20px 4px 32px;font-size:12px;color:var(--text-2)"><span style="font-weight:700;color:var(--navy)">'+(i+1)+'. '+esc(step.step||'')+'</span> — '+esc(step.detail||'')+'</div>';
+      });
+    }
     if(p.wfn.emailSubject) html+='<div class="pd-sh">WFN Outreach Email</div><div class="pd-notes-box">'+esc(p.wfn.emailSubject)+'</div>';
   }
 
   // Cadence Status
-  if(p.cadence&&(p.cadence.tone||p.cadence.touchesSent&&p.cadence.touchesSent.length)){
-    html+='<div class="pd-sh">Cadence</div>'
+  if(p.cadence&&(p.cadence.builtAt||p.cadence.tone||p.cadence.touchesSent&&p.cadence.touchesSent.length)){
+    html+='<div class="pd-sh">30-Day Cadence</div>'
       +'<div class="pd-grid">'
-      +field('Tone',p.cadence.tone)
-      +field('Touches Sent',p.cadence.touchesSent.length ? 'Day '+p.cadence.touchesSent.map(function(i){return [2,8,15,22,30][i]||i}).join(', Day ') : '0')
+      +field('Product',p.cadence.product==='ts'?'TotalSource PEO':p.cadence.product==='wfn'?'Workforce Now':p.cadence.tone||'')
+      +field('Competitor',p.cadence.competitor||'')
+      +field('Trigger',p.cadence.trigger||'')
+      +field('Urgency',p.cadence.urgency||'')
+      +field('Built',p.cadence.builtAt?profileRelTime(p.cadence.builtAt):'')
+      +field('Last Touch',p.cadence.lastTouchAt?'Day '+p.cadence.lastTouchDay+' · '+p.cadence.lastTouchType+' · '+profileRelTime(p.cadence.lastTouchAt):'None yet')
       +'</div>';
+    if(p.cadence.touchesSent&&p.cadence.touchesSent.length){
+      html+='<div style="padding:6px 20px 12px"><div style="font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">Touches Sent ('+p.cadence.touchesSent.length+')</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      p.cadence.touchesSent.forEach(function(t){
+        var parts=String(t).split('_');
+        var day=parts[0], type=parts[1]||'';
+        var colors={email:'#0097a7',call:'#e65100',linkedin:'#1565c0',video:'#7b1fa2',text:'#2e7d32'};
+        var c=colors[type]||'#666';
+        html+='<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid '+c+';color:'+c+';background:'+c+'18">Day '+day+(type?' · '+type:'')+'</span>';
+      });
+      html+='</div></div>';
+    }
   }
 
   // Notes
@@ -12607,6 +12673,7 @@ function openProfileDetail(id){
 
   // Actions
   html+='<div class="pd-action-row">'
+    +'<button onclick="launchCadenceFromProfile(\''+p._id+'\')" style="padding:8px 16px;font-size:12px;font-weight:700;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb)">⚡ Launch 30-Day Cadence</button>'
     +'<button onclick="loadProspectFromProfile(\''+p._id+'\')" style="padding:8px 14px;font-size:12px;font-weight:700;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb)">↩ Load as Active Prospect</button>'
     +'<button onclick="exportSingleProfile(\''+p._id+'\')" style="padding:8px 14px;font-size:12px;font-weight:700;background:var(--off-white);color:var(--text-2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb)">⬇ Export Profile</button>'
     +'<button onclick="deleteProfile(\''+p._id+'\');showProfilesList()" style="padding:8px 14px;font-size:12px;font-weight:700;background:var(--off-white);color:var(--red);border:1px solid rgba(204,0,0,.2);border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb)">🗑 Delete</button>'
@@ -12619,6 +12686,20 @@ function showProfilesList(){
   document.getElementById('profiles-list-view').style.display='block';
   document.getElementById('profiles-detail-view').style.display='none';
   renderProfilesList();
+}
+
+function launchCadenceFromProfile(id) {
+  var p = getProfileById(id); if(!p) return;
+  // Close the profiles drawer
+  closeProfilesDrawer && closeProfilesDrawer();
+  // Set as active prospect
+  if (setActiveProspectId) setActiveProspectId(id);
+  window._hqProspect = Object.assign({}, p);
+  // Use cadLoadProspect which handles all the data mapping
+  cadLoadProspect(id);
+  // Navigate to cadence tab
+  hqTab('cadence');
+  showToast('⚡ ' + p.company + ' loaded — select a trigger and hit Build Cadence');
 }
 
 function loadProspectFromProfile(id){
