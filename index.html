@@ -4210,9 +4210,18 @@ function getHQHTML(session){
 
   <!-- 30-DAY CADENCE TAB -->
   <div id="hq-cadence-view" style="display:none">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
       <div><div style="font-family:var(--fd);font-size:19px;font-weight:600">30-Day Intel Cadence</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Competitor trigger to personalized outreach · 15 touches · 5 channels</div></div>
       <button onclick="hqTab('cmd')" class="btn btn-outline" style="font-size:12px">Back to HQ</button>
+    </div>
+    <!-- Prospect Selector Bar -->
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 20px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-3);flex-shrink:0">Load Prospect</span>
+      <select id="cad-prospect-select" onchange="cadLoadProspect(this.value)" class="fi" style="font-size:12px;padding:7px 12px;flex:1;min-width:200px;max-width:340px">
+        <option value="">— Select saved prospect —</option>
+      </select>
+      <div id="cad-prospect-badge" style="display:none;align-items:center;gap:8px;background:var(--navy);color:#fff;border-radius:var(--radius-sm);padding:5px 14px;font-size:11px;font-weight:600"></div>
+      <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap" id="cad-analyzer-badges"></div>
     </div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:20px;box-shadow:var(--shadow)">
       <div style="font-size:10px;letter-spacing:2px;color:var(--red);font-weight:700;text-transform:uppercase;margin-bottom:16px">Step 1 — Enter Intel Signal</div>
@@ -8466,15 +8475,24 @@ function wfn_renderResults(analysis, data) {
   // Show results
   document.getElementById('wfn-results').classList.add('active');
   // ── Cadence bridge ──
-  window._lastAnalyzerRun = {
+  var _cadBridgeWfnPanel = {
     source: 'wfn_panel',
     company: data.company || '',
     contact: (window._hqProspect && window._hqProspect.contact) || '',
     competitor: (data.primaryPlatform && data.primaryPlatform !== 'ADP Workforce Now') ? data.primaryPlatform : ((data.additionalSystems && data.additionalSystems[0]) || ''),
     product: 'wfn',
     signals: (analysis.signals || []).concat(analysis.competitive || []).concat(analysis.risks || []),
-    classification: analysis.classification || ''
+    classification: analysis.classification || '',
+    fitScore: analysis.fitScore || 0,
+    opportunityScore: analysis.opportunityScore || 0,
+    urgencyScore: analysis.urgencyScore || 0,
+    fitReason: analysis.fitReason || '',
+    roi: analysis.roi || {},
+    crossSell: analysis.crossSell || [],
+    playbook: analysis.playbook || []
   };
+  window._lastAnalyzerRun = _cadBridgeWfnPanel;
+  saveAnalyzerDataToProspect(_cadBridgeWfnPanel);
   // Show email section and store data for AI generation
   document.getElementById('wfn-emailSection').style.display = 'block';
   _ecCurrentData = Object.assign({}, data, {
@@ -10335,15 +10353,21 @@ window.runEmbeddedAnalysis = function(){
   sreCurrentAnalysis = result;
   sreDisplayResults(result);
   // ── Cadence bridge ──
-  window._lastAnalyzerRun = {
+  var _cadBridgeSre = {
     source: 'smart_router',
     company: (p && p.company) || '',
     contact: (p && p.contact) || (window._hqProspect && window._hqProspect.contact) || '',
     competitor: (p && p.currentProvider) || (p && p.platform) || '',
     product: result.recommendation && result.recommendation.toLowerCase().indexOf('totalsource') > -1 ? 'ts' : 'wfn',
     signals: (result.peoFactors || []).concat(result.wfnFactors || []),
-    classification: result.recommendation || ''
+    classification: result.recommendation || '',
+    peoScore: result.peoScore || 0,
+    wfnScore: result.wfnScore || 0,
+    confidence: result.confidence || 0,
+    recommendation: result.recommendation || ''
   };
+  window._lastAnalyzerRun = _cadBridgeSre;
+  saveAnalyzerDataToProspect(_cadBridgeSre);
 
   // Advance pipeline node for Smart Routing
   var n0b = document.getElementById('psn0b'), l0b = document.getElementById('psl0b');
@@ -12016,7 +12040,7 @@ async function _fbPatch(arr) {
   var body = { fields: { profiles: _fbEncode(arr) } };
   var res = await fetch(url, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
   if (!res.ok) {
@@ -12310,7 +12334,6 @@ window.generateEmail = function(){
 };
 
 // ── Hook into WFN ecGenerate ──────────────────────────
-// wfn_ecGenerate populates _wfnEcSubject etc
 var _origWfnEcGenerate = window.wfn_ecGenerate;
 window.wfn_ecGenerate = function(){
   _origWfnEcGenerate && _origWfnEcGenerate.apply(this, arguments);
@@ -12323,16 +12346,62 @@ window.wfn_ecGenerate = function(){
     upsertProfile({
       company: p.company,
       stage:   'WFN Email Generated',
-      wfn:{
-        company:    companyEl?companyEl.value:'',
-        employeeCount: eeEl?eeEl.value:'',
-        industry:   indEl?indEl.value:'',
-        platform:   platEl?platEl.value:'',
+      wfn: Object.assign({
+        company:      companyEl?companyEl.value:'',
+        employeeCount:eeEl?eeEl.value:'',
+        industry:     indEl?indEl.value:'',
+        platform:     platEl?platEl.value:'',
         emailSubject: window._wfnEcSubject||'',
-        ranAt:      new Date().toISOString()
-      }
+        ranAt:        new Date().toISOString()
+      }, _wfnAnalysis ? {
+        classification:  _wfnAnalysis.classification||'',
+        fitScore:        _wfnAnalysis.fitScore||0,
+        fitReason:       _wfnAnalysis.fitReason||'',
+        opportunityScore:_wfnAnalysis.opportunityScore||0,
+        urgencyScore:    _wfnAnalysis.urgencyScore||0,
+        signals:         _wfnAnalysis.signals||[],
+        competitive:     _wfnAnalysis.competitive||[],
+        risks:           _wfnAnalysis.risks||[],
+        crossSell:       _wfnAnalysis.crossSell||[],
+        roi:             _wfnAnalysis.roi||{},
+        playbook:        _wfnAnalysis.playbook||[]
+      } : {})
     });
   }, 800);
+};
+
+// ── Hook into wfn_renderResults — saves IMMEDIATELY after analysis ──
+var _origWfnRenderResults = window.wfn_renderResults;
+window.wfn_renderResults = function(analysis, data){
+  _origWfnRenderResults && _origWfnRenderResults.apply(this, arguments);
+  var p = window._hqProspect;
+  var company = (p && p.company) || (data && data.company) || '';
+  if (!company) return;
+  upsertProfile({
+    company: company,
+    stage:   'WFN Analyzed',
+    wfn: {
+      company:         data.company||'',
+      employeeCount:   data.employees||'',
+      industry:        data.industry||'',
+      platform:        data.primaryPlatform||'',
+      additionalSystems: data.additionalSystems||[],
+      classification:  analysis.classification||'',
+      fitScore:        analysis.fitScore||0,
+      fitReason:       analysis.fitReason||'',
+      opportunityScore:analysis.opportunityScore||0,
+      opportunityReason:analysis.opportunityReason||'',
+      urgencyScore:    analysis.urgencyScore||0,
+      urgencyReason:   analysis.urgencyReason||'',
+      signals:         analysis.signals||[],
+      competitive:     analysis.competitive||[],
+      risks:           analysis.risks||[],
+      crossSell:       analysis.crossSell||[],
+      roi:             analysis.roi||{},
+      playbook:        analysis.playbook||[],
+      ranAt:           new Date().toISOString()
+    }
+  });
 };
 
 // ── Hook into ecMarkSent (main composer cadence) ─────
@@ -13006,15 +13075,24 @@ async function analyzeWFN() {
     _wfnData = { company, employees, industry: document.getElementById('w-industry').value, primaryPlatform: platform, additionalSystems };
     _wfnAnalysis = analysis;
     // ── Cadence bridge ──
-    window._lastAnalyzerRun = {
+    var _cadBridgeWfn = {
       source: 'wfn',
       company: company,
       contact: (window._hqProspect && window._hqProspect.contact) || '',
       competitor: platform !== 'ADP Workforce Now' ? platform : (additionalSystems[0] || ''),
       product: 'wfn',
       signals: (analysis.signals || []).concat(analysis.competitive || []).concat(analysis.risks || []),
-      classification: analysis.classification || ''
+      classification: analysis.classification || '',
+      fitScore: analysis.fitScore || 0,
+      opportunityScore: analysis.opportunityScore || 0,
+      urgencyScore: analysis.urgencyScore || 0,
+      fitReason: analysis.fitReason || '',
+      roi: analysis.roi || {},
+      crossSell: analysis.crossSell || [],
+      playbook: analysis.playbook || []
     };
+    window._lastAnalyzerRun = _cadBridgeWfn;
+    saveAnalyzerDataToProspect(_cadBridgeWfn);
 
     // Render
     document.getElementById('w-resCompany').textContent = company;
@@ -14087,7 +14165,23 @@ return[
 {day:28,type:'linkedin',icon:'🔗',label:'Day 28',urgency:'Day 28 - Stay Visible',title:'LinkedIn - Organic Engagement',subject:'Organic Content Engagement',body:'No DM. Just like and leave a thoughtful comment on their most recent LinkedIn post.\n\nExample: "Great perspective on [topic] - the compliance / talent / cost angle here is something a lot of growing DMV companies are underestimating right now. Well said."\n\nStay visible without asking for anything. Long game.',tip:'Staying on someone\'s radar without pitching builds long-term brand. When they are ready, you are the person they think of.'},
 {day:30,type:'text',icon:'💬',label:'Day 30',urgency:'Day 30 - Final Touch',title:'Text Message (if mobile available)',subject:'Text',body:'Hi '+ct+', this is AJ Jaghori from ADP. We have connected a few times over email and LinkedIn about '+co+'. I know this is a different channel, but wanted to give it one last shot. Any chance a quick call makes sense? Completely understand if not. - AJ',tip:'Only use if you have a verified direct mobile. Keep it human and brief.'}
 ];}
-window.cadBuild=function(){var co=(document.getElementById('cad-company')||{}).value||'',comp=(document.getElementById('cad-competitor')||{}).value||'';co=co.trim();comp=comp.trim();if(!co){showToast('Enter a company name first',true);return;}if(!comp){showToast('Select a competitor',true);return;}if(!_cadTrigger){showToast('Select a trigger type',true);return;}var intel={company:co,contact:((document.getElementById('cad-contact')||{}).value||'').trim()||'[First Name]',competitor:comp,trigger:_cadTrigger,urgency:_cadUrgency,detail:((document.getElementById('cad-detail')||{}).value||'').trim()||('the recent news around '+comp)};_cadTouches=cadBuildTouches(intel,_cadProduct);_cadActiveIdx=0;_cadFilter='all';document.getElementById('cad-output').style.display='block';cadRenderStrip(intel);cadRenderFilters();cadRenderList();cadRenderDetail();document.getElementById('cad-output').scrollIntoView({behavior:'smooth',block:'nearest'});};
+window.cadBuild=function(){var co=(document.getElementById('cad-company')||{}).value||'',comp=(document.getElementById('cad-competitor')||{}).value||'';co=co.trim();comp=comp.trim();if(!co){showToast('Enter a company name first',true);return;}if(!comp){showToast('Select a competitor',true);return;}if(!_cadTrigger){showToast('Select a trigger type',true);return;}var intel={company:co,contact:((document.getElementById('cad-contact')||{}).value||'').trim()||'[First Name]',competitor:comp,trigger:_cadTrigger,urgency:_cadUrgency,detail:((document.getElementById('cad-detail')||{}).value||'').trim()||('the recent news around '+comp)};_cadTouches=cadBuildTouches(intel,_cadProduct);_cadActiveIdx=0;_cadFilter='all';document.getElementById('cad-output').style.display='block';cadRenderStrip(intel);cadRenderFilters();cadRenderList();cadRenderDetail();document.getElementById('cad-output').scrollIntoView({behavior:'smooth',block:'nearest'});
+  // ── Save cadence config to Firebase profile ──
+  if(typeof upsertProfile==='function' && co){
+    upsertProfile({
+      company: co,
+      stage: 'Cadence Built',
+      cadence: {
+        product: _cadProduct,
+        competitor: comp,
+        trigger: _cadTrigger,
+        urgency: _cadUrgency,
+        builtAt: new Date().toISOString(),
+        touchesSent: (function(){ var p=getProfiles&&getProfiles().find(function(x){return x.company.trim().toLowerCase()===co.trim().toLowerCase();}); return (p&&p.cadence&&p.cadence.touchesSent)||[]; })()
+      }
+    });
+  }
+};
 function cadRenderStrip(intel){var uc=intel.urgency==='CRITICAL'?'background:#fee2e2;border-color:#fca5a5;color:#b91c1c':intel.urgency==='HIGH'?'background:#fff7ed;border-color:#fed7aa;color:#c2410c':'background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8';document.getElementById('cad-strip').innerHTML='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1"><span style="font-size:13px;font-weight:700;color:#fff">'+cadEsc(intel.company)+'</span><span style="color:rgba(255,255,255,.35)">·</span><span style="font-size:12px;color:rgba(255,255,255,.6)">'+cadEsc(intel.contact)+'</span><span style="color:rgba(255,255,255,.35)">·</span><span style="font-size:12px;color:rgba(255,255,255,.6)">'+cadEsc(intel.competitor)+'</span><span style="color:rgba(255,255,255,.35)">·</span><span style="font-size:12px;color:rgba(255,255,255,.6)">ADP '+(_cadProduct==='ts'?'TotalSource PEO':'Workforce Now')+'</span></div><span style="padding:3px 12px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid;'+uc+'">'+intel.urgency+'</span>';}
 function cadRenderFilters(){var types=['all','email','call','linkedin','video','text'],html='';types.forEach(function(t){var count=t==='all'?_cadTouches.length:_cadTouches.filter(function(x){return x.type===t;}).length;html+='<button class="cad-filter-btn'+(t===_cadFilter?' cad-f-active':'')+'" onclick="cadSetFilter(\''+t+'\')">'+(t==='all'?'All ('+count+')':((CAD_TYPE_STYLES[t]||{label:t}).label+' ('+count+')'))+'</button>';});document.getElementById('cad-filters').innerHTML=html;}
 window.cadSetFilter=function(f){_cadFilter=f;_cadActiveIdx=0;cadRenderFilters();cadRenderList();cadRenderDetail();};
@@ -14096,49 +14190,232 @@ function cadRenderList(){var touches=cadFilteredTouches(),html='';touches.forEac
 window.cadSelectTouch=function(i){_cadActiveIdx=i;cadRenderList();cadRenderDetail();};
 function cadRenderDetail(){var touches=cadFilteredTouches(),t=touches[_cadActiveIdx];if(!t){document.getElementById('cad-touch-detail').innerHTML='<div style="color:var(--text-3);font-size:13px;padding:8px">Select a touch to view details.</div>';return;}var ts=CAD_TYPE_STYLES[t.type]||{bg:'#f5f5f5',border:'#ccc',color:'#666',label:t.type},gi=_cadTouches.indexOf(t),html='';html+='<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:18px"><div style="width:48px;height:48px;border-radius:10px;background:'+ts.bg+';border:2px solid '+ts.border+';display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+t.icon+'</div><div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span class="cad-type-badge" style="background:'+ts.bg+';border:1px solid '+ts.border+';color:'+ts.color+'">'+ts.label+'</span><span style="font-size:10px;color:var(--red);font-weight:700">'+t.label+'</span><span style="font-size:10px;color:var(--text-3)">· Touch '+(gi+1)+' of '+_cadTouches.length+'</span></div><div style="font-family:var(--fd);font-size:18px;font-weight:600;color:var(--text)">'+cadEsc(t.title)+'</div><div style="font-size:11px;color:var(--text-3);margin-top:3px">'+cadEsc(t.urgency)+'</div></div><button onclick="cadCopyBody('+gi+')" id="cad-cp-'+gi+'" style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb);color:var(--text-2);flex-shrink:0;white-space:nowrap">Copy</button></div>';if(t.subject&&t.type!=='call'&&t.type!=='text'){html+='<div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:baseline;gap:10px"><span style="font-size:10px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:1px;flex-shrink:0">Subject</span><span style="font-size:12px;color:var(--text);font-family:var(--fm)">'+cadEsc(t.subject)+'</span></div>';}html+='<div style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 18px;margin-bottom:12px"><pre style="font-family:var(--fb);font-size:13px;line-height:1.75;color:var(--text-2);white-space:pre-wrap;margin:0;word-break:break-word">'+cadEsc(t.body)+'</pre></div>';html+='<div style="background:#fffbeb;border:1px solid var(--gold-border,#d4a017);border-radius:var(--radius-sm);padding:10px 14px"><div style="font-size:12px;color:var(--gold,#b8920a);line-height:1.6">'+cadEsc(t.tip)+'</div></div>';html+='<div style="display:flex;gap:8px;margin-top:18px">';if(gi>0)html+='<button onclick="cadNavGlobal('+(gi-1)+')" style="background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 16px;font-size:12px;cursor:pointer;font-family:var(--fb);color:var(--text-2)">Prev</button>';if(gi<_cadTouches.length-1)html+='<button onclick="cadNavGlobal('+(gi+1)+')" style="background:var(--navy);border:none;border-radius:var(--radius-sm);padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb);color:#fff">Next Touch</button>';html+='</div>';document.getElementById('cad-touch-detail').innerHTML=html;}
 window.cadNavGlobal=function(gi){var filtered=cadFilteredTouches(),t=_cadTouches[gi],fi=filtered.indexOf(t);if(fi>=0){_cadActiveIdx=fi;}else{_cadFilter='all';_cadActiveIdx=gi;cadRenderFilters();}cadRenderList();cadRenderDetail();};
-window.cadCopyBody=function(gi){var t=_cadTouches[gi];if(!t)return;var text=(t.subject&&t.type!=='call'&&t.type!=='text'?'SUBJECT: '+t.subject+'\n\n':'')+t.body;navigator.clipboard.writeText(text).catch(function(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});var btn=document.getElementById('cad-cp-'+gi);if(btn){btn.textContent='Copied!';btn.style.color='var(--green)';btn.style.borderColor='var(--green-border,#16a34a)';setTimeout(function(){btn.textContent='Copy';btn.style.color='';btn.style.borderColor='';},2000);}};
+window.cadCopyBody=function(gi){var t=_cadTouches[gi];if(!t)return;var text=(t.subject&&t.type!=='call'&&t.type!=='text'?'SUBJECT: '+t.subject+'\n\n':'')+t.body;navigator.clipboard.writeText(text).catch(function(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});var btn=document.getElementById('cad-cp-'+gi);if(btn){btn.textContent='Copied!';btn.style.color='var(--green)';btn.style.borderColor='var(--green-border,#16a34a)';setTimeout(function(){btn.textContent='Copy';btn.style.color='';btn.style.borderColor='';},2000);}
+  // ── Track touch as sent in Firebase ──
+  var co=(document.getElementById('cad-company')||{}).value||'';co=co.trim();
+  if(co && typeof upsertProfile==='function' && typeof getProfiles==='function'){
+    var prof=getProfiles().find(function(x){return x.company.trim().toLowerCase()===co.toLowerCase();});
+    var cad=Object.assign({touchesSent:[]},prof&&prof.cadence||{});
+    var touchKey=t.day+'_'+t.type;
+    if(!cad.touchesSent.includes(touchKey)){
+      cad.touchesSent.push(touchKey);
+      cad.lastTouchAt=new Date().toISOString();
+      cad.lastTouchDay=t.day;
+      cad.lastTouchType=t.type;
+      upsertProfile({company:co, stage:'Cadence Active', cadence:cad});
+    }
+  }
+};
 function cadEsc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 window.cadReset=function(){_cadTouches=[];_cadActiveIdx=0;_cadFilter='all';_cadTrigger='';_cadUrgency='MEDIUM';['cad-company','cad-contact','cad-detail'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var sel=document.getElementById('cad-competitor');if(sel)sel.value='';document.querySelectorAll('.cad-trig-btn').forEach(function(b){b.className='cad-trig-btn';});var pill=document.getElementById('cad-urgency-pill');if(pill)pill.style.display='none';var out=document.getElementById('cad-output');if(out)out.style.display='none';cadSetProduct('ts');};
 window.cadenceInit=function(){
-  var last=window._lastAnalyzerRun;
-  var prospect=window._hqProspect;
+  // ── Populate prospect selector dropdown ──
+  cadPopulateProspectSelector();
+
+  // ── Determine best data source ──
+  // Priority: Firebase profile fields (wfn/sre) > _lastAnalyzerRun > _hqProspect basics
+  var prospect = window._hqProspect;
+
+  // If we don't have _lastAnalyzerRun yet, try to build it from the Firebase profile
+  if (!window._lastAnalyzerRun && prospect) {
+    if (prospect.wfn && prospect.wfn.fitScore) {
+      window._lastAnalyzerRun = {
+        source: 'wfn_panel', company: prospect.company, contact: prospect.contact||'',
+        competitor: prospect.wfn.platform||'', product: 'wfn',
+        classification: prospect.wfn.classification||'', fitScore: prospect.wfn.fitScore||0,
+        fitReason: prospect.wfn.fitReason||'', opportunityScore: prospect.wfn.opportunityScore||0,
+        urgencyScore: prospect.wfn.urgencyScore||0,
+        signals: (prospect.wfn.signals||[]).concat(prospect.wfn.competitive||[]).concat(prospect.wfn.risks||[]),
+        roi: prospect.wfn.roi||{}, crossSell: prospect.wfn.crossSell||[]
+      };
+    } else if (prospect.sre) {
+      window._lastAnalyzerRun = {
+        source: 'smart_router', company: prospect.company, contact: prospect.contact||'',
+        competitor: '', product: prospect.sre.recommendation&&prospect.sre.recommendation.indexOf('TotalSource')>-1?'ts':'wfn',
+        recommendation: prospect.sre.recommendation||'', confidence: prospect.sre.confidence||0,
+        peoScore: prospect.sre.peoScore||0, wfnScore: prospect.sre.wfnScore||0,
+        signals: (prospect.sre.peoFactors||[]).concat(prospect.sre.wfnFactors||[]),
+        classification: prospect.sre.recommendation||''
+      };
+    }
+  }
+
+  var last = window._lastAnalyzerRun;
 
   // ── Company & Contact ──
-  var coEl=document.getElementById('cad-company');
-  var ctEl=document.getElementById('cad-contact');
-  var company=(last&&last.company)||(prospect&&prospect.company)||'';
-  var contact=(last&&last.contact)||(prospect&&prospect.contact)||'';
-  if(coEl&&!coEl.value&&company) coEl.value=company;
-  if(ctEl&&!ctEl.value&&contact) ctEl.value=contact;
+  var coEl = document.getElementById('cad-company');
+  var ctEl = document.getElementById('cad-contact');
+  var company = (last && last.company) || (prospect && prospect.company) || '';
+  var contact = (last && last.contact) || (prospect && prospect.contact) || '';
+  if (coEl) coEl.value = company;
+  if (ctEl) ctEl.value = contact;
 
-  if(!last) return; // no analyzer run yet, stop here
+  if (!last || !last.source) return;
 
   // ── Competitor ──
-  var compEl=document.getElementById('cad-competitor');
-  if(compEl&&!compEl.value&&last.competitor){
-    // Try to match to one of the dropdown options
-    var opts=Array.from(compEl.options).map(function(o){return o.value;});
-    var match=opts.find(function(o){return o&&last.competitor&&last.competitor.toLowerCase().indexOf(o.toLowerCase())>-1;});
-    if(!match) match=opts.find(function(o){return o&&last.competitor&&o.toLowerCase().indexOf(last.competitor.toLowerCase().split(' ')[0])>-1;});
-    if(match) compEl.value=match;
+  var compEl = document.getElementById('cad-competitor');
+  if (compEl && last.competitor) {
+    var opts = Array.from(compEl.options).map(function(o){ return o.value; });
+    var match = opts.find(function(o){ return o && last.competitor && last.competitor.toLowerCase().indexOf(o.toLowerCase()) > -1; });
+    if (!match) match = opts.find(function(o){ return o && last.competitor && o.toLowerCase().indexOf((last.competitor.toLowerCase().split(' ')[0])) > -1; });
+    if (match) compEl.value = match;
   }
 
   // ── Product ──
-  if(last.product) cadSetProduct(last.product);
+  if (last.product) cadSetProduct(last.product);
 
-  // ── Intel Detail (pre-fill from signals) ──
-  var detEl=document.getElementById('cad-detail');
-  if(detEl&&!detEl.value&&last.signals&&last.signals.length){
-    var top=last.signals.slice(0,4).join('. ');
-    detEl.value=top;
+  // ── Intel Detail — build a rich summary from all available data ──
+  var detEl = document.getElementById('cad-detail');
+  if (detEl) {
+    var detailParts = [];
+    if (last.classification) detailParts.push('Classification: ' + last.classification + '.');
+    if (last.fitScore) detailParts.push('Fit Score: ' + last.fitScore + '/100 — ' + (last.fitReason || ''));
+    if (last.signals && last.signals.length) detailParts.push('Key signals: ' + last.signals.slice(0,3).join('; ') + '.');
+    if (last.recommendation) detailParts.push('Routing recommendation: ' + last.recommendation + ' (' + (last.confidence||'') + '% confidence).');
+    if (last.roi && last.roi.annualSavings) detailParts.push('Estimated annual savings: ' + last.roi.annualSavings + '.');
+    detEl.value = detailParts.join(' ');
   }
 
-  // ── Show a toast if we auto-filled from analyzer ──
-  if(last.source&&(last.company||last.competitor||last.signals&&last.signals.length)){
-    var src=last.source==='wfn'||last.source==='wfn_panel'?'WFN Analyzer':last.source==='smart_router'?'Smart Router':'analyzer';
-    showToast('Pre-filled from '+src+' — select a trigger and hit Build Cadence');
+  // ── Show analyzer badges ──
+  cadRenderAnalyzerBadges(savedData || (last ? { [last.source]: last } : {}));
+
+  // ── Show prospect badge ──
+  var badge = document.getElementById('cad-prospect-badge');
+  if (badge && company) {
+    badge.style.display = 'flex';
+    badge.innerHTML = '<span style="opacity:.6;margin-right:4px">▶</span>' + company + (contact ? ' · ' + contact : '');
   }
+
+  // ── Toast ──
+  var src = last.source === 'wfn' || last.source === 'wfn_panel' ? 'WFN Analyzer' : last.source === 'smart_router' ? 'Smart Router' : 'analyzer';
+  var hasSavedData = savedData && Object.keys(savedData).length > 0;
+  showToast((hasSavedData ? '✅ Loaded from saved profile' : 'Pre-filled from ' + src) + ' — select a trigger and hit Build Cadence');
 };
+
+function cadPopulateProspectSelector() {
+  var sel = document.getElementById('cad-prospect-select');
+  if (!sel) return;
+  // Use Firebase profiles (getProfiles) with localStorage fallback (getSavedProspects)
+  var prospects = (typeof getProfiles === 'function') ? getProfiles() : (getSavedProspects ? getSavedProspects() : []);
+  var activeId = (window._hqProspect && window._hqProspect._id) || (getActiveProspectId ? getActiveProspectId() : null);
+  sel.innerHTML = '<option value="">— Select saved prospect —</option>';
+  prospects.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p._id;
+    var hasSre = !!p.sre;
+    var hasWfn = !!(p.wfn && p.wfn.fitScore);
+    var hasTs  = !!(p.ts  && p.ts.eligibilityScore);
+    var hasCad = !!(p.cadence && p.cadence.builtAt);
+    var badges = (hasSre?'🎯':'') + (hasWfn?'📊':'') + (hasTs?'🏥':'') + (hasCad?'⚡':'');
+    var done = hasSre||hasWfn||hasTs;
+    opt.textContent = p.company
+      + (p.headcount ? ' (' + p.headcount + 'ee)' : '')
+      + (badges ? ' ' + badges : '')
+      + (done ? ' ✓' : '');
+    if (p._id === activeId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function cadRenderAnalyzerBadges(analyzerData) {
+  var wrap = document.getElementById('cad-analyzer-badges');
+  if (!wrap || !analyzerData) return;
+  var html = '';
+  if (analyzerData.smart_router) {
+    var sr = analyzerData.smart_router;
+    html += '<div style="padding:4px 10px;border-radius:var(--radius-sm);background:#eff6ff;border:1px solid #bfdbfe;font-size:10px;font-weight:700;color:#1d4ed8">🎯 Smart Router · ' + (sr.recommendation||'') + ' · ' + (sr.confidence||0) + '%</div>';
+  }
+  if (analyzerData.wfn || analyzerData.wfn_panel) {
+    var w = analyzerData.wfn_panel || analyzerData.wfn;
+    html += '<div style="padding:4px 10px;border-radius:var(--radius-sm);background:#f0fdf4;border:1px solid #bbf7d0;font-size:10px;font-weight:700;color:#166534">📊 WFN · ' + (w.classification||'') + ' · Fit ' + (w.fitScore||0) + '</div>';
+  }
+  wrap.innerHTML = html;
+}
+
+window.cadLoadProspect = function(id) {
+  if (!id) return;
+  // Use Firebase profiles first, fall back to localStorage
+  var prospects = (typeof getProfiles === 'function') ? getProfiles() : (getSavedProspects ? getSavedProspects() : []);
+  var p = prospects.find(function(x){ return x._id === id; });
+  if (!p) return;
+
+  // Set as active prospect everywhere
+  if (setActiveProspectId) setActiveProspectId(id);
+  window._hqProspect = Object.assign({}, p);
+
+  // Reset cadence form fields
+  cadReset();
+
+  // Build _lastAnalyzerRun from Firebase profile data
+  // Priority: wfn (most detailed) > sre (routing) 
+  if (p.wfn && p.wfn.fitScore) {
+    window._lastAnalyzerRun = {
+      source:          'wfn_panel',
+      company:         p.company,
+      contact:         p.contact || '',
+      competitor:      p.wfn.platform || '',
+      product:         'wfn',
+      classification:  p.wfn.classification || '',
+      fitScore:        p.wfn.fitScore || 0,
+      fitReason:       p.wfn.fitReason || '',
+      opportunityScore:p.wfn.opportunityScore || 0,
+      urgencyScore:    p.wfn.urgencyScore || 0,
+      signals:         (p.wfn.signals||[]).concat(p.wfn.competitive||[]).concat(p.wfn.risks||[]),
+      roi:             p.wfn.roi || {},
+      crossSell:       p.wfn.crossSell || []
+    };
+  } else if (p.sre) {
+    window._lastAnalyzerRun = {
+      source:         'smart_router',
+      company:        p.company,
+      contact:        p.contact || '',
+      competitor:     '',
+      product:        p.sre.recommendation && p.sre.recommendation.indexOf('TotalSource') > -1 ? 'ts' : 'wfn',
+      recommendation: p.sre.recommendation || '',
+      confidence:     p.sre.confidence || 0,
+      peoScore:       p.sre.peoScore || 0,
+      wfnScore:       p.sre.wfnScore || 0,
+      signals:        (p.sre.peoFactors||[]).concat(p.sre.wfnFactors||[]),
+      classification: p.sre.recommendation || ''
+    };
+  } else if (p._analyzerData) {
+    // Legacy: fall back to old _analyzerData format
+    var best = p._analyzerData.wfn_panel || p._analyzerData.wfn || p._analyzerData.smart_router;
+    if (best) window._lastAnalyzerRun = best;
+  }
+
+  cadenceInit();
+};
+
+
+// ══════════════════════════════════════════════════════════
+//  ANALYZER → PROSPECT PROFILE PERSISTENCE
+//  Saves analyzer results into the active prospect record
+// ══════════════════════════════════════════════════════════
+function saveAnalyzerDataToProspect(analyzerData) {
+  var id = getActiveProspectId ? getActiveProspectId() : null;
+  if (!id) {
+    // Try from window._hqProspect
+    if (window._hqProspect && window._hqProspect._id) id = window._hqProspect._id;
+  }
+  if (!id) return; // no active prospect — nothing to save to
+
+  var arr = getSavedProspects ? getSavedProspects() : [];
+  var idx = arr.findIndex(function(x){ return x._id === id; });
+  if (idx < 0) return;
+
+  // Merge new analyzer data (overwrite per source)
+  var existing = arr[idx]._analyzerData || {};
+  existing[analyzerData.source] = Object.assign({}, analyzerData, { _savedAt: new Date().toISOString() });
+  arr[idx]._analyzerData = existing;
+
+  if (setSavedProspects) setSavedProspects(arr);
+
+  // Also update window._hqProspect live
+  if (window._hqProspect && window._hqProspect._id === id) {
+    window._hqProspect._analyzerData = existing;
+  }
+}
 
 function ihubToggle() {
   var body    = document.getElementById('ihub-body');
