@@ -10605,37 +10605,85 @@ window.sreExtractFromImage = async function(input) {
         notesEl.dispatchEvent(new Event('input'));
       }
       // Auto-check pain points based on keyword matches in OCR text
+      // Works for BOTH ADP client panel and non-ADP prospect panel — whichever is visible
       var ocrLower = extracted.toLowerCase();
-      var painMap = [
-        { id:'pain401k-embed',        words:['401k','401(k)','retirement','pension'] },
-        { id:'painWC-embed',          words:['workers comp','workers\' comp','work comp','wc renewal','wcb'] },
-        { id:'painACA-embed',         words:['aca','affordable care','1095','compliance','mandate'] },
-        { id:'painBenefits-embed',    words:['benefits','benefit payment','cobra','open enrollment','fsa','hsa'] },
+
+      // ADP Client pain points
+      var adpPainMap = [
+        { id:'pain401k-embed',         words:['401k','401(k)','retirement','pension'] },
+        { id:'painWC-embed',           words:['workers comp','workers\' comp','work comp','wc renewal','wcb'] },
+        { id:'painACA-embed',          words:['aca','affordable care','1095','compliance','mandate'] },
+        { id:'painBenefits-embed',     words:['benefits','benefit payment','cobra','open enrollment','fsa','hsa'] },
         { id:'painMultiStateTax-embed',words:['multi-state','multistate','multi state','state tax','nexus','withholding'] },
-        { id:'painPlatform-embed',    words:['platform','system down','outage','error','bug','glitch','downtime','failure'] },
-        { id:'painGL-embed',          words:['gl','general ledger','integration','sync','accounting','quickbooks','sage','netsuite'] },
-        { id:'painSupport-embed',     words:['support','response time','ticket','escalat','communication','customer service'] },
-        { id:'painI9-embed',          words:['i-9','i9','immigration','e-verify','everify','onboarding','new hire'] },
-        { id:'painMultiEntity-embed', words:['multi-entity','multi entity','multiple entities','subsidiary','subsidiaries','entities'] },
-        { id:'painManual-embed',      words:['manual','spreadsheet','paper','excel','data entry','re-enter','double entry'] }
+        { id:'painPlatform-embed',     words:['platform','system down','outage','error','bug','glitch','downtime','failure'] },
+        { id:'painGL-embed',           words:['gl','general ledger','integration','sync','accounting','quickbooks','sage','netsuite'] },
+        { id:'painSupport-embed',      words:['support','response time','ticket','escalat','communication','customer service'] },
+        { id:'painI9-embed',           words:['i-9','i9','immigration','e-verify','everify','onboarding','new hire'] },
+        { id:'painMultiEntity-embed',  words:['multi-entity','multi entity','multiple entities','subsidiary','subsidiaries','entities'] },
+        { id:'painManual-embed',       words:['manual','spreadsheet','paper','excel','data entry','re-enter','double entry'] }
       ];
+
+      // Non-ADP Prospect pain points + platform detection
+      var npPainMap = [
+        { id:'np-pain-benefits-cost',  words:['benefits cost','carrier','premium','health insurance','benefit expense'] },
+        { id:'np-pain-wc-rates',       words:['workers comp','wc rate','work comp','mod rate','experience mod'] },
+        { id:'np-pain-hr-burden',      words:['hr admin','doing hr','no hr','hr themselves','owner doing','cfo doing'] },
+        { id:'np-pain-compliance-risk',words:['compliance','osha','epli','audit','penalty','violation','fines'] },
+        { id:'np-pain-reporting',      words:['reporting','report','dashboard','analytics','visibility','data'] },
+        { id:'np-pain-integrations',   words:['integration','erp','gl','quickbooks','netsuite','sage','sync','api'] },
+        { id:'np-pain-multistate',     words:['multi-state','multistate','multi state','state tax','nexus','expanding','new state'] },
+        { id:'np-pain-support',        words:['support','response time','ticket','escalat','unresponsive','communication'] },
+        { id:'np-pain-growth',         words:['growth','hiring','headcount','growing','expansion','scaling','rapid'] },
+        { id:'np-pain-renewal',        words:['renewal','contract','anniversary','expir','end of term'] },
+        { id:'np-pain-manual',         words:['manual','spreadsheet','excel','paper','data entry','re-enter','double entry'] },
+        { id:'np-pain-price',          words:['price','cost','expensive','fees','pricing','overcharg','value'] },
+        { id:'np-pain-newleader',      words:['new hr','new cfo','new director','new vp','leadership change','new leader'] },
+        { id:'np-pain-acquisition',    words:['acquisition','merger','acquired','merging','m&a','consolidat'] }
+      ];
+
+      // Platform detection for non-ADP prospects
+      var platMap = [
+        { id:'plat-paychex',   words:['paychex','paychex flex'] },
+        { id:'plat-paycom',    words:['paycom'] },
+        { id:'plat-paylocity', words:['paylocity'] },
+        { id:'plat-rippling',  words:['rippling'] },
+        { id:'plat-gusto',     words:['gusto'] },
+        { id:'plat-bamboo',    words:['bamboo','bamboohr'] },
+        { id:'plat-qb',        words:['quickbooks payroll','qb payroll','intuit payroll'] },
+        { id:'plat-isolved',   words:['isolved','i-solved'] }
+      ];
+
       var painChecked = 0;
-      painMap.forEach(function(p) {
-        var matched = p.words.some(function(w){ return ocrLower.indexOf(w) > -1; });
-        if (matched) {
-          var cb = document.getElementById(p.id);
-          if (cb && !cb.checked) {
-            cb.checked = true;
-            var lbl = cb.closest('label');
-            if (lbl) lbl.classList.add('checked');
-            painChecked++;
+
+      function checkPainList(map) {
+        map.forEach(function(p) {
+          var matched = p.words.some(function(w){ return ocrLower.indexOf(w) > -1; });
+          if (matched) {
+            var cb = document.getElementById(p.id);
+            if (cb && !cb.checked) {
+              cb.checked = true;
+              var lbl = cb.closest('label');
+              if (lbl) lbl.classList.add('checked');
+              painChecked++;
+            }
           }
-        }
-      });
+        });
+      }
+
+      // Check which panel is active and apply the right map (or both if both visible)
+      var adpPanel = document.getElementById('pain-panel-adp');
+      var npPanel  = document.getElementById('pain-panel-nonadp');
+      var adpVisible = adpPanel && adpPanel.style.display !== 'none';
+      var npVisible  = npPanel  && npPanel.style.display  !== 'none';
+
+      if (adpVisible) checkPainList(adpPainMap);
+      if (npVisible)  { checkPainList(npPainMap); checkPainList(platMap); }
+      // If neither is visible yet, check both
+      if (!adpVisible && !npVisible) { checkPainList(adpPainMap); checkPainList(npPainMap); checkPainList(platMap); }
+
       if (painChecked > 0) {
-        // Scroll pain section into view
-        var painPanel = document.getElementById('pain-panel-adp');
-        if (painPanel) painPanel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+        var activePainPanel = adpVisible ? adpPanel : npPanel;
+        if (activePainPanel) activePainPanel.scrollIntoView({ behavior:'smooth', block:'nearest' });
         if (typeof showToast === 'function') showToast('🎯 ' + painChecked + ' pain point' + (painChecked > 1 ? 's' : '') + ' auto-detected from screenshot');
       }
 
