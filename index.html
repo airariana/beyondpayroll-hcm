@@ -6735,6 +6735,32 @@ Pain Points Noted: Manual time entry, no integration with benefits"></textarea>
       </div>
     </div>
     <div class="card">
+
+      <!-- GONG SCREENSHOT UPLOADER -->
+      <div style="padding:14px 18px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:10px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:20px;">
+        <div style="font-size:22px;flex-shrink:0;margin-top:2px;">🎙️</div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:3px;">Import from Gong Screenshot</div>
+          <div style="font-size:12px;color:#16a34a;line-height:1.55;">Upload a screenshot of your <strong>Gong call summary</strong> — key topics, pain points, and next steps will be extracted automatically via Google Vision.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;">
+          <input type="file" id="wfn-gong-img-upload" accept="image/*" style="display:none" onchange="wfnExtractFromGong(this)">
+          <button type="button" onclick="document.getElementById('wfn-gong-img-upload').click()" id="wfn-gong-upload-btn"
+            style="font-size:12px;padding:8px 15px;background:#166534;color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:600;display:flex;align-items:center;gap:6px;transition:opacity .15s;"
+            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            <span id="wfn-gong-upload-icon">📸</span><span id="wfn-gong-upload-lbl">Upload Gong Screenshot</span>
+          </button>
+        </div>
+        <div id="wfn-gong-img-preview-wrap" style="display:none;width:100%;padding:8px 10px;background:#fff;border:1px solid #86efac;border-radius:7px;align-items:center;gap:10px;margin-top:4px;">
+          <img id="wfn-gong-img-thumb" style="height:36px;width:auto;border-radius:4px;border:1px solid #86efac;object-fit:cover;" src="" alt="preview">
+          <div style="flex:1;min-width:0;">
+            <div id="wfn-gong-img-status" style="font-size:11px;color:#166534;font-weight:600;">Extracting text…</div>
+            <div id="wfn-gong-img-name" style="font-size:10px;color:#778DA9;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+          </div>
+          <button type="button" onclick="wfnDismissGongImage()" style="background:transparent;border:none;color:#778DA9;cursor:pointer;font-size:15px;padding:2px 6px;">×</button>
+        </div>
+      </div>
+
       <div class="form-field">
         <label class="form-label">Gong Transcript or Call Summary</label>
         <textarea class="form-textarea" id="wfn-callTranscript" style="min-height:180px;" placeholder="Paste Gong call transcript or summary here...
@@ -7185,8 +7211,10 @@ Example:
   #wfn-panel .section-header {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 12px;
     margin-bottom: 16px;
+    flex-wrap: nowrap;
   }
 
   #wfn-panel .section-icon {
@@ -11049,11 +11077,14 @@ window.wfnExtractFromSalesforce = async function(input) {
         if (platEl) { platEl.value = platOptions[pi]; filled++; } break;
       }
     }
-    // Call notes: dump remaining text
-    var transcEl = document.getElementById('wfn-callTranscript');
-    if (transcEl && ocrText.length > 20) {
-      var existing = transcEl.value.trim();
-      transcEl.value = existing ? existing + '\n\n--- From Screenshot ---\n' + ocrText : '--- From Screenshot ---\n' + ocrText;
+    // Feed ADP usage data field with any ADP-related text from screenshot
+    var adpEl = document.getElementById('wfn-adpUsageData');
+    if (adpEl && ocrText.length > 20) {
+      var adpKeywords = /adp|payroll|module|workforce|run|classic|employees in system|time.attendance|benefits admin|last upgrade|pain point/i;
+      var adpLines = ocrText.split('\n').filter(function(l){ return adpKeywords.test(l); }).join('\n');
+      var adpDump = adpLines.length > 10 ? adpLines : ocrText;
+      var existingAdp = adpEl.value.trim();
+      adpEl.value = existingAdp ? existingAdp + '\n\n--- From Salesforce Screenshot ---\n' + adpDump : '--- From Salesforce Screenshot ---\n' + adpDump;
       filled++;
     }
 
@@ -11078,6 +11109,118 @@ window.wfnDismissSfImage = function() {
   var thumb = document.getElementById('wfn-sf-img-thumb');
   if (thumb) thumb.src = '';
 };
+
+// ── WFN Gong Screenshot → Call Transcript extractor ──────────────────────────
+window.wfnExtractFromGong = async function(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  input.value = '';
+
+  var wrap   = document.getElementById('wfn-gong-img-preview-wrap');
+  var thumb  = document.getElementById('wfn-gong-img-thumb');
+  var status = document.getElementById('wfn-gong-img-status');
+  var fname  = document.getElementById('wfn-gong-img-name');
+  var btn    = document.getElementById('wfn-gong-upload-btn');
+  var lbl    = document.getElementById('wfn-gong-upload-lbl');
+  var icon   = document.getElementById('wfn-gong-upload-icon');
+
+  // Resize & encode image
+  var base64 = await new Promise(function(res, rej) {
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(url);
+      var MAX = 1200;
+      var w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        var scale = Math.min(MAX/w, MAX/h);
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+      }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(canvas.toDataURL('image/jpeg', 0.82).split(',')[1]);
+    };
+    img.onerror = rej;
+    img.src = url;
+  });
+
+  thumb.src = 'data:image/jpeg;base64,' + base64;
+  fname.textContent = file.name;
+  status.textContent = '⏳ Reading Gong screenshot…';
+  status.style.color = '#166534';
+  wrap.style.display = 'flex';
+  btn.disabled = true;
+  lbl.textContent = 'Extracting…';
+  icon.textContent = '⏳';
+
+  try {
+    // Google Cloud Vision OCR via Worker
+    var visionRes = await fetch(VISION_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
+      body: JSON.stringify({
+        requests: [{
+          image: { content: base64 },
+          features: [{ type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 }]
+        }]
+      })
+    });
+    var visionData = await visionRes.json();
+    var ocrText = '';
+    if (visionData.responses && visionData.responses[0] && visionData.responses[0].fullTextAnnotation) {
+      ocrText = visionData.responses[0].fullTextAnnotation.text.trim();
+    } else if (visionData.responses && visionData.responses[0] && visionData.responses[0].textAnnotations && visionData.responses[0].textAnnotations.length > 0) {
+      ocrText = visionData.responses[0].textAnnotations[0].description.trim();
+    }
+    if (!ocrText) throw new Error(
+      (visionData.responses && visionData.responses[0] && visionData.responses[0].error)
+        ? visionData.responses[0].error.message : 'No text detected in image'
+    );
+
+    // Dump OCR text into the Gong transcript field
+    var transcEl = document.getElementById('wfn-callTranscript');
+    if (transcEl) {
+      var existing = transcEl.value.trim();
+      transcEl.value = existing
+        ? existing + '\n\n--- From Gong Screenshot ---\n' + ocrText
+        : '--- From Gong Screenshot ---\n' + ocrText;
+    }
+
+    // Also feed ADP usage data field with any ADP/product mentions from the call
+    var adpEl = document.getElementById('wfn-adpUsageData');
+    if (adpEl && ocrText.length > 20) {
+      var adpKeywords = /adp|payroll|module|workforce|run|classic|employees in system|time.attendance|benefits admin|last upgrade|pain point|current product/i;
+      var adpLines = ocrText.split('\n').filter(function(l){ return adpKeywords.test(l); }).join('\n');
+      if (adpLines.length > 10) {
+        var existingAdp = adpEl.value.trim();
+        adpEl.value = existingAdp ? existingAdp + '\n\n--- From Gong Screenshot ---\n' + adpLines : '--- From Gong Screenshot ---\n' + adpLines;
+      }
+    }
+
+    status.textContent = '✅ Gong transcript extracted';
+    status.style.color = '#166534';
+    showToast('🎙️ Gong transcript loaded into Call Notes');
+
+  } catch(err) {
+    console.error('WFN Gong extract error:', err);
+    status.textContent = '❌ ' + (err.message || 'Extraction failed');
+    status.style.color = '#dc2626';
+  }
+
+  btn.disabled = false;
+  lbl.textContent = 'Upload Gong Screenshot';
+  icon.textContent = '📸';
+};
+
+window.wfnDismissGongImage = function() {
+  var wrap = document.getElementById('wfn-gong-img-preview-wrap');
+  if (wrap) wrap.style.display = 'none';
+  var thumb = document.getElementById('wfn-gong-img-thumb');
+  if (thumb) thumb.src = '';
+};
+
 
 // ══════════════════════════════════════════════════════════
 //  TOTALSOURCE TOOL — Salesforce Client Insights Image Import
