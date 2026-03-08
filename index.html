@@ -8610,7 +8610,7 @@ window.runEmbeddedAnalysis = function(){
 // ── Gong Screenshot → Notes extractor ───────────────────────────────────────
 
 // ── Google Cloud Vision OCR ───────────────────────────────────────────────────
-var GCV_API_KEY = 'AIzaSyBU_bHIfG5dj2KDqk7cMr-12gSJlH37KDk';
+var GCV_API_KEY = 'AIzaSyD-Ka3mxApP0RR4Gvdf8tOd9IPAsEVhaOw';
 
 window.sreExtractFromImage = async function(input) {
   if (!input.files || !input.files[0]) return;
@@ -8665,7 +8665,13 @@ window.sreExtractFromImage = async function(input) {
       extracted = data.responses[0].textAnnotations[0].description.trim();
     }
 
-    if (extracted) {
+    // Log full response for debugging
+    console.log('Vision API response:', JSON.stringify(data));
+
+    if (data.error) {
+      status.textContent = '❌ API error: ' + data.error.message;
+      status.style.color = '#ef4444';
+    } else if (extracted) {
       var notesEl = document.getElementById('sre-notes');
       if (notesEl) {
         var existing = notesEl.value.trim();
@@ -8676,13 +8682,16 @@ window.sreExtractFromImage = async function(input) {
       status.textContent = '✅ Text extracted successfully';
       status.style.color = '#22c55e';
     } else {
-      status.textContent = '⚠️ No text found — try a clearer screenshot';
+      var errDetail = (data.responses && data.responses[0] && data.responses[0].error)
+        ? data.responses[0].error.message : 'No text detected';
+      console.warn('Vision no text:', errDetail, data);
+      status.textContent = '⚠️ ' + errDetail;
       status.style.color = '#f59e0b';
     }
 
   } catch(err) {
     console.error('Vision OCR error:', err);
-    status.textContent = '❌ Extraction failed — paste notes manually';
+    status.textContent = '❌ ' + (err.message || 'Extraction failed');
     status.style.color = '#ef4444';
   }
 
