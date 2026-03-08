@@ -740,7 +740,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
   --ih--red:#CC0000; --red-light:#e8001a; --red-dim:rgba(204,0,0,0.10); --red-glow:rgba(204,0,0,0.20);
   --ih--ink:#0d0f12; --ink2:#141720; --ink3:#1c2029;
   --ih--surface:#22262f; --surface2:#282d38; --ih--border:#2e333f; --border2:rgba(255,255,255,0.10);
-  --ih--text:#dde1eb; --text2:#8b93a8; --text3:#555e72;
+  --ih--text:#dde1eb; --text2:#8b93a8; --text3:#6b7280; --ih--text2:#8b93a8; --ih--text3:#6b7280;
   --ih--green:#22c55e; --green-dim:rgba(34,197,94,0.12);
   --yellow:#f59e0b; --yellow-dim:rgba(245,158,11,0.12);
   --ih--orange:#f97316; --orange-dim:rgba(249,115,22,0.12);
@@ -818,7 +818,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 .intel-hub-panel /* ── CARDS ── */
 .card { background:var(--ih--surface); border:1px solid var(--ih--border); border-radius:10px; padding:22px 24px; }
 .intel-hub-panel .card + .card { margin-top:16px; }
-.intel-hub-panel .card-label { font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; color:var(--text3); margin-bottom:14px; }
+.intel-hub-panel .card-label { font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; color:#9ca3af; margin-bottom:14px; }
 .intel-hub-panel .section-title { font-family:'DM Serif Display',serif; font-size:20px; font-weight:400; margin-bottom:16px; color:#fff; }
 .intel-hub-panel /* ── GRID LAYOUTS ── */
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px; }
@@ -1124,7 +1124,7 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
 .intel-hub-panel .type-card:hover { border-color:var(--text2); }
 .intel-hub-panel .type-icon { font-size:28px; margin-bottom:10px; }
 .intel-hub-panel .type-title { font-size:16px; font-weight:700; color:#fff; margin-bottom:6px; }
-.intel-hub-panel .type-desc { font-size:12px; color:var(--text2); line-height:1.5; }
+.intel-hub-panel .type-desc { font-size:12px; color:#9ca3af; line-height:1.5; }
 .intel-hub-panel /* ── WAGE SLIDERS ── */
 .wage-dist { background:var(--ink3); border:1px solid var(--ih--border); border-radius:8px; padding:20px 22px; }
 .intel-hub-panel .wage-slider-item { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
@@ -1231,6 +1231,38 @@ body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit
   transition:all 0.2s; white-space:nowrap; flex-shrink:0;
 }
 .intel-hub-panel .ocr-btn:hover { border-color:var(--ih--blue); color:var(--ih--blue); }
+
+/* ── HUB CONTRAST FIX — ensure all text visible on dark background ── */
+.intel-hub-panel, .intel-hub-panel * { color: inherit; }
+.intel-hub-panel { color: #dde1eb !important; }
+.intel-hub-panel h1,.intel-hub-panel h2,.intel-hub-panel h3,
+.intel-hub-panel h4,.intel-hub-panel h5,.intel-hub-panel h6 { color: #fff; }
+.intel-hub-panel p, .intel-hub-panel span, .intel-hub-panel div { color: inherit; }
+.intel-hub-panel label { color: #9ca3af !important; }
+.intel-hub-panel .section-title-dark { color: #e5e7eb !important; }
+.intel-hub-panel .field-label-dark { color: #e5e7eb !important; }
+.intel-hub-panel .routing-title-dark { color: #e5e7eb !important; }
+.intel-hub-panel .routing-subtitle-dark { color: #9ca3af !important; }
+.intel-hub-panel .card-label { color: #6b7280 !important; }
+.intel-hub-panel .pain-section-header-dark { color: #9ca3af !important; }
+.intel-hub-panel .factor-header-dark { color: #e5e7eb !important; }
+.intel-hub-panel .account-type-label,
+.intel-hub-panel .type-card-title,
+.intel-hub-panel .type-card-desc { color: #e5e7eb !important; }
+.intel-hub-panel input[type="text"],
+.intel-hub-panel input[type="number"],
+.intel-hub-panel input[type="date"],
+.intel-hub-panel select,
+.intel-hub-panel textarea { color: #fff !important; background: #1c2029 !important; }
+.intel-hub-panel .dark-card { color: #e5e7eb !important; }
+.intel-hub-panel .dark-card * { color: inherit !important; }
+.intel-hub-panel .pain-checkbox-dark label { color: #d1d5db !important; }
+/* type card text */
+.intel-hub-panel [class*="type-card"] h3,
+.intel-hub-panel [class*="type-card"] p,
+.intel-hub-panel [class*="card-title"],
+.intel-hub-panel [class*="card-desc"] { color: #e5e7eb !important; }
+
 .intel-hub-panel .ocr-btn input[type="file"] { display:none; }
 .intel-hub-panel .ocr-status {
   display:none; font-size:11px; padding:6px 12px; border-radius:6px;
