@@ -7041,7 +7041,7 @@ Example:
 
 /* Scoped WFN styles */
 
-  #wfn-panel :root {
+  #wfn-panel {
     --primary: #0055A5;
     --primary-light: #0066CC;
     --primary-dim: rgba(0, 85, 165, 0.1);
@@ -7068,14 +7068,14 @@ Example:
 
   /* HEADER */
   #wfn-panel header {
-    background: var(--ink);
+    background: #0D1B2A;
     color: white;
     padding: 0 40px;
     height: 70px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 3px solid var(--primary);
+    border-bottom: 3px solid #0055A5;
     box-shadow: 0 2px 12px rgba(0,0,0,0.1);
   }
 
@@ -7088,7 +7088,7 @@ Example:
   #wfn-panel .logo-icon {
     width: 44px;
     height: 44px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    background: linear-gradient(135deg, #0055A5, #00A3E0);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -7110,7 +7110,7 @@ Example:
   #wfn-panel .logo-sub {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    color: var(--secondary);
+    color: #00A3E0;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-top: 2px;
@@ -7119,7 +7119,7 @@ Example:
   #wfn-panel .header-badge {
     background: rgba(0, 163, 224, 0.2);
     border: 1px solid rgba(0, 163, 224, 0.4);
-    color: var(--secondary);
+    color: #00A3E0;
     padding: 6px 14px;
     border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
@@ -7138,7 +7138,7 @@ Example:
   #wfn-panel .hero {
     margin-bottom: 40px;
     padding: 32px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(135deg, #0055A5 0%, #00A3E0 100%);
     border-radius: 12px;
     color: white;
     position: relative;
@@ -7192,12 +7192,12 @@ Example:
   #wfn-panel .section-icon {
     width: 36px;
     height: 36px;
-    background: var(--primary-dim);
+    background: rgba(0, 85, 165, 0.1);
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--primary);
+    color: #0055A5;
     font-size: 18px;
   }
 
@@ -7205,23 +7205,23 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
     font-size: 18px;
-    color: var(--ink);
+    color: #0D1B2A;
     letter-spacing: -0.01em;
   }
 
   #wfn-panel .section-subtitle {
     font-size: 13px;
-    color: var(--muted);
+    color: #778DA9;
     margin-top: 2px;
   }
 
   /* FORM */
   #wfn-panel .card {
-    background: white;
-    border: 1px solid var(--line);
+    background: #ffffff;
+    border: 1px solid #E0E5EB;
     border-radius: 10px;
     padding: 28px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
 
   #wfn-panel .form-grid {
@@ -7246,34 +7246,35 @@ Example:
     font-size: 11px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--slate);
+    color: #415A77;
     font-weight: 600;
   }
 
   #wfn-panel .form-label.required::after {
     content: ' *';
-    color: var(--danger);
+    color: #E63946;
   }
 
-  .form-input,
-  .form-select,
+  #wfn-panel .form-input,
+  #wfn-panel .form-select,
   #wfn-panel .form-textarea {
     padding: 12px 16px;
-    border: 1px solid var(--line);
+    border: 1.5px solid #E0E5EB;
     border-radius: 6px;
-    background: white;
+    background: #ffffff;
     font-family: 'IBM Plex Sans', sans-serif;
     font-size: 14px;
-    color: var(--ink);
+    color: #0D1B2A;
     transition: all 0.2s;
     outline: none;
+    width: 100%;
   }
 
-  .form-input:focus,
-  .form-select:focus,
+  #wfn-panel .form-input:focus,
+  #wfn-panel .form-select:focus,
   #wfn-panel .form-textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-dim);
+    border-color: #0055A5;
+    box-shadow: 0 0 0 3px rgba(0, 85, 165, 0.12);
   }
 
   #wfn-panel .form-textarea {
@@ -7311,28 +7312,39 @@ Example:
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    border: 2px solid var(--line);
+    border: 2px solid #E0E5EB;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    background: white;
+    background: #ffffff;
+    user-select: none;
+  }
+
+  #wfn-panel .competitor-label:hover {
+    border-color: #0055A5;
+    background: rgba(0, 85, 165, 0.04);
   }
 
   #wfn-panel .competitor-checkbox:checked + .competitor-label {
-    border-color: var(--primary);
-    background: var(--primary-dim);
+    border-color: #0055A5;
+    background: rgba(0, 85, 165, 0.08);
+    box-shadow: 0 0 0 1px #0055A5;
   }
 
   #wfn-panel .competitor-name {
     font-size: 13px;
     font-weight: 600;
-    color: var(--ink);
+    color: #0D1B2A;
+  }
+
+  #wfn-panel .competitor-checkbox:checked + .competitor-label .competitor-name {
+    color: #0055A5;
   }
 
   #wfn-panel .competitor-rating {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    color: var(--warning);
+    color: #FF9500;
     display: flex;
     align-items: center;
     gap: 3px;
@@ -7343,7 +7355,7 @@ Example:
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    background: linear-gradient(135deg, #0055A5, #00A3E0);
     color: white;
     border: none;
     padding: 16px 36px;
@@ -7364,26 +7376,27 @@ Example:
   }
 
   #wfn-panel .btn-analyze:disabled {
-    background: var(--ghost);
+    background: #B0B8C4;
     cursor: not-allowed;
     box-shadow: none;
   }
 
   #wfn-panel .btn-clear {
     padding: 16px 24px;
-    background: white;
-    border: 1px solid var(--line);
+    background: #ffffff;
+    border: 1.5px solid #E0E5EB;
     border-radius: 8px;
     font-family: 'IBM Plex Sans', sans-serif;
     font-size: 14px;
-    color: var(--slate);
+    color: #415A77;
     cursor: pointer;
     transition: all 0.2s;
   }
 
   #wfn-panel .btn-clear:hover {
-    border-color: var(--slate);
-    color: var(--ink);
+    border-color: #415A77;
+    color: #0D1B2A;
+    background: #F8FAFB;
   }
 
   #wfn-panel .analyze-section {
@@ -7405,8 +7418,8 @@ Example:
   #wfn-panel .spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid var(--line);
-    border-top-color: var(--primary);
+    border: 4px solid #E0E5EB;
+    border-top-color: #0055A5;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin: 0 auto 20px;
@@ -7417,7 +7430,7 @@ Example:
   #wfn-panel .loading-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 13px;
-    color: var(--muted);
+    color: #778DA9;
   }
 
   /* RESULTS */
@@ -7429,7 +7442,7 @@ Example:
 
   #wfn-panel .results-header {
     background: white;
-    border: 2px solid var(--primary);
+    border: 2px solid #0055A5;
     border-radius: 10px;
     padding: 28px;
     margin-bottom: 32px;
@@ -7442,13 +7455,13 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 900;
     font-size: 24px;
-    color: var(--ink);
+    color: #0D1B2A;
     margin-bottom: 6px;
   }
 
   #wfn-panel .results-meta p {
     font-size: 14px;
-    color: var(--muted);
+    color: #778DA9;
   }
 
   #wfn-panel .classification-badge {
@@ -7460,7 +7473,7 @@ Example:
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: #778DA9;
     margin-bottom: 6px;
   }
 
@@ -7472,9 +7485,9 @@ Example:
     letter-spacing: -0.02em;
   }
 
-  #wfn-panel .type-upgrade { color: var(--success); }
-  #wfn-panel .type-new-sale { color: var(--primary); }
-  #wfn-panel .type-competitive { color: var(--warning); }
+  #wfn-panel .type-upgrade { color: #00C389; }
+  #wfn-panel .type-new-sale { color: #0055A5; }
+  #wfn-panel .type-competitive { color: #FF9500; }
 
   /* SCORE GRID */
   #wfn-panel .score-grid {
@@ -7490,7 +7503,7 @@ Example:
 
   #wfn-panel .score-card {
     background: white;
-    border: 2px solid var(--line);
+    border: 2px solid #E0E5EB;
     border-radius: 10px;
     padding: 24px;
     position: relative;
@@ -7506,9 +7519,9 @@ Example:
     height: 4px;
   }
 
-  #wfn-panel .score-card.fit::before { background: var(--success); }
-  #wfn-panel .score-card.opportunity::before { background: var(--warning); }
-  #wfn-panel .score-card.urgency::before { background: var(--danger); }
+  #wfn-panel .score-card.fit::before { background: #00C389; }
+  #wfn-panel .score-card.opportunity::before { background: #FF9500; }
+  #wfn-panel .score-card.urgency::before { background: #E63946; }
 
   #wfn-panel .score-header {
     display: flex;
@@ -7522,7 +7535,7 @@ Example:
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: #778DA9;
     font-weight: 600;
   }
 
@@ -7534,13 +7547,13 @@ Example:
     letter-spacing: -0.03em;
   }
 
-  #wfn-panel .score-fit { color: var(--success); }
-  #wfn-panel .score-opportunity { color: var(--warning); }
-  #wfn-panel .score-urgency { color: var(--danger); }
+  #wfn-panel .score-fit { color: #00C389; }
+  #wfn-panel .score-opportunity { color: #FF9500; }
+  #wfn-panel .score-urgency { color: #E63946; }
 
   #wfn-panel .score-bar {
     height: 8px;
-    background: var(--line);
+    background: #E0E5EB;
     border-radius: 4px;
     overflow: hidden;
     margin-bottom: 12px;
@@ -7552,13 +7565,13 @@ Example:
     width: 0;
   }
 
-  #wfn-panel .fill-fit { background: var(--success); }
-  #wfn-panel .fill-opportunity { background: var(--warning); }
-  #wfn-panel .fill-urgency { background: var(--danger); }
+  #wfn-panel .fill-fit { background: #00C389; }
+  #wfn-panel .fill-opportunity { background: #FF9500; }
+  #wfn-panel .fill-urgency { background: #E63946; }
 
   #wfn-panel .score-description {
     font-size: 13px;
-    color: var(--slate);
+    color: #415A77;
     line-height: 1.6;
   }
 
@@ -7576,7 +7589,7 @@ Example:
 
   #wfn-panel .insight-card {
     background: white;
-    border: 1px solid var(--line);
+    border: 1px solid #E0E5EB;
     border-radius: 10px;
     padding: 24px;
   }
@@ -7602,7 +7615,7 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
     font-size: 15px;
-    color: var(--ink);
+    color: #0D1B2A;
   }
 
   #wfn-panel .insight-list {
@@ -7617,7 +7630,7 @@ Example:
     align-items: flex-start;
     gap: 10px;
     font-size: 13px;
-    color: var(--slate);
+    color: #415A77;
     line-height: 1.6;
   }
 
@@ -7629,10 +7642,10 @@ Example:
     flex-shrink: 0;
   }
 
-  #wfn-panel .dot-success { background: var(--success); }
-  #wfn-panel .dot-warning { background: var(--warning); }
-  #wfn-panel .dot-primary { background: var(--primary); }
-  #wfn-panel .dot-danger { background: var(--danger); }
+  #wfn-panel .dot-success { background: #00C389; }
+  #wfn-panel .dot-warning { background: #FF9500; }
+  #wfn-panel .dot-primary { background: #0055A5; }
+  #wfn-panel .dot-danger { background: #E63946; }
 
   /* REVIEW BADGE */
   #wfn-panel .review-badge {
@@ -7641,8 +7654,8 @@ Example:
     gap: 6px;
     padding: 6px 12px;
     border-radius: 6px;
-    background: var(--warning-dim);
-    border: 1px solid var(--warning);
+    background: rgba(255,149,0,0.12);
+    border: 1px solid #FF9500;
     margin-top: 8px;
   }
 
@@ -7650,13 +7663,13 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
     font-size: 14px;
-    color: var(--warning);
+    color: #FF9500;
   }
 
   #wfn-panel .review-badge-source {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    color: var(--slate);
+    color: #415A77;
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
@@ -7664,7 +7677,7 @@ Example:
   /* ROI CALCULATOR */
   #wfn-panel .roi-section {
     background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
-    border: 2px solid var(--secondary);
+    border: 2px solid #00A3E0;
     border-radius: 12px;
     padding: 32px;
     margin-bottom: 32px;
@@ -7679,13 +7692,13 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 900;
     font-size: 22px;
-    color: var(--ink);
+    color: #0D1B2A;
     margin-bottom: 8px;
   }
 
   #wfn-panel .roi-subtitle {
     font-size: 14px;
-    color: var(--muted);
+    color: #778DA9;
   }
 
   #wfn-panel .roi-metrics {
@@ -7711,7 +7724,7 @@ Example:
     font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: #778DA9;
     margin-bottom: 8px;
   }
 
@@ -7719,14 +7732,14 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 900;
     font-size: 28px;
-    color: var(--primary);
+    color: #0055A5;
     line-height: 1;
   }
 
   /* PLAYBOOK */
   #wfn-panel .playbook-section {
     background: white;
-    border: 2px solid var(--line);
+    border: 2px solid #E0E5EB;
     border-radius: 12px;
     padding: 32px;
   }
@@ -7739,7 +7752,7 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 900;
     font-size: 20px;
-    color: var(--ink);
+    color: #0D1B2A;
     margin-bottom: 8px;
   }
 
@@ -7757,7 +7770,7 @@ Example:
   #wfn-panel .step-number {
     width: 36px;
     height: 36px;
-    background: var(--primary);
+    background: #0055A5;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -7773,13 +7786,13 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
     font-size: 15px;
-    color: var(--ink);
+    color: #0D1B2A;
     margin-bottom: 6px;
   }
 
   #wfn-panel .step-content p {
     font-size: 14px;
-    color: var(--slate);
+    color: #415A77;
     line-height: 1.6;
   }
 
@@ -7795,13 +7808,13 @@ Example:
   #wfn-panel .email-section {
     margin-top: 24px;
     background: white;
-    border: 1px solid var(--line);
+    border: 1px solid #E0E5EB;
     border-radius: 12px;
     overflow: hidden;
   }
   #wfn-panel .email-section-header {
     padding: 16px 20px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid #E0E5EB;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -7812,54 +7825,54 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-size: 15px;
     font-weight: 700;
-    color: var(--ink);
+    color: #0D1B2A;
   }
   #wfn-panel .email-section-body { padding: 20px; }
-  #wfn-panel .ec-outlook {background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  #wfn-panel .ec-outlook {background:#fff;border:1px solid #E0E5EB;border-radius:8px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
   #wfn-panel .ec-ol-tb {background:#1a2460;padding:7px 12px;display:flex;align-items:center;gap:8px}
   #wfn-panel .ec-ol-ico {width:22px;height:22px;background:#0078d4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
-  #wfn-panel .ec-ol-bar {background:#e8ebf5;border-bottom:1px solid var(--line);padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap}
-  #wfn-panel .ec-fr {display:flex;align-items:flex-start;border-bottom:1px solid var(--line);min-height:34px}
-  #wfn-panel .ec-fl {font-size:9px;color:var(--muted);font-weight:700;padding:10px 8px;min-width:52px;flex-shrink:0;border-right:1px solid var(--line);letter-spacing:1px;text-transform:uppercase}
-  #wfn-panel .ec-fi-box {width:100%;height:100%;background:transparent;border:none;padding:8px 10px;font-size:13px;color:var(--ink);font-family:'IBM Plex Sans',sans-serif;outline:none;flex:1}
-  #wfn-panel .ec-body-txt {min-height:200px;padding:12px;font-size:12px;line-height:1.8;color:var(--ink);white-space:pre-wrap;font-family:'Calibri',sans-serif;border-top:1px solid var(--line);background:#fff}
-  #wfn-panel .ec-ol-ft {background:#f8fafb;border-top:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
-  #wfn-panel .ec-mto {background:#f8fafb;border:1.5px solid var(--line);border-radius:8px;padding:16px}
-  #wfn-panel .ec-mto-hdr {display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  #wfn-panel .ec-ol-bar {background:#e8ebf5;border-bottom:1px solid #E0E5EB;padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap}
+  #wfn-panel .ec-fr {display:flex;align-items:flex-start;border-bottom:1px solid #E0E5EB;min-height:34px}
+  #wfn-panel .ec-fl {font-size:9px;color:#778DA9;font-weight:700;padding:10px 8px;min-width:52px;flex-shrink:0;border-right:1px solid #E0E5EB;letter-spacing:1px;text-transform:uppercase}
+  #wfn-panel .ec-fi-box {width:100%;height:100%;background:transparent;border:none;padding:8px 10px;font-size:13px;color:#0D1B2A;font-family:'IBM Plex Sans',sans-serif;outline:none;flex:1}
+  #wfn-panel .ec-body-txt {min-height:200px;padding:12px;font-size:12px;line-height:1.8;color:#0D1B2A;white-space:pre-wrap;font-family:'Calibri',sans-serif;border-top:1px solid #E0E5EB;background:#fff}
+  #wfn-panel .ec-ol-ft {background:#f8fafb;border-top:1px solid #E0E5EB;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+  #wfn-panel .ec-mto {background:#f8fafb;border:1.5px solid #E0E5EB;border-radius:8px;padding:16px}
+  #wfn-panel .ec-mto-hdr {display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #E0E5EB}
   #wfn-panel .ec-mto-btn {width:100%;background:#0055A5;border:none;border-radius:6px;padding:13px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;margin-bottom:10px;}
   #wfn-panel .ec-mto-btn:hover {opacity:.88}
-  #wfn-panel .ec-tip {background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:var(--slate);line-height:1.65}
+  #wfn-panel .ec-tip {background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:#415A77;line-height:1.65}
   #wfn-panel .ec-or {display:flex;align-items:center;gap:8px;margin-bottom:10px}
-  #wfn-panel .ec-or-line {flex:1;height:1px;background:var(--line)}
-  #wfn-panel .ec-or-txt {font-size:10px;color:var(--muted);font-weight:500}
-  #wfn-panel .ec-crow {background:white;border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:7px}
-  #wfn-panel .ec-cprev {font-size:10px;color:var(--muted);background:#f8fafb;border:1px solid var(--line);border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5;max-height:46px;overflow:hidden;font-family:'Calibri',sans-serif;word-break:break-word}
-  #wfn-panel .ec-cbtn {width:100%;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;background:transparent;color:var(--ink);border-color:var(--line);}
+  #wfn-panel .ec-or-line {flex:1;height:1px;background:#E0E5EB}
+  #wfn-panel .ec-or-txt {font-size:10px;color:#778DA9;font-weight:500}
+  #wfn-panel .ec-crow {background:white;border:1px solid #E0E5EB;border-radius:6px;padding:8px;margin-bottom:7px}
+  #wfn-panel .ec-cprev {font-size:10px;color:#778DA9;background:#f8fafb;border:1px solid #E0E5EB;border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5;max-height:46px;overflow:hidden;font-family:'Calibri',sans-serif;word-break:break-word}
+  #wfn-panel .ec-cbtn {width:100%;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;background:transparent;color:#0D1B2A;border-color:#E0E5EB;}
   #wfn-panel .ec-cbtn:hover {opacity:.8}
-  #wfn-panel .ec-smb {font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:white;color:var(--muted);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;flex-shrink:0;margin:auto 8px auto 0;transition:all .15s}
-  #wfn-panel .ec-smb:hover {border-color:var(--primary);color:var(--primary)}
-  #wfn-panel .ec-gen-btn {padding:9px 18px;background:var(--primary);color:white;border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
-  #wfn-panel .ec-gen-btn:hover {background:var(--primary-light)}
+  #wfn-panel .ec-smb {font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid #E0E5EB;background:white;color:#778DA9;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;flex-shrink:0;margin:auto 8px auto 0;transition:all .15s}
+  #wfn-panel .ec-smb:hover {border-color:#0055A5;color:#0055A5}
+  #wfn-panel .ec-gen-btn {padding:9px 18px;background:#0055A5;color:white;border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
+  #wfn-panel .ec-gen-btn:hover {background:#0066CC}
   #wfn-panel .ec-gen-btn:disabled {opacity:.5;cursor:not-allowed}
-  #wfn-panel .ec-loading {font-size:12px;color:var(--muted);font-style:italic;padding:8px 0}
+  #wfn-panel .ec-loading {font-size:12px;color:#778DA9;font-style:italic;padding:8px 0}
 
   #wfn-panel .btn-export {
     padding: 10px 20px;
     background: white;
-    border: 1px solid var(--line);
+    border: 1px solid #E0E5EB;
     border-radius: 6px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--slate);
+    color: #415A77;
     cursor: pointer;
     transition: all 0.15s;
   }
 
   #wfn-panel .btn-export:hover {
-    border-color: var(--primary);
-    color: var(--primary);
+    border-color: #0055A5;
+    color: #0055A5;
   }
 
   /* API CONFIG */
@@ -7868,7 +7881,7 @@ Example:
   #wfn-panel .api-config-toggle {
     width: 48px;
     height: 48px;
-    background: var(--slate);
+    background: #415A77;
     color: white;
     border: none;
     border-radius: 50%;
@@ -7881,7 +7894,7 @@ Example:
   }
 
   #wfn-panel .api-config-toggle:hover {
-    background: var(--primary);
+    background: #0055A5;
     transform: scale(1.05);
   }
 
@@ -7891,7 +7904,7 @@ Example:
     right: 0;
     width: 320px;
     background: white;
-    border: 2px solid var(--line);
+    border: 2px solid #E0E5EB;
     border-radius: 10px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.15);
     padding: 20px;
@@ -7906,14 +7919,14 @@ Example:
     font-family: 'Archivo', sans-serif;
     font-weight: 700;
     font-size: 14px;
-    color: var(--ink);
+    color: #0D1B2A;
     margin-bottom: 16px;
   }
 
   #wfn-panel .api-key-input {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid var(--line);
+    border: 1px solid #E0E5EB;
     border-radius: 6px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -7923,7 +7936,7 @@ Example:
   #wfn-panel .api-save-btn {
     width: 100%;
     padding: 10px;
-    background: var(--primary);
+    background: #0055A5;
     color: white;
     border: none;
     border-radius: 6px;
@@ -7935,18 +7948,18 @@ Example:
   }
 
   #wfn-panel .api-save-btn:hover {
-    background: var(--primary-light);
+    background: #0066CC;
   }
 
   #wfn-panel .api-hint {
     font-size: 11px;
-    color: var(--muted);
+    color: #778DA9;
     margin-top: 8px;
     line-height: 1.4;
   }
 
   #wfn-panel .api-hint a {
-    color: var(--primary);
+    color: #0055A5;
     text-decoration: none;
   }
 
@@ -8255,22 +8268,11 @@ URGENCY: Contract timing, pain points, budget
 
 Keep all text concise (under 100 chars per field).`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": "ignored", "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 3500,
-        messages: [{ role: "user", content: prompt }]
-      })
+    const result = await callClaudeAPI({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 3500,
+      messages: [{ role: "user", content: prompt }]
     });
-
-    if (!response.ok) {
-      const errBody = await response.text();
-      throw new Error('API error ' + response.status + ': ' + errBody.substring(0, 300));
-    }
-
-    const result = await response.json();
 
     if (!result.content || result.content.length === 0) {
       throw new Error('Empty response: ' + JSON.stringify(result).substring(0, 200));
@@ -8508,16 +8510,11 @@ Respond ONLY with valid JSON (no markdown):
 }`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
-      })
+    const result = await callClaudeAPI({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      messages: [{ role: "user", content: prompt }]
     });
-    const result = await response.json();
     const raw = result.content.map(i => i.text || '').join('');
     const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
     let parsed;
@@ -10522,6 +10519,35 @@ window.runEmbeddedAnalysis = function(){
 // ── Google Cloud Vision OCR ───────────────────────────────────────────────────
 var VISION_WORKER_URL = 'https://claude-vision-proxy.aj-3ab.workers.dev';
 
+// ── Claude API proxy helper ────────────────────────────────────────────────────
+// Routes through the Cloudflare Worker to avoid browser CORS restrictions.
+// The worker must forward requests with X-Service: 'claude' to api.anthropic.com.
+// If the worker doesn't yet support Claude proxying, update it with:
+//   if (req.headers.get('X-Service') === 'claude') {
+//     return fetch('https://api.anthropic.com/v1/messages', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json',
+//                  'x-api-key': ANTHROPIC_API_KEY,
+//                  'anthropic-version': '2023-06-01' },
+//       body: req.body
+//     });
+//   }
+async function callClaudeAPI(body) {
+  var response = await fetch(VISION_WORKER_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Service': 'claude'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    var errText = await response.text();
+    throw new Error('API error ' + response.status + ': ' + errText.substring(0, 300));
+  }
+  return response.json();
+}
+
 window.sreExtractFromImage = async function(input) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
@@ -12518,12 +12544,7 @@ async function analyzeRouting() {
   }
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
-    });
-    var result = await response.json();
+    var result = await callClaudeAPI({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role:'user', content: prompt }] });
     if (result.error) throw new Error(result.error.message);
     var raw = result.content.map(function(i){ return i.text||''; }).join('');
     var clean = raw.replace(/```json|```/g,'').trim();
@@ -12703,12 +12724,7 @@ async function analyzeWFN() {
   document.getElementById('wfnAnalyzeBtn').disabled = true;
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2500, messages: [{ role:'user', content: prompt }] })
-    });
-    var result = await response.json();
+    var result = await callClaudeAPI({ model: 'claude-sonnet-4-20250514', max_tokens: 2500, messages: [{ role:'user', content: prompt }] });
     if (result.error) throw new Error(result.error.message);
     var raw = result.content.map(function(i){ return i.text||''; }).join('');
     var clean = raw.replace(/```json|```/g,'').trim();
@@ -12811,12 +12827,7 @@ async function wfnGenerateEmail() {
   var prompt = 'You are an elite B2B sales rep for ADP WorkforceNow. Write a short, punchy outreach email based on this analysis.\n\nCOMPANY: ' + d.company + '\nEMPLOYEES: ' + d.employees + '\nINDUSTRY: ' + (d.industry||'Not specified') + '\nCURRENT PLATFORM: ' + d.primaryPlatform + '\nCLASSIFICATION: ' + a.classification + '\nFIT SCORE: ' + a.fitScore + '/100\nOPPORTUNITY: ' + a.opportunityScore + '/100\nTOP SIGNALS: ' + (a.signals||[]).slice(0,2).join('; ') + '\nCOMPETITIVE ANGLES: ' + (a.competitive||[]).slice(0,2).join('; ') + '\nROI HIGHLIGHT: ' + (a.roi ? a.roi.annualSavings + ' annual savings, ' + a.roi.payback + ' payback' : 'significant ROI') + '\n\nWrite a compelling cold outreach email. Requirements:\n- Subject line: punchy, specific to their situation\n- Body: 3-4 short paragraphs max\n- Reference their current platform pain points\n- Include one specific ROI figure\n- End with a clear CTA for a 20-minute call\n- Close with signature placeholder\n\nReturn ONLY valid JSON:\n{\n  "subject": "Email subject line",\n  "body": "Full email body with \\n\\n for paragraphs. End with \\n\\n—\\n[Your Name]\\nADP WorkforceNow | [Your Phone] | [Your Email]"\n}';
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 800, messages: [{ role:'user', content: prompt }] })
-    });
-    var result = await response.json();
+    var result = await callClaudeAPI({ model: 'claude-sonnet-4-20250514', max_tokens: 800, messages: [{ role:'user', content: prompt }] });
     if (result.error) throw new Error(result.error.message);
     var raw = result.content.map(function(i){ return i.text||''; }).join('');
     var clean = raw.replace(/```json|```/g,'').trim();
@@ -13115,23 +13126,18 @@ async function handleImageUpload(tab, input) {
       ? 'Extract information from this image/document to fill a WorkforceNow sales analysis form. Return ONLY valid JSON with these fields (use null if not found):\n{\n  "company": "company name",\n  "employees": "number of employees (number only)",\n  "industry": "industry description",\n  "revenue": "annual revenue e.g. $45M",\n  "locations": "number of locations (number only)",\n  "states": "states operating in e.g. VA, MD, TX",\n  "platform": "current HR/payroll platform name",\n  "adpData": "any ADP usage or product info visible",\n  "contactEmail": "email address if visible"\n}'
       : 'Extract information from this image/document to fill a TotalSource PEO benefits analysis form. Return ONLY valid JSON with these fields (use null if not found):\n{\n  "companyName": "company name",\n  "contactName": "first name of contact",\n  "contactTitle": "job title",\n  "numEE": "number of eligible employees (number only)",\n  "state": "state name (full name e.g. Virginia)",\n  "city": "city name",\n  "avgWages": "average annual wages per employee (number only, no $ or commas)",\n  "carrier": "current health insurance carrier name",\n  "premAvg": "current monthly premium blended average (number only)",\n  "renewalIncrease": "renewal increase percentage (number only)",\n  "contribPct": "employer contribution percentage (number only)",\n  "benefitsRate": "benefits participation rate as percentage (number only)",\n  "contactEmail": "email address if visible"\n}';
 
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-            { type: 'text', text: fieldPrompt }
-          ]
-        }]
-      })
+    var result = await callClaudeAPI({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 800,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+          { type: 'text', text: fieldPrompt }
+        ]
+      }]
     });
 
-    var result = await response.json();
     if (result.error) throw new Error(result.error.message);
     var raw = result.content.map(function(i){ return i.text||''; }).join('');
     var clean = raw.replace(/```json|```/g,'').trim();
