@@ -8346,46 +8346,50 @@ function wfn_renderResults(analysis, data) {
   wfn_setScore('urgency', analysis.urgencyScore, analysis.urgencyReason);
 
   // Insights
-  wfn_renderList('crossSellList', analysis.crossSell, 'dot-success');
-  wfn_renderList('signalsList', analysis.signals, 'dot-warning');
-  wfn_renderList('competitiveList', analysis.competitive, 'dot-primary');
-  wfn_renderList('risksList', analysis.risks, 'dot-danger');
+  wfn_renderList('wfn-crossSellList', analysis.crossSell, 'dot-success');
+  wfn_renderList('wfn-signalsList', analysis.signals, 'dot-warning');
+  wfn_renderList('wfn-competitiveList', analysis.competitive, 'dot-primary');
+  wfn_renderList('wfn-risksList', analysis.risks, 'dot-danger');
 
   // Add competitor review badges
   const competitorReviewsEl = document.getElementById('wfn-competitorReviews');
-  competitorReviewsEl.innerHTML = '';
-  
-  data.additionalSystems.forEach(comp => {
-    const reviewData = COMPETITOR_REVIEWS[comp];
-    if (reviewData) {
-      competitorReviewsEl.innerHTML += `
-        <div class="review-badge">
-          <span class="review-badge-rating">⭐ ${reviewData.g2Rating}/5</span>
-          <span class="review-badge-source">${comp} on G2</span>
-        </div>
-      `;
-    }
-  });
+  if (competitorReviewsEl) {
+    competitorReviewsEl.innerHTML = '';
+    (data.additionalSystems || []).forEach(comp => {
+      const reviewData = COMPETITOR_REVIEWS[comp];
+      if (reviewData) {
+        competitorReviewsEl.innerHTML += `
+          <div class="review-badge">
+            <span class="review-badge-rating">⭐ ${reviewData.g2Rating}/5</span>
+            <span class="review-badge-source">${comp} on G2</span>
+          </div>
+        `;
+      }
+    });
+  }
 
   // ROI
-  document.getElementById('wfn-roiSavings').textContent = analysis.roi.annualSavings;
-  document.getElementById('wfn-roiEfficiency').textContent = analysis.roi.efficiencyGain;
-  document.getElementById('wfn-roiPayback').textContent = analysis.roi.payback;
-  document.getElementById('wfn-roi3Year').textContent = analysis.roi.threeYear;
+  var roi = analysis.roi || {};
+  var roiSavings = document.getElementById('wfn-roiSavings'); if (roiSavings) roiSavings.textContent = roi.annualSavings || '—';
+  var roiEff = document.getElementById('wfn-roiEfficiency'); if (roiEff) roiEff.textContent = roi.efficiencyGain || '—';
+  var roiPay = document.getElementById('wfn-roiPayback'); if (roiPay) roiPay.textContent = roi.payback || '—';
+  var roi3yr = document.getElementById('wfn-roi3Year'); if (roi3yr) roi3yr.textContent = roi.threeYear || '—';
 
   // Playbook
   const playbookEl = document.getElementById('wfn-playbookSteps');
-  playbookEl.innerHTML = '';
-  analysis.playbook.forEach((step, i) => {
-    playbookEl.innerHTML += `
-      <div class="playbook-step">
-        <div class="step-number">${i + 1}</div>
-        <div class="step-content">
-          <h4>${step.step}</h4>
-          <p>${step.detail}</p>
-        </div>
-      </div>`;
-  });
+  if (playbookEl) {
+    playbookEl.innerHTML = '';
+    (analysis.playbook || []).forEach((step, i) => {
+      playbookEl.innerHTML += `
+        <div class="playbook-step">
+          <div class="step-number">${i + 1}</div>
+          <div class="step-content">
+            <h4>${step.step}</h4>
+            <p>${step.detail}</p>
+          </div>
+        </div>`;
+    });
+  }
 
   // Show results
   document.getElementById('wfn-results').classList.add('active');
@@ -8415,8 +8419,10 @@ function wfn_renderResults(analysis, data) {
 }
 
 function wfn_setScore(type, score, reason) {
-  document.getElementById(`${type}Score`).textContent = score;
-  document.getElementById(`${type}Reason`).textContent = reason;
+  var scoreEl = document.getElementById('wfn-' + type + 'Score') || document.getElementById(type + 'Score');
+  var reasonEl = document.getElementById('wfn-' + type + 'Reason') || document.getElementById(type + 'Reason');
+  if (scoreEl) scoreEl.textContent = score;
+  if (reasonEl) reasonEl.textContent = reason || '';
 }
 
 function wfn_renderList(containerId, items, dotClass) {
