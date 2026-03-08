@@ -10645,7 +10645,7 @@ window.npExtractFromImage = async function(input) {
     );
 
     // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch(VISION_WORKER_URL, {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
@@ -10782,7 +10782,7 @@ window.wfnExtractFromSalesforce = async function(input) {
     );
 
     // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch(VISION_WORKER_URL, {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
@@ -10915,7 +10915,7 @@ window.tsExtractFromSalesforce = async function(input) {
     );
 
     // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch(VISION_WORKER_URL, {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
@@ -12380,7 +12380,7 @@ async function analyzeRouting() {
   }
 
   try {
-    var response = await fetch(VISION_WORKER_URL, {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
@@ -12565,7 +12565,7 @@ async function analyzeWFN() {
   document.getElementById('wfnAnalyzeBtn').disabled = true;
 
   try {
-    var response = await fetch(VISION_WORKER_URL, {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2500, messages: [{ role:'user', content: prompt }] })
@@ -12673,7 +12673,7 @@ async function wfnGenerateEmail() {
   var prompt = 'You are an elite B2B sales rep for ADP WorkforceNow. Write a short, punchy outreach email based on this analysis.\n\nCOMPANY: ' + d.company + '\nEMPLOYEES: ' + d.employees + '\nINDUSTRY: ' + (d.industry||'Not specified') + '\nCURRENT PLATFORM: ' + d.primaryPlatform + '\nCLASSIFICATION: ' + a.classification + '\nFIT SCORE: ' + a.fitScore + '/100\nOPPORTUNITY: ' + a.opportunityScore + '/100\nTOP SIGNALS: ' + (a.signals||[]).slice(0,2).join('; ') + '\nCOMPETITIVE ANGLES: ' + (a.competitive||[]).slice(0,2).join('; ') + '\nROI HIGHLIGHT: ' + (a.roi ? a.roi.annualSavings + ' annual savings, ' + a.roi.payback + ' payback' : 'significant ROI') + '\n\nWrite a compelling cold outreach email. Requirements:\n- Subject line: punchy, specific to their situation\n- Body: 3-4 short paragraphs max\n- Reference their current platform pain points\n- Include one specific ROI figure\n- End with a clear CTA for a 20-minute call\n- Close with signature placeholder\n\nReturn ONLY valid JSON:\n{\n  "subject": "Email subject line",\n  "body": "Full email body with \\n\\n for paragraphs. End with \\n\\n—\\n[Your Name]\\nADP WorkforceNow | [Your Phone] | [Your Email]"\n}';
 
   try {
-    var response = await fetch(VISION_WORKER_URL, {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 800, messages: [{ role:'user', content: prompt }] })
@@ -12977,7 +12977,7 @@ async function handleImageUpload(tab, input) {
       ? 'Extract information from this image/document to fill a WorkforceNow sales analysis form. Return ONLY valid JSON with these fields (use null if not found):\n{\n  "company": "company name",\n  "employees": "number of employees (number only)",\n  "industry": "industry description",\n  "revenue": "annual revenue e.g. $45M",\n  "locations": "number of locations (number only)",\n  "states": "states operating in e.g. VA, MD, TX",\n  "platform": "current HR/payroll platform name",\n  "adpData": "any ADP usage or product info visible",\n  "contactEmail": "email address if visible"\n}'
       : 'Extract information from this image/document to fill a TotalSource PEO benefits analysis form. Return ONLY valid JSON with these fields (use null if not found):\n{\n  "companyName": "company name",\n  "contactName": "first name of contact",\n  "contactTitle": "job title",\n  "numEE": "number of eligible employees (number only)",\n  "state": "state name (full name e.g. Virginia)",\n  "city": "city name",\n  "avgWages": "average annual wages per employee (number only, no $ or commas)",\n  "carrier": "current health insurance carrier name",\n  "premAvg": "current monthly premium blended average (number only)",\n  "renewalIncrease": "renewal increase percentage (number only)",\n  "contribPct": "employer contribution percentage (number only)",\n  "benefitsRate": "benefits participation rate as percentage (number only)",\n  "contactEmail": "email address if visible"\n}';
 
-    var response = await fetch(VISION_WORKER_URL, {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
