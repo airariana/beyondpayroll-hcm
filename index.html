@@ -8465,6 +8465,16 @@ function wfn_renderResults(analysis, data) {
 
   // Show results
   document.getElementById('wfn-results').classList.add('active');
+  // ── Cadence bridge ──
+  window._lastAnalyzerRun = {
+    source: 'wfn_panel',
+    company: data.company || '',
+    contact: (window._hqProspect && window._hqProspect.contact) || '',
+    competitor: (data.primaryPlatform && data.primaryPlatform !== 'ADP Workforce Now') ? data.primaryPlatform : ((data.additionalSystems && data.additionalSystems[0]) || ''),
+    product: 'wfn',
+    signals: (analysis.signals || []).concat(analysis.competitive || []).concat(analysis.risks || []),
+    classification: analysis.classification || ''
+  };
   // Show email section and store data for AI generation
   document.getElementById('wfn-emailSection').style.display = 'block';
   _ecCurrentData = Object.assign({}, data, {
@@ -10324,6 +10334,16 @@ window.runEmbeddedAnalysis = function(){
 
   sreCurrentAnalysis = result;
   sreDisplayResults(result);
+  // ── Cadence bridge ──
+  window._lastAnalyzerRun = {
+    source: 'smart_router',
+    company: (p && p.company) || '',
+    contact: (p && p.contact) || (window._hqProspect && window._hqProspect.contact) || '',
+    competitor: (p && p.currentProvider) || (p && p.platform) || '',
+    product: result.recommendation && result.recommendation.toLowerCase().indexOf('totalsource') > -1 ? 'ts' : 'wfn',
+    signals: (result.peoFactors || []).concat(result.wfnFactors || []),
+    classification: result.recommendation || ''
+  };
 
   // Advance pipeline node for Smart Routing
   var n0b = document.getElementById('psn0b'), l0b = document.getElementById('psl0b');
@@ -12985,6 +13005,16 @@ async function analyzeWFN() {
 
     _wfnData = { company, employees, industry: document.getElementById('w-industry').value, primaryPlatform: platform, additionalSystems };
     _wfnAnalysis = analysis;
+    // ── Cadence bridge ──
+    window._lastAnalyzerRun = {
+      source: 'wfn',
+      company: company,
+      contact: (window._hqProspect && window._hqProspect.contact) || '',
+      competitor: platform !== 'ADP Workforce Now' ? platform : (additionalSystems[0] || ''),
+      product: 'wfn',
+      signals: (analysis.signals || []).concat(analysis.competitive || []).concat(analysis.risks || []),
+      classification: analysis.classification || ''
+    };
 
     // Render
     document.getElementById('w-resCompany').textContent = company;
@@ -14069,7 +14099,46 @@ window.cadNavGlobal=function(gi){var filtered=cadFilteredTouches(),t=_cadTouches
 window.cadCopyBody=function(gi){var t=_cadTouches[gi];if(!t)return;var text=(t.subject&&t.type!=='call'&&t.type!=='text'?'SUBJECT: '+t.subject+'\n\n':'')+t.body;navigator.clipboard.writeText(text).catch(function(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});var btn=document.getElementById('cad-cp-'+gi);if(btn){btn.textContent='Copied!';btn.style.color='var(--green)';btn.style.borderColor='var(--green-border,#16a34a)';setTimeout(function(){btn.textContent='Copy';btn.style.color='';btn.style.borderColor='';},2000);}};
 function cadEsc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 window.cadReset=function(){_cadTouches=[];_cadActiveIdx=0;_cadFilter='all';_cadTrigger='';_cadUrgency='MEDIUM';['cad-company','cad-contact','cad-detail'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});var sel=document.getElementById('cad-competitor');if(sel)sel.value='';document.querySelectorAll('.cad-trig-btn').forEach(function(b){b.className='cad-trig-btn';});var pill=document.getElementById('cad-urgency-pill');if(pill)pill.style.display='none';var out=document.getElementById('cad-output');if(out)out.style.display='none';cadSetProduct('ts');};
-window.cadenceInit=function(){var p=window._hqProspect;if(p&&p.company){var co=document.getElementById('cad-company');if(co&&!co.value)co.value=p.company;var ct=document.getElementById('cad-contact');if(ct&&!ct.value)ct.value=p.contact||'';}};
+window.cadenceInit=function(){
+  var last=window._lastAnalyzerRun;
+  var prospect=window._hqProspect;
+
+  // ── Company & Contact ──
+  var coEl=document.getElementById('cad-company');
+  var ctEl=document.getElementById('cad-contact');
+  var company=(last&&last.company)||(prospect&&prospect.company)||'';
+  var contact=(last&&last.contact)||(prospect&&prospect.contact)||'';
+  if(coEl&&!coEl.value&&company) coEl.value=company;
+  if(ctEl&&!ctEl.value&&contact) ctEl.value=contact;
+
+  if(!last) return; // no analyzer run yet, stop here
+
+  // ── Competitor ──
+  var compEl=document.getElementById('cad-competitor');
+  if(compEl&&!compEl.value&&last.competitor){
+    // Try to match to one of the dropdown options
+    var opts=Array.from(compEl.options).map(function(o){return o.value;});
+    var match=opts.find(function(o){return o&&last.competitor&&last.competitor.toLowerCase().indexOf(o.toLowerCase())>-1;});
+    if(!match) match=opts.find(function(o){return o&&last.competitor&&o.toLowerCase().indexOf(last.competitor.toLowerCase().split(' ')[0])>-1;});
+    if(match) compEl.value=match;
+  }
+
+  // ── Product ──
+  if(last.product) cadSetProduct(last.product);
+
+  // ── Intel Detail (pre-fill from signals) ──
+  var detEl=document.getElementById('cad-detail');
+  if(detEl&&!detEl.value&&last.signals&&last.signals.length){
+    var top=last.signals.slice(0,4).join('. ');
+    detEl.value=top;
+  }
+
+  // ── Show a toast if we auto-filled from analyzer ──
+  if(last.source&&(last.company||last.competitor||last.signals&&last.signals.length)){
+    var src=last.source==='wfn'||last.source==='wfn_panel'?'WFN Analyzer':last.source==='smart_router'?'Smart Router':'analyzer';
+    showToast('Pre-filled from '+src+' — select a trigger and hit Build Cadence');
+  }
+};
 
 function ihubToggle() {
   var body    = document.getElementById('ihub-body');
