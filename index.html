@@ -8297,7 +8297,7 @@ URGENCY: Contract timing, pain points, budget
 Keep all text concise (under 100 chars per field).`;
 
     const result = await callClaudeAPI({
-      model: "claude-sonnet-4-20250514",
+      model: "gemini-1.5-flash",
       max_tokens: 3500,
       messages: [{ role: "user", content: prompt }]
     });
@@ -8539,7 +8539,7 @@ Respond ONLY with valid JSON (no markdown):
 
   try {
     const result = await callClaudeAPI({
-      model: "claude-sonnet-4-20250514",
+      model: "gemini-1.5-flash",
       max_tokens: 1000,
       messages: [{ role: "user", content: prompt }]
     });
@@ -10561,19 +10561,53 @@ var VISION_WORKER_URL = 'https://claude-vision-proxy.aj-3ab.workers.dev';
 //     });
 //   }
 async function callClaudeAPI(body) {
+  // Convert Anthropic message format to Gemini format
+  var messages = body.messages || [];
+  var contents = messages.map(function(m) {
+    var parts = [];
+    if (typeof m.content === 'string') {
+      parts = [{ text: m.content }];
+    } else if (Array.isArray(m.content)) {
+      parts = m.content.map(function(c) {
+        if (c.type === 'text') return { text: c.text };
+        if (c.type === 'image') return { inlineData: { mimeType: c.source.media_type, data: c.source.data } };
+        return { text: '' };
+      });
+    }
+    return { role: m.role === 'assistant' ? 'model' : 'user', parts: parts };
+  });
+
+  var geminiBody = {
+    contents: contents,
+    generationConfig: {
+      maxOutputTokens: body.max_tokens || 1000,
+      temperature: 0.3
+    }
+  };
+
   var response = await fetch(VISION_WORKER_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Service': 'claude'
+      'X-Service': 'gemini'
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(geminiBody)
   });
   if (!response.ok) {
     var errText = await response.text();
     throw new Error('API error ' + response.status + ': ' + errText.substring(0, 300));
   }
-  return response.json();
+  var geminiResp = await response.json();
+
+  // Convert Gemini response back to Anthropic-style format the rest of the code expects
+  var text = '';
+  try {
+    text = geminiResp.candidates[0].content.parts[0].text || '';
+  } catch(e) {
+    if (geminiResp.error) throw new Error(geminiResp.error.message || 'Gemini error');
+    throw new Error('Unexpected Gemini response: ' + JSON.stringify(geminiResp).substring(0, 200));
+  }
+  return { content: [{ type: 'text', text: text }] };
 }
 
 window.sreExtractFromImage = async function(input) {
@@ -12687,7 +12721,7 @@ async function analyzeRouting() {
   }
 
   try {
-    var result = await callClaudeAPI({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role:'user', content: prompt }] });
+    var result = await callClaudeAPI({ model: 'gemini-1.5-flash', max_tokens: 1500, messages: [{ role:'user', content: prompt }] });
     if (result.error) throw new Error(result.error.message);
     var raw = result.content.map(function(i){ return i.text||''; }).join('');
     var clean = raw.replace(/```json|```/g,'').trim();
@@ -12867,7 +12901,7 @@ async function analyzeWFN() {
   document.getElementById('wfnAnalyzeBtn').disabled = true;
 
   try {
-    var result = await callClaudeAPI({ model: 'claude-sonnet-4-20250514', max_tokens: 2500, messages: [{ role:'user', content: prompt }] });
+    var result = await callClaudeAPI({ model: 'gemini-1.5-flash', max_tokens: 2500, messages: [{ role:'user', content: prompt }] });
     if (result.error) throw new Error(result.error.message);
     var raw = result.content.map(function(i){ return i.text||''; }).join('');
     var clean = raw.replace(/```json|```/g,'').trim();
@@ -12970,7 +13004,7 @@ async function wfnGenerateEmail() {
   var prompt = 'You are an elite B2B sales rep for ADP WorkforceNow. Write a short, punchy outreach email based on this analysis.\n\nCOMPANY: ' + d.company + '\nEMPLOYEES: ' + d.employees + '\nINDUSTRY: ' + (d.industry||'Not specified') + '\nCURRENT PLATFORM: ' + d.primaryPlatform + '\nCLASSIFICATION: ' + a.classification + '\nFIT SCORE: ' + a.fitScore + '/100\nOPPORTUNITY: ' + a.opportunityScore + '/100\nTOP SIGNALS: ' + (a.signals||[]).slice(0,2).join('; ') + '\nCOMPETITIVE ANGLES: ' + (a.competitive||[]).slice(0,2).join('; ') + '\nROI HIGHLIGHT: ' + (a.roi ? a.roi.annualSavings + ' annual savings, ' + a.roi.payback + ' payback' : 'significant ROI') + '\n\nWrite a compelling cold outreach email. Requirements:\n- Subject line: punchy, specific to their situation\n- Body: 3-4 short paragraphs max\n- Reference their current platform pain points\n- Include one specific ROI figure\n- End with a clear CTA for a 20-minute call\n- Close with signature placeholder\n\nReturn ONLY valid JSON:\n{\n  "subject": "Email subject line",\n  "body": "Full email body with \\n\\n for paragraphs. End with \\n\\n—\\n[Your Name]\\nADP WorkforceNow | [Your Phone] | [Your Email]"\n}';
 
   try {
-    var result = await callClaudeAPI({ model: 'claude-sonnet-4-20250514', max_tokens: 800, messages: [{ role:'user', content: prompt }] });
+    var result = await callClaudeAPI({ model: 'gemini-1.5-flash', max_tokens: 800, messages: [{ role:'user', content: prompt }] });
     if (result.error) throw new Error(result.error.message);
     var raw = result.content.map(function(i){ return i.text||''; }).join('');
     var clean = raw.replace(/```json|```/g,'').trim();
@@ -13270,7 +13304,7 @@ async function handleImageUpload(tab, input) {
       : 'Extract information from this image/document to fill a TotalSource PEO benefits analysis form. Return ONLY valid JSON with these fields (use null if not found):\n{\n  "companyName": "company name",\n  "contactName": "first name of contact",\n  "contactTitle": "job title",\n  "numEE": "number of eligible employees (number only)",\n  "state": "state name (full name e.g. Virginia)",\n  "city": "city name",\n  "avgWages": "average annual wages per employee (number only, no $ or commas)",\n  "carrier": "current health insurance carrier name",\n  "premAvg": "current monthly premium blended average (number only)",\n  "renewalIncrease": "renewal increase percentage (number only)",\n  "contribPct": "employer contribution percentage (number only)",\n  "benefitsRate": "benefits participation rate as percentage (number only)",\n  "contactEmail": "email address if visible"\n}';
 
     var result = await callClaudeAPI({
-      model: 'claude-sonnet-4-20250514',
+      model: 'gemini-1.5-flash',
       max_tokens: 800,
       messages: [{
         role: 'user',
