@@ -8225,7 +8225,7 @@ Keep all text concise (under 100 chars per field).`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": (localStorage.getItem('adp_hub_apikey')||''), "anthropic-version": "2023-06-01" },
+      headers: { "Content-Type": "application/json", "x-api-key": "ignored", "anthropic-version": "2023-06-01" },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 3500,
@@ -10676,28 +10676,63 @@ window.npExtractFromImage = async function(input) {
         ? visionData.responses[0].error.message : 'No text detected in image'
     );
 
-    console.log('[NP IMG] Step2 start, ocrText len:', ocrText.length);
-    status.textContent = '⏳ Claude Step 2…';
-    // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': (localStorage.getItem('adp_hub_apikey')||''), 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: 'Extract prospect/contact information from the following OCR text. This could be from a business card, LinkedIn profile, Salesforce record, email signature, or any professional document.\n\nOCR TEXT:\n' + ocrText + '\n\nReturn ONLY valid JSON with these exact keys (use null for fields not found):\n{\n  "company": "company name",\n  "contact": "full contact name",\n  "email": "email address",\n  "phone": "phone number in (555) 000-0000 format",\n  "industry": "industry type (e.g. Manufacturing, Healthcare, Construction)",\n  "state": "2-letter state abbreviation",\n  "headcount": "number only (e.g. 75)",\n  "persona": "one of: CFO, HR Director, VP HR, Controller, CEO/Owner, Operations"\n}\n\nFor persona: infer from job title if present. For headcount: extract employee count if visible. Return null for any field not found. No markdown, just JSON.'
-        }]
-      })
-    });
+    // Step 2: Regex parse OCR text — no API needed, 100% free
+    status.textContent = '⏳ Parsing text…';
+    var lines = ocrText.split(/\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var full = ocrText;
 
-    var data = await response.json();
-    var raw = (data.content || []).map(function(i) { return i.text || ''; }).join('');
-    var clean = raw.replace(/```json/g,'').replace(/```/g,'').trim();
-    var parsed = JSON.parse(clean);
+    var parsed = {};
+    // Email
+    var emailM = full.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+    parsed.email = emailM ? emailM[0] : null;
+    // Phone
+    var phoneM = full.match(/\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/);
+    if (phoneM) {
+      var d = phoneM[0].replace(/\D/g,'');
+      parsed.phone = '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6);
+    }
+    // State (2-letter abbreviation)
+    var stateM = full.match(/\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/);
+    parsed.state = stateM ? stateM[1] : null;
+    // Employee count / headcount
+    var hcM = full.match(/\b(\d{1,5})\s*(employees?|EE|ee|workers?|staff|headcount|FTE)/i);
+    parsed.headcount = hcM ? hcM[1] : null;
+    // Industry keywords
+    var industries = ['Healthcare','Manufacturing','Construction','Technology','Finance','Retail','Education','Hospitality','Transportation','Legal','Insurance','Real Estate','Non-Profit'];
+    parsed.industry = null;
+    for (var ii=0; ii<industries.length; ii++) {
+      if (full.toLowerCase().indexOf(industries[ii].toLowerCase()) > -1) { parsed.industry = industries[ii]; break; }
+    }
+    // Persona from title keywords
+    var personaTitles = [
+      ['CFO', /\b(CFO|Chief Financial|VP Finance|Finance Director)/i],
+      ['HR Director', /\b(HR Director|Director of HR|Human Resources Director|CHRO|Chief HR)/i],
+      ['VP HR', /\b(VP.{0,5}HR|VP.{0,5}Human Resources|Vice President.{0,10}HR)/i],
+      ['Controller', /\b(Controller|Comptroller)/i],
+      ['CEO/Owner', /\b(CEO|Owner|President|Founder|Co-Founder|Principal)/i],
+      ['Operations', /\b(COO|Operations|Office Manager|Admin)/i]
+    ];
+    parsed.persona = null;
+    for (var pi=0; pi<personaTitles.length; pi++) {
+      if (personaTitles[pi][1].test(full)) { parsed.persona = personaTitles[pi][0]; break; }
+    }
+    // Company: first non-email, non-phone line that looks like a company name
+    parsed.company = null;
+    for (var ci=0; ci<lines.length; ci++) {
+      var l = lines[ci];
+      if (l.length > 2 && l.length < 60 && !l.match(/@/) && !l.match(/^\d/) && !l.match(/^https?:/)) {
+        parsed.company = l; break;
+      }
+    }
+    // Contact name: look for lines that are 2-3 capitalized words
+    parsed.contact = null;
+    for (var ni=0; ni<lines.length; ni++) {
+      var l = lines[ni];
+      if (/^[A-Z][a-z]+ [A-Z][a-z]+(\s[A-Z][a-z]+)?$/.test(l) && l !== parsed.company) {
+        parsed.contact = l; break;
+      }
+    }
 
-    // Map to form fields
     var fieldMap = {
       'f-company':  parsed.company,
       'f-contact':  parsed.contact,
@@ -10711,14 +10746,14 @@ window.npExtractFromImage = async function(input) {
     var filled = 0;
     Object.keys(fieldMap).forEach(function(id) {
       var val = fieldMap[id];
-      if (val && val !== 'null') {
+      if (val) {
         var el = document.getElementById(id);
         if (el && !el.value) { el.value = val; filled++; }
       }
     });
 
     // Handle persona select
-    if (parsed.persona && parsed.persona !== 'null') {
+    if (parsed.persona) {
       var pEl = document.getElementById('f-persona');
       if (pEl) {
         for (var i = 0; i < pEl.options.length; i++) {
@@ -10728,7 +10763,7 @@ window.npExtractFromImage = async function(input) {
     }
 
     // Auto-suggest LinkedIn from name
-    if (parsed.contact && parsed.contact !== 'null') {
+    if (parsed.contact) {
       var liEl = document.getElementById('f-linkedin');
       if (liEl && !liEl.value) {
         var slug = parsed.contact.toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().replace(/\s+/g,'-');
@@ -10830,58 +10865,55 @@ window.wfnExtractFromSalesforce = async function(input) {
         ? visionData.responses[0].error.message : 'No text detected in image'
     );
 
-    // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': (localStorage.getItem('adp_hub_apikey')||''), 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: 'The following is OCR text from a Salesforce CRM screenshot, likely showing a Client Insights or Account record. Extract all available data for an ADP Workforce Now (WFN) sales analysis.\n\nOCR TEXT:\n' + ocrText + '\n\nReturn ONLY valid JSON with these exact keys (use null for fields not found):\n{\n  "companyName": "company/account name",\n  "employeeCount": "number only",\n  "industry": "industry type",\n  "revenue": "annual revenue as text e.g. $5M or $5,000,000",\n  "locations": "number of locations/offices",\n  "states": "state(s) where they operate — comma separated abbreviations if multiple",\n  "primaryPlatform": "current HCM/payroll platform (e.g. ADP RUN, Paychex, Paylocity, etc.)",\n  "callNotes": "any notes, comments, or description text visible that would be relevant to a WFN sales conversation"\n}\n\nReturn null for any field not found. No markdown, just JSON.'
-        }]
-      })
-    });
-
-    var data = await response.json();
-    var raw = (data.content || []).map(function(i) { return i.text || ''; }).join('');
-    var clean = raw.replace(/```json/g,'').replace(/```/g,'').trim();
-    var parsed = JSON.parse(clean);
-
+    // Step 2: Regex parse OCR text — no API needed
+    status.textContent = '⏳ Parsing text…';
+    var lines = ocrText.split(/\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var full = ocrText;
     var filled = 0;
+
     function setWfn(id, val) {
-      if (!val || val === 'null') return;
+      if (!val) return;
       var el = document.getElementById(id);
       if (el) { el.value = val; filled++; }
     }
 
-    setWfn('wfn-companyName',    parsed.companyName);
-    setWfn('wfn-employeeCount',  parsed.employeeCount);
-    setWfn('wfn-industry',       parsed.industry);
-    setWfn('wfn-revenue',        parsed.revenue);
-    setWfn('wfn-locations',      parsed.locations);
-    setWfn('wfn-states',         parsed.states);
-
-    // Platform dropdown
-    if (parsed.primaryPlatform && parsed.primaryPlatform !== 'null') {
-      var platEl = document.getElementById('wfn-primaryPlatform');
-      if (platEl) {
-        var platOptions = ['ADP RUN','ADP Classic','Paychex','Paylocity','Ceridian','Workday','UKG','BambooHR','Rippling','Gusto','Other'];
-        var matched = platOptions.find(function(p){ return parsed.primaryPlatform.toLowerCase().indexOf(p.toLowerCase()) > -1; });
-        if (matched) { platEl.value = matched; filled++; }
-        else { platEl.value = 'Other'; filled++; }
+    // Company name: first substantial line
+    for (var ci=0; ci<lines.length; ci++) {
+      if (lines[ci].length > 2 && lines[ci].length < 80 && !lines[ci].match(/@/)) {
+        setWfn('wfn-companyName', lines[ci]); break;
       }
     }
-
-    // Append call notes to transcript field
-    if (parsed.callNotes && parsed.callNotes !== 'null') {
-      var transcEl = document.getElementById('wfn-callTranscript');
-      if (transcEl) {
-        var existing = transcEl.value.trim();
-        transcEl.value = existing ? existing + '\n\n--- From Salesforce ---\n' + parsed.callNotes : '--- From Salesforce ---\n' + parsed.callNotes;
-        filled++;
+    // Employee count
+    var hcM = full.match(/\b(\d{1,5})\s*(employees?|EE|ee|workers?|staff|headcount|FTE)/i);
+    if (hcM) setWfn('wfn-employeeCount', hcM[1]);
+    // Revenue
+    var revM = full.match(/\$[\d,]+(?:\.\d+)?\s*[MBK]?/i);
+    if (revM) setWfn('wfn-revenue', revM[0]);
+    // Locations
+    var locM = full.match(/\b(\d+)\s*(location|office|site|branch)/i);
+    if (locM) setWfn('wfn-locations', locM[1]);
+    // States
+    var stateM = full.match(/\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)/g);
+    if (stateM) setWfn('wfn-states', [...new Set(stateM)].join(', '));
+    // Industry
+    var industries = ['Healthcare','Manufacturing','Construction','Technology','Finance','Retail','Education','Hospitality','Transportation','Legal'];
+    for (var ii=0; ii<industries.length; ii++) {
+      if (full.toLowerCase().indexOf(industries[ii].toLowerCase()) > -1) { setWfn('wfn-industry', industries[ii]); break; }
+    }
+    // Platform
+    var platOptions = ['ADP RUN','ADP Classic','Paychex','Paylocity','Ceridian','Workday','UKG','BambooHR','Rippling','Gusto'];
+    var platEl = document.getElementById('wfn-primaryPlatform');
+    for (var pi=0; pi<platOptions.length; pi++) {
+      if (full.toLowerCase().indexOf(platOptions[pi].toLowerCase()) > -1) {
+        if (platEl) { platEl.value = platOptions[pi]; filled++; } break;
       }
+    }
+    // Call notes: dump remaining text
+    var transcEl = document.getElementById('wfn-callTranscript');
+    if (transcEl && ocrText.length > 20) {
+      var existing = transcEl.value.trim();
+      transcEl.value = existing ? existing + '\n\n--- From Screenshot ---\n' + ocrText : '--- From Screenshot ---\n' + ocrText;
+      filled++;
     }
 
     status.textContent = filled > 0 ? ('✅ ' + filled + ' fields mapped from Salesforce') : '⚠️ No fields detected';
@@ -10978,127 +11010,54 @@ window.tsExtractFromSalesforce = async function(input) {
         ? visionData.responses[0].error.message : 'No text detected in image'
     );
 
-    // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': (localStorage.getItem('adp_hub_apikey')||''), 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: 'The following is OCR text from a Salesforce CRM screenshot showing Client Insights for an ADP TotalSource (PEO) sales analysis. Extract all available data to populate the TotalSource Eligibility & Outreach Tool.\n\nOCR TEXT:\n' + ocrText + '\n\nReturn ONLY valid JSON with these exact keys (use null for fields not found):\n{\n  "companyName": "company name",\n  "contactName": "contact first name only",\n  "contactTitle": "contact job title",\n  "state": "full state name (e.g. Texas, Florida, Virginia)",\n  "city": "city name if visible",\n  "numEmployees": "eligible employee count as number only",\n  "numLocations": "1, 2-3, 4-9, or 10+ (choose closest)",\n  "industry": "low, med, or high — low=professional services/tech/finance, med=healthcare/retail/education, high=construction/manufacturing/transportation",\n  "avgWages": "average annual wages per employee, number only no symbols",\n  "totalWages": "total annual wages, number only no symbols",\n  "carrier": "current health insurance carrier name if visible",\n  "renewalIncrease": "renewal percentage increase number only if visible",\n  "asiScore": "ASI score number if visible",\n  "adpProducts": "number of existing ADP products if visible",\n  "openMarketClient": "yes or no — is this an ADP open market client"\n}\n\nReturn null for any field not found. No markdown, just JSON.'
-        }]
-      })
-    });
-
-    var data = await response.json();
-    var raw = (data.content || []).map(function(i) { return i.text || ''; }).join('');
-    var clean = raw.replace(/```json/g,'').replace(/```/g,'').trim();
-    var parsed = JSON.parse(clean);
-
+    // Step 2: Regex parse OCR text — no API needed, 100% free
+    status.textContent = '⏳ Parsing text…';
+    var lines = ocrText.split(/\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var full = ocrText;
     var filled = 0;
 
-    // Text inputs
     function setTs(id, val) {
-      if (!val || val === 'null') return;
+      if (!val) return;
       var el = document.getElementById(id);
       if (el) {
-        // Handle formatted number fields
         if (id === 'avgWages' || id === 'totalWages') {
           var num = parseInt(String(val).replace(/[^0-9]/g,''), 10);
           if (!isNaN(num)) { el.value = num.toLocaleString('en-US'); filled++; }
-        } else {
-          el.value = val; filled++;
-        }
+        } else { el.value = val; filled++; }
       }
     }
 
-    setTs('companyName',  parsed.companyName);
-    setTs('contactName',  parsed.contactName);
-    setTs('contactTitle', parsed.contactTitle);
-    setTs('numEE',        parsed.numEmployees);
-    setTs('avgWages',     parsed.avgWages);
-    setTs('totalWages',   parsed.totalWages);
-    setTs('asiScore',     parsed.asiScore);
-    setTs('adpProducts',  parsed.adpProducts);
-
-    // State select
-    if (parsed.state && parsed.state !== 'null') {
-      var stEl = document.getElementById('hqState');
-      if (stEl) {
-        for (var i = 0; i < stEl.options.length; i++) {
-          if (stEl.options[i].value.toLowerCase() === parsed.state.toLowerCase()) {
-            stEl.value = stEl.options[i].value;
-            onStateChange(); // populate metro dropdown
-            filled++;
-            // Now try city
-            if (parsed.city && parsed.city !== 'null') {
-              setTimeout(function(city) {
-                var metEl = document.getElementById('hqMetro');
-                if (metEl) {
-                  for (var j = 0; j < metEl.options.length; j++) {
-                    if (metEl.options[j].value.toLowerCase().indexOf(city.toLowerCase()) > -1) {
-                      metEl.value = metEl.options[j].value; filled++; break;
-                    }
-                  }
-                }
-              }.bind(null, parsed.city), 100);
-            }
-            break;
-          }
-        }
-      }
+    for (var ci=0; ci<lines.length; ci++) {
+      if (lines[ci].length > 2 && lines[ci].length < 80 && !lines[ci].match(/@/)) { setTs('companyName', lines[ci]); break; }
     }
-
-    // Locations select
-    if (parsed.numLocations && parsed.numLocations !== 'null') {
-      var locEl = document.getElementById('numLocations');
-      if (locEl) {
-        var locMap = {'1':'1','2':'2','2-3':'2','3':'2','4':'4','4-9':'4','10':'10+','10+':'10+'};
-        var locVal = locMap[String(parsed.numLocations)] || (parseInt(parsed.numLocations)>=10?'10+':parseInt(parsed.numLocations)>=4?'4':parseInt(parsed.numLocations)>=2?'2':'1');
-        locEl.value = locVal;
-        filled++;
-      }
+    for (var ni=0; ni<lines.length; ni++) {
+      if (/^[A-Z][a-z]+ [A-Z][a-z]+(\s[A-Z][a-z]+)?$/.test(lines[ni])) { setTs('contactName', lines[ni].split(' ')[0]); break; }
     }
-
-    // Industry select
-    if (parsed.industry && parsed.industry !== 'null') {
-      var indEl = document.getElementById('industry');
-      if (indEl) { indEl.value = parsed.industry; filled++; }
-    }
-
-    // Open market client radio
-    if (parsed.openMarketClient && parsed.openMarketClient !== 'null') {
-      var omVal = parsed.openMarketClient.toLowerCase() === 'yes' ? 'yes' : 'no';
-      var omEl = document.querySelector('input[name="openMarketClient"][value="'+omVal+'"]');
-      if (omEl) { omEl.checked = true; toggleOpenMarket(); filled++; }
-    }
-
-    // Carrier select — try to match
-    if (parsed.carrier && parsed.carrier !== 'null') {
-      var cEl = document.getElementById('carrier');
-      if (cEl) {
-        var carrierMap = {
-          'aetna':'aetna','united':'uhc','uhc':'uhc','cigna':'cigna','humana':'humana',
-          'kaiser':'kaiser','bcbs':'bcbs','bluecross':'bcbs','anthem':'anthem','molina':'molina'
-        };
-        var cKey = Object.keys(carrierMap).find(function(k){ return parsed.carrier.toLowerCase().indexOf(k) > -1; });
-        if (cKey) { cEl.value = carrierMap[cKey]; filled++; }
-      }
-    }
-
-    // Renewal increase
-    if (parsed.renewalIncrease && parsed.renewalIncrease !== 'null') {
-      var riEl = document.getElementById('renewalIncrease');
-      if (riEl) { riEl.value = String(parsed.renewalIncrease).replace(/[^0-9.]/g,''); filled++; }
-    }
-
-    // Trigger recalc if possible
+    var hcM = full.match(/\b(\d{1,5})\s*(employees?|EE|ee|eligible|workers?|staff)/i);
+    if (hcM) setTs('numEE', hcM[1]);
+    var stateNames = {AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+    var stateAbbr = full.match(/\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/);
+    if (stateAbbr) setTs('state', stateNames[stateAbbr[1]] || stateAbbr[1]);
+    var wageM = full.match(/avg[^\n]*\$(\d[\d,]+)/i)||full.match(/average[^\n]*\$(\d[\d,]+)/i);
+    if (wageM) setTs('avgWages', wageM[1].replace(/,/g,''));
+    var totalM = full.match(/total[^\n]*\$(\d[\d,]+)/i)||full.match(/annual[^\n]*\$(\d[\d,]+)/i);
+    if (totalM) setTs('totalWages', totalM[1].replace(/,/g,''));
+    var carrierMap = {'aetna':'aetna','united':'uhc','uhc':'uhc','cigna':'cigna','humana':'humana','kaiser':'kaiser','bcbs':'bcbs','bluecross':'bcbs','blue cross':'bcbs','anthem':'anthem','molina':'molina'};
+    var cEl = document.getElementById('carrier');
+    if (cEl) { var cKey = Object.keys(carrierMap).find(function(k){ return full.toLowerCase().indexOf(k)>-1; }); if(cKey){cEl.value=carrierMap[cKey];filled++;} }
+    var renM = full.match(/(\d{1,3})\s*%\s*(increase|renewal)/i);
+    if (renM) { var riEl=document.getElementById('renewalIncrease'); if(riEl){riEl.value=renM[1];filled++;} }
+    var asiM = full.match(/ASI[:\s]+(\d+)/i);
+    if (asiM) setTs('asiScore', asiM[1]);
+    var adpM = full.match(/(\d+)\s*ADP/i);
+    if (adpM) setTs('adpProducts', adpM[1]);
+    var locM = full.match(/\b(\d+)\s*(location|office|site|branch)/i);
+    if (locM) { var locEl=document.getElementById('numLocations'); if(locEl){var n=parseInt(locM[1]);locEl.value=n>=10?'10+':n>=4?'4':n>=2?'2':'1';filled++;} }
+    var indEl = document.getElementById('industry');
+    if (indEl) { indEl.value=/construction|manufactur|transport/i.test(full)?'high':/technology|software|finance|legal|professional/i.test(full)?'low':'med'; filled++; }
+    if (/open market/i.test(full)) { var omEl=document.querySelector('input[name="openMarketClient"][value="yes"]'); if(omEl){omEl.checked=true;if(typeof toggleOpenMarket==='function')toggleOpenMarket();filled++;} }
     if (typeof calcScore === 'function') setTimeout(calcScore, 200);
 
-    status.textContent = filled > 0 ? ('✅ ' + filled + ' fields mapped from Salesforce') : '⚠️ No fields detected';
-    status.style.color = filled > 0 ? '#166534' : '#b45309';
     if (filled > 0) showToast('🔗 ' + filled + ' TotalSource fields populated from Salesforce');
 
   } catch(err) {
@@ -11643,7 +11602,7 @@ async function _fbPatch(arr) {
   var body = { fields: { profiles: _fbEncode(arr) } };
   var res = await fetch(url, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
     body: JSON.stringify(body)
   });
   if (!res.ok) {
@@ -12446,7 +12405,7 @@ async function analyzeRouting() {
   try {
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': (localStorage.getItem('adp_hub_apikey')||''), 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
     });
     var result = await response.json();
@@ -12631,7 +12590,7 @@ async function analyzeWFN() {
   try {
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': (localStorage.getItem('adp_hub_apikey')||''), 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2500, messages: [{ role:'user', content: prompt }] })
     });
     var result = await response.json();
@@ -12739,7 +12698,7 @@ async function wfnGenerateEmail() {
   try {
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': (localStorage.getItem('adp_hub_apikey')||''), 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 800, messages: [{ role:'user', content: prompt }] })
     });
     var result = await response.json();
@@ -13043,7 +13002,7 @@ async function handleImageUpload(tab, input) {
 
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': (localStorage.getItem('adp_hub_apikey')||''), 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
