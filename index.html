@@ -10621,13 +10621,10 @@ window.npExtractFromImage = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    // Step 1: Google Cloud Vision OCR — direct API call using stored key
-    var gvKey = getGVisionKey ? getGVisionKey() : (localStorage.getItem('adp_hub_gvision')||'');
-    if (!gvKey) throw new Error('Google Vision API key not set — click ⚙ API Keys in the hub bar to add it.');
-    var visionEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(gvKey);
-    var visionRes = await fetch(visionEndpoint, {
+    // Step 1: Google Cloud Vision OCR via Worker (free, no CORS issues)
+    var visionRes = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
       body: JSON.stringify({
         requests: [{
           image: { content: base64 },
@@ -10648,9 +10645,9 @@ window.npExtractFromImage = async function(input) {
     );
 
     // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: (function(){ var k=getApiKeySilent()||getApiKey(); return { 'Content-Type': 'application/json', 'x-api-key': k, 'Authorization': 'Bearer '+k, 'anthropic-version': '2023-06-01' }; })(),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -10761,13 +10758,10 @@ window.wfnExtractFromSalesforce = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    // Step 1: Google Cloud Vision OCR — direct API call using stored key
-    var gvKey = getGVisionKey ? getGVisionKey() : (localStorage.getItem('adp_hub_gvision')||'');
-    if (!gvKey) throw new Error('Google Vision API key not set — click ⚙ API Keys in the hub bar to add it.');
-    var visionEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(gvKey);
-    var visionRes = await fetch(visionEndpoint, {
+    // Step 1: Google Cloud Vision OCR via Worker (free, no CORS issues)
+    var visionRes = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
       body: JSON.stringify({
         requests: [{
           image: { content: base64 },
@@ -10788,9 +10782,9 @@ window.wfnExtractFromSalesforce = async function(input) {
     );
 
     // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: (function(){ var k=getApiKeySilent()||getApiKey(); return { 'Content-Type': 'application/json', 'x-api-key': k, 'Authorization': 'Bearer '+k, 'anthropic-version': '2023-06-01' }; })(),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -10897,13 +10891,10 @@ window.tsExtractFromSalesforce = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    // Step 1: Google Cloud Vision OCR — direct API call using stored key
-    var gvKey = getGVisionKey ? getGVisionKey() : (localStorage.getItem('adp_hub_gvision')||'');
-    if (!gvKey) throw new Error('Google Vision API key not set — click ⚙ API Keys in the hub bar to add it.');
-    var visionEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(gvKey);
-    var visionRes = await fetch(visionEndpoint, {
+    // Step 1: Google Cloud Vision OCR via Worker (free, no CORS issues)
+    var visionRes = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
       body: JSON.stringify({
         requests: [{
           image: { content: base64 },
@@ -10924,9 +10915,9 @@ window.tsExtractFromSalesforce = async function(input) {
     );
 
     // Step 2: Claude parses OCR text into structured JSON (text-only, no vision)
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: (function(){ var k=getApiKeySilent()||getApiKey(); return { 'Content-Type': 'application/json', 'x-api-key': k, 'Authorization': 'Bearer '+k, 'anthropic-version': '2023-06-01' }; })(),
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -11588,7 +11579,7 @@ async function _fbPatch(arr) {
   var body = { fields: { profiles: _fbEncode(arr) } };
   var res = await fetch(url, {
     method: 'PATCH',
-    headers: (function(){ var k=getApiKeySilent()||getApiKey(); return { 'Content-Type': 'application/json', 'x-api-key': k, 'Authorization': 'Bearer '+k, 'anthropic-version': '2023-06-01' }; })(),
+    headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
     body: JSON.stringify(body)
   });
   if (!res.ok) {
@@ -12389,9 +12380,9 @@ async function analyzeRouting() {
   }
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
     });
     var result = await response.json();
@@ -12574,9 +12565,9 @@ async function analyzeWFN() {
   document.getElementById('wfnAnalyzeBtn').disabled = true;
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 2500, messages: [{ role:'user', content: prompt }] })
     });
     var result = await response.json();
@@ -12682,9 +12673,9 @@ async function wfnGenerateEmail() {
   var prompt = 'You are an elite B2B sales rep for ADP WorkforceNow. Write a short, punchy outreach email based on this analysis.\n\nCOMPANY: ' + d.company + '\nEMPLOYEES: ' + d.employees + '\nINDUSTRY: ' + (d.industry||'Not specified') + '\nCURRENT PLATFORM: ' + d.primaryPlatform + '\nCLASSIFICATION: ' + a.classification + '\nFIT SCORE: ' + a.fitScore + '/100\nOPPORTUNITY: ' + a.opportunityScore + '/100\nTOP SIGNALS: ' + (a.signals||[]).slice(0,2).join('; ') + '\nCOMPETITIVE ANGLES: ' + (a.competitive||[]).slice(0,2).join('; ') + '\nROI HIGHLIGHT: ' + (a.roi ? a.roi.annualSavings + ' annual savings, ' + a.roi.payback + ' payback' : 'significant ROI') + '\n\nWrite a compelling cold outreach email. Requirements:\n- Subject line: punchy, specific to their situation\n- Body: 3-4 short paragraphs max\n- Reference their current platform pain points\n- Include one specific ROI figure\n- End with a clear CTA for a 20-minute call\n- Close with signature placeholder\n\nReturn ONLY valid JSON:\n{\n  "subject": "Email subject line",\n  "body": "Full email body with \\n\\n for paragraphs. End with \\n\\n—\\n[Your Name]\\nADP WorkforceNow | [Your Phone] | [Your Email]"\n}';
 
   try {
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 800, messages: [{ role:'user', content: prompt }] })
     });
     var result = await response.json();
@@ -12986,9 +12977,9 @@ async function handleImageUpload(tab, input) {
       ? 'Extract information from this image/document to fill a WorkforceNow sales analysis form. Return ONLY valid JSON with these fields (use null if not found):\n{\n  "company": "company name",\n  "employees": "number of employees (number only)",\n  "industry": "industry description",\n  "revenue": "annual revenue e.g. $45M",\n  "locations": "number of locations (number only)",\n  "states": "states operating in e.g. VA, MD, TX",\n  "platform": "current HR/payroll platform name",\n  "adpData": "any ADP usage or product info visible",\n  "contactEmail": "email address if visible"\n}'
       : 'Extract information from this image/document to fill a TotalSource PEO benefits analysis form. Return ONLY valid JSON with these fields (use null if not found):\n{\n  "companyName": "company name",\n  "contactName": "first name of contact",\n  "contactTitle": "job title",\n  "numEE": "number of eligible employees (number only)",\n  "state": "state name (full name e.g. Virginia)",\n  "city": "city name",\n  "avgWages": "average annual wages per employee (number only, no $ or commas)",\n  "carrier": "current health insurance carrier name",\n  "premAvg": "current monthly premium blended average (number only)",\n  "renewalIncrease": "renewal increase percentage (number only)",\n  "contribPct": "employer contribution percentage (number only)",\n  "benefitsRate": "benefits participation rate as percentage (number only)",\n  "contactEmail": "email address if visible"\n}';
 
-    var response = await fetch('https://api.anthropic.com/v1/messages', {
+    var response = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': 'ignored', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
@@ -13135,8 +13126,8 @@ async function ocrIntoTextarea(inputId, targetId, statusId) {
       r.readAsDataURL(file);
     });
 
-    // Call Google Cloud Vision API - TEXT_DETECTION
-    var endpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(gvKey);
+    // Call Google Cloud Vision via Worker (avoids CORS in Chrome extension)
+    var endpoint = VISION_WORKER_URL;
     var body = {
       requests: [{
         image: { content: base64 },
@@ -13146,7 +13137,7 @@ async function ocrIntoTextarea(inputId, targetId, statusId) {
 
     var resp = await fetch(endpoint, {
       method: 'POST',
-      headers: (function(){ var k=getApiKeySilent()||getApiKey(); return { 'Content-Type': 'application/json', 'x-api-key': k, 'Authorization': 'Bearer '+k, 'anthropic-version': '2023-06-01' }; })(),
+      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
       body: JSON.stringify(body)
     });
 
