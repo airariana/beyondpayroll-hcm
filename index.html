@@ -10621,10 +10621,13 @@ window.npExtractFromImage = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    // Step 1: Google Cloud Vision OCR via Worker
-    var visionRes = await fetch(VISION_WORKER_URL, {
+    // Step 1: Google Cloud Vision OCR — direct API call using stored key
+    var gvKey = getGVisionKey ? getGVisionKey() : (localStorage.getItem('adp_hub_gvision')||'');
+    if (!gvKey) throw new Error('Google Vision API key not set — click ⚙ API Keys in the hub bar to add it.');
+    var visionEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(gvKey);
+    var visionRes = await fetch(visionEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         requests: [{
           image: { content: base64 },
@@ -10758,10 +10761,13 @@ window.wfnExtractFromSalesforce = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    // Step 1: Google Cloud Vision OCR via Worker
-    var visionRes = await fetch(VISION_WORKER_URL, {
+    // Step 1: Google Cloud Vision OCR — direct API call using stored key
+    var gvKey = getGVisionKey ? getGVisionKey() : (localStorage.getItem('adp_hub_gvision')||'');
+    if (!gvKey) throw new Error('Google Vision API key not set — click ⚙ API Keys in the hub bar to add it.');
+    var visionEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(gvKey);
+    var visionRes = await fetch(visionEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         requests: [{
           image: { content: base64 },
@@ -10891,10 +10897,13 @@ window.tsExtractFromSalesforce = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    // Step 1: Google Cloud Vision OCR via Worker
-    var visionRes = await fetch(VISION_WORKER_URL, {
+    // Step 1: Google Cloud Vision OCR — direct API call using stored key
+    var gvKey = getGVisionKey ? getGVisionKey() : (localStorage.getItem('adp_hub_gvision')||'');
+    if (!gvKey) throw new Error('Google Vision API key not set — click ⚙ API Keys in the hub bar to add it.');
+    var visionEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(gvKey);
+    var visionRes = await fetch(visionEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         requests: [{
           image: { content: base64 },
