@@ -8610,7 +8610,7 @@ window.runEmbeddedAnalysis = function(){
 // ── Gong Screenshot → Notes extractor ───────────────────────────────────────
 
 // ── Google Cloud Vision OCR ───────────────────────────────────────────────────
-var GCV_API_KEY = 'AIzaSyD-Ka3mxApP0RR4Gvdf8tOd9IPAsEVhaOw';
+var VISION_WORKER_URL = 'https://claude-vision-proxy.aj-3ab.workers.dev';
 
 window.sreExtractFromImage = async function(input) {
   if (!input.files || !input.files[0]) return;
@@ -8645,9 +8645,9 @@ window.sreExtractFromImage = async function(input) {
   icon.textContent = '⏳';
 
   try {
-    var res = await fetch('https://vision.googleapis.com/v1/images:annotate?key=' + GCV_API_KEY, {
+    var res = await fetch(VISION_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Service': 'vision' },
       body: JSON.stringify({
         requests: [{
           image: { content: base64 },
