@@ -10604,7 +10604,42 @@ window.sreExtractFromImage = async function(input) {
         if (typeof sreUpdateNotesTags === 'function') sreUpdateNotesTags();
         notesEl.dispatchEvent(new Event('input'));
       }
-      status.textContent = '✅ Text extracted successfully';
+      // Auto-check pain points based on keyword matches in OCR text
+      var ocrLower = extracted.toLowerCase();
+      var painMap = [
+        { id:'pain401k-embed',        words:['401k','401(k)','retirement','pension'] },
+        { id:'painWC-embed',          words:['workers comp','workers\' comp','work comp','wc renewal','wcb'] },
+        { id:'painACA-embed',         words:['aca','affordable care','1095','compliance','mandate'] },
+        { id:'painBenefits-embed',    words:['benefits','benefit payment','cobra','open enrollment','fsa','hsa'] },
+        { id:'painMultiStateTax-embed',words:['multi-state','multistate','multi state','state tax','nexus','withholding'] },
+        { id:'painPlatform-embed',    words:['platform','system down','outage','error','bug','glitch','downtime','failure'] },
+        { id:'painGL-embed',          words:['gl','general ledger','integration','sync','accounting','quickbooks','sage','netsuite'] },
+        { id:'painSupport-embed',     words:['support','response time','ticket','escalat','communication','customer service'] },
+        { id:'painI9-embed',          words:['i-9','i9','immigration','e-verify','everify','onboarding','new hire'] },
+        { id:'painMultiEntity-embed', words:['multi-entity','multi entity','multiple entities','subsidiary','subsidiaries','entities'] },
+        { id:'painManual-embed',      words:['manual','spreadsheet','paper','excel','data entry','re-enter','double entry'] }
+      ];
+      var painChecked = 0;
+      painMap.forEach(function(p) {
+        var matched = p.words.some(function(w){ return ocrLower.indexOf(w) > -1; });
+        if (matched) {
+          var cb = document.getElementById(p.id);
+          if (cb && !cb.checked) {
+            cb.checked = true;
+            var lbl = cb.closest('label');
+            if (lbl) lbl.classList.add('checked');
+            painChecked++;
+          }
+        }
+      });
+      if (painChecked > 0) {
+        // Scroll pain section into view
+        var painPanel = document.getElementById('pain-panel-adp');
+        if (painPanel) painPanel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+        if (typeof showToast === 'function') showToast('🎯 ' + painChecked + ' pain point' + (painChecked > 1 ? 's' : '') + ' auto-detected from screenshot');
+      }
+
+      status.textContent = '✅ Text extracted' + (painChecked > 0 ? ' · ' + painChecked + ' pain points detected' : ' successfully');
       status.style.color = '#22c55e';
     } else {
       var errDetail = (data.responses && data.responses[0] && data.responses[0].error)
