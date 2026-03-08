@@ -799,6 +799,31 @@ function handleRequest(e){
     <div class="modal-title">New Prospect</div>
     <div class="modal-sub">Enter prospect details to initialize the 30-day cadence</div>
 
+    <!-- ── Image Upload to Auto-Populate ── -->
+    <div style="margin-bottom:16px;padding:11px 14px;background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:2px;">📷 Auto-Fill from Screenshot</div>
+        <div style="font-size:11px;color:var(--text-2);line-height:1.5;">Upload a business card, LinkedIn profile, Salesforce record, or any screenshot — fields will be populated automatically.</div>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center;flex-shrink:0;">
+        <input type="file" id="np-img-upload" accept="image/*" style="display:none" onchange="npExtractFromImage(this)">
+        <button type="button" onclick="document.getElementById('np-img-upload').click()" id="np-upload-btn"
+          style="font-size:12px;padding:7px 13px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:var(--fb);font-weight:600;display:flex;align-items:center;gap:5px;transition:opacity .15s;"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <span id="np-upload-icon">📷</span><span id="np-upload-lbl">Upload Image</span>
+        </button>
+      </div>
+    </div>
+    <!-- Image preview strip -->
+    <div id="np-img-preview-wrap" style="display:none;margin-bottom:12px;padding:8px 12px;background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);align-items:center;gap:10px;">
+      <img id="np-img-thumb" style="height:38px;width:auto;border-radius:4px;border:1px solid var(--border);object-fit:cover;" src="" alt="preview">
+      <div style="flex:1;min-width:0;">
+        <div id="np-img-status" style="font-size:12px;color:var(--blue);font-weight:600;">Extracting fields…</div>
+        <div id="np-img-name" style="font-size:10px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      </div>
+      <button type="button" onclick="npDismissImage()" style="background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:16px;padding:2px 6px;">×</button>
+    </div>
+
     <div class="field-row" style="margin-bottom:14px">
       <div><label class="fl">Company Name *</label><input class="fi" id="f-company" placeholder="Acme Corp"></div>
       <div><label class="fl">Contact Name</label><input class="fi" id="f-contact" placeholder="Jane Smith"></div>
@@ -2698,6 +2723,32 @@ window.ecExportCSV=function(){
 </header>
 
 <!-- ── CLIENT INFO ─────────────────────────────────── -->
+
+<!-- Salesforce Client Insights Image Upload -->
+<div style="margin-bottom:18px;padding:14px 18px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+  <div style="font-size:22px;flex-shrink:0;margin-top:2px;">🔗</div>
+  <div style="flex:1;min-width:200px;">
+    <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:3px;">Import from Salesforce Client Insights</div>
+    <div style="font-size:12px;color:#3b82f6;line-height:1.55;">Upload a screenshot of the <strong>Client Insights tab</strong> in Salesforce — company name, state, employee count, industry, wages, carrier, and ASI will be mapped to fields automatically.</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;">
+    <input type="file" id="ts-sf-img-upload" accept="image/*" style="display:none" onchange="tsExtractFromSalesforce(this)">
+    <button type="button" onclick="document.getElementById('ts-sf-img-upload').click()" id="ts-sf-upload-btn"
+      style="font-size:12px;padding:8px 15px;background:#1e40af;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px;transition:opacity .15s;"
+      onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      <span id="ts-sf-upload-icon">📸</span><span id="ts-sf-upload-lbl">Upload Salesforce Screenshot</span>
+    </button>
+  </div>
+  <div id="ts-sf-img-preview-wrap" style="display:none;width:100%;padding:8px 10px;background:#fff;border:1px solid #bfdbfe;border-radius:7px;align-items:center;gap:10px;margin-top:4px;">
+    <img id="ts-sf-img-thumb" style="height:36px;width:auto;border-radius:4px;border:1px solid #bfdbfe;object-fit:cover;" src="" alt="preview">
+    <div style="flex:1;min-width:0;">
+      <div id="ts-sf-img-status" style="font-size:11px;color:#1e40af;font-weight:600;">Extracting fields…</div>
+      <div id="ts-sf-img-name" style="font-size:10px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+    </div>
+    <button type="button" onclick="tsDismissSfImage()" style="background:transparent;border:none;color:#6b7280;cursor:pointer;font-size:15px;padding:2px 6px;">×</button>
+  </div>
+</div>
+
 <p class="section-title">Client Information</p>
 <div class="grid">
   <div class="card">
@@ -4683,6 +4734,33 @@ function ts_ecFireMailto(){
       <p>Identify upgrade candidates from ADP Classic/RUN, detect competitive displacement opportunities with review-backed intelligence, and calculate switching ROI for mid-market prospects.</p>
     </div>
   </div>
+
+  <!-- SALESFORCE IMAGE UPLOAD -->
+  <section class="section">
+    <div style="padding:14px 18px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:10px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:22px;flex-shrink:0;margin-top:2px;">🔗</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:3px;">Import from Salesforce Client Insights</div>
+        <div style="font-size:12px;color:#3b82f6;line-height:1.55;">Upload a screenshot of the <strong>Client Insights tab</strong> in Salesforce — company name, employee count, industry, state, and platform will be mapped automatically.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap;">
+        <input type="file" id="wfn-sf-img-upload" accept="image/*" style="display:none" onchange="wfnExtractFromSalesforce(this)">
+        <button type="button" onclick="document.getElementById('wfn-sf-img-upload').click()" id="wfn-sf-upload-btn"
+          style="font-size:12px;padding:8px 15px;background:#1e40af;color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:var(--fb);font-weight:600;display:flex;align-items:center;gap:6px;transition:opacity .15s;"
+          onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <span id="wfn-sf-upload-icon">📸</span><span id="wfn-sf-upload-lbl">Upload Salesforce Screenshot</span>
+        </button>
+      </div>
+      <div id="wfn-sf-img-preview-wrap" style="display:none;width:100%;padding:8px 10px;background:#fff;border:1px solid #bfdbfe;border-radius:7px;align-items:center;gap:10px;margin-top:4px;">
+        <img id="wfn-sf-img-thumb" style="height:36px;width:auto;border-radius:4px;border:1px solid #bfdbfe;object-fit:cover;" src="" alt="preview">
+        <div style="flex:1;min-width:0;">
+          <div id="wfn-sf-img-status" style="font-size:11px;color:#1e40af;font-weight:600;">Extracting fields…</div>
+          <div id="wfn-sf-img-name" style="font-size:10px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        </div>
+        <button type="button" onclick="wfnDismissSfImage()" style="background:transparent;border:none;color:var(--text-3);cursor:pointer;font-size:15px;padding:2px 6px;">×</button>
+      </div>
+    </div>
+  </section>
 
   <!-- CLIENT INFO -->
   <section class="section">
@@ -8707,6 +8785,480 @@ window.sreDismissImage = function() {
   if (thumb) thumb.src = '';
 };
 // ── End Vision OCR ────────────────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════
+//  NEW PROSPECT MODAL — Image Auto-Fill
+//  Uses Claude Vision API to extract prospect fields
+// ══════════════════════════════════════════════════════════
+
+window.npExtractFromImage = async function(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  input.value = '';
+
+  var wrap   = document.getElementById('np-img-preview-wrap');
+  var thumb  = document.getElementById('np-img-thumb');
+  var status = document.getElementById('np-img-status');
+  var fname  = document.getElementById('np-img-name');
+  var btn    = document.getElementById('np-upload-btn');
+  var lbl    = document.getElementById('np-upload-lbl');
+  var icon   = document.getElementById('np-upload-icon');
+
+  var base64 = await new Promise(function(res, rej) {
+    var reader = new FileReader();
+    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+
+  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  fname.textContent = file.name;
+  status.textContent = '⏳ Analyzing image…';
+  status.style.color = 'var(--blue)';
+  wrap.style.display = 'flex';
+  btn.disabled = true;
+  lbl.textContent = 'Analyzing…';
+  icon.textContent = '⏳';
+
+  try {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: file.type, data: base64 }
+            },
+            {
+              type: 'text',
+              text: `Extract prospect/contact information from this image. This could be a business card, LinkedIn profile, Salesforce record, email signature, or any professional document.
+
+Return ONLY valid JSON with these exact keys (use null for fields not found):
+{
+  "company": "company name",
+  "contact": "full contact name",
+  "email": "email address",
+  "phone": "phone number in (555) 000-0000 format",
+  "industry": "industry type (e.g. Manufacturing, Healthcare, Construction)",
+  "state": "2-letter state abbreviation",
+  "headcount": "number only (e.g. 75)",
+  "persona": "one of: CFO, HR Director, VP HR, Controller, CEO/Owner, Operations"
+}
+
+For persona: infer from job title if present. For headcount: extract employee count if visible. Return null for any field not found. No markdown, just JSON.`
+            }
+          ]
+        }]
+      })
+    });
+
+    var data = await response.json();
+    var raw = (data.content || []).map(function(i) { return i.text || ''; }).join('');
+    var clean = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+    var parsed = JSON.parse(clean);
+
+    // Map to form fields
+    var fieldMap = {
+      'f-company':  parsed.company,
+      'f-contact':  parsed.contact,
+      'f-email':    parsed.email,
+      'f-phone':    parsed.phone,
+      'f-industry': parsed.industry,
+      'f-state':    parsed.state,
+      'f-headcount':parsed.headcount
+    };
+
+    var filled = 0;
+    Object.keys(fieldMap).forEach(function(id) {
+      var val = fieldMap[id];
+      if (val && val !== 'null') {
+        var el = document.getElementById(id);
+        if (el && !el.value) { el.value = val; filled++; }
+      }
+    });
+
+    // Handle persona select
+    if (parsed.persona && parsed.persona !== 'null') {
+      var pEl = document.getElementById('f-persona');
+      if (pEl) {
+        for (var i = 0; i < pEl.options.length; i++) {
+          if (pEl.options[i].value === parsed.persona) { pEl.value = parsed.persona; filled++; break; }
+        }
+      }
+    }
+
+    // Auto-suggest LinkedIn from name
+    if (parsed.contact && parsed.contact !== 'null') {
+      var liEl = document.getElementById('f-linkedin');
+      if (liEl && !liEl.value) {
+        var slug = parsed.contact.toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().replace(/\s+/g,'-');
+        liEl.value = 'linkedin.com/in/' + slug;
+      }
+    }
+
+    status.textContent = filled > 0 ? ('✅ ' + filled + ' field' + (filled > 1 ? 's' : '') + ' populated') : '⚠️ No fields detected';
+    status.style.color = filled > 0 ? 'var(--green)' : 'var(--gold)';
+    if (filled > 0) showToast('📋 ' + filled + ' fields auto-filled from image');
+
+  } catch(err) {
+    console.error('NP image extract error:', err);
+    status.textContent = '❌ ' + (err.message || 'Extraction failed');
+    status.style.color = 'var(--red)';
+  }
+
+  btn.disabled = false;
+  lbl.textContent = 'Upload Image';
+  icon.textContent = '📷';
+};
+
+window.npDismissImage = function() {
+  var wrap = document.getElementById('np-img-preview-wrap');
+  if (wrap) wrap.style.display = 'none';
+  var thumb = document.getElementById('np-img-thumb');
+  if (thumb) thumb.src = '';
+};
+
+// ══════════════════════════════════════════════════════════
+//  WFN ANALYZER — Salesforce Client Insights Image Import
+// ══════════════════════════════════════════════════════════
+
+window.wfnExtractFromSalesforce = async function(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  input.value = '';
+
+  var wrap   = document.getElementById('wfn-sf-img-preview-wrap');
+  var thumb  = document.getElementById('wfn-sf-img-thumb');
+  var status = document.getElementById('wfn-sf-img-status');
+  var fname  = document.getElementById('wfn-sf-img-name');
+  var btn    = document.getElementById('wfn-sf-upload-btn');
+  var lbl    = document.getElementById('wfn-sf-upload-lbl');
+  var icon   = document.getElementById('wfn-sf-upload-icon');
+
+  var base64 = await new Promise(function(res, rej) {
+    var reader = new FileReader();
+    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+
+  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  fname.textContent = file.name;
+  status.textContent = '⏳ Reading Salesforce data…';
+  status.style.color = '#1e40af';
+  wrap.style.display = 'flex';
+  btn.disabled = true;
+  lbl.textContent = 'Extracting…';
+  icon.textContent = '⏳';
+
+  try {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: file.type, data: base64 }
+            },
+            {
+              type: 'text',
+              text: `This is a screenshot from Salesforce CRM, likely showing a Client Insights or Account record. Extract all available data for an ADP Workforce Now (WFN) sales analysis.
+
+Return ONLY valid JSON with these exact keys (use null for fields not found):
+{
+  "companyName": "company/account name",
+  "employeeCount": "number only",
+  "industry": "industry type",
+  "revenue": "annual revenue as text e.g. $5M or $5,000,000",
+  "locations": "number of locations/offices",
+  "states": "state(s) where they operate — comma separated abbreviations if multiple",
+  "primaryPlatform": "current HCM/payroll platform (e.g. ADP RUN, Paychex, Paylocity, etc.)",
+  "callNotes": "any notes, comments, or description text visible that would be relevant to a WFN sales conversation"
+}
+
+Return null for any field not found. No markdown, just JSON.`
+            }
+          ]
+        }]
+      })
+    });
+
+    var data = await response.json();
+    var raw = (data.content || []).map(function(i) { return i.text || ''; }).join('');
+    var clean = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+    var parsed = JSON.parse(clean);
+
+    var filled = 0;
+    function setWfn(id, val) {
+      if (!val || val === 'null') return;
+      var el = document.getElementById(id);
+      if (el) { el.value = val; filled++; }
+    }
+
+    setWfn('wfn-companyName',    parsed.companyName);
+    setWfn('wfn-employeeCount',  parsed.employeeCount);
+    setWfn('wfn-industry',       parsed.industry);
+    setWfn('wfn-revenue',        parsed.revenue);
+    setWfn('wfn-locations',      parsed.locations);
+    setWfn('wfn-states',         parsed.states);
+
+    // Platform dropdown
+    if (parsed.primaryPlatform && parsed.primaryPlatform !== 'null') {
+      var platEl = document.getElementById('wfn-primaryPlatform');
+      if (platEl) {
+        var platOptions = ['ADP RUN','ADP Classic','Paychex','Paylocity','Ceridian','Workday','UKG','BambooHR','Rippling','Gusto','Other'];
+        var matched = platOptions.find(function(p){ return parsed.primaryPlatform.toLowerCase().indexOf(p.toLowerCase()) > -1; });
+        if (matched) { platEl.value = matched; filled++; }
+        else { platEl.value = 'Other'; filled++; }
+      }
+    }
+
+    // Append call notes to transcript field
+    if (parsed.callNotes && parsed.callNotes !== 'null') {
+      var transcEl = document.getElementById('wfn-callTranscript');
+      if (transcEl) {
+        var existing = transcEl.value.trim();
+        transcEl.value = existing ? existing + '\n\n--- From Salesforce ---\n' + parsed.callNotes : '--- From Salesforce ---\n' + parsed.callNotes;
+        filled++;
+      }
+    }
+
+    status.textContent = filled > 0 ? ('✅ ' + filled + ' fields mapped from Salesforce') : '⚠️ No fields detected';
+    status.style.color = filled > 0 ? '#166534' : '#b45309';
+    if (filled > 0) showToast('🔗 ' + filled + ' WFN fields populated from Salesforce');
+
+  } catch(err) {
+    console.error('WFN Salesforce extract error:', err);
+    status.textContent = '❌ ' + (err.message || 'Extraction failed');
+    status.style.color = '#dc2626';
+  }
+
+  btn.disabled = false;
+  lbl.textContent = 'Upload Salesforce Screenshot';
+  icon.textContent = '📸';
+};
+
+window.wfnDismissSfImage = function() {
+  var wrap = document.getElementById('wfn-sf-img-preview-wrap');
+  if (wrap) wrap.style.display = 'none';
+  var thumb = document.getElementById('wfn-sf-img-thumb');
+  if (thumb) thumb.src = '';
+};
+
+// ══════════════════════════════════════════════════════════
+//  TOTALSOURCE TOOL — Salesforce Client Insights Image Import
+// ══════════════════════════════════════════════════════════
+
+window.tsExtractFromSalesforce = async function(input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  input.value = '';
+
+  var wrap   = document.getElementById('ts-sf-img-preview-wrap');
+  var thumb  = document.getElementById('ts-sf-img-thumb');
+  var status = document.getElementById('ts-sf-img-status');
+  var fname  = document.getElementById('ts-sf-img-name');
+  var btn    = document.getElementById('ts-sf-upload-btn');
+  var lbl    = document.getElementById('ts-sf-upload-lbl');
+  var icon   = document.getElementById('ts-sf-upload-icon');
+
+  var base64 = await new Promise(function(res, rej) {
+    var reader = new FileReader();
+    reader.onload = function(e) { res(e.target.result.split(',')[1]); };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+
+  thumb.src = 'data:' + file.type + ';base64,' + base64;
+  fname.textContent = file.name;
+  status.textContent = '⏳ Reading Salesforce data…';
+  status.style.color = '#1e40af';
+  wrap.style.display = 'flex';
+  btn.disabled = true;
+  lbl.textContent = 'Extracting…';
+  icon.textContent = '⏳';
+
+  try {
+    var response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: file.type, data: base64 }
+            },
+            {
+              type: 'text',
+              text: `This is a screenshot from Salesforce CRM showing Client Insights for an ADP TotalSource (PEO) sales analysis. Extract all available data to populate the TotalSource Eligibility & Outreach Tool.
+
+Return ONLY valid JSON with these exact keys (use null for fields not found):
+{
+  "companyName": "company name",
+  "contactName": "contact first name only",
+  "contactTitle": "contact job title",
+  "state": "full state name (e.g. Texas, Florida, Virginia)",
+  "city": "city name if visible",
+  "numEmployees": "eligible employee count as number only",
+  "numLocations": "1, 2-3, 4-9, or 10+ (choose closest)",
+  "industry": "low, med, or high — low=professional services/tech/finance, med=healthcare/retail/education, high=construction/manufacturing/transportation",
+  "avgWages": "average annual wages per employee, number only no symbols",
+  "totalWages": "total annual wages, number only no symbols",
+  "carrier": "current health insurance carrier name if visible",
+  "renewalIncrease": "renewal percentage increase number only if visible",
+  "asiScore": "ASI score number if visible",
+  "adpProducts": "number of existing ADP products if visible",
+  "openMarketClient": "yes or no — is this an ADP open market client"
+}
+
+Return null for any field not found. No markdown, just JSON.`
+            }
+          ]
+        }]
+      })
+    });
+
+    var data = await response.json();
+    var raw = (data.content || []).map(function(i) { return i.text || ''; }).join('');
+    var clean = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+    var parsed = JSON.parse(clean);
+
+    var filled = 0;
+
+    // Text inputs
+    function setTs(id, val) {
+      if (!val || val === 'null') return;
+      var el = document.getElementById(id);
+      if (el) {
+        // Handle formatted number fields
+        if (id === 'avgWages' || id === 'totalWages') {
+          var num = parseInt(String(val).replace(/[^0-9]/g,''), 10);
+          if (!isNaN(num)) { el.value = num.toLocaleString('en-US'); filled++; }
+        } else {
+          el.value = val; filled++;
+        }
+      }
+    }
+
+    setTs('companyName',  parsed.companyName);
+    setTs('contactName',  parsed.contactName);
+    setTs('contactTitle', parsed.contactTitle);
+    setTs('numEE',        parsed.numEmployees);
+    setTs('avgWages',     parsed.avgWages);
+    setTs('totalWages',   parsed.totalWages);
+    setTs('asiScore',     parsed.asiScore);
+    setTs('adpProducts',  parsed.adpProducts);
+
+    // State select
+    if (parsed.state && parsed.state !== 'null') {
+      var stEl = document.getElementById('hqState');
+      if (stEl) {
+        for (var i = 0; i < stEl.options.length; i++) {
+          if (stEl.options[i].value.toLowerCase() === parsed.state.toLowerCase()) {
+            stEl.value = stEl.options[i].value;
+            onStateChange(); // populate metro dropdown
+            filled++;
+            // Now try city
+            if (parsed.city && parsed.city !== 'null') {
+              setTimeout(function(city) {
+                var metEl = document.getElementById('hqMetro');
+                if (metEl) {
+                  for (var j = 0; j < metEl.options.length; j++) {
+                    if (metEl.options[j].value.toLowerCase().indexOf(city.toLowerCase()) > -1) {
+                      metEl.value = metEl.options[j].value; filled++; break;
+                    }
+                  }
+                }
+              }.bind(null, parsed.city), 100);
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // Locations select
+    if (parsed.numLocations && parsed.numLocations !== 'null') {
+      var locEl = document.getElementById('numLocations');
+      if (locEl) {
+        var locMap = {'1':'1','2':'2','2-3':'2','3':'2','4':'4','4-9':'4','10':'10+','10+':'10+'};
+        var locVal = locMap[String(parsed.numLocations)] || (parseInt(parsed.numLocations)>=10?'10+':parseInt(parsed.numLocations)>=4?'4':parseInt(parsed.numLocations)>=2?'2':'1');
+        locEl.value = locVal;
+        filled++;
+      }
+    }
+
+    // Industry select
+    if (parsed.industry && parsed.industry !== 'null') {
+      var indEl = document.getElementById('industry');
+      if (indEl) { indEl.value = parsed.industry; filled++; }
+    }
+
+    // Open market client radio
+    if (parsed.openMarketClient && parsed.openMarketClient !== 'null') {
+      var omVal = parsed.openMarketClient.toLowerCase() === 'yes' ? 'yes' : 'no';
+      var omEl = document.querySelector('input[name="openMarketClient"][value="'+omVal+'"]');
+      if (omEl) { omEl.checked = true; toggleOpenMarket(); filled++; }
+    }
+
+    // Carrier select — try to match
+    if (parsed.carrier && parsed.carrier !== 'null') {
+      var cEl = document.getElementById('carrier');
+      if (cEl) {
+        var carrierMap = {
+          'aetna':'aetna','united':'uhc','uhc':'uhc','cigna':'cigna','humana':'humana',
+          'kaiser':'kaiser','bcbs':'bcbs','bluecross':'bcbs','anthem':'anthem','molina':'molina'
+        };
+        var cKey = Object.keys(carrierMap).find(function(k){ return parsed.carrier.toLowerCase().indexOf(k) > -1; });
+        if (cKey) { cEl.value = carrierMap[cKey]; filled++; }
+      }
+    }
+
+    // Renewal increase
+    if (parsed.renewalIncrease && parsed.renewalIncrease !== 'null') {
+      var riEl = document.getElementById('renewalIncrease');
+      if (riEl) { riEl.value = String(parsed.renewalIncrease).replace(/[^0-9.]/g,''); filled++; }
+    }
+
+    // Trigger recalc if possible
+    if (typeof calcScore === 'function') setTimeout(calcScore, 200);
+
+    status.textContent = filled > 0 ? ('✅ ' + filled + ' fields mapped from Salesforce') : '⚠️ No fields detected';
+    status.style.color = filled > 0 ? '#166534' : '#b45309';
+    if (filled > 0) showToast('🔗 ' + filled + ' TotalSource fields populated from Salesforce');
+
+  } catch(err) {
+    console.error('TS Salesforce extract error:', err);
+    status.textContent = '❌ ' + (err.message || 'Extraction failed');
+    status.style.color = '#dc2626';
+  }
+
+  btn.disabled = false;
+  lbl.textContent = 'Upload Salesforce Screenshot';
+  icon.textContent = '📸';
+};
+
+window.tsDismissSfImage = function() {
+  var wrap = document.getElementById('ts-sf-img-preview-wrap');
+  if (wrap) wrap.style.display = 'none';
+  var thumb = document.getElementById('ts-sf-img-thumb');
+  if (thumb) thumb.src = '';
+};
+// ── End Salesforce Image Import ──────────────────────────────────────────────
 
 window.sreClearNotes = function(){
   var el = document.getElementById('sre-notes');
