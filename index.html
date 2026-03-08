@@ -8546,7 +8546,7 @@ Respond ONLY with valid JSON (no markdown):
   try {
     const result = await callClaudeAPI({
       model: "gemini-1.5-flash",
-      max_tokens: 1000,
+      max_tokens: 2000,
       messages: [{ role: "user", content: prompt }]
     });
     const raw = result.content.map(i => i.text || '').join('');
@@ -10586,7 +10586,7 @@ async function callClaudeAPI(body) {
   var geminiBody = {
     contents: contents,
     generationConfig: {
-      maxOutputTokens: body.max_tokens || 1000,
+      maxOutputTokens: body.max_tokens || 4000,
       temperature: 0.3
     }
   };
