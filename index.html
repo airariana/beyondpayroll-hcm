@@ -785,8 +785,8 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
         <input type="file" class="img-scan-input" id="imgScanInput" accept="image/*" onchange="imgFileSelected(event)">
         <img id="imgScanPreview" class="img-scan-preview" alt="Preview">
         <div id="imgScanIcon" class="img-scan-icon">📄</div>
-        <div class="img-scan-lbl" id="imgScanLbl">Drop business card or document here</div>
-        <div class="img-scan-sub" id="imgScanSub">Supports: business cards, letterheads, screenshots, invoices — click or drag</div>
+        <div class="img-scan-lbl" id="imgScanLbl">Drop business card, doc, or Gong transcript here</div>
+        <div class="img-scan-sub" id="imgScanSub">Business cards · Letterheads · Screenshots · Gong transcripts — auto-populates fields &amp; SRE pain points</div>
         <div class="img-scan-progress" id="imgScanProgress">⟳ Extracting text with AI Vision...</div>
         <div class="img-scan-result-badge" id="imgScanBadge">✓ Fields auto-filled from scan</div>
       </div>
@@ -1773,6 +1773,106 @@ function imgDragLeave(){document.getElementById('imgScanWrap').classList.remove(
 function imgDrop(e){e.preventDefault();imgDragLeave();const f=e.dataTransfer.files[0];if(f)imgProcess(f)}
 function imgFileSelected(e){const f=e.target.files[0];if(f)imgProcess(f)}
 
+// ── Gong transcript → SRE pain point keyword map ─────────────────────
+// Loaded from gong-keywords.json — edit that file to add/remove triggers
+// Falls back to inline defaults if fetch fails (offline / local file open)
+let GONG_PAIN_MAP={
+  'sre-401k':  ['401k','401(k)','retirement plan','retirement admin','matching error','retirement contribution','pension error'],
+  'sre-wc':    ['workers comp','workers\' comp','work comp','workcomp','injury claim','mod rate','experience mod','NCCI','loss run','work-related injury'],
+  'sre-aca':   ['ACA','affordable care act','1094','1095','minimum essential','employer mandate','shared responsibility','aca compliance','aca filing'],
+  'sre-benefits':['benefits error','benefit deduction','cobra','open enrollment problem','carrier issue','benefits administration','benefit billing','wrong deduction','enrollment error'],
+  'sre-tax':   ['multi-state','multistate','state tax','nexus','state withholding','tax filing error','tax notice','SIT','state income tax','tax penalty','garnishment','levy'],
+  'sre-platform':['system down','outage','login issue','portal broken','platform issue','ADP down','slow system','locked out','access issue','can\'t log in','glitch','bug','error message','system error'],
+  'sre-gl':    ['general ledger','GL','journal entry','mapping error','accounting integration','QuickBooks','Sage','NetSuite','ERP','ledger code','chart of accounts','cost center','GL code'],
+  'sre-support':['no response','can\'t reach','support ticket','customer service','account manager','rep','unresponsive','escalation','no one calls back','ignored','slow response','service issue'],
+  'sre-i9':    ['I-9','i9','e-verify','work authorization','everify','immigration','onboarding compliance','new hire paperwork','i-9 audit'],
+  'sre-multi': ['multiple entities','multi-entity','subsidiaries','holding company','multiple EINs','multiple companies','parent company','several companies','umbrella'],
+  'sre-manual':['manual','spreadsheet','excel','paper','manual process','by hand','rekeying','double entry','no automation','time-consuming','inefficient']
+};
+
+// Load keywords from gong-keywords.json and merge into GONG_PAIN_MAP
+(function loadGongKeywords(){
+  fetch('./gong-keywords.json?v='+Date.now())
+    .then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(data){
+      const loaded={};
+      let count=0;
+      for(const[id,entry] of Object.entries(data)){
+        if(id.startsWith('_')) continue; // skip _meta
+        if(entry && Array.isArray(entry.keywords)){
+          loaded[id]=entry.keywords;
+          count++;
+        }
+      }
+      if(count>0){
+        GONG_PAIN_MAP=loaded;
+        console.log('[BeyondPayroll] gong-keywords.json loaded — '+count+' pain categories, '
+          +Object.values(loaded).reduce((s,a)=>s+a.length,0)+' total keywords');
+      }
+    })
+    .catch(function(e){
+      console.info('[BeyondPayroll] gong-keywords.json not loaded ('+e.message+') — using built-in defaults');
+    });
+})();
+
+// Detect client type & ADP products from transcript text
+function gongDetectClientType(text){
+  const t=text.toLowerCase();
+  const adpProducts=[];
+  if(/\badp run\b|\brun payroll\b|\brun platform\b/.test(t)) adpProducts.push('run');
+  if(/\bclassic\b|\badp classic\b|\blegacy adp\b/.test(t)) adpProducts.push('classic');
+  if(/\bworkforce now\b|\bwfn\b/.test(t)) adpProducts.push('wfn');
+  if(/\btotalsource\b|\bpeo\b|\bco.?employ/.test(t)) adpProducts.push('ts');
+  if(/\betime\b|\btlm\b|\btime and labor\b/.test(t)) adpProducts.push('etime');
+  const isExisting=adpProducts.length>0||/currently (using|on|with) adp|existing adp|adp client|already (use|using|have) adp/.test(t);
+  return{clientType:isExisting?'existing':'new', adpProducts};
+}
+
+// Map Gong transcript text to SRE checkboxes
+function gongMapPains(text){
+  const t=text.toLowerCase();
+  const hits=[];
+  for(const[id,keywords] of Object.entries(GONG_PAIN_MAP)){
+    for(const kw of keywords){
+      if(t.includes(kw.toLowerCase())){hits.push(id);break;}
+    }
+  }
+  return hits;
+}
+
+// Apply SRE selections from scan results
+function sreApplyFromScan(parsed){
+  // Client type silo
+  if(parsed.client_type){
+    const ct=parsed.client_type.toLowerCase();
+    if(ct==='existing'||ct==='adp') sreSilo('existing');
+    else if(ct==='new') sreSilo('new');
+  }
+  // ADP product sub-track
+  if(parsed.adp_products&&Array.isArray(parsed.adp_products)){
+    parsed.adp_products.forEach(function(p){
+      const el=document.getElementById('sre-adp-'+p.toLowerCase());
+      if(el&&!el.classList.contains('sel')) sreAdpToggle(p.toLowerCase(),el);
+    });
+  }
+  // Pain point checkboxes
+  if(parsed.pain_points&&Array.isArray(parsed.pain_points)){
+    parsed.pain_points.forEach(function(id){
+      const cb=document.getElementById(id);
+      if(cb&&!cb.checked){
+        cb.checked=true;
+        const label=cb.closest('.sre-cb');
+        if(label) label.classList.add('ck');
+      }
+    });
+  }
+  // Refresh SRE scores if prospect data changed
+  if(typeof sreRefresh==='function') sreRefresh();
+}
+
 async function imgProcess(file){
   const preview=document.getElementById('imgScanPreview');
   const progress=document.getElementById('imgScanProgress');
@@ -1789,61 +1889,122 @@ async function imgProcess(file){
   };
   reader.readAsDataURL(file);
   icon.style.display='none';
-  lbl.textContent='Scanning document...';
+  lbl.textContent='Scanning with Gemini Vision...';
   sub.style.display='none';
   progress.classList.add('show');
-  // Convert to base64 for API
+  // Convert to base64
   const base64=await new Promise(res=>{
     const r=new FileReader();
     r.onload=()=>res(r.result.split(',')[1]);
     r.readAsDataURL(file);
   });
+  // Detect if this looks like a Gong transcript (text-heavy) vs a contact card
+  const isTranscript=file.type==='text/plain'||file.name.toLowerCase().includes('transcript')||file.name.toLowerCase().includes('gong');
+  const prompt=isTranscript
+    ? `This is a Gong call transcript or sales notes document. Extract ALL of the following and return ONLY valid JSON, no markdown:
+{
+  "company": "",
+  "contact": "",
+  "title": "",
+  "email": "",
+  "phone": "",
+  "industry": "",
+  "state": "",
+  "headcount": "",
+  "linkedin": "",
+  "client_type": "new or existing",
+  "adp_products": ["run","classic","wfn","ts","etime","other"],
+  "pain_points": ["sre-401k","sre-wc","sre-aca","sre-benefits","sre-tax","sre-platform","sre-gl","sre-support","sre-i9","sre-multi","sre-manual"],
+  "transcript_text": "full verbatim text of the document"
+}
+Rules:
+- client_type: "existing" if they currently use any ADP product, "new" if net-new prospect
+- adp_products: ONLY include products explicitly mentioned as currently in use
+- pain_points: include ONLY the IDs from the list above where the transcript clearly mentions that pain. Map these keywords: 401k/retirement→sre-401k, workers comp/mod rate→sre-wc, ACA/1095→sre-aca, benefits error/cobra→sre-benefits, multi-state tax/nexus→sre-tax, system down/platform issue→sre-platform, GL/ledger/ERP→sre-gl, no response/support issue→sre-support, I-9/e-verify→sre-i9, multiple entities/EINs→sre-multi, manual/spreadsheet/rekeying→sre-manual
+- state: 2-letter abbreviation
+- headcount: number only
+- Use "" for any field not found`
+    : `Extract contact and company info from this image (business card, letterhead, screenshot, or any document). Also identify any ADP product mentions and business pain points. Return ONLY valid JSON, no markdown:
+{
+  "company": "",
+  "contact": "",
+  "title": "",
+  "email": "",
+  "phone": "",
+  "industry": "",
+  "state": "",
+  "headcount": "",
+  "linkedin": "",
+  "client_type": "new or existing",
+  "adp_products": [],
+  "pain_points": [],
+  "transcript_text": ""
+}
+Rules: state=2-letter abbrev, headcount=number only, client_type="existing" if ADP product visible, pain_points from: [sre-401k,sre-wc,sre-aca,sre-benefits,sre-tax,sre-platform,sre-gl,sre-support,sre-i9,sre-multi,sre-manual]. Use "" for missing fields.`;
+
   try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    // Route through Cloudflare Worker — Gemini Vision
+    const resp=await fetch(window.CF_WORKER_URL||'https://beyondpayroll-proxy.ajrios.workers.dev',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-Service':'gemini'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:600,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image',source:{type:'base64',media_type:file.type||'image/jpeg',data:base64}},
-            {type:'text',text:`Extract contact/company information from this image (business card, letterhead, invoice, document screenshot, or any text-containing image). Return ONLY valid JSON with these exact keys — use empty string "" if not found:
-{"company":"","contact":"","title":"","email":"","phone":"","industry":"","state":"","headcount":"","linkedin":""}
-Rules: state = 2-letter abbreviation, headcount = number only if visible, industry = inferred from company type if possible. No markdown, no explanation.`}
+        contents:[{
+          parts:[
+            {inline_data:{mime_type:file.type||'image/jpeg',data:base64}},
+            {text:prompt}
           ]
         }]
       })
     });
     const data=await resp.json();
-    const raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    // Gemini response format: candidates[0].content.parts[0].text
+    const raw=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts
+      ? data.candidates[0].content.parts.map(p=>p.text||'').join('')
+      : (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('') // anthropic fallback
+    );
     const clean=raw.replace(/```json|```/g,'').trim();
     const parsed=JSON.parse(clean);
-    // Map to form fields
-    if(parsed.company) document.getElementById('f-company').value=parsed.company;
-    if(parsed.contact) document.getElementById('f-contact').value=parsed.contact;
-    if(parsed.email) document.getElementById('f-email').value=parsed.email;
-    if(parsed.phone) document.getElementById('f-phone').value=parsed.phone;
-    if(parsed.industry) document.getElementById('f-industry').value=parsed.industry;
-    if(parsed.state) document.getElementById('f-state').value=parsed.state;
+
+    // ── 1. Prospect modal fields ──────────────────────────────────────
+    if(parsed.company)   document.getElementById('f-company').value=parsed.company;
+    if(parsed.contact)   document.getElementById('f-contact').value=parsed.contact;
+    if(parsed.email)     document.getElementById('f-email').value=parsed.email;
+    if(parsed.phone)     document.getElementById('f-phone').value=parsed.phone;
+    if(parsed.industry)  document.getElementById('f-industry').value=parsed.industry;
+    if(parsed.state)     document.getElementById('f-state').value=parsed.state;
     if(parsed.headcount) document.getElementById('f-headcount').value=parsed.headcount;
-    if(parsed.linkedin) document.getElementById('f-linkedin').value=parsed.linkedin;
+    if(parsed.linkedin)  document.getElementById('f-linkedin').value=parsed.linkedin;
     if(parsed.title){
-      // Try to match persona
-      const titleLower=parsed.title.toLowerCase();
+      const t=parsed.title.toLowerCase();
       const sel=document.getElementById('f-persona');
-      if(titleLower.includes('cfo')||titleLower.includes('finance')) sel.value='CFO';
-      else if(titleLower.includes('hr dir')) sel.value='HR Director';
-      else if(titleLower.includes('vp hr')||titleLower.includes('vp, hr')) sel.value='VP HR';
-      else if(titleLower.includes('controller')) sel.value='Controller';
-      else if(titleLower.includes('ceo')||titleLower.includes('owner')||titleLower.includes('president')) sel.value='CEO/Owner';
-      else if(titleLower.includes('oper')) sel.value='Operations';
+      if(t.includes('cfo')||t.includes('finance'))             sel.value='CFO';
+      else if(t.includes('hr dir'))                            sel.value='HR Director';
+      else if(t.includes('vp hr')||t.includes('vp, hr'))       sel.value='VP HR';
+      else if(t.includes('controller'))                        sel.value='Controller';
+      else if(t.includes('ceo')||t.includes('owner')||t.includes('president')) sel.value='CEO/Owner';
+      else if(t.includes('oper'))                              sel.value='Operations';
     }
+
+    // ── 2. SRE — run keyword fallback on transcript_text if Gemini missed pains ─
+    if(parsed.transcript_text&&(!parsed.pain_points||!parsed.pain_points.length)){
+      parsed.pain_points=gongMapPains(parsed.transcript_text);
+    }
+    // Also detect client type from transcript text as fallback
+    if(parsed.transcript_text&&!parsed.client_type){
+      const detected=gongDetectClientType(parsed.transcript_text);
+      if(!parsed.client_type) parsed.client_type=detected.clientType;
+      if(!parsed.adp_products||!parsed.adp_products.length) parsed.adp_products=detected.adpProducts;
+    }
+
+    // ── 3. Apply to SRE panel ─────────────────────────────────────────
+    sreApplyFromScan(parsed);
+
+    const painCount=(parsed.pain_points||[]).length;
+    const fieldCount=[parsed.company,parsed.contact,parsed.email,parsed.phone].filter(Boolean).length;
     progress.classList.remove('show');
     badge.classList.add('show');
-    lbl.textContent='Scan complete — review and adjust fields below';
-    showToast('✓ Fields populated from image scan');
+    lbl.textContent='Scan complete — '+fieldCount+' fields + '+painCount+' pain point'+(painCount!==1?'s':'')+' detected';
+    showToast('✓ Gemini scan complete — SRE auto-populated');
   }catch(err){
     progress.classList.remove('show');
     lbl.textContent='Scan failed — please fill fields manually';
@@ -1875,6 +2036,7 @@ function sreAdpToggle(key,el){
 function sreRefresh(){
   const p=window._hqProspect;
   const status=document.getElementById('sre-status');
+  if(!status)return; // HQ not yet rendered
   const fields=[
     ['sre-company','company'],['sre-contact','contact'],['sre-persona','persona'],
     ['sre-industry','industry'],['sre-state','state'],['sre-headcount','headcount']
@@ -2047,7 +2209,7 @@ window.saveProspect=function(){
 function hqRenderBanner(){
   const p=window._hqProspect;if(!p)return;
   document.getElementById('hq-pe').style.display='none';
-  const pf=document.getElementById('hq-pf');pf.style.display='grid';
+  const pf=document.getElementById('hq-pf');if(!pf)return;pf.style.display='grid';
   const tc=p.track==='WFN'?'wfn':'ts';
   const tl=p.track==='WFN'?'Track A — WorkforceNow':'Track B — TotalSource';
   pf.innerHTML=`
@@ -2080,6 +2242,7 @@ window.hqOpenScore=function(track){
   const panel=document.getElementById('hq-sap');panel.classList.add('open');
   document.getElementById('sap-badge').textContent=track==='WFN'?'TRACK A — WorkforceNow':'TRACK B — TotalSource';
   const row=document.getElementById('sc-row');
+  if(!row)return;
   if(track==='WFN'){
     row.innerHTML=hqScoreBox('WFN Fit Score','sc-fit','/100','Fit profile score','#1e40af')+
       hqScoreBox('Revenue Opportunity','sc-opp','/100','Revenue opportunity','#b8920a')+
@@ -2153,6 +2316,7 @@ function ecRenderAll(){
   document.getElementById('ecs-track').style.color=p.track==='WFN'?'var(--blue)':'var(--red)';
   document.getElementById('ecs-profile').textContent=`${p.industry||'—'} · ${p.state||'—'} · ${p.headcount||'—'} EEs`;
   const tabsEl=document.getElementById('ec-tabs');
+  if(!tabsEl)return;
   tabsEl.innerHTML=touches.map((t,i)=>{
     const sent=window._ecStatuses[i]==='Sent'||window._ecStatuses[i]==='Meeting Booked';
     let cls='ec-t'+(i===window._ecActiveIdx?' active':sent?' sent':'');
@@ -3747,7 +3911,7 @@ function renderACAresults(data) {
   // ── vs current premium callout ─────────────────────────
   var clientAvg = getRaw('premAvg');
   var vsPremEl  = document.getElementById('acaVsPremium');
-  if (clientAvg && avgSilver) {
+  if (vsPremEl && clientAvg && avgSilver) {
     var diff    = clientAvg - avgSilver;
     var diffPct = Math.round(Math.abs(diff / avgSilver) * 100);
     var msg = diff > 0
@@ -4125,7 +4289,7 @@ function updateBenefits(){
 
   // Renewal vs TotalSource row
   var renewal=getRaw('renewalIncrease'), renewalRow=document.getElementById('renewalRow');
-  if(renewal&&clientWeighted){
+  if(renewalRow&&renewal&&clientWeighted){
     var renewedCost=clientWeighted*(1+renewal/100);
     var savingsVsRenewalLow =renewedCost-tsLowW, savingsVsRenewalHigh=renewedCost-tsHighW;
     renewalRow.style.display='block';
@@ -5309,7 +5473,7 @@ function renderACAresults(data) {
   // ── vs current premium callout ─────────────────────────
   var clientAvg = getRaw('premAvg');
   var vsPremEl  = document.getElementById('acaVsPremium');
-  if (clientAvg && avgSilver) {
+  if (vsPremEl && clientAvg && avgSilver) {
     var diff    = clientAvg - avgSilver;
     var diffPct = Math.round(Math.abs(diff / avgSilver) * 100);
     var msg = diff > 0
@@ -5687,7 +5851,7 @@ function updateBenefits(){
 
   // Renewal vs TotalSource row
   var renewal=getRaw('renewalIncrease'), renewalRow=document.getElementById('renewalRow');
-  if(renewal&&clientWeighted){
+  if(renewalRow&&renewal&&clientWeighted){
     var renewedCost=clientWeighted*(1+renewal/100);
     var savingsVsRenewalLow =renewedCost-tsLowW, savingsVsRenewalHigh=renewedCost-tsHighW;
     renewalRow.style.display='block';
