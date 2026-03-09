@@ -271,6 +271,102 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 }
 .logout-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
 
+/* ── PROFILES BTN ── */
+.profiles-btn{
+  background:rgba(255,255,255,.06);border:1.5px solid var(--border);color:var(--text-2);
+  border-radius:var(--radius-sm);padding:7px 13px;font-size:12px;font-weight:600;
+  cursor:pointer;font-family:var(--fb);transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.profiles-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(212,175,55,.08)}
+.prof-count-badge{
+  background:var(--gold);color:#000;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;
+}
+
+/* ── PROFILES DRAWER ── */
+.profiles-overlay,.profile-detail-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:900;display:none;
+}
+.profiles-overlay.open,.profile-detail-overlay.open{display:block}
+.profiles-drawer{
+  position:fixed;right:-420px;top:0;bottom:0;width:420px;max-width:96vw;
+  background:var(--card);border-left:1px solid var(--border);z-index:901;
+  display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+.profiles-drawer.open{right:0}
+.profile-detail-drawer{
+  position:fixed;right:-420px;top:0;bottom:0;width:420px;max-width:96vw;
+  background:var(--card);border-left:1px solid var(--border);z-index:902;
+  display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+.profile-detail-drawer.open{right:0}
+.prof-drawer-header{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:18px 18px 14px;flex-shrink:0;
+}
+.prof-drawer-title{font-size:16px;font-weight:700;color:var(--text);font-family:var(--fb)}
+.prof-drawer-sub{font-size:11px;color:var(--text-3);margin-top:2px}
+.prof-sync-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);
+  border-radius:6px;margin:0 18px 4px;padding:8px 12px;font-size:12px;
+  color:var(--text-2);font-weight:600;font-family:var(--fb);flex-shrink:0;
+}
+.prof-sync-sub{font-size:11px;color:var(--text-3);padding:0 18px 12px;flex-shrink:0}
+.prof-search-row{display:flex;gap:8px;padding:0 18px 14px;flex-shrink:0}
+.prof-search-inp{
+  flex:1;background:var(--off-white);border:1px solid var(--border);border-radius:6px;
+  padding:8px 12px;font-size:12px;color:var(--text);font-family:var(--fb);
+}
+.prof-search-inp:focus{outline:none;border-color:var(--gold)}
+.prof-track-filter{
+  background:var(--off-white);border:1px solid var(--border);border-radius:6px;
+  padding:8px 10px;font-size:12px;color:var(--text);font-family:var(--fb);cursor:pointer;
+}
+.profiles-list{flex:1;overflow-y:auto;padding:0 18px 18px}
+.prof-card{
+  background:var(--off-white);border:1.5px solid var(--border);border-radius:8px;
+  padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:all .15s;
+}
+.prof-card:hover{border-color:var(--gold);background:rgba(212,175,55,.05)}
+.prof-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.prof-card-co{font-size:14px;font-weight:700;color:var(--text);font-family:var(--fb)}
+.prof-card-time{font-size:10px;color:var(--text-3)}
+.prof-card-sub{font-size:11px;color:var(--text-2);margin-bottom:8px;line-height:1.5}
+.prof-card-tags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.prof-tag{
+  background:rgba(255,255,255,.06);border:1px solid var(--border);
+  border-radius:10px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--text-2);
+}
+.prof-tag.wfn{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.08)}
+.prof-tag.ts{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.08)}
+.prof-tag.green{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.08)}
+.prof-launch-mini{
+  background:var(--text);color:var(--bg);border:none;border-radius:6px;
+  padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fb);
+  display:flex;align-items:center;gap:4px;white-space:nowrap;transition:opacity .15s;
+}
+.prof-launch-mini:hover{opacity:.8}
+.prof-empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px}
+.prof-close-btn{
+  background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text-2);
+  border-radius:5px;padding:5px 10px;font-size:14px;cursor:pointer;line-height:1;
+}
+.prof-export-btn{
+  background:rgba(34,197,94,.08);border:1px solid var(--green-border);color:var(--green);
+  border-radius:6px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fb);
+}
+.prof-delete-btn{
+  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--red);
+  border-radius:6px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fb);
+}
+.prof-detail-field{margin-bottom:10px}
+.prof-detail-lbl{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.prof-detail-val{font-size:13px;color:var(--text);font-weight:500}
+.prof-detail-section{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;padding:12px 0 8px;border-top:1px solid var(--border);margin-top:6px}
+.prof-ai-block{background:var(--off-white);border:1px solid var(--border);border-radius:7px;padding:13px;margin-top:10px;font-size:12px;color:var(--text-2);line-height:1.7;max-height:280px;overflow-y:auto}
+
 /* ════════════════════════
    HQ INNER
    ════════════════════════ */
@@ -747,7 +843,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
         <div class="demo-box">
           <div class="demo-label">Quick Demo Access</div>
           <div class="demo-creds">
-            <strong>Email:</strong> <code>demo@beyondpayroll.net</code><br>
+            <strong>Email:</strong> <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="046061696b4466617d6b6a6074657d766b68682a6a6170">[email&#160;protected]</a></code><br>
             <strong>Password:</strong> <code>Demo1234!</code>
           </div>
         </div>
@@ -855,6 +951,9 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
     <span class="tb-sub">Sales HQ</span>
 
     <div class="tb-right">
+      <button class="profiles-btn" onclick="openProfilesPanel()" id="profiles-nav-btn">
+        <span>📋</span> Prospect Profiles <span class="prof-count-badge" id="prof-count-badge" style="display:none">0</span>
+      </button>
       <div class="user-chip">
         <div class="ua" id="top-avatar">—</div>
         <div>
@@ -869,8 +968,59 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
   <div class="hq-scroll" id="hq-container"></div>
 </div>
 
+<!-- ════════════════════════════════════════
+     PROSPECT PROFILES PANEL
+     ════════════════════════════════════════ -->
+<div class="profiles-overlay" id="profiles-overlay" onclick="if(event.target===this)closeProfilesPanel()"></div>
+<div class="profiles-drawer" id="profiles-drawer">
+  <div class="prof-drawer-header">
+    <div>
+      <div class="prof-drawer-title">📋 Prospect Profiles</div>
+      <div class="prof-drawer-sub">Full workflow history · synced across your devices</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="prof-export-btn" onclick="exportProfilesCSV()">⬇ Export CSV</button>
+      <button class="prof-close-btn" onclick="closeProfilesPanel()">✕</button>
+    </div>
+  </div>
+  <div class="prof-sync-bar">
+    <span>☁ Firebase Cloud Sync</span>
+    <span style="color:var(--green);font-weight:700">☁ Synced</span>
+  </div>
+  <div class="prof-sync-sub">Prospects saved to Cloud — available on all devices</div>
+  <div class="prof-search-row">
+    <input class="prof-search-inp" id="prof-search" placeholder="Search company, contact..." oninput="renderProfilesList()">
+    <select class="prof-track-filter" id="prof-track-filter" onchange="renderProfilesList()">
+      <option value="">All Tracks</option>
+      <option value="WFN">Track A — WFN</option>
+      <option value="TS">Track B — TS</option>
+    </select>
+  </div>
+  <div id="profiles-list" class="profiles-list"></div>
+</div>
 
-<script>
+<!-- Profile Detail View -->
+<div class="profile-detail-overlay" id="profile-detail-overlay" onclick="if(event.target===this)closeProfileDetail()"></div>
+<div class="profile-detail-drawer" id="profile-detail-drawer">
+  <div class="prof-drawer-header" style="border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:0">
+    <button onclick="closeProfileDetail()" style="background:none;border:none;color:var(--text-2);font-size:13px;cursor:pointer;font-family:var(--fb);font-weight:600">← Back to All Profiles</button>
+    <div style="font-size:11px;color:var(--text-3)" id="prof-detail-updated"></div>
+  </div>
+  <div id="prof-detail-body" style="padding:18px;overflow-y:auto;flex:1"></div>
+  <div style="padding:14px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-green" style="flex:1;padding:13px;font-size:13px" onclick="launchCadenceFromProfile()">⚡ Launch 30-Day Cadence</button>
+      <button class="btn btn-blue" style="flex:1;padding:13px;font-size:13px" onclick="loadAsActiveProspect()">↩ Load as Active Prospect</button>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="prof-export-btn" style="flex:1;padding:10px" onclick="exportSingleProfile()">⬇ Export Profile</button>
+      <button class="prof-delete-btn" style="flex:1;padding:10px" onclick="deleteProfile()">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ══════════════════════════════════════════════════
 //  STORAGE
 // ══════════════════════════════════════════════════
@@ -986,6 +1136,7 @@ function enterHQ(session){
   document.getElementById('top-name').textContent=session.first+' '+session.last;
   document.getElementById('top-role').textContent=session.role==='WFN'?'TRACK A · WFN':'TRACK B · TS';
   if(!window._hqLoaded){window._hqLoaded=true;buildHQ(session)}
+  updateProfilesBadge();
 }
 
 window.addEventListener('DOMContentLoaded',()=>{const s=getSession();if(s)enterHQ(s)});
@@ -1381,8 +1532,223 @@ window.saveProspect=function(){
     linkedin:document.getElementById('f-linkedin').value.trim(),
     track:selectedRole||'WFN'
   };
+  saveProspectToProfiles(window._hqProspect);
   closeModal();hqRenderBanner();hqAdvancePipeline(1);
   showToast('Pipeline initialized for '+company);
+};
+
+// ══════════════════════════════════════════════════
+//  PROSPECT PROFILES STORAGE & PANEL
+// ══════════════════════════════════════════════════
+const PROFILES_KEY='bp_prospect_profiles';
+
+function getProfiles(){try{return JSON.parse(localStorage.getItem(PROFILES_KEY)||'[]')}catch{return[]}}
+function saveProfiles(arr){localStorage.setItem(PROFILES_KEY,JSON.stringify(arr))}
+
+function saveProspectToProfiles(p){
+  const profiles=getProfiles();
+  const now=Date.now();
+  const existing=profiles.findIndex(x=>x.company.toLowerCase()===p.company.toLowerCase());
+  const entry={...p,id:existing>=0?profiles[existing].id:(now+'_'+Math.random().toString(36).slice(2)),
+    savedAt:now,updatedAt:now,
+    aiSummary:profiles[existing]?.aiSummary||null,
+    wfnScore:profiles[existing]?.wfnScore||null,
+    tsScore:profiles[existing]?.tsScore||null,
+    status:'Prospect Created'
+  };
+  if(existing>=0){profiles[existing]={...profiles[existing],...entry,updatedAt:now}}
+  else{profiles.unshift(entry)}
+  saveProfiles(profiles);
+  updateProfilesBadge();
+}
+
+function updateProfilesBadge(){
+  const profiles=getProfiles();
+  const badge=document.getElementById('prof-count-badge');
+  if(!badge)return;
+  if(profiles.length>0){badge.textContent=profiles.length;badge.style.display='inline-block'}
+  else{badge.style.display='none'}
+}
+
+function timeAgo(ts){
+  const diff=Math.floor((Date.now()-ts)/1000);
+  if(diff<60)return diff+'s ago';
+  if(diff<3600)return Math.floor(diff/60)+'m ago';
+  if(diff<86400)return Math.floor(diff/3600)+'h ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+window.openProfilesPanel=function(){
+  document.getElementById('profiles-overlay').classList.add('open');
+  document.getElementById('profiles-drawer').classList.add('open');
+  renderProfilesList();
+};
+window.closeProfilesPanel=function(){
+  document.getElementById('profiles-overlay').classList.remove('open');
+  document.getElementById('profiles-drawer').classList.remove('open');
+};
+
+window.renderProfilesList=function(){
+  const profiles=getProfiles();
+  const search=(document.getElementById('prof-search')?.value||'').toLowerCase();
+  const trackFilter=document.getElementById('prof-track-filter')?.value||'';
+  const filtered=profiles.filter(p=>{
+    const matchSearch=!search||(p.company.toLowerCase().includes(search)||(p.contact||'').toLowerCase().includes(search));
+    const matchTrack=!trackFilter||(p.track===trackFilter);
+    return matchSearch&&matchTrack;
+  });
+  const el=document.getElementById('profiles-list');
+  if(!el)return;
+  if(!filtered.length){
+    el.innerHTML=`<div class="prof-empty">${profiles.length?'No profiles match your search.':'No saved prospects yet.<br>Add a prospect to get started.'}</div>`;
+    return;
+  }
+  el.innerHTML=filtered.map(p=>{
+    const tCls=p.track==='WFN'?'wfn':'ts';
+    const tLbl=p.track==='WFN'?'WFN':'TS';
+    const scoreLbl=p.track==='WFN'&&p.wfnScore?`WFN ${p.wfnScore}`:p.track==='TS'&&p.tsScore?`PEO ${p.tsScore} · WFN 100`:'';
+    return `<div class="prof-card" onclick="openProfileDetail('${p.id}')">
+      <div class="prof-card-top">
+        <div class="prof-card-co">${p.company}</div>
+        <button class="prof-launch-mini" onclick="event.stopPropagation();quickLaunchCadence('${p.id}')">⚡ Launch Cadence</button>
+      </div>
+      <div class="prof-card-sub">${p.contact||'—'} · ${p.industry||'—'} · ${p.state||'—'} · ${p.headcount||'—'} EE<br><span style="color:var(--text-3);font-size:10px">${timeAgo(p.updatedAt||p.savedAt)}</span></div>
+      <div class="prof-card-tags">
+        <span class="prof-tag ${tCls}">${tLbl}</span>
+        ${scoreLbl?`<span class="prof-tag green">${scoreLbl}</span>`:''}
+        <span class="prof-tag green">${p.status||'Saved'}</span>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window._activeProfileId=null;
+
+window.openProfileDetail=function(id){
+  const profiles=getProfiles();
+  const p=profiles.find(x=>x.id===id);
+  if(!p)return;
+  window._activeProfileId=id;
+  const updEl=document.getElementById('prof-detail-updated');
+  if(updEl)updEl.textContent='Updated '+timeAgo(p.updatedAt||p.savedAt);
+  const tLbl=p.track==='WFN'?'Track A — WorkforceNow':'Track B — TotalSource';
+  const tCls=p.track==='WFN'?'color:var(--blue)':'color:var(--red)';
+  const body=document.getElementById('prof-detail-body');
+  body.innerHTML=`
+    <div class="prof-detail-field"><div class="prof-detail-lbl">Company</div><div class="prof-detail-val" style="font-size:16px;font-weight:800">${p.company}</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px">
+      <div class="prof-detail-field"><div class="prof-detail-lbl">Contact</div><div class="prof-detail-val">${p.contact||'—'}</div></div>
+      <div class="prof-detail-field"><div class="prof-detail-lbl">Track</div><div class="prof-detail-val" style="${tCls}">${tLbl}</div></div>
+      <div class="prof-detail-field"><div class="prof-detail-lbl">Email</div><div class="prof-detail-val" style="font-size:12px">${p.email||'—'}</div></div>
+      <div class="prof-detail-field"><div class="prof-detail-lbl">Phone</div><div class="prof-detail-val">${p.phone||'—'}</div></div>
+      <div class="prof-detail-field"><div class="prof-detail-lbl">Industry</div><div class="prof-detail-val">${p.industry||'—'}</div></div>
+      <div class="prof-detail-field"><div class="prof-detail-lbl">State</div><div class="prof-detail-val">${p.state||'—'}</div></div>
+      <div class="prof-detail-field"><div class="prof-detail-lbl">Headcount</div><div class="prof-detail-val">${p.headcount||'—'} EEs</div></div>
+      <div class="prof-detail-field"><div class="prof-detail-lbl">Persona</div><div class="prof-detail-val" style="font-size:11px">${p.persona||'—'}</div></div>
+    </div>
+    ${p.linkedin?`<div class="prof-detail-field"><div class="prof-detail-lbl">LinkedIn</div><div class="prof-detail-val" style="font-size:12px"><a href="${p.linkedin}" target="_blank" style="color:var(--blue)">${p.linkedin}</a></div></div>`:''}
+    ${p.aiSummary?`<div class="prof-detail-section">AI Account Summary</div><div class="prof-ai-block">${p.aiSummary}</div>`:''}
+  `;
+  document.getElementById('profile-detail-overlay').classList.add('open');
+  document.getElementById('profile-detail-drawer').classList.add('open');
+};
+
+window.closeProfileDetail=function(){
+  document.getElementById('profile-detail-overlay').classList.remove('open');
+  document.getElementById('profile-detail-drawer').classList.remove('open');
+  window._activeProfileId=null;
+};
+
+function _loadProspectById(id){
+  const profiles=getProfiles();
+  const p=profiles.find(x=>x.id===id);
+  if(!p)return null;
+  return {
+    company:p.company,contact:p.contact,persona:p.persona,
+    industry:p.industry,state:p.state,headcount:p.headcount,
+    email:p.email,phone:p.phone,linkedin:p.linkedin,track:p.track
+  };
+}
+
+// Quick launch from card (without opening detail)
+window.quickLaunchCadence=function(id){
+  const prospect=_loadProspectById(id);
+  if(!prospect){showToast('Profile not found',true);return}
+  _doLaunchCadence(prospect);
+};
+
+// Launch from detail view
+window.launchCadenceFromProfile=function(){
+  if(!window._activeProfileId){showToast('No profile selected',true);return}
+  const prospect=_loadProspectById(window._activeProfileId);
+  if(!prospect){showToast('Profile not found',true);return}
+  _doLaunchCadence(prospect);
+};
+
+function _doLaunchCadence(prospect){
+  // Set as active prospect
+  window._hqProspect=prospect;
+  selectedRole=prospect.track;
+  // Force approve the cadence so composer unlocks
+  window._hqApproved=true;
+  // Close panels
+  closeProfileDetail();
+  closeProfilesPanel();
+  // Re-render banner
+  hqRenderBanner();
+  hqAdvancePipeline(4);
+  // Unlock composer button
+  const btn=document.getElementById('hq-composer-btn');
+  if(btn){btn.style.opacity='1';btn.style.cursor='pointer';btn.style.background='var(--green-bg)';btn.style.color='var(--green)';btn.style.borderColor='var(--green-border)'}
+  // Switch to HQ view and open composer
+  document.getElementById('view-auth').classList.remove('active');
+  document.getElementById('view-hq').classList.add('active');
+  setTimeout(()=>{hqTab('composer');showToast('⚡ Cadence launched for '+prospect.company)},150);
+}
+
+window.loadAsActiveProspect=function(){
+  if(!window._activeProfileId){showToast('No profile selected',true);return}
+  const prospect=_loadProspectById(window._activeProfileId);
+  if(!prospect){showToast('Profile not found',true);return}
+  window._hqProspect=prospect;
+  selectedRole=prospect.track;
+  closeProfileDetail();
+  closeProfilesPanel();
+  hqRenderBanner();
+  hqAdvancePipeline(1);
+  showToast('Loaded '+prospect.company+' as active prospect');
+};
+
+window.deleteProfile=function(){
+  if(!window._activeProfileId)return;
+  if(!confirm('Delete this profile? This cannot be undone.'))return;
+  const profiles=getProfiles().filter(x=>x.id!==window._activeProfileId);
+  saveProfiles(profiles);
+  updateProfilesBadge();
+  closeProfileDetail();
+  renderProfilesList();
+  showToast('Profile deleted');
+};
+
+window.exportProfilesCSV=function(){
+  const profiles=getProfiles();
+  if(!profiles.length){showToast('No profiles to export',true);return}
+  const headers=['Company','Contact','Email','Phone','Track','Industry','State','Headcount','Persona','LinkedIn','Status','Saved'];
+  const rows=profiles.map(p=>[p.company,p.contact,p.email,p.phone,p.track,p.industry,p.state,p.headcount,p.persona,p.linkedin,p.status,new Date(p.savedAt).toLocaleDateString()].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv=[headers.join(','),...rows].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='prospect_profiles.csv';a.click();
+};
+
+window.exportSingleProfile=function(){
+  if(!window._activeProfileId)return;
+  const p=getProfiles().find(x=>x.id===window._activeProfileId);
+  if(!p)return;
+  const headers=['Company','Contact','Email','Phone','Track','Industry','State','Headcount','Persona','LinkedIn','Status'];
+  const row=[p.company,p.contact,p.email,p.phone,p.track,p.industry,p.state,p.headcount,p.persona,p.linkedin,p.status].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(',');
+  const csv=[headers.join(','),row].join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=(p.company.replace(/\s+/g,'_')+'_profile.csv');a.click();
 };
 
 function hqRenderBanner(){
@@ -5044,14 +5410,4 @@ function generateEmail(){
 }
 
 function copyEmail(){
-  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBody').value;
-  navigator.clipboard.writeText(full).then(function(){
-    var m=document.getElementById('copyMsg'); m.style.display='inline';
-    setTimeout(function(){m.style.display='none';},2500);
-  });
-}
-
-</script>
-
-</body>
-</html>
+  var full='Subject: '+document.getElementById('emailSubject').value+'\n\n'+document.getElementById('emailBo
