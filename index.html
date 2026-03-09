@@ -344,8 +344,58 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
   font-family:var(--fb);transition:all .15s;
 }
 .pd-new-btn:hover{background:var(--navy)}
-/* Firebase status badge in nav */
-.fb-status{font-size:10px;font-weight:600;padding:4px 8px;border-radius:4px;display:flex;align-items:center;gap:4px;cursor:pointer}
+/* Prospect Profile detail view */
+.pp-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:6000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s ease}
+.pp-modal{background:var(--white);border-radius:var(--radius);max-width:720px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.pp-modal-hdr{background:var(--navy);color:#fff;padding:18px 22px;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.pp-modal-co{font-family:var(--fd);font-size:17px;font-weight:600}
+.pp-modal-meta{font-size:11px;opacity:.55;margin-top:3px}
+.pp-modal-body{flex:1;overflow-y:auto;padding:0}
+.pp-section{padding:16px 22px;border-bottom:1px solid var(--border)}
+.pp-section:last-child{border-bottom:none}
+.pp-section-ttl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-3);margin-bottom:10px}
+.pp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pp-field{background:var(--off-white);border-radius:6px;padding:8px 10px}
+.pp-field-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-3);margin-bottom:3px}
+.pp-field-val{font-size:12px;font-weight:600;color:var(--text)}
+.pp-field-val.red{color:var(--red)}
+.pp-field-val.blue{color:var(--blue)}
+.pp-field-val.green{color:var(--green)}
+.pp-pain-list{display:flex;flex-wrap:wrap;gap:5px}
+.pp-pain-tag{font-size:10px;font-weight:600;padding:3px 8px;border-radius:3px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.pp-transcript{font-size:11px;line-height:1.7;color:var(--text-2);background:var(--off-white);border-radius:6px;padding:12px;white-space:pre-wrap;max-height:140px;overflow-y:auto}
+.pp-notes-area{width:100%;min-height:80px;padding:10px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);resize:vertical;box-sizing:border-box;line-height:1.6}
+.pp-modal-ftr{padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;background:var(--white)}
+.pp-ftr-btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb);border:1.5px solid var(--border);background:var(--white);color:var(--text-2);transition:all .15s}
+.pp-ftr-btn:hover{background:var(--off-white);border-color:var(--text)}
+.pp-ftr-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pp-ftr-btn.primary:hover{background:#0f1729}
+.pp-ftr-btn.red{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+/* Cadence jump button after approve */
+.cadence-jump-banner{position:fixed;bottom:24px;right:24px;z-index:5500;animation:slideUp .3s ease both}
+.cadence-jump-banner button{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:14px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--fd);box-shadow:0 8px 32px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px;transition:all .15s}
+.cadence-jump-banner button:hover{background:#c0271d;transform:translateY(-1px)}
+.cadence-jump-banner .cjb-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+/* Intel action buttons (email / social) */
+.cdt-intel-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.cdt-ia-btn{font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;cursor:pointer;font-family:var(--fb);border:1.5px solid;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
+.cdt-ia-btn.email{background:var(--blue-bg);color:var(--blue);border-color:#bfdbfe}
+.cdt-ia-btn.email:hover{background:var(--blue);color:#fff}
+.cdt-ia-btn.social{background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)}
+.cdt-ia-btn.social:hover{background:var(--gold);color:#fff}
+.cdt-ia-btn.sms{background:rgba(34,197,94,.1);color:#16a34a;border-color:rgba(34,197,94,.3)}
+.cdt-ia-btn.sms:hover{background:#16a34a;color:#fff}
+/* SMS reminder modal */
+.sms-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:6000;display:flex;align-items:center;justify-content:center;padding:20px}
+.sms-modal{background:var(--white);border-radius:var(--radius);max-width:460px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.sms-modal-hdr{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.sms-modal-body{padding:20px}
+.sms-field-lbl{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:5px}
+.sms-inp{width:100%;padding:9px 12px;font-size:13px;font-family:var(--fb);border:1.5px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);box-sizing:border-box;margin-bottom:12px}
+.sms-inp:focus{outline:none;border-color:var(--navy)}
+.sms-textarea{width:100%;min-height:90px;padding:9px 12px;font-size:12px;font-family:var(--fb);border:1.5px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);resize:vertical;line-height:1.6;box-sizing:border-box;margin-bottom:12px}
+.sms-modal-ftr{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px}
 .fb-status.live{background:rgba(34,197,94,.1);color:#16a34a;border:1px solid rgba(34,197,94,.2)}
 .fb-status.offline{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
 .fb-status.error{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
@@ -1594,7 +1644,12 @@ function enterHQ(session){
     if(typeof notifRequestPermission==='function') notifRequestPermission();
     // Check for overdue touches
     if(typeof notifCheckOverdue==='function') setTimeout(notifCheckOverdue, 1500);
-  }, 200);
+    // Feature 2: Auto-pull prospect into tool panels on load
+    if(typeof window.pullProspectToTool==='function' && window._hqProspect){
+      window.pullProspectToTool('wfn');
+      window.pullProspectToTool('ts');
+    }
+  }, 400);
   // Close dropdown on outside click
   document.addEventListener('click',function(e){
     const btn=document.getElementById('profileBtn');
@@ -1639,6 +1694,9 @@ function getHQHTML(session){
           <span class="notif-badge" id="notif-badge">0</span>
         </button>
       </div>
+      <button onclick="toggleProfileDropdown()" style="padding:9px 14px;font-size:12px;font-weight:700;border-radius:6px;border:1.5px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);display:inline-flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.borderColor='var(--navy)';this.style.color='var(--navy)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'" title="Prospect Profiles">
+        📁 Profiles <span id="header-prospect-count" style="font-size:10px;background:var(--navy);color:#fff;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center"></span>
+      </button>
       <button class="btn btn-dark" onclick="openModal()" style="padding:9px 18px;font-size:13px">+ New Prospect</button>
     </div>
   </div>
@@ -1968,7 +2026,7 @@ function getHQHTML(session){
         </div>
 
         <div class="tc-note" style="margin-top:10px">
-          <span>⚡</span><span>Copy <strong>Fit Score, Opportunity, and Urgency</strong> into Score Approval panel below after running.</span>
+          <span>⚡</span><span><strong>Scores auto-populate</strong> into Score Approval panel when you click Mark as Run. Review and adjust if needed.</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           <button class="btn btn-outline" onclick="hqMarkDone(1,'WFN Analyzer');hqOpenScore('WFN')">✓ Mark as Run</button>
@@ -2019,7 +2077,7 @@ function getHQHTML(session){
         </div>
 
         <div class="tc-note" style="margin-top:10px">
-          <span>⚡</span><span>Copy <strong>Fit Score, Discount Range, and Risk Profile</strong> into Score Approval panel below.</span>
+          <span>⚡</span><span><strong>Scores auto-populate</strong> into Score Approval panel when you click Mark as Run. Review and adjust if needed.</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           <button class="btn btn-outline" onclick="hqMarkDone(1,'TotalSource Tool');hqOpenScore('TS')">✓ Mark as Run</button>
@@ -3198,6 +3256,9 @@ document.addEventListener('DOMContentLoaded',function(){
 window.saveProspect=function(){
   const company=document.getElementById('f-company').value.trim();
   if(!company){showToast('Company name is required',true);return}
+  // Collect SRE context at save time
+  const sreCtx = typeof atCollectSreContext === 'function' ? atCollectSreContext() : {};
+  const transcriptEl=document.getElementById('sre-transcript');
   window._hqProspect={
     company,contact:document.getElementById('f-contact').value.trim(),
     persona:document.getElementById('f-persona').value,
@@ -3207,10 +3268,30 @@ window.saveProspect=function(){
     email:document.getElementById('f-email').value.trim(),
     phone:document.getElementById('f-phone').value.trim(),
     linkedin:document.getElementById('f-linkedin').value.trim(),
-    track:selectedRole||'WFN'
+    track:selectedRole||'WFN',
+    // SRE data
+    painPoints: sreCtx.painPoints||[],
+    adpProducts: sreCtx.adpProducts||[],
+    clientType: sreCtx.clientType||'new',
+    sreRecommendation: sreCtx.sreRecommendation||'',
+    sreConfidence: sreCtx.sreConfidence||'',
+    sreWfnScore: sreCtx.sreWfnScore||'',
+    srePeoScore: sreCtx.srePeoScore||'',
+    transcript: transcriptEl?transcriptEl.value.trim():'',
+    notes:'',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    approved: false
   };
+  // Persist to saved prospects list
+  const arr=getProspects();
+  const existing=arr.findIndex(function(x){return x.company===company;});
+  if(existing>=0){arr[existing]=Object.assign(arr[existing],window._hqProspect);}
+  else{arr.unshift(window._hqProspect);}
+  saveProspectsLocal(arr);
   closeModal();hqRenderBanner();hqAdvancePipeline(1);
   setTimeout(sreRefresh,80);
+  renderSavedProspects();
   showToast('Pipeline initialized for '+company);
 };
 
@@ -3730,7 +3811,32 @@ window.hqOpenScore=function(track){
       hqScoreBox('Discount Range','sc-disc','% est.','Estimated premium discount','#b8920a')+
       hqScoreBox('UW Risk','sc-risk','/10','Underwriting risk score','#c2410c');
   }
+  // ── Feature 3: Auto-populate from SRE analysis ──
+  if(window._sreAnalysis){
+    const a=window._sreAnalysis;
+    const fitEl=document.getElementById('sc-fit');
+    if(fitEl){
+      fitEl.value=track==='WFN'?(a.wfn||''):(a.peo||'');
+    }
+    // Auto-populate opportunity from SRE confidence as proxy
+    const oppEl=document.getElementById('sc-opp');
+    if(oppEl&&a.conf) oppEl.value=a.conf;
+  }
+  // If atData has fit scores from the analyzer, use those
+  if(window._atResults){
+    const res=window._atResults['wfn']||window._atResults['ts']||window._atResults['full'];
+    if(res&&res.fit_scores){
+      const fs=res.fit_scores;
+      const fitEl=document.getElementById('sc-fit');
+      const oppEl=document.getElementById('sc-opp');
+      const urgEl=document.getElementById('sc-urg')||document.getElementById('sc-disc');
+      if(fitEl&&!fitEl.value) fitEl.value=track==='WFN'?(fs.wfn||''):(fs.ts||'');
+      if(oppEl&&!oppEl.value) oppEl.value=fs.market_opportunity||'';
+    }
+  }
   row.querySelectorAll('.score-inp').forEach(inp=>inp.addEventListener('input',hqUpdateRec));
+  // Trigger rec update if values were auto-filled
+  hqUpdateRec();
   panel.scrollIntoView({behavior:'smooth',block:'start'});hqAdvancePipeline(2);
 };
 
@@ -3759,6 +3865,25 @@ window.hqApprove=function(){
   if(tab){tab.classList.remove('locked');tab.style.opacity='1';tab.style.cursor='pointer'}
   const btn=document.getElementById('hq-composer-btn');
   if(btn){btn.style.opacity='1';btn.style.cursor='pointer';btn.style.background='var(--green-bg)';btn.style.color='var(--green)';btn.style.borderColor='var(--green-border)'}
+  // ── Feature 4: Cadence jump banner ──
+  const existing=document.getElementById('cadence-jump-banner');
+  if(existing)existing.remove();
+  const banner=document.createElement('div');
+  banner.id='cadence-jump-banner';
+  banner.className='cadence-jump-banner';
+  banner.innerHTML='<button onclick="hqTab(\'composer\');document.getElementById(\'cadence-jump-banner\').remove()">'
+    +'📅 Go to 30-Day Cadence'
+    +'<button class="cjb-close" onclick="event.stopPropagation();document.getElementById(\'cadence-jump-banner\').remove()">✕</button>'
+    +'</button>';
+  document.body.appendChild(banner);
+  // Persist approval to saved prospect
+  const p=window._hqProspect;
+  if(p){
+    const arr=getProspects();
+    const idx=arr.findIndex(function(x){return x.company===p.company;});
+    if(idx>=0){arr[idx].approved=true;saveProspectsLocal(arr);}
+    window._hqProspect.approved=true;
+  }
   showToast('Cadence approved — 30-Day Cadence unlocked ⚡');
 };
 
@@ -4063,6 +4188,11 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
           </div>
         </div>
         <div id="cdt-intel-result-${day}" style="padding:0 10px 8px 62px">${intelResult ? cdtRenderIntelResult(intelResult) : ''}</div>
+        <div class="cdt-intel-actions" style="padding:0 10px 10px 62px">
+          <button class="cdt-ia-btn email" onclick="cdtIntelEmail(${day})" title="Draft email with this intel">✉ Email</button>
+          <button class="cdt-ia-btn social" onclick="cdtIntelLinkedIn(${day})" title="Copy as LinkedIn post">💼 LinkedIn Post</button>
+          <button class="cdt-ia-btn sms" onclick="cdtIntelSms(${day})" title="Send SMS to prospect">📱 SMS</button>
+        </div>
       </div>`;
     }
     if(intel && td){
@@ -4075,6 +4205,11 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
           </div>
         </div>
         <div id="cdt-intel-result-${day}" style="padding:0 10px 8px 62px">${intelResult ? cdtRenderIntelResult(intelResult) : ''}</div>
+        <div class="cdt-intel-actions" style="padding:0 10px 10px 62px">
+          <button class="cdt-ia-btn email" onclick="cdtIntelEmail(${day})" title="Draft email with this intel">✉ Email</button>
+          <button class="cdt-ia-btn social" onclick="cdtIntelLinkedIn(${day})" title="Copy as LinkedIn post">💼 LinkedIn Post</button>
+          <button class="cdt-ia-btn sms" onclick="cdtIntelSms(${day})" title="Send SMS to prospect">📱 SMS</button>
+        </div>
       </div>`;
     }
 
@@ -4673,7 +4808,10 @@ function renderSavedProspects(){
   const count=document.getElementById('pd-count');
   if(!list)return;
   const arr=getProspects();
-  if(count)count.textContent=arr.length>0?`(${arr.length})`:'';
+  if(count)count.textContent=arr.length>0?`(${arr.length})`:''
+  // Update header count badge
+  const hdrCount = document.getElementById('header-prospect-count');
+  if(hdrCount) hdrCount.textContent = arr.length > 0 ? arr.length : '';
   if(!arr.length){
     list.innerHTML='<div class="pd-empty">No saved prospects yet.<br>Click + New Prospect to add one.</div>';
     return;
@@ -4684,14 +4822,17 @@ function renderSavedProspects(){
     const track=isTS?'ts':'wfn';
     const trackLabel=isTS?'TS':'WFN';
     const isActive=p.company===active;
+    const isApproved=p.approved||false;
     const meta=p.stage||((p.industry||'—')+' · '+(p.state||'—'));
-    return '<div class="pd-prospect-row'+(isActive?' active-row':'')+'" onclick="pdLoadProspect('+i+')">'
-      +'<div class="pd-pr-icon">'+(isTS?'🏢':'🖥️')+'</div>'
-      +'<div class="pd-pr-info"><div class="pd-pr-name">'+escHtml(p.company||'Unknown')+'</div>'
-      +'<div class="pd-pr-meta">'+escHtml(p.contact||'—')+' · '+escHtml(meta)+'</div></div>'
-      +'<span class="pd-pr-track '+track+'">'+trackLabel+'</span>'
-      +'<button class="pd-pr-cadence-btn" onclick="event.stopPropagation();pdAddToCadence('+i+')" title="Load into 30-day cadence">+ Cadence</button>'
-      +'</div>';
+    const statusDot=isApproved?'<span style="font-size:9px;font-weight:700;color:#16a34a;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);padding:1px 5px;border-radius:3px;margin-left:4px">ACTIVE</span>':'';
+    return '<div class="pd-prospect-row'+(isActive?' active-row':'')+'" onclick="pdLoadProspect('+i+')">'+
+      '<div class="pd-pr-icon">'+(isTS?'🏢':'🖥️')+'</div>'+
+      '<div class="pd-pr-info"><div class="pd-pr-name">'+escHtml(p.company||'Unknown')+statusDot+'</div>'+
+      '<div class="pd-pr-meta">'+escHtml(p.contact||'—')+' · '+escHtml(meta)+'</div></div>'+
+      '<span class="pd-pr-track '+track+'">'+trackLabel+'</span>'+
+      '<button class="pd-pr-cadence-btn" style="background:var(--off-white);color:var(--text-2);border:1px solid var(--border);margin-right:2px" onclick="event.stopPropagation();ppShowProfile('+i+')" title="View full profile">👁</button>'+
+      '<button class="pd-pr-cadence-btn" onclick="event.stopPropagation();pdAddToCadence('+i+')" title="Load into cadence">+ Cadence</button>'+
+      '</div>';
   }).join('');
 }
 
@@ -4730,11 +4871,11 @@ function pdAddToCadence(idx){
 function exportProspects(){
   const arr=getProspects();
   if(!arr.length){showToast('No prospects to export',true);return;}
-  const hdrs=['Company','Contact','Email','Phone','LinkedIn','Persona','Industry','State','Headcount','Track','Stage','SRE Recommendation','SRE Confidence','PEO Score','WFN Score','Cadence Tone','Touches Sent','Notes','Created','Updated'];
+  const hdrs=['Company','Contact','Email','Phone','LinkedIn','Persona','Industry','State','Headcount','Track','SRE Recommendation','SRE Confidence','PEO Score','WFN Score','Pain Points','Notes','Created'];
   const rows=arr.map(function(p){
     return [p.company,p.contact,p.email,p.phone,p.linkedin,p.persona,p.industry,p.state,p.headcount,
-      p.track,p.stage,p.sreRec,p.sreConf,p.peoScore,p.wfnScore,p.cadenceTone,p.touchesSent,
-      p.notes,p.createdAt,p.updatedAt
+      p.track,p.sreRecommendation||p.sreRec,p.sreConfidence||p.sreConf,p.srePeoScore||p.peoScore,p.sreWfnScore||p.wfnScore,
+      (p.painPoints||[]).join('; '),p.notes,p.createdAt
     ].map(function(v){return '"'+String(v||'').replace(/"/g,'""')+'"';});
   });
   const csv=[hdrs.join(',')].concat(rows.map(function(r){return r.join(',');})).join('\n');
@@ -4744,6 +4885,215 @@ function exportProspects(){
   a.click();
   showToast('Exported '+arr.length+' prospects');
 }
+
+// ── Feature 1: Prospect Profile Modal ─────────────────────────────
+window.ppShowProfile = function(idx) {
+  const arr = getProspects();
+  const p = arr[idx]; if(!p) return;
+  closeProfileDropdown();
+  const isTS = (p.track||'').toLowerCase().includes('ts');
+  const painHtml = (p.painPoints||[]).length
+    ? p.painPoints.map(function(x){return '<span class="pp-pain-tag">'+escHtml(x)+'</span>';}).join('')
+    : '<span style="color:var(--text-3);font-size:11px">None captured yet</span>';
+  const transcriptHtml = p.transcript
+    ? '<div class="pp-transcript">'+escHtml(p.transcript)+'</div>'
+    : '<div style="color:var(--text-3);font-size:11px;font-style:italic">No transcript pasted yet — add via Smart Routing Engine</div>';
+
+  const existing = document.getElementById('pp-modal-overlay');
+  if(existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'pp-modal-overlay';
+  overlay.id = 'pp-modal-overlay';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+
+  const approvedBadge = p.approved ? '<span style="font-size:10px;background:#16a34a;color:#fff;padding:2px 7px;border-radius:3px;margin-left:8px;font-family:var(--fb)">ACTIVE CADENCE</span>' : '';
+  const linkedinLink = p.linkedin ? '<a href="'+escHtml(p.linkedin)+'" target="_blank" style="color:var(--blue)">View &#8594;</a>' : '&#8212;';
+
+  overlay.innerHTML = [
+    '<div class="pp-modal">',
+      '<div class="pp-modal-hdr">',
+        '<div>',
+          '<div class="pp-modal-co">'+escHtml(p.company||'Unknown')+approvedBadge+'</div>',
+          '<div class="pp-modal-meta">'+escHtml(p.contact||'&#8212;')+' &middot; '+escHtml(p.email||'&#8212;')+' &middot; '+escHtml(p.phone||'&#8212;')+'</div>',
+        '</div>',
+        '<button onclick="document.getElementById(\'pp-modal-overlay\').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px">&#10005;</button>',
+      '</div>',
+      '<div class="pp-modal-body">',
+        '<div class="pp-section">',
+          '<div class="pp-section-ttl">Firmographic Data</div>',
+          '<div class="pp-grid">',
+            '<div class="pp-field"><div class="pp-field-lbl">Industry</div><div class="pp-field-val">'+escHtml(p.industry||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">State</div><div class="pp-field-val">'+escHtml(p.state||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Headcount</div><div class="pp-field-val">'+escHtml(p.headcount||'&#8212;')+' EEs</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Persona</div><div class="pp-field-val">'+escHtml(p.persona||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Track</div><div class="pp-field-val '+(isTS?'red':'blue')+'">'+(isTS?'TotalSource PEO':'WorkforceNow')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Client Type</div><div class="pp-field-val">'+escHtml(p.clientType||'New Prospect')+'</div></div>',
+          '</div>',
+        '</div>',
+        '<div class="pp-section">',
+          '<div class="pp-section-ttl">Smart Routing Engine Results</div>',
+          '<div class="pp-grid">',
+            '<div class="pp-field"><div class="pp-field-lbl">Recommendation</div><div class="pp-field-val '+(isTS?'red':'blue')+'">'+escHtml(p.sreRecommendation||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Confidence</div><div class="pp-field-val">'+(p.sreConfidence ? p.sreConfidence+'%' : '&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">WFN Score</div><div class="pp-field-val blue">'+(p.sreWfnScore||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">PEO Score</div><div class="pp-field-val red">'+(p.srePeoScore||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Current ADP Products</div><div class="pp-field-val">'+((p.adpProducts||[]).join(', ')||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">LinkedIn</div><div class="pp-field-val">'+linkedinLink+'</div></div>',
+          '</div>',
+        '</div>',
+        '<div class="pp-section">',
+          '<div class="pp-section-ttl">Confirmed Pain Points</div>',
+          '<div class="pp-pain-list">'+painHtml+'</div>',
+        '</div>',
+        '<div class="pp-section">',
+          '<div class="pp-section-ttl">Gong / Transcript Extract</div>',
+          transcriptHtml,
+        '</div>',
+        '<div class="pp-section">',
+          '<div class="pp-section-ttl">Rep Notes</div>',
+          '<textarea class="pp-notes-area" id="pp-notes-inp" placeholder="Add notes, objections, renewal timing, follow-up context&hellip;">'+escHtml(p.notes||'')+'</textarea>',
+        '</div>',
+      '</div>',
+      '<div class="pp-modal-ftr">',
+        '<button class="pp-ftr-btn primary" onclick="ppSaveNotes('+idx+')">Save Notes</button>',
+        '<button class="pp-ftr-btn" onclick="pdLoadProspect('+idx+');document.getElementById(\'pp-modal-overlay\').remove()">&#9654; Load Active</button>',
+        '<button class="pp-ftr-btn sms-btn" style="background:rgba(34,197,94,.08);color:#16a34a;border-color:rgba(34,197,94,.3)" onclick="ppSendSmsReminder('+idx+')">&#128241; SMS</button>',
+        '<button class="pp-ftr-btn red" onclick="ppDeleteProspect('+idx+')">&#128465; Delete</button>',
+        '<button class="pp-ftr-btn" style="margin-left:auto" onclick="document.getElementById(\'pp-modal-overlay\').remove()">Close</button>',
+      '</div>',
+    '</div>'
+  ].join('');
+  document.body.appendChild(overlay);
+};
+
+window.ppSaveNotes = function(idx) {
+  const arr = getProspects();
+  if(!arr[idx]) return;
+  const notes = document.getElementById('pp-notes-inp');
+  if(notes){ arr[idx].notes = notes.value; arr[idx].updatedAt = new Date().toISOString(); }
+  saveProspectsLocal(arr);
+  if(window._hqProspect && window._hqProspect.company === arr[idx].company) window._hqProspect.notes = arr[idx].notes;
+  showToast('Notes saved for '+arr[idx].company);
+};
+
+window.ppDeleteProspect = function(idx) {
+  const arr = getProspects();
+  if(!arr[idx]) return;
+  if(!confirm('Delete '+arr[idx].company+' from Prospect Profiles?')) return;
+  arr.splice(idx, 1);
+  saveProspectsLocal(arr);
+  renderSavedProspects();
+  const ov = document.getElementById('pp-modal-overlay');
+  if(ov) ov.remove();
+  showToast('Prospect deleted');
+};
+
+// ── Feature 2: Auto-pull prospect data into tool panels ──────────
+window.addEventListener('DOMContentLoaded', function(){
+  // Override hqRenderBanner to also auto-pull into tool panels
+  const _origBanner = window.hqRenderBanner;
+  if(_origBanner){
+    window.hqRenderBanner = function(){
+      _origBanner();
+      setTimeout(function(){
+        if(typeof window.pullProspectToTool === 'function' && window._hqProspect){
+          window.pullProspectToTool('wfn');
+          window.pullProspectToTool('ts');
+        }
+      }, 150);
+    };
+  }
+});
+
+// ── Feature 5: Intel action buttons ──────────────────────────────
+window.cdtIntelEmail = function(day) {
+  const p = window._hqProspect; if(!p) return;
+  const result = cdtGetIntelResult(day);
+  const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
+  const subject = encodeURIComponent('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' — '+p.company);
+  const snippet = result ? result.result.substring(0,320)+'...\n\n' : '[Paste your intel brief here]\n\n';
+  const bodyText = 'Hi '+((p.contact||'').split(' ')[0]||p.company)+',\n\n'+snippet+'Worth a quick conversation?\n\n— [Your Name]\nADP | beyondpayroll.net';
+  window.location.href = 'mailto:'+encodeURIComponent(p.email||'')+'?subject='+subject+'&body='+encodeURIComponent(bodyText);
+};
+
+window.cdtIntelLinkedIn = function(day) {
+  const p = window._hqProspect; if(!p) return;
+  const result = cdtGetIntelResult(day);
+  const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
+  const post = '📊 '+(intelDay?intelDay.label:'Competitive Intel')+' — '
+    +p.industry+' companies at '+p.headcount+' employees.\n\n'
+    +(result?result.result.substring(0,260)+'...\n\n':'[Your insight here]\n\n')
+    +'#HCM #ADP #WorkforceNow #PEO #HRTech';
+  if(navigator.clipboard){ navigator.clipboard.writeText(post).then(function(){ showToast('LinkedIn post copied — paste into LinkedIn'); }); }
+  window.open('https://www.linkedin.com/feed/', '_blank');
+};
+
+window.cdtIntelSms = function(day) {
+  const p = window._hqProspect; if(!p) return;
+  const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
+  ppShowSmsModal(
+    p.phone||'',
+    'Hi '+((p.contact||'').split(' ')[0]||p.company)+' — quick follow-up on '+(intelDay?intelDay.label:'my research')+' for '+p.company+'. Worth a 15-min call this week? — [Your Name], ADP',
+    'Day '+day+' Intel — '+p.company
+  );
+};
+
+// ── Feature 6: SMS Reminder ───────────────────────────────────────
+window.ppSendSmsReminder = function(idx) {
+  const arr = getProspects();
+  const p = arr[idx]||window._hqProspect; if(!p) return;
+  ppShowSmsModal(
+    p.phone||'',
+    'Hi '+((p.contact||'').split(' ')[0]||p.company)+'! Following up on our ADP conversation re: '+p.company+'. Do you have 15 min this week? — [Your Name], ADP | beyondpayroll.net',
+    'Follow-up Reminder — '+p.company
+  );
+};
+
+function ppShowSmsModal(phone, defaultMsg, title) {
+  const existing = document.getElementById('sms-modal-overlay');
+  if(existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'sms-modal-overlay';
+  overlay.id = 'sms-modal-overlay';
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
+  overlay.innerHTML = [
+    '<div class="sms-modal">',
+      '<div class="sms-modal-hdr">',
+        '<div style="font-family:var(--fd);font-size:14px;font-weight:600">&#128241; '+escHtml(title||'SMS Reminder')+'</div>',
+        '<button onclick="document.getElementById(\'sms-modal-overlay\').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer">&#10005;</button>',
+      '</div>',
+      '<div class="sms-modal-body">',
+        '<div class="sms-field-lbl">Mobile Number</div>',
+        '<input class="sms-inp" id="sms-phone-inp" type="tel" placeholder="+1 (555) 000-0000" value="'+escHtml(phone)+'">',
+        '<div class="sms-field-lbl">Message <span style="color:var(--text-3);font-weight:400" id="sms-char-count"></span></div>',
+        '<textarea class="sms-textarea" id="sms-msg-inp" oninput="document.getElementById(\'sms-char-count\').textContent=\'(\'+this.value.length+\'/160)\'">'+escHtml(defaultMsg)+'</textarea>',
+        '<div style="font-size:11px;color:var(--text-3)">Opens your device SMS app. For bulk/scheduled SMS, use the Sales Agent tab (Twilio).</div>',
+      '</div>',
+      '<div class="sms-modal-ftr">',
+        '<button class="pp-ftr-btn primary" onclick="ppSendSms()" style="flex:1">&#128228; Open in Messages</button>',
+        '<button class="pp-ftr-btn" onclick="ppCopySms()" style="flex:1">&#8859; Copy</button>',
+        '<button class="pp-ftr-btn" onclick="document.getElementById(\'sms-modal-overlay\').remove()">Cancel</button>',
+      '</div>',
+    '</div>'
+  ].join('');
+  document.body.appendChild(overlay);
+  const msgEl = document.getElementById('sms-msg-inp');
+  if(msgEl) document.getElementById('sms-char-count').textContent='('+msgEl.value.length+'/160)';
+}
+
+window.ppSendSms = function() {
+  const phone = (document.getElementById('sms-phone-inp')||{}).value||'';
+  const msg = (document.getElementById('sms-msg-inp')||{}).value||'';
+  if(!phone){ showToast('Enter a mobile number first', true); return; }
+  window.location.href = 'sms:'+phone.replace(/\s/g,'')+'?body='+encodeURIComponent(msg);
+  document.getElementById('sms-modal-overlay').remove();
+};
+
+window.ppCopySms = function() {
+  const msg = (document.getElementById('sms-msg-inp')||{}).value||'';
+  if(navigator.clipboard){ navigator.clipboard.writeText(msg).then(function(){ showToast('Message copied to clipboard'); }); }
+};
+
 
 // Hook saveProspect to also persist to Firebase
 document.addEventListener('DOMContentLoaded',function(){
