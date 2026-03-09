@@ -764,6 +764,58 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .img-scan-progress.show{display:block}
 .img-scan-result-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green);margin-top:8px;display:none}
 .img-scan-result-badge.show{display:inline-flex}
+
+/* ═══════════════════════════════════════════
+   SALES AGENT TAB STYLES
+   ═══════════════════════════════════════════ */
+.sa-view{padding:24px 28px;max-width:1100px;margin:0 auto}
+.sa-header{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.sa-header-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--navy),var(--navy-2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sa-header h2{font-family:var(--fd);font-size:22px;font-weight:600;color:var(--text);margin:0}
+.sa-header .sa-sub{font-size:12px;color:var(--text-3);margin-top:2px}
+.sa-status-bar{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.sa-status-chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:500}
+.sa-status-chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sa-status-chip .dot.green{background:#22c55e}
+.sa-status-chip .dot.red{background:#ef4444}
+.sa-status-chip .dot.yellow{background:#eab308}
+.sa-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+@media(max-width:768px){.sa-grid{grid-template-columns:1fr}}
+.sa-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.sa-card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.sa-card-hdr h3{font-size:14px;font-weight:600;color:var(--text);flex:1;margin:0}
+.sa-card-hdr .sa-ch-icon{font-size:16px}
+.sa-field{margin-bottom:14px}
+.sa-field label{display:block;font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.sa-field input,.sa-field textarea,.sa-field select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--fb);font-size:13px;color:var(--text);background:var(--off-white);transition:border-color .15s}
+.sa-field input:focus,.sa-field textarea:focus,.sa-field select:focus{outline:none;border-color:var(--navy)}
+.sa-field textarea{resize:vertical;min-height:80px;line-height:1.6}
+.sa-btn{padding:10px 18px;border-radius:var(--radius-sm);font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.sa-btn.primary{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.sa-btn.primary:hover{background:var(--navy-2)}
+.sa-btn.green{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.sa-btn.green:hover{border-color:var(--green)}
+.sa-btn.outline{background:var(--white);color:var(--text-2);border-color:var(--border)}
+.sa-btn.outline:hover{border-color:var(--text);color:var(--text)}
+.sa-btn:disabled{opacity:.4;cursor:not-allowed}
+.sa-btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.sa-result{margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;display:none}
+.sa-result.show{display:block}
+.sa-result.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.sa-result.err{background:var(--err-bg);color:var(--err);border:1px solid #fcc}
+.sa-sync-section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;box-shadow:var(--shadow)}
+.sa-sync-section h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sa-log{max-height:200px;overflow-y:auto;font-family:var(--fm);font-size:11px;color:var(--text-2);background:var(--off-white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;margin-top:12px}
+.sa-log-entry{padding:3px 0;border-bottom:1px solid var(--border)}
+.sa-log-entry:last-child{border-bottom:none}
+.sa-log-entry .ch{font-weight:600;text-transform:uppercase;font-size:10px}
+.sa-log-entry .ch.sms{color:var(--blue)}
+.sa-log-entry .ch.phone{color:var(--green)}
+.sa-log-entry .ch.email{color:var(--gold)}
+.sa-prospect-select{margin-bottom:16px;padding:12px 14px;background:var(--gold-bg);border:1px solid var(--gold-border);border-radius:var(--radius-sm)}
+.sa-prospect-select .sa-ps-label{font-size:11px;font-weight:600;color:var(--gold);margin-bottom:4px}
+.sa-prospect-select .sa-ps-name{font-size:14px;font-weight:600;color:var(--text)}
+.sa-prospect-select .sa-ps-detail{font-size:11px;color:var(--text-3);margin-top:2px}
 </style>
 </head>
 <body>
@@ -1282,6 +1334,7 @@ function getHQHTML(session){
   <div class="hq-nav">
     <button class="hq-tab active" id="htab-cmd" onclick="hqTab('cmd')">🏠 Command Center <span class="tab-badge">HQ</span></button>
     <button class="hq-tab locked" id="htab-composer" onclick="hqTab('composer')">✉️ Email Composer <span class="tab-badge">STEP 5</span></button>
+    <button class="hq-tab" id="htab-agent" onclick="hqTab('agent')">🤖 Sales Agent <span class="tab-badge" style="background:rgba(34,197,94,.15);color:#16a34a">LIVE</span></button>
   </div>
 
   <!-- Prospect strip -->
@@ -1729,6 +1782,84 @@ function getHQHTML(session){
     </div>
   </div><!-- /composer-view -->
 
+  <!-- ══ SALES AGENT TAB ══ -->
+  <div id="hq-agent-view" style="display:none">
+    <div class="sa-view">
+      <div class="sa-header">
+        <div class="sa-header-icon">🤖</div>
+        <div>
+          <h2>Sales Agent</h2>
+          <div class="sa-sub">Multi-channel outreach — SMS, Phone, Email via Twilio + SendGrid</div>
+        </div>
+      </div>
+
+      <div class="sa-status-bar">
+        <div class="sa-status-chip"><span class="dot" id="sa-api-dot"></span> <span id="sa-api-lbl">Checking API…</span></div>
+        <div class="sa-status-chip"><span class="dot" id="sa-twilio-dot"></span> <span id="sa-twilio-lbl">Twilio</span></div>
+        <div class="sa-status-chip"><span class="dot" id="sa-sg-dot"></span> <span id="sa-sg-lbl">SendGrid</span></div>
+        <div class="sa-status-chip" style="margin-left:auto;cursor:pointer;font-weight:600" onclick="saSyncProspects()">☁ Sync Prospects to Agent</div>
+      </div>
+
+      <div class="sa-prospect-select" id="sa-prospect-banner" style="display:none">
+        <div class="sa-ps-label">ACTIVE PROSPECT</div>
+        <div class="sa-ps-name" id="sa-ps-name">—</div>
+        <div class="sa-ps-detail" id="sa-ps-detail">—</div>
+      </div>
+
+      <div class="sa-grid">
+        <!-- SMS Card -->
+        <div class="sa-card">
+          <div class="sa-card-hdr"><span class="sa-ch-icon">💬</span><h3>Send SMS</h3></div>
+          <div class="sa-field"><label>Phone Number</label><input type="tel" id="sa-sms-phone" placeholder="+1 (555) 000-0000"></div>
+          <div class="sa-field"><label>Message</label><textarea id="sa-sms-msg" placeholder="Hi {{ name }}, I wanted to reach out about {{ company }}…" rows="4"></textarea></div>
+          <div class="sa-btn-row">
+            <button class="sa-btn primary" onclick="saSendSMS()">📤 Send SMS</button>
+            <button class="sa-btn outline" onclick="saPreviewSMS()">👁 Preview</button>
+          </div>
+          <div class="sa-result" id="sa-sms-result"></div>
+        </div>
+
+        <!-- Phone Card -->
+        <div class="sa-card">
+          <div class="sa-card-hdr"><span class="sa-ch-icon">📞</span><h3>AI Phone Call</h3></div>
+          <div class="sa-field"><label>Phone Number</label><input type="tel" id="sa-call-phone" placeholder="+1 (555) 000-0000"></div>
+          <div class="sa-field"><label>Voice Script</label><textarea id="sa-call-script" placeholder="Hello {{ name }}, this is a call from BeyondPayroll…" rows="4"></textarea></div>
+          <div class="sa-field"><label>Voice</label>
+            <select id="sa-call-voice">
+              <option value="Polly.Matthew">Matthew (Male, US)</option>
+              <option value="Polly.Joanna">Joanna (Female, US)</option>
+              <option value="Polly.Amy">Amy (Female, UK)</option>
+              <option value="Polly.Brian">Brian (Male, UK)</option>
+            </select>
+          </div>
+          <div class="sa-btn-row">
+            <button class="sa-btn primary" onclick="saMakeCall()">📞 Initiate Call</button>
+          </div>
+          <div class="sa-result" id="sa-call-result"></div>
+        </div>
+      </div>
+
+      <!-- Cadence Execution -->
+      <div class="sa-sync-section">
+        <h3>⚡ Cadence Execution Engine</h3>
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:14px">Run all pending cadence steps (SMS, Phone, Email) that are due. Use Dry Run to preview before executing.</div>
+        <div class="sa-btn-row">
+          <button class="sa-btn green" onclick="saExecuteCadence(true)">🔍 Dry Run</button>
+          <button class="sa-btn primary" onclick="saExecuteCadence(false)">🚀 Execute Now</button>
+          <button class="sa-btn outline" onclick="saLoadActivity()">📋 Activity Log</button>
+        </div>
+        <div class="sa-result" id="sa-exec-result"></div>
+      </div>
+
+      <!-- Activity Log -->
+      <div class="sa-sync-section" id="sa-activity-section" style="display:none">
+        <h3>📋 Recent Activity</h3>
+        <div class="sa-log" id="sa-activity-log"></div>
+      </div>
+
+    </div>
+  </div><!-- /agent-view -->
+
 </div><!-- /hq-wrap -->
 `;
 }
@@ -1751,9 +1882,12 @@ window.hqTab=function(tab){
   if(tab==='composer'&&!window._hqApproved){showToast('Complete Score Approval to unlock Email Composer',true);return}
   document.getElementById('hq-cmd').style.display=tab==='cmd'?'block':'none';
   document.getElementById('hq-composer-view').style.display=tab==='composer'?'block':'none';
+  const agentView=document.getElementById('hq-agent-view');
+  if(agentView)agentView.style.display=tab==='agent'?'block':'none';
   document.querySelectorAll('.hq-tab').forEach(t=>t.classList.remove('active'));
   const el=document.getElementById('htab-'+tab);if(el)el.classList.add('active');
   if(tab==='composer')ecRenderAll();
+  if(tab==='agent')saInit();
   document.getElementById('hq-container').scrollTop=0;
 };
 
@@ -2671,6 +2805,215 @@ document.addEventListener('DOMContentLoaded',function(){
   }
   renderSavedProspects();
 });
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SALES AGENT — API Bridge Client
+// ═══════════════════════════════════════════════════════════════════════
+const SA_API = 'http://localhost:8787/api';
+let _saReady = false;
+
+async function saFetch(path, opts = {}) {
+  try {
+    const resp = await fetch(SA_API + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+    });
+    return await resp.json();
+  } catch (e) {
+    return { success: false, error: 'API unreachable — is the Sales Agent server running? (' + e.message + ')' };
+  }
+}
+
+function saShowResult(id, ok, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'sa-result show ' + (ok ? 'ok' : 'err');
+  el.textContent = msg;
+  setTimeout(function(){ el.classList.remove('show'); }, 8000);
+}
+
+async function saInit() {
+  // Auto-fill prospect fields
+  const p = window._hqProspect;
+  const banner = document.getElementById('sa-prospect-banner');
+  if (p && banner) {
+    banner.style.display = 'block';
+    document.getElementById('sa-ps-name').textContent = (p.contact || p.company || '—');
+    document.getElementById('sa-ps-detail').textContent =
+      (p.company || '') + ' · ' + (p.email || '') + ' · ' + (p.phone || '');
+    // Auto-fill phone/email
+    const smsPhone = document.getElementById('sa-sms-phone');
+    const callPhone = document.getElementById('sa-call-phone');
+    if (smsPhone && !smsPhone.value && p.phone) smsPhone.value = p.phone;
+    if (callPhone && !callPhone.value && p.phone) callPhone.value = p.phone;
+  } else if (banner) {
+    banner.style.display = 'none';
+  }
+
+  // Check API health
+  const health = await saFetch('/health');
+  const apiDot = document.getElementById('sa-api-dot');
+  const apiLbl = document.getElementById('sa-api-lbl');
+  const twilioDot = document.getElementById('sa-twilio-dot');
+  const twilioLbl = document.getElementById('sa-twilio-lbl');
+  const sgDot = document.getElementById('sa-sg-dot');
+  const sgLbl = document.getElementById('sa-sg-lbl');
+
+  if (health.status === 'ok') {
+    _saReady = true;
+    apiDot.className = 'dot green'; apiLbl.textContent = 'API Connected';
+    twilioDot.className = 'dot ' + (health.twilio_configured ? 'green' : 'red');
+    twilioLbl.textContent = health.twilio_configured ? 'Twilio Ready' : 'Twilio Not Configured';
+    sgDot.className = 'dot ' + (health.sendgrid_configured ? 'green' : 'yellow');
+    sgLbl.textContent = health.sendgrid_configured ? 'SendGrid Ready' : 'SendGrid Skipped';
+  } else {
+    _saReady = false;
+    apiDot.className = 'dot red'; apiLbl.textContent = 'API Offline';
+    twilioDot.className = 'dot red'; twilioLbl.textContent = 'Twilio Unknown';
+    sgDot.className = 'dot red'; sgLbl.textContent = 'SendGrid Unknown';
+  }
+}
+
+async function saSyncProspects() {
+  if (!_saReady) { showToast('Sales Agent API is offline — start the server first', true); return; }
+  const arr = getProspects();
+  if (!arr.length) { showToast('No saved prospects to sync', true); return; }
+
+  const mapped = arr.map(function(p) {
+    return {
+      name: p.contact || p.company || 'Unknown',
+      company: p.company || '',
+      phone: p.phone || '',
+      email: p.email || '',
+      title: p.persona || '',
+      industry: p.industry || '',
+      state: p.state || '',
+      headcount: p.headcount || '',
+      track: p.track || '',
+      linkedin: p.linkedin || '',
+    };
+  });
+
+  const result = await saFetch('/prospects/sync', {
+    method: 'POST',
+    body: JSON.stringify({ prospects: mapped }),
+  });
+
+  if (result.success) {
+    showToast('Synced ' + result.total + ' prospects (' + result.created + ' new, ' + result.updated + ' updated)');
+  } else {
+    showToast('Sync failed: ' + (result.error || 'Unknown'), true);
+  }
+}
+
+async function saSendSMS() {
+  if (!_saReady) { showToast('Sales Agent API is offline', true); return; }
+  const phone = document.getElementById('sa-sms-phone').value.trim();
+  const msg = document.getElementById('sa-sms-msg').value.trim();
+  if (!phone) { saShowResult('sa-sms-result', false, 'Enter a phone number'); return; }
+  if (!msg) { saShowResult('sa-sms-result', false, 'Enter a message'); return; }
+
+  saShowResult('sa-sms-result', true, 'Sending…');
+  const result = await saFetch('/send/sms', {
+    method: 'POST',
+    body: JSON.stringify({ to_phone: phone, message: msg }),
+  });
+
+  if (result.success) {
+    saShowResult('sa-sms-result', true, 'SMS sent — SID: ' + (result.sid || 'OK'));
+    showToast('SMS sent to ' + phone);
+  } else {
+    saShowResult('sa-sms-result', false, 'Failed: ' + (result.error || 'Unknown error'));
+  }
+}
+
+function saPreviewSMS() {
+  const msg = document.getElementById('sa-sms-msg').value.trim();
+  const p = window._hqProspect;
+  if (!msg) { saShowResult('sa-sms-result', false, 'Enter a message first'); return; }
+  let preview = msg;
+  if (p) {
+    preview = preview.replace(/\{\{\s*name\s*\}\}/gi, p.contact || '');
+    preview = preview.replace(/\{\{\s*company\s*\}\}/gi, p.company || '');
+    preview = preview.replace(/\{\{\s*title\s*\}\}/gi, p.persona || '');
+    preview = preview.replace(/\{\{\s*industry\s*\}\}/gi, p.industry || '');
+    preview = preview.replace(/\{\{\s*state\s*\}\}/gi, p.state || '');
+  }
+  saShowResult('sa-sms-result', true, 'Preview: ' + preview);
+}
+
+async function saMakeCall() {
+  if (!_saReady) { showToast('Sales Agent API is offline', true); return; }
+  const phone = document.getElementById('sa-call-phone').value.trim();
+  const script = document.getElementById('sa-call-script').value.trim();
+  const voice = document.getElementById('sa-call-voice').value;
+  if (!phone) { saShowResult('sa-call-result', false, 'Enter a phone number'); return; }
+  if (!script) { saShowResult('sa-call-result', false, 'Enter a voice script'); return; }
+
+  if (!confirm('Initiate AI phone call to ' + phone + '? This will make a real call via Twilio.')) return;
+
+  saShowResult('sa-call-result', true, 'Initiating call…');
+  const result = await saFetch('/send/call', {
+    method: 'POST',
+    body: JSON.stringify({ to_phone: phone, script: script, voice: voice }),
+  });
+
+  if (result.success) {
+    saShowResult('sa-call-result', true, 'Call initiated — SID: ' + (result.sid || 'OK'));
+    showToast('Call initiated to ' + phone);
+  } else {
+    saShowResult('sa-call-result', false, 'Failed: ' + (result.error || 'Unknown error'));
+  }
+}
+
+async function saExecuteCadence(dryRun) {
+  if (!_saReady) { showToast('Sales Agent API is offline', true); return; }
+  if (!dryRun && !confirm('Execute all pending cadence steps NOW? This will send real SMS/email/calls.')) return;
+
+  saShowResult('sa-exec-result', true, dryRun ? 'Running dry run…' : 'Executing…');
+  const result = await saFetch('/enrollments/execute', {
+    method: 'POST',
+    body: JSON.stringify({ dry_run: dryRun }),
+  });
+
+  if (result.error) {
+    saShowResult('sa-exec-result', false, 'Error: ' + result.error);
+    return;
+  }
+
+  const label = dryRun ? 'DRY RUN' : 'EXECUTED';
+  saShowResult('sa-exec-result', true,
+    label + ' — Pending: ' + result.total_pending +
+    ' | Executed: ' + result.executed +
+    ' | Failed: ' + result.failed +
+    ' | Skipped: ' + result.skipped
+  );
+}
+
+async function saLoadActivity() {
+  if (!_saReady) { showToast('Sales Agent API is offline', true); return; }
+  const section = document.getElementById('sa-activity-section');
+  const log = document.getElementById('sa-activity-log');
+  section.style.display = 'block';
+  log.innerHTML = '<div style="color:var(--text-3)">Loading…</div>';
+
+  const result = await saFetch('/activity?limit=30');
+  if (!result.activities || !result.activities.length) {
+    log.innerHTML = '<div style="color:var(--text-3);padding:8px">No activity yet. Sync prospects, create a cadence, and execute steps.</div>';
+    return;
+  }
+
+  log.innerHTML = result.activities.map(function(a) {
+    return '<div class="sa-log-entry">' +
+      '<span class="ch ' + a.channel + '">' + a.channel + '</span> ' +
+      '<strong>' + (a.prospect_name || a.prospect_id) + '</strong> — ' +
+      a.action + ' · ' +
+      '<span style="color:var(--text-3)">' + (a.created_at || '').substring(0,19) + '</span>' +
+    '</div>';
+  }).join('');
+
+  section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
 
 </script>
 
