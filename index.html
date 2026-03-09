@@ -3000,6 +3000,31 @@ Rules: state=2-letter abbrev, headcount=number only, client_type="existing" if A
 // ═══════════════════════════════════════════════════════
 // SMART ROUTING ENGINE
 // ═══════════════════════════════════════════════════════
+// ── Cloudflare Worker proxy URL (handles Anthropic + Gemini auth) ──
+const BP_WORKER_URL = 'https://beyondpayroll-proxy.aj-3ab.workers.dev';
+
+// Helper: POST to Gemini via CF Worker proxy
+// Wraps a plain { messages:[{role,content}] } body into Gemini format
+function bpGeminiFetch(body) {
+  // Convert Anthropic-style messages array → Gemini contents array
+  var contents = (body.messages || []).map(function(m) {
+    return { role: m.role === 'assistant' ? 'model' : 'user',
+             parts: [{ text: typeof m.content === 'string' ? m.content : (m.content[0] && m.content[0].text) || '' }] };
+  });
+  return fetch(BP_WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Service': 'gemini' },
+    body: JSON.stringify({ contents: contents })
+  });
+}
+
+// Helper: extract text from Gemini response
+function bpGeminiText(data) {
+  return (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts)
+    ? data.candidates[0].content.parts.map(function(p){ return p.text || ''; }).join('')
+    : '';
+}
+
 let _sreClientType='';
 let _sreAdpProducts=new Set();
 let _sreAnalysis=null;
@@ -3318,18 +3343,10 @@ Generate a competitive intelligence report in this EXACT JSON format (respond wi
   "recommended_next_step": "Specific next step recommendation for this prospect"
 }`;
 
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  })
+  bpGeminiFetch({ messages: [{ role: 'user', content: prompt }] })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    const raw = (data.content || []).filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('');
+    const raw = bpGeminiText(data);
     const clean = raw.replace(/```json|```/g, '').trim();
     let parsed;
     try { parsed = JSON.parse(clean); } catch(e) { throw new Error('Parse error: ' + e.message); }
@@ -3338,7 +3355,7 @@ Generate a competitive intelligence report in this EXACT JSON format (respond wi
     showToast('✓ Market analysis complete for ' + p.company);
   })
   .catch(function(err) {
-    body.innerHTML = '<div class="mia-error">⚠ Analysis failed: ' + err.message + '<br><small>Check Anthropic API connectivity. The proxy worker handles auth.</small></div>';
+    body.innerHTML = '<div class="mia-error">⚠ Analysis failed: ' + err.message + '<br><small>Check your internet connection and try again.</small></div>';
     console.error('[MIA] Error:', err);
   });
 };
@@ -3468,18 +3485,10 @@ Generate a complete competitive intelligence report in this EXACT JSON format (J
   }
 }`;
 
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  })
+  bpGeminiFetch({ messages: [{ role: 'user', content: prompt }] })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    const raw = (data.content || []).filter(function(b) { return b.type === 'text'; }).map(function(b) { return b.text; }).join('');
+    const raw = bpGeminiText(data);
     const clean = raw.replace(/```json|```/g, '').trim();
     let d;
     try { d = JSON.parse(clean); } catch(e) { throw new Error('Parse error: ' + e.message); }
@@ -4407,13 +4416,9 @@ Provide a focused competitive intel brief covering:
 Keep it concise — this is a cadence refresh, not a full report. Focus on what's actionable for Day ${day} outreach.`;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] })
-    });
+    const resp = await bpGeminiFetch({ messages:[{role:'user',content:prompt}] });
     const data = await resp.json();
-    const text = data.content?.map(c=>c.text||'').join('').trim() || 'No response received.';
+    const text = bpGeminiText(data).trim() || 'No response received.';
     cdtSaveIntelResult(day, text);
     if(resultEl) resultEl.innerHTML = cdtRenderIntelResult({ result:text, ts:new Date().toISOString(), day });
     notifAdd('intel', '📊 Intel Refresh Complete — Day '+day+' · '+(intelDay?.label||'Intel'), p.company+' · Competitive brief ready', 'INTEL');
@@ -9277,37 +9282,111 @@ window.atPullFromProspect = function() {
   }
   if (emptyEl) emptyEl.style.display = 'none';
   if (loadedEl) loadedEl.style.display = 'block';
+
+  var sre = atCollectSreContext();
+  var adpStr = sre.adpProducts.length ? sre.adpProducts.map(function(x){return x.toUpperCase();}).join(', ') : '—';
+  var painStr = sre.painPoints.length ? sre.painPoints.join(', ') : '—';
+  var transcriptStr = sre.transcript.length > 20
+    ? sre.transcript.substring(0, 80).trim() + (sre.transcript.length > 80 ? '…' : '')
+    : (sre.transcript.length ? sre.transcript : '—');
+  var sreStr = sre.sreRan
+    ? sre.sreRecommendation + ' (' + sre.sreConfidence + '% confidence)'
+    : '— (run Smart Routing Engine first)';
+
   var fields = [
     ['Company', p.company, 'co'],
     ['Contact', p.contact, ''],
     ['Industry', p.industry, ''],
     ['State', p.state, ''],
-    ['Headcount', p.headcount, ''],
+    ['Headcount', p.headcount ? p.headcount + ' employees' : '', ''],
     ['Track', p.track, ''],
     ['Persona', p.persona, ''],
+    ['Client Type', sre.clientType || (p.track || 'new'), ''],
+    ['Current ADP Products', adpStr, ''],
+    ['SRE Recommendation', sreStr, ''],
+    ['Pain Points', painStr, ''],
+    ['Transcript', transcriptStr, ''],
     ['Email', p.email, '']
   ];
   if (gridEl) {
-    gridEl.innerHTML = fields.filter(function(f){return f[1];}).map(function(f) {
-      return '<div class="at-pg-item"><div class="at-pg-lbl">' + f[0] + '</div><div class="at-pg-val' + (f[2] ? ' ' + f[2] : '') + '">' + escHtml(f[1]) + '</div></div>';
+    gridEl.innerHTML = fields.filter(function(f){return f[1] && f[1] !== '—';}).map(function(f) {
+      var isHighlight = (f[0] === 'SRE Recommendation' && sre.sreRan) || (f[0] === 'Pain Points' && sre.painPoints.length);
+      var style = isHighlight ? ' style="color:var(--red);font-weight:600"' : '';
+      return '<div class="at-pg-item"><div class="at-pg-lbl">' + f[0] + '</div>'
+        + '<div class="at-pg-val' + (f[2] ? ' ' + f[2] : '') + '"' + style + '>' + escHtml(f[1]) + '</div></div>';
     }).join('');
   }
 };
+
+// ── Helper: collect full SRE state into a structured object ──────
+function atCollectSreContext() {
+  var PAIN_IDS = ['sre-401k','sre-wc','sre-aca','sre-benefits','sre-tax','sre-platform','sre-gl','sre-support','sre-i9','sre-multi','sre-manual'];
+  var PAIN_LABELS = {
+    'sre-401k':'401K admin errors','sre-wc':'Workers Comp issues','sre-aca':'ACA compliance problems',
+    'sre-benefits':'Benefits payment errors','sre-tax':'Multi-state tax issues','sre-platform':'Platform failures',
+    'sre-gl':'GL integration errors','sre-support':'Poor support/communication','sre-i9':'I-9 / E-Verify errors',
+    'sre-multi':'Multi-entity complexity','sre-manual':'Manual / spreadsheet processes'
+  };
+  var checkedPains = PAIN_IDS.filter(function(id) {
+    var el = document.getElementById(id); return el && el.checked;
+  }).map(function(id){ return PAIN_LABELS[id]; });
+
+  var transcriptEl = document.getElementById('sre-transcript');
+  var transcript = transcriptEl ? transcriptEl.value.trim() : '';
+
+  var adpProds = Array.from(window._sreAdpProducts || []);
+  var clientType = window._sreClientType || '';
+  var analysis = window._sreAnalysis || null;
+
+  return {
+    painPoints: checkedPains,
+    transcript: transcript,
+    adpProducts: adpProds,
+    clientType: clientType,
+    sreRecommendation: analysis ? analysis.rec : '',
+    sreConfidence: analysis ? analysis.pct || analysis.conf : '',
+    sreWfnScore: analysis ? analysis.wfn : '',
+    srePeoScore: analysis ? analysis.peo : '',
+    srePrimaryFactors: analysis ? (analysis.wfnF || analysis.peoF || []) : [],
+    sreRan: !!analysis
+  };
+}
 
 // ── Confirm data for analysis ─────────────────────────────────────
 window.atConfirmData = function() {
   var p = window._hqProspect;
   if (!p) { showToast('No prospect loaded', true); return; }
+  var sre = atCollectSreContext();
   _atData = {
+    // ── Firmographic ──
     company: p.company, contact: p.contact, industry: p.industry || '',
     state: p.state || '', headcount: p.headcount || '',
-    clientType: p.track === 'TS' ? 'existing-ts' : p.track === 'WFN' ? 'existing-wfn' : 'new',
-    platform: p.platform || '', notes: p.notes || '', email: p.email || '',
-    persona: p.persona || ''
+    email: p.email || '', persona: p.persona || '', phone: p.phone || '',
+    linkedin: p.linkedin || '', platform: p.platform || '', notes: p.notes || '',
+    track: p.track || '',
+    // ── SRE routing result ──
+    clientType: sre.clientType || (p.track === 'TS' ? 'existing' : 'new'),
+    adpProducts: sre.adpProducts,
+    sreRecommendation: sre.sreRecommendation,
+    sreConfidence: sre.sreConfidence,
+    sreWfnScore: sre.sreWfnScore,
+    srePeoScore: sre.srePeoScore,
+    srePrimaryFactors: sre.srePrimaryFactors,
+    // ── Pain points from checkboxes ──
+    painPoints: sre.painPoints,
+    // ── Gong transcript extract ──
+    transcript: sre.transcript,
+    sreRan: sre.sreRan
   };
   document.getElementById('at-data-badge').style.display = '';
   atUpdateStatusBar('data');
-  showToast('✓ Prospect data confirmed — select a tool');
+  var painCount = sre.painPoints.length;
+  var transcriptLoaded = sre.transcript.length > 20;
+  var msg = '✓ ' + p.company + ' loaded';
+  if (painCount) msg += ' · ' + painCount + ' pain signal' + (painCount > 1 ? 's' : '');
+  if (transcriptLoaded) msg += ' · transcript included';
+  if (sre.sreRan) msg += ' · SRE: ' + sre.sreRecommendation;
+  showToast(msg);
   atScrollToTool();
 };
 
@@ -9518,88 +9597,127 @@ window.atResTab = function(tab) {
 function atCallClaude(tool, data) {
   var toolDescriptions = {
     wfn: 'WFN (WorkforceNow) Fit & Upgrade Analysis',
-    ts: 'TotalSource PEO Analysis',
+    ts: 'TotalSource PEO Eligibility & Fit Analysis',
     market: 'Market & Competitive Intelligence Analysis',
     full: 'Full HCM Intelligence Report (WFN + TotalSource PEO + Market)'
   };
 
-  var prompt = 'You are an expert ADP HCM sales intelligence analyst. Generate a comprehensive ' + toolDescriptions[tool] + ' for the following prospect/client. Return ONLY valid JSON — no markdown, no preamble.\n\n'
-    + 'PROSPECT DATA:\n'
-    + JSON.stringify(data, null, 2)
-    + '\n\nReturn this exact JSON structure:\n'
+  // ── Build enriched context block from SRE data ──
+  var sreBlock = '';
+  if (data.sreRan) {
+    sreBlock += '\nSMART ROUTING ENGINE RESULTS:\n';
+    sreBlock += '  Recommendation: ' + (data.sreRecommendation || '—') + '\n';
+    sreBlock += '  Confidence: ' + (data.sreConfidence || '—') + '%\n';
+    sreBlock += '  WFN Fit Score: ' + (data.sreWfnScore || '—') + '/100\n';
+    sreBlock += '  PEO Fit Score: ' + (data.srePeoScore || '—') + '/100\n';
+    if (data.srePrimaryFactors && data.srePrimaryFactors.length) {
+      sreBlock += '  Key Routing Factors: ' + data.srePrimaryFactors.join('; ') + '\n';
+    }
+  } else {
+    sreBlock += '\nSMART ROUTING ENGINE: Not yet run — infer recommendation from firmographic data.\n';
+  }
+
+  var painBlock = '';
+  if (data.painPoints && data.painPoints.length) {
+    painBlock = '\nCONFIRMED PAIN POINTS (from Gong transcript analysis / rep-checked):\n'
+      + data.painPoints.map(function(p){ return '  • ' + p; }).join('\n') + '\n';
+  }
+
+  var adpBlock = '';
+  if (data.adpProducts && data.adpProducts.length) {
+    adpBlock = '\nCURRENT ADP PRODUCTS IN USE: ' + data.adpProducts.map(function(x){return x.toUpperCase();}).join(', ') + '\n';
+  }
+
+  var transcriptBlock = '';
+  if (data.transcript && data.transcript.length > 20) {
+    transcriptBlock = '\nGONG TRANSCRIPT EXTRACT (verbatim — use for tone, pain language, objections):\n"""\n'
+      + data.transcript.substring(0, 2000) + (data.transcript.length > 2000 ? '\n[...truncated]' : '') + '\n"""\n';
+  }
+
+  var prompt = 'You are an expert ADP HCM sales intelligence analyst. Generate a comprehensive '
+    + toolDescriptions[tool] + ' for the following prospect/client.\n'
+    + 'Use ALL provided data — especially the confirmed pain points, SRE scores, and transcript extract — to make the analysis highly specific and actionable.\n'
+    + 'Return ONLY valid JSON — no markdown, no preamble.\n\n'
+    + 'FIRMOGRAPHIC DATA:\n'
+    + '  Company: ' + (data.company || '—') + '\n'
+    + '  Contact: ' + (data.contact || '—') + '\n'
+    + '  Persona: ' + (data.persona || '—') + '\n'
+    + '  Industry: ' + (data.industry || '—') + '\n'
+    + '  State: ' + (data.state || '—') + '\n'
+    + '  Headcount: ' + (data.headcount || '—') + ' employees\n'
+    + '  Client Type: ' + (data.clientType || 'new prospect') + '\n'
+    + '  Current Platform: ' + (data.platform || '—') + '\n'
+    + '  Track: ' + (data.track || '—') + '\n'
+    + '  Notes: ' + (data.notes || '—') + '\n'
+    + adpBlock
+    + sreBlock
+    + painBlock
+    + transcriptBlock
+    + '\nReturn this exact JSON structure:\n'
     + '{\n'
-    + '  "executive_summary": "2-3 sentence sharp assessment",\n'
+    + '  "executive_summary": "2-3 sentence sharp assessment — reference their specific pain points and SRE score",\n'
     + '  "fit_scores": { "wfn": 0-100, "ts": 0-100, "market_opportunity": 0-100 },\n'
     + '  "wfn_analysis": {\n'
     + '    "fit_rating": "Strong/Moderate/Weak",\n'
-    + '    "headline": "one-line WFN value prop for this company",\n'
-    + '    "roi_estimate": "specific $ or % ROI estimate",\n'
+    + '    "headline": "one-line WFN value prop referencing their specific pain",\n'
+    + '    "roi_estimate": "specific $ or % ROI estimate based on headcount/industry",\n'
     + '    "payback_months": number,\n'
     + '    "upgrade_path": "migration/upgrade recommendation if applicable",\n'
-    + '    "pros": ["4 reasons WFN solves their situation"],\n'
+    + '    "pros": ["4 reasons WFN solves their specific confirmed pain points"],\n'
     + '    "cons": ["2-3 honest gaps or risks"],\n'
     + '    "displacement_playbook": "counter-position vs their likely current platform",\n'
-    + '    "key_modules": ["top 3 WFN modules for this profile"]\n'
+    + '    "key_modules": ["top 3 WFN modules for this exact profile"]\n'
     + '  },\n'
     + '  "ts_analysis": {\n'
     + '    "fit_rating": "Strong/Moderate/Weak",\n'
-    + '    "headline": "one-line TS value prop for this company",\n'
-    + '    "pepm_range": "estimated PEPM range $XX-$XX",\n'
+    + '    "headline": "one-line TS value prop referencing their specific pain",\n'
+    + '    "pepm_range": "estimated PEPM range $XX-$XX based on headcount/industry",\n'
     + '    "annual_savings_estimate": "estimated annual savings vs standalone",\n'
-    + '    "benefits_benchmark": "how their benefits stack compares",\n'
-    + '    "co_employment_risk": "Low/Medium/High with brief rationale",\n'
+    + '    "benefits_benchmark": "how their benefits stack likely compares for this industry",\n'
+    + '    "co_employment_risk": "Low/Medium/High with rationale specific to their industry/state",\n'
     + '    "renewal_window_signal": "timing/urgency signal if detectable",\n'
-    + '    "pros": ["4 reasons TS solves their situation"],\n'
+    + '    "pros": ["4 reasons TS solves their confirmed pain points"],\n'
     + '    "cons": ["2-3 honest gaps or risks for PEO"]\n'
     + '  },\n'
     + '  "market_analysis": {\n'
-    + '    "market_condition": "current HCM/PEO market state for this industry",\n'
-    + '    "regulatory_alerts": ["2-3 regulatory/compliance changes creating urgency"],\n'
+    + '    "market_condition": "current HCM/PEO market state for this specific industry and state",\n'
+    + '    "regulatory_alerts": ["2-3 regulatory/compliance changes creating urgency for this industry/state"],\n'
     + '    "pricing_signals": "competitor pricing shifts if notable",\n'
-    + '    "timing_urgency": "why act now — specific market trigger",\n'
+    + '    "timing_urgency": "why act now — specific market trigger for their industry",\n'
     + '    "social_signals": ["2-3 LinkedIn/social trends relevant to their industry"]\n'
     + '  },\n'
     + '  "competitive_threats": [\n'
     + '    {"competitor": "name", "threat_level": "High/Medium/Low", "adp_counter": "specific ADP counter-position", "weakness": "their key weakness vs ADP"}\n'
     + '  ],\n'
     + '  "pain_vs_solution": {\n'
-    + '    "current_pain": "description of their current pain state",\n'
-    + '    "wfn_solution": "how WFN specifically resolves their pain",\n'
-    + '    "ts_solution": "how TotalSource specifically resolves their pain"\n'
+    + '    "current_pain": "description tying back to their confirmed pain points verbatim where possible",\n'
+    + '    "wfn_solution": "how WFN specifically resolves each confirmed pain",\n'
+    + '    "ts_solution": "how TotalSource specifically resolves each confirmed pain"\n'
     + '  },\n'
     + '  "recommended_product": "WFN or TotalSource PEO",\n'
     + '  "recommended_strategy": {\n'
     + '    "approach": "consultative/challenger/value-led",\n'
-    + '    "opening_hook": "single most compelling first sentence tailored to their persona",\n'
-    + '    "sequence_focus": "what the cadence should emphasize",\n'
-    + '    "close_trigger": "specific event that will get them to sign"\n'
+    + '    "opening_hook": "single most compelling first sentence — reference their confirmed pain by name",\n'
+    + '    "sequence_focus": "what the cadence should emphasize given their pain profile",\n'
+    + '    "close_trigger": "specific event that will get them to sign — tied to their pain or renewal timing"\n'
     + '  },\n'
     + '  "objection_handlers": {\n'
-    + '    "price": "response if they say ADP is too expensive",\n'
-    + '    "timing": "response if now is not the right time",\n'
-    + '    "current_provider": "response if happy with current provider",\n'
+    + '    "price": "response if they say ADP is too expensive — use their ROI data",\n'
+    + '    "timing": "response if now is not the right time — tie to regulatory urgency",\n'
+    + '    "current_provider": "response if happy with current provider — reference their platform pain if detected",\n'
     + '    "co_employment": "response if worried about co-employment (TS only)"\n'
     + '  }\n'
     + '}';
 
-  return fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }]
-    })
-  })
+  return bpGeminiFetch({ messages: [{ role: 'user', content: prompt }] })
   .then(function(r) { return r.json(); })
   .then(function(resp) {
-    var raw = (resp.content || []).filter(function(b){ return b.type === 'text'; }).map(function(b){ return b.text; }).join('');
+    var raw = bpGeminiText(resp);
     var clean = raw.replace(/```json|```/g, '').trim();
     try { return JSON.parse(clean); }
     catch(e) { throw new Error('JSON parse failed: ' + e.message + '\n\nRaw: ' + raw.substring(0, 200)); }
   });
 }
-
 // ── Render results ────────────────────────────────────────────────
 function atRenderResults(d, activeTab) {
   var body = document.getElementById('at-results-body');
@@ -9799,14 +9917,10 @@ window.atRunWeeklyIntel = function() {
     + '  "summary_email": {"subject":"","urgent_alerts":"","wfn_highlights":"","peo_highlights":"","adp_positioning_notes":""}\n'
     + '}';
 
-  fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3000, messages:[{role:'user',content:prompt}] })
-  })
+  bpGeminiFetch({ messages:[{role:'user',content:prompt}] })
   .then(function(r){return r.json();})
   .then(function(resp){
-    var raw=(resp.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+    var raw=bpGeminiText(resp);
     var clean=raw.replace(/```json|```/g,'').trim();
     var d=JSON.parse(clean);
     atRenderWeeklyIntel(bodyEl,d);
@@ -9990,14 +10104,10 @@ window.atRunSocialAgent = function() {
     + '  "sales_navigator_actions": [{"action":"","reason":""}]\n'
     + '}';
 
-  fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3000, messages:[{role:'user',content:prompt}] })
-  })
+  bpGeminiFetch({ messages:[{role:'user',content:prompt}] })
   .then(function(r){return r.json();})
   .then(function(resp){
-    var raw=(resp.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+    var raw=bpGeminiText(resp);
     var clean=raw.replace(/```json|```/g,'').trim();
     var d=JSON.parse(clean);
     atRenderSocialAgent(bodyEl,d);
