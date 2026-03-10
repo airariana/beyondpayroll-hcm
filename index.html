@@ -2681,6 +2681,22 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 .smb:hover{border-color:var(--red);color:var(--red);}
 .ts-section-title{font-family:'DM Serif Display',serif;font-size:20px;font-weight:400;margin-bottom:16px;color:var(--text);}
 
+/* ══ CDX: Cadence Health Bar ══════════════════════════════════ */
+.cdx-health-stat{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:rgba(255,255,255,.75);}
+.cdx-health-stat .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+/* ══ CDX: Status Flow ════════════════════════════════════════= */
+.cdx-sf-step{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 8px;border-radius:4px;white-space:nowrap;border:1px solid var(--border);color:var(--muted);background:rgba(255,255,255,.03);cursor:pointer;transition:all .15s;}
+.cdx-sf-step:hover{border-color:rgba(255,255,255,.2);color:var(--text);}
+.cdx-sf-step.active{background:rgba(184,146,10,.15);border-color:rgba(184,146,10,.4);color:#f59e0b;}
+.cdx-sf-step.win{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.25);color:#22c55e;}
+.cdx-sf-step.win.active{background:rgba(34,197,94,.2);border-color:#22c55e;}
+.cdx-sf-arrow{color:var(--muted);font-size:12px;flex-shrink:0;}
+/* ══ CDX: Talk Track Items ════════════════════════════════════ */
+.cdx-track-item{font-size:11px;color:var(--text);line-height:1.45;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:5px;border:1px solid var(--border);cursor:pointer;transition:all .15s;position:relative;}
+.cdx-track-item:hover{background:rgba(13,21,53,.9);color:#fff;border-color:rgba(255,255,255,.15);}
+/* ══ CDX: AI Spin ════════════════════════════════════════════= */
+@keyframes cdx-spin{to{transform:rotate(360deg)}}
+
 /* ═══════════════════════════════════════════════
    ANALYSIS TOOL — DATA PULL + MARKET INTEL
    ═══════════════════════════════════════════════ */
@@ -3070,13 +3086,99 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
       </div>
 
       <!-- EMAIL GENERATOR -->
+      <!-- ══ CADENCE HEALTH SCORE BAR ══ -->
+      <div id="cdx-health-bar" style="background:linear-gradient(135deg,#0d1535,#1a2460);border-radius:10px;padding:16px 20px;margin-bottom:20px;display:none;position:relative;overflow:hidden;">
+        <div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(184,146,10,.15),transparent 70%);pointer-events:none;"></div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:relative;z-index:1;">
+          <!-- Ring -->
+          <div style="position:relative;flex-shrink:0;">
+            <svg width="64" height="64" viewBox="0 0 64 64" style="transform:rotate(-90deg);">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/>
+              <circle id="cdx-health-ring" cx="32" cy="32" r="26" fill="none" stroke="#22c55e" stroke-width="5" stroke-dasharray="163.4" stroke-dashoffset="163.4" stroke-linecap="round" style="transition:stroke-dashoffset 1s ease,stroke .5s ease;"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+              <span id="cdx-health-pct" style="font-family:'DM Serif Display',serif;font-size:15px;font-weight:700;color:#fff;line-height:1;">—</span>
+            </div>
+          </div>
+          <!-- Stats -->
+          <div style="flex:1;min-width:180px;">
+            <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px;">Cadence Health Score</div>
+            <div id="cdx-health-label" style="font-family:'DM Serif Display',serif;font-size:17px;color:#fff;margin-bottom:8px;">—</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="cdx-health-stats"></div>
+          </div>
+          <!-- Next action -->
+          <div id="cdx-next-action" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 14px;min-width:180px;display:none;">
+            <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px;">Next Action</div>
+            <div id="cdx-next-txt" style="font-size:12px;font-weight:600;color:#fff;line-height:1.4;"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="ts-card" id="emailSection">
         <div class="ts-section-header">
           <div class="ts-section-title">Email Cadence Composer</div>
+          <!-- AI Generate Button -->
+          <button id="cdx-ai-btn" onclick="cdxGenerateEmail()" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#b8920a,#d4a80c);color:#0d1535;border:none;border-radius:7px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;font-family:'DM Sans',sans-serif;">
+            <span style="font-size:14px;">✦</span> AI Personalize
+          </button>
         </div>
+
+        <!-- Touch Tabs -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;" id="ts-touch-tabs"></div>
+
+        <!-- AI Generation Panel -->
+        <div id="cdx-ai-panel" style="display:none;background:linear-gradient(135deg,#0d1535,#1a2460);border-radius:10px;padding:16px;margin-bottom:14px;border:1px solid rgba(184,146,10,.25);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="font-size:16px;">✦</span>
+            <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.3px;">AI Email Personalizer</span>
+            <span style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(184,146,10,.8);background:rgba(184,146,10,.1);border:1px solid rgba(184,146,10,.2);padding:2px 8px;border-radius:3px;">BETA</span>
+            <button onclick="document.getElementById('cdx-ai-panel').style.display='none'" style="margin-left:auto;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.5);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px;">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px;">Tone</div>
+              <select id="cdx-tone" style="width:100%;background:#1a1d22;border:1.5px solid rgba(255,255,255,.12);color:#e8e9ec;border-radius:6px;padding:7px 9px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;">
+                <option value="consultative">Consultative</option>
+                <option value="direct">Direct & Data-Led</option>
+                <option value="urgency">Create Urgency</option>
+                <option value="breakup">Pattern Interrupt</option>
+                <option value="followup">Warm Follow-Up</option>
+              </select>
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px;">Focus</div>
+              <select id="cdx-focus" style="width:100%;background:#1a1d22;border:1.5px solid rgba(255,255,255,.12);color:#e8e9ec;border-radius:6px;padding:7px 9px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;">
+                <option value="benefits">Benefits Savings</option>
+                <option value="compliance">HR Compliance</option>
+                <option value="talent">Talent & Retention</option>
+                <option value="payroll">Payroll Accuracy</option>
+                <option value="competitive">vs Competitor</option>
+                <option value="roi">ROI / Cost Savings</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:5px;">Context / Intel (optional)</div>
+            <textarea id="cdx-context" placeholder="e.g. They just had a 12% renewal increase, HR director is frustrated with manual processes, competing with Paylocity…" style="width:100%;background:#1a1d22;border:1.5px solid rgba(255,255,255,.12);color:#e8e9ec;border-radius:6px;padding:8px 10px;font-size:11px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;min-height:54px;line-height:1.55;box-sizing:border-box;"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="cdxRunAI()" id="cdx-run-btn" style="flex:1;background:linear-gradient(135deg,#b8920a,#d4a80c);color:#0d1535;border:none;border-radius:7px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s;">
+              <span id="cdx-run-spinner" style="display:none;width:14px;height:14px;border:2px solid rgba(13,21,53,.3);border-top-color:#0d1535;border-radius:50%;animation:cdx-spin .6s linear infinite;"></span>
+              <span id="cdx-run-label">✦ Generate Personalized Email</span>
+            </button>
+            <button onclick="cdxApplyToBody()" id="cdx-apply-btn" style="display:none;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:#22c55e;border-radius:7px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">✓ Apply</button>
+          </div>
+          <!-- AI Result -->
+          <div id="cdx-ai-result" style="display:none;margin-top:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;">
+            <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(184,146,10,.8);margin-bottom:8px;">✦ AI Draft</div>
+            <div id="cdx-ai-text" style="font-size:12px;color:rgba(255,255,255,.85);line-height:1.7;white-space:pre-wrap;font-family:'Calibri',sans-serif;"></div>
+          </div>
+        </div>
+
+        <!-- Main Composer Grid -->
         <div class="ts-ec-grid">
           <div>
+            <!-- Outlook Mock -->
             <div class="ts-outlook">
               <div class="ts-ol-tb">
                 <div class="ts-ol-ico">O</div>
@@ -3089,13 +3191,29 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
                 <button class="ts-tbtn" style="background:transparent;color:#555;border-color:#ccc;" onclick="tsCopyField('subj')">Subject</button>
                 <button class="ts-tbtn" style="background:transparent;color:#555;border-color:#ccc;" onclick="tsCopyField('body')">Body</button>
               </div>
-              <div class="ts-ol-fr"><div class="ts-ol-fl">To</div><input class="ts-ol-fv" id="ts-to-inp" placeholder="recipient@company.com"><button class="smb" onclick="tsCopyField('to')">copy</button></div>
-              <div class="ts-ol-fr"><div class="ts-ol-fl">Subject</div><div class="ts-ol-fv" id="emailSubject" style="font-weight:600;font-size:12px;display:flex;align-items:center;padding:8px 10px;flex:1;background:#fff;color:#111;"></div><button class="smb" onclick="tsCopyField('subj')">copy</button></div>
-              <div class="ts-ol-body" id="emailBody"></div>
-              <div class="ts-ol-ft">
+              <div class="ts-ol-fr">
+                <div class="ts-ol-fl">To</div>
+                <input class="ts-ol-fv" id="ts-to-inp" placeholder="recipient@company.com">
+                <button class="smb" onclick="tsCopyField('to')">copy</button>
+              </div>
+              <div class="ts-ol-fr">
+                <div class="ts-ol-fl">Subject</div>
+                <div class="ts-ol-fv" id="emailSubject" style="font-weight:600;font-size:12px;display:flex;align-items:center;padding:8px 10px;flex:1;background:#fff;color:#111;"></div>
+                <button class="smb" onclick="tsCopyField('subj')">copy</button>
+              </div>
+              <!-- Editable body -->
+              <div id="emailBody" class="ts-ol-body" contenteditable="true" style="outline:none;min-height:180px;" oninput="cdxUpdateBodyStats()"></div>
+              <div class="ts-ol-ft" style="gap:10px;">
                 <button class="ts-tbtn" style="background:#b8920a;color:#fff;border-color:#b8920a;" onclick="tsCopyAll()">⎘ Copy All Fields</button>
+                <!-- Character / word count -->
+                <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+                  <span id="cdx-word-count" style="font-size:9px;color:#888;font-family:'JetBrains Mono',monospace;">0 words</span>
+                  <span id="cdx-read-score" style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:rgba(34,197,94,.15);color:#22c55e;display:none;"></span>
+                </div>
               </div>
             </div>
+
+            <!-- Outlook Launch -->
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:16px;margin-top:10px;">
               <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
                 <span style="font-size:22px;flex-shrink:0;">📧</span>
@@ -3113,19 +3231,49 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
               </div>
             </div>
           </div>
+
+          <!-- RIGHT SIDEBAR -->
           <div>
+            <!-- Status Card - Enhanced -->
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:10px;">
               <div style="padding:9px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;display:flex;align-items:center;gap:6px;color:var(--text);background:var(--mid);">📋 Cadence Status</div>
               <div style="padding:12px;">
+                <!-- Status flow visual -->
+                <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;" id="cdx-status-flow">
+                  <div class="cdx-sf-step active" data-val="Pending">Pending</div>
+                  <div class="cdx-sf-arrow">›</div>
+                  <div class="cdx-sf-step" data-val="Drafted">Draft</div>
+                  <div class="cdx-sf-arrow">›</div>
+                  <div class="cdx-sf-step" data-val="Sent">Sent</div>
+                  <div class="cdx-sf-arrow">›</div>
+                  <div class="cdx-sf-step" data-val="Opened">Opened</div>
+                  <div class="cdx-sf-arrow">›</div>
+                  <div class="cdx-sf-step win" data-val="Meeting Booked">🎯 Meeting</div>
+                </div>
                 <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:5px;">Touch Status</div>
-                <select id="ts-touch-status" onchange="tsSetStatus(this.value)" style="width:100%;background:#1a1d22;border:1.5px solid var(--border);border-radius:6px;padding:7px 9px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;margin-bottom:8px;">
+                <select id="ts-touch-status" onchange="tsSetStatus(this.value);cdxSyncStatusFlow(this.value)" style="width:100%;background:#1a1d22;border:1.5px solid var(--border);border-radius:6px;padding:7px 9px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;margin-bottom:8px;">
                   <option>Pending</option><option>Drafted</option><option>Sent</option><option>Opened</option><option>Replied</option><option>Meeting Booked</option><option>No Response</option><option>Opted Out</option>
                 </select>
+                <!-- Contextual coaching tip -->
+                <div id="cdx-status-tip" style="display:none;background:rgba(184,146,10,.08);border:1px solid rgba(184,146,10,.2);border-radius:6px;padding:8px 10px;font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:8px;"></div>
                 <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:5px;">Notes</div>
                 <textarea id="ts-touch-notes" placeholder="Log response, next steps…" style="width:100%;background:#1a1d22;border:1.5px solid var(--border);color:var(--text);border-radius:6px;padding:8px 9px;font-size:11px;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;min-height:60px;"></textarea>
                 <button onclick="tsExportCSV()" style="width:100%;margin-top:8px;padding:8px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:var(--green);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">⬇ Export CSV</button>
               </div>
             </div>
+
+            <!-- Smart Talk Tracks -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:10px;">
+              <div style="padding:9px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text);background:var(--mid);display:flex;align-items:center;justify-content:space-between;">
+                <span>💬 Talk Tracks</span>
+                <button onclick="cdxRefreshTracks()" style="background:none;border:none;font-size:10px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;">↻ refresh</button>
+              </div>
+              <div id="cdx-tracks" style="padding:10px;display:flex;flex-direction:column;gap:5px;">
+                <div style="font-size:11px;color:var(--muted);font-style:italic;padding:4px 2px;">Select a touch to load talk tracks.</div>
+              </div>
+            </div>
+
+            <!-- Tone Guide -->
             <div style="background:var(--surface);border:1px solid var(--border);border-radius:9px;overflow:hidden;">
               <div style="padding:9px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--text);background:var(--mid);">🎯 Tone Guide</div>
               <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
@@ -3176,6 +3324,622 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 </div>
 
 
+<script>
+/* ════════════════════════════════════════════════════════
+   PROSPECT MODAL EDIT FIX
+   Pre-populates the modal when editing an existing prospect,
+   and allows adding more files to an existing profile.
+════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  // Track which prospect is being edited (null = new)
+  window._editingProspectId = null;
+
+  /* ── Intercept openModal to support edit mode ─────────── */
+  // Wait for app.js to define openModal, then wrap it
+  function patchOpenModal() {
+    const original = window.openModal;
+    window.openModal = function(prospectOrId) {
+      // Call original to open/reset the modal
+      if (original) original();
+
+      // If called with a prospect object or ID, populate fields
+      if (!prospectOrId) {
+        // New prospect mode
+        window._editingProspectId = null;
+        setModalMode('new');
+        return;
+      }
+
+      // Resolve prospect object
+      let p = null;
+      if (typeof prospectOrId === 'object') {
+        p = prospectOrId;
+      } else {
+        // Try to find by ID in common storage locations
+        const allProspects = window.prospects || window.PROSPECTS ||
+          (window.state && window.state.prospects) ||
+          (window.appState && window.appState.prospects) || {};
+        p = allProspects[prospectOrId] ||
+            Object.values(allProspects).find(x => x.id === prospectOrId || x.uid === prospectOrId);
+      }
+
+      if (!p) {
+        console.warn('[ModalFix] Could not resolve prospect:', prospectOrId);
+        setModalMode('new');
+        return;
+      }
+
+      window._editingProspectId = p.id || p.uid || null;
+      setModalMode('edit', p);
+    };
+  }
+
+  function setModalMode(mode, p) {
+    const titleEl = document.querySelector('#prospectModal .modal-title');
+    const subEl   = document.querySelector('#prospectModal .modal-sub');
+    const saveBtn = document.querySelector('#prospectModal button[onclick="saveProspect()"]');
+    const routeBtn = document.querySelector('#prospectModal button[onclick="saveAndRouteSRE()"]');
+
+    if (mode === 'edit' && p) {
+      if (titleEl) titleEl.textContent = 'Edit Prospect';
+      if (subEl)   subEl.textContent   = 'Update details or drop in new files to enrich the profile';
+      if (saveBtn) saveBtn.textContent  = 'Save Changes →';
+
+      // Map field IDs to prospect properties
+      const fieldMap = {
+        'f-company':   ['company', 'companyName', 'co'],
+        'f-contact':   ['contact', 'contactName', 'name'],
+        'f-email':     ['email'],
+        'f-phone':     ['phone'],
+        'f-linkedin':  ['linkedin', 'linkedinUrl'],
+        'f-industry':  ['industry'],
+        'f-state':     ['state', 'hqState'],
+        'f-headcount': ['headcount', 'numEE', 'employees', 'ee'],
+        'f-persona':   ['persona', 'title', 'role'],
+      };
+
+      for (const [fieldId, keys] of Object.entries(fieldMap)) {
+        const el = document.getElementById(fieldId);
+        if (!el) continue;
+        for (const k of keys) {
+          const val = p[k] ?? p[k.toLowerCase()] ?? null;
+          if (val !== null && val !== undefined && val !== '') {
+            el.value = val;
+            break;
+          }
+        }
+      }
+
+      // Track selection in cadence track selector if present
+      if (p.track) {
+        const trackOpts = document.querySelectorAll('#prospectModal .track-opt');
+        trackOpts.forEach(opt => {
+          opt.classList.remove('sel-wfn', 'sel-ts');
+          const t = opt.getAttribute('data-track') || opt.textContent.toLowerCase();
+          if (p.track.toLowerCase().includes('wfn') && t.includes('wfn')) opt.classList.add('sel-wfn');
+          if (p.track.toLowerCase().includes('ts') && t.includes('ts')) opt.classList.add('sel-ts');
+        });
+      }
+
+      // Show existing files/notes in drop zone label if any
+      const dzLbl = document.getElementById('imgScanLbl');
+      const dzSub = document.getElementById('imgScanSub');
+      if (dzLbl) dzLbl.textContent = 'Drop new files to enrich this profile';
+      if (dzSub) dzSub.textContent = 'Add business cards · LinkedIn · PDFs · emails · screenshots';
+
+    } else {
+      // Reset to new mode
+      if (titleEl) titleEl.textContent = 'New Prospect';
+      if (subEl)   subEl.textContent   = 'Enter prospect details to initialize the 30-day cadence';
+      if (saveBtn) saveBtn.textContent  = 'Initialize Prospect →';
+      const dzLbl = document.getElementById('imgScanLbl');
+      const dzSub = document.getElementById('imgScanSub');
+      if (dzLbl) dzLbl.textContent = 'Drop files to auto-build profile';
+      if (dzSub) dzSub.textContent = 'Business cards · LinkedIn · PDFs · emails · screenshots';
+    }
+  }
+
+  /* ── Intercept saveProspect to merge on edit ──────────── */
+  function patchSaveProspect() {
+    const original = window.saveProspect;
+    window.saveProspect = function() {
+      // If in edit mode, inject the editing ID so app.js merges rather than creates
+      if (window._editingProspectId) {
+        // Many app.js patterns check window._editingId or window.editProspectId
+        window._editingId      = window._editingProspectId;
+        window.editProspectId  = window._editingProspectId;
+        window._isEditing      = true;
+      } else {
+        window._editingId      = null;
+        window.editProspectId  = null;
+        window._isEditing      = false;
+      }
+      if (original) original.apply(this, arguments);
+      // Reset after save
+      window._editingProspectId = null;
+    };
+  }
+
+  /* ── Patch editProspect / ppEditProspect if called directly ── */
+  function exposeEditHelper() {
+    // Some app.js versions call a separate editProspect(id) function
+    // This provides a universal entry point
+    window.openEditModal = function(prospectOrId) {
+      window.openModal(prospectOrId);
+    };
+  }
+
+  /* ── Observe prospect strip Edit button clicks ────────── */
+  // The Edit button is rendered dynamically in the prospect strip by app.js
+  // Strategy: intercept click in capture phase, read data from window.prospects
+  // OR scrape visible fields from the strip as fallback
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+
+    const txt = btn.textContent.trim();
+    // Match "Edit", "⇐ Edit", "← Edit", "✎ Edit" patterns
+    if (!/edit/i.test(txt) || txt.length > 12) return;
+
+    // Wait a tick to let app.js open the modal first, then populate
+    setTimeout(function() {
+      // Get prospect from all known storage locations
+      const allProspects =
+        window.prospects ||
+        window.PROSPECTS ||
+        (window.appState && window.appState.prospects) ||
+        (window.state && window.state.prospects) ||
+        {};
+
+      // Try current active prospect
+      const currentId =
+        window.currentProspectId ||
+        window.activeProspectId ||
+        (window.appState && window.appState.currentProspectId) ||
+        (window.state && window.state.currentProspectId);
+
+      let p = currentId ? (allProspects[currentId] || Object.values(allProspects).find(x => (x.id||x.uid) === currentId)) : null;
+
+      // Fallback: if only one prospect, use it
+      if (!p) {
+        const vals = Object.values(allProspects);
+        if (vals.length === 1) p = vals[0];
+      }
+
+      // Last resort: scrape visible data from the prospect strip DOM
+      if (!p) {
+        p = scrapeStripData();
+      }
+
+      if (!p) return;
+
+      window._editingProspectId = p.id || p.uid || p.key || currentId || null;
+      setModalMode('edit', p);
+    }, 80);
+
+  }, true);
+
+  /* ── Scrape prospect data from visible strip ────────── */
+  function scrapeStripData() {
+    const strip = document.querySelector('.prospect-strip');
+    if (!strip) return null;
+
+    const p = {};
+    strip.querySelectorAll('.psf-item').forEach(item => {
+      const lbl = (item.querySelector('.psf-lbl')?.textContent || '').toLowerCase().trim();
+      const val = (item.querySelector('.psf-val')?.textContent || '').trim();
+      if (!val) return;
+      if (lbl.includes('company')) p.company = val;
+      else if (lbl.includes('contact') || lbl.includes('name')) p.contact = val;
+      else if (lbl.includes('email')) p.email = val;
+      else if (lbl.includes('phone')) p.phone = val;
+      else if (lbl.includes('industry')) p.industry = val;
+      else if (lbl.includes('state')) p.state = val.replace(/·.*/, '').trim();
+      else if (lbl.includes('hc') || lbl.includes('ee') || lbl.includes('employee') || lbl.includes('head')) {
+        const n = val.match(/\d+/);
+        if (n) p.headcount = n[0];
+      }
+      else if (lbl.includes('persona') || lbl.includes('title') || lbl.includes('role')) p.persona = val;
+      else if (lbl.includes('track')) p.track = val;
+    });
+
+    return Object.keys(p).length > 0 ? p : null;
+  }
+
+  /* ── Apply patches once app.js has loaded ─────────────── */
+  // Try immediately, then retry after app.js loads
+  function applyPatches() {
+    patchOpenModal();
+    patchSaveProspect();
+    exposeEditHelper();
+    console.log('[ModalFix] Edit pre-population patch applied ✓');
+  }
+
+  // Patch now (in case openModal is already defined inline)
+  if (typeof window.openModal === 'function') {
+    applyPatches();
+  }
+
+  // Also patch after app.js defers
+  window.addEventListener('load', applyPatches);
+
+  // MutationObserver fallback: patch as soon as openModal appears on window
+  let _patched = false;
+  const _observer = new MutationObserver(() => {
+    if (!_patched && typeof window.openModal === 'function') {
+      _patched = true;
+      applyPatches();
+      _observer.disconnect();
+    }
+  });
+  _observer.observe(document.body, { childList: true, subtree: true });
+
+})();
+</script>
+   Adds: AI Email Personalization, Health Score, Talk Tracks,
+         Status Flow, Word Count / Readability
+════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  /* ── Talk Track Library ─────────────────────────────── */
+  const TALK_TRACKS = {
+    1: [
+      "Opening: 'I specialize in helping [industry] companies in [state] solve the two biggest HR headaches — benefits cost and compliance risk. Can I show you what that looks like for a company your size?'",
+      "Pattern interrupt: Lead with a specific number. 'Most [size]-person firms in [state] are overpaying 12–22% on health premiums vs. what TotalSource can deliver. Worth a 20-minute look?'",
+      "Anchor: 'ADP TotalSource is the only PEO that comes with ADP's full HR tech stack at no extra charge. No other PEO can say that.'"
+    ],
+    2: [
+      "Follow-up hook: 'I wanted to share one data point — a [size]-person [industry] company in [metro] just locked in a [X]% discount on health premiums through TotalSource. Your profile is similar.'",
+      "Objection pre-empt: 'The most common concern I hear is losing control of HR decisions. Happy to walk you through how co-employment actually works — most clients feel like they gained control, not lost it.'",
+      "Social proof: 'We just brought on 3 firms in [metro] this quarter. Happy to make an intro to one of them if you want a peer perspective.'"
+    ],
+    3: [
+      "Urgency: 'Renewal cycles are the #1 driver of TotalSource decisions. If your renewal is within 90 days, now is the window to run a parallel quote with no obligation.'",
+      "Insight: 'Did you know that 67% of firms your size are unknowingly paying FUTA/SUTA at blended rates instead of TotalSource's pooled rates? That alone often covers the PEO fee.'",
+      "CTA escalation: 'I've got a 20-minute eligibility review I can run on your current benefits setup — no data required, just your current carrier and headcount. Worth a call this week?'"
+    ],
+    4: [
+      "Re-engagement: 'I know timing isn't always right. If I've caught you at the wrong moment, just let me know and I'll resurface in 90 days. But if benefits cost is anywhere on your radar, I'd love 15 minutes.'",
+      "Value reframe: 'Think of TotalSource less as a vendor and more as outsourcing your entire HR department to ADP — compliance, benefits, workers' comp, risk — at a fraction of what an internal team costs.'",
+      "Competitive: 'If you're evaluating other PEOs, I can show you exactly how TotalSource's underwriting and ADP's tech stack compares. Most competitive wins happen in that conversation.'"
+    ],
+    5: [
+      "Pattern interrupt subject line idea: 'Quick question about your benefits renewal' or '[Name] — something specific to [Company]'",
+      "Breakup framing: 'I'll make this my last reach-out for now. If circumstances change — renewal pressure, compliance concerns, or growth — I'd love to reconnect. The door stays open.'",
+      "Final value drop: 'One last data point: TotalSource clients average 14–22% in health premium savings and reduce HR admin time by 40%. If that math ever makes sense to revisit, I'm here.'"
+    ]
+  };
+
+  const STATUS_TIPS = {
+    'Drafted': '📝 Good start — review the subject line. 40% of open rates are determined by subject alone. Keep it under 50 chars and personalized.',
+    'Sent': '📤 Email sent! Log the send time. Best response windows: Tue–Thu, 7–9am or 4–6pm local time.',
+    'Opened': '👁 They opened it! Strike within 24 hours with a phone call or LinkedIn connection request while you\'re top of mind.',
+    'Replied': '🔥 Reply = buying signal. Respond within 2 hours. Mirror their communication style and move toward a calendar ask.',
+    'Meeting Booked': '🎯 Meeting booked — send a confirmation with a clear agenda. Pre-arm them with one key data point to share with their team.',
+    'No Response': '⏳ No response yet. Try a channel switch — phone or LinkedIn DM. Different medium, same message, new result.',
+    'Opted Out': '🚪 Opted out — respect it and log it. Remove from active cadence and set a 6-month re-engage reminder.',
+    'Pending': '⚡ Ready to draft. Click AI Personalize to generate a tailored version, or edit the template directly in the Outlook window above.'
+  };
+
+  /* ── Health Score Calculator ─────────────────────────── */
+  window.cdxUpdateHealthScore = function() {
+    const bar = document.getElementById('cdx-health-bar');
+    if (!bar) return;
+
+    // Try to read touch data from tsData if available
+    let touches = [];
+    try { touches = window.tsData ? Object.values(window.tsData) : []; } catch(e) {}
+
+    if (!touches.length) { bar.style.display = 'none'; return; }
+    bar.style.display = 'block';
+
+    const sent = touches.filter(t => ['Sent','Opened','Replied','Meeting Booked'].includes(t.status)).length;
+    const replied = touches.filter(t => ['Replied','Meeting Booked'].includes(t.status)).length;
+    const overdue = touches.filter(t => t.overdue).length;
+    const total = touches.length;
+
+    const pct = Math.round((sent / total) * 100);
+    const score = Math.min(100, pct + (replied * 12) - (overdue * 8));
+    const clampedScore = Math.max(0, score);
+
+    // Ring
+    const ring = document.getElementById('cdx-health-ring');
+    const circumference = 163.4;
+    const offset = circumference - (clampedScore / 100) * circumference;
+    if (ring) {
+      ring.style.strokeDashoffset = offset;
+      ring.style.stroke = clampedScore >= 70 ? '#22c55e' : clampedScore >= 40 ? '#f59e0b' : '#ef4444';
+    }
+
+    const pctEl = document.getElementById('cdx-health-pct');
+    if (pctEl) pctEl.textContent = clampedScore + '%';
+
+    const label = document.getElementById('cdx-health-label');
+    if (label) {
+      label.textContent = clampedScore >= 80 ? 'Strong Momentum' :
+                          clampedScore >= 60 ? 'On Track' :
+                          clampedScore >= 40 ? 'Needs Attention' : 'Falling Behind';
+    }
+
+    const statsEl = document.getElementById('cdx-health-stats');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <span class="cdx-health-stat"><span class="dot" style="background:#22c55e;"></span>${sent} sent</span>
+        <span class="cdx-health-stat"><span class="dot" style="background:#60a5fa;"></span>${replied} replied</span>
+        ${overdue ? `<span class="cdx-health-stat"><span class="dot" style="background:#ef4444;"></span>${overdue} overdue</span>` : ''}
+      `;
+    }
+
+    // Next action
+    const pending = touches.find(t => t.status === 'Pending');
+    const nextEl = document.getElementById('cdx-next-action');
+    const nextTxt = document.getElementById('cdx-next-txt');
+    if (nextEl && nextTxt && pending) {
+      nextEl.style.display = 'block';
+      nextTxt.textContent = `Touch ${pending.day || '?'} — ${pending.label || 'Next email'}`;
+    } else if (nextEl) {
+      nextEl.style.display = 'none';
+    }
+  };
+
+  /* ── Status Flow Sync ────────────────────────────────── */
+  window.cdxSyncStatusFlow = function(val) {
+    document.querySelectorAll('.cdx-sf-step').forEach(s => s.classList.remove('active'));
+    const match = document.querySelector(`.cdx-sf-step[data-val="${val}"]`);
+    if (match) match.classList.add('active');
+
+    const tipEl = document.getElementById('cdx-status-tip');
+    if (tipEl) {
+      const tip = STATUS_TIPS[val];
+      if (tip) {
+        tipEl.style.display = 'block';
+        tipEl.innerHTML = tip;
+      } else {
+        tipEl.style.display = 'none';
+      }
+    }
+
+    // Refresh health score on status change
+    setTimeout(cdxUpdateHealthScore, 100);
+  };
+
+  // Wire flow step clicks to the dropdown
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.cdx-sf-step').forEach(s => {
+      s.addEventListener('click', function() {
+        const val = this.getAttribute('data-val');
+        const sel = document.getElementById('ts-touch-status');
+        if (sel) { sel.value = val; sel.dispatchEvent(new Event('change')); }
+        cdxSyncStatusFlow(val);
+      });
+    });
+  });
+
+  /* ── Word Count & Readability ────────────────────────── */
+  window.cdxUpdateBodyStats = function() {
+    const body = document.getElementById('emailBody');
+    const wcEl = document.getElementById('cdx-word-count');
+    const rsEl = document.getElementById('cdx-read-score');
+    if (!body || !wcEl) return;
+
+    const text = body.innerText || '';
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+    const wc = words.length;
+    wcEl.textContent = wc + ' word' + (wc !== 1 ? 's' : '');
+
+    // Simple readability: flag if too long or too short
+    if (rsEl) {
+      if (wc === 0) { rsEl.style.display = 'none'; return; }
+      rsEl.style.display = 'inline';
+      if (wc < 50) {
+        rsEl.textContent = 'Too short';
+        rsEl.style.background = 'rgba(249,115,22,.15)';
+        rsEl.style.color = '#f97316';
+      } else if (wc > 300) {
+        rsEl.textContent = 'Too long';
+        rsEl.style.background = 'rgba(239,68,68,.15)';
+        rsEl.style.color = '#ef4444';
+      } else {
+        rsEl.textContent = '✓ Good length';
+        rsEl.style.background = 'rgba(34,197,94,.15)';
+        rsEl.style.color = '#22c55e';
+      }
+    }
+  };
+
+  /* ── Talk Tracks ────────────────────────────────────── */
+  window.cdxLoadTracks = function(touchDay) {
+    const container = document.getElementById('cdx-tracks');
+    if (!container) return;
+    const tracks = TALK_TRACKS[touchDay] || TALK_TRACKS[Math.min(touchDay, 5)] || TALK_TRACKS[1];
+    container.innerHTML = tracks.map(t =>
+      `<div class="cdx-track-item" onclick="cdxUseTrack(this)">${t}</div>`
+    ).join('');
+  };
+
+  window.cdxRefreshTracks = function() {
+    // Cycle through touch day 1-5 randomly for inspiration
+    const day = Math.ceil(Math.random() * 5);
+    cdxLoadTracks(day);
+  };
+
+  window.cdxUseTrack = function(el) {
+    const body = document.getElementById('emailBody');
+    if (!body) return;
+    const text = el.textContent;
+    const note = document.getElementById('ts-touch-notes');
+    if (note) {
+      note.value = (note.value ? note.value + '\n\n' : '') + '💬 Talk track used: ' + text;
+    }
+    // Flash feedback
+    el.style.background = 'rgba(34,197,94,.2)';
+    el.style.borderColor = '#22c55e';
+    el.style.color = '#22c55e';
+    setTimeout(() => {
+      el.style.background = '';
+      el.style.borderColor = '';
+      el.style.color = '';
+    }, 1200);
+    showToast('Talk track copied to notes ✓');
+  };
+
+  /* ── AI Email Generator ──────────────────────────────── */
+  window.cdxGenerateEmail = function() {
+    const panel = document.getElementById('cdx-ai-panel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window.cdxRunAI = async function() {
+    const btn = document.getElementById('cdx-run-btn');
+    const label = document.getElementById('cdx-run-label');
+    const spinner = document.getElementById('cdx-run-spinner');
+    const result = document.getElementById('cdx-ai-result');
+    const aiText = document.getElementById('cdx-ai-text');
+    const applyBtn = document.getElementById('cdx-apply-btn');
+
+    if (!btn || !aiText) return;
+
+    // Gather context
+    const tone = document.getElementById('cdx-tone')?.value || 'consultative';
+    const focus = document.getElementById('cdx-focus')?.value || 'benefits';
+    const context = document.getElementById('cdx-context')?.value || '';
+    const touchLabel = document.getElementById('ts-touch-lbl')?.textContent || 'Touch 1';
+    const subject = document.getElementById('emailSubject')?.textContent || '';
+    const existingBody = document.getElementById('emailBody')?.innerText || '';
+
+    // Get prospect info from page
+    const companyName = document.getElementById('companyName')?.value || '[Company]';
+    const contactName = document.getElementById('contactName')?.value || '[Contact]';
+    const numEE = document.getElementById('numEE')?.value || '';
+    const industry = document.getElementById('industry')?.value || '';
+
+    // Build prompt
+    const prompt = `You are an elite ADP TotalSource PEO sales rep writing a sales cadence email.
+
+PROSPECT INFO:
+- Company: ${companyName}
+- Contact: ${contactName}
+- Employees: ${numEE || 'unknown'}
+- Industry: ${industry || 'unknown'}
+
+CADENCE TOUCH: ${touchLabel}
+TONE: ${tone}
+FOCUS: ${focus}
+EXISTING TEMPLATE (improve/personalize this):
+${existingBody || subject || '(generate fresh)'}
+
+ADDITIONAL CONTEXT / INTEL:
+${context || 'None provided'}
+
+WRITING RULES:
+1. Keep under 150 words — executives don't read long emails
+2. One specific, relevant insight or number anchored to their profile
+3. Clear, specific CTA at the end (15-minute call, a specific date/time question)
+4. Never say "checking in", "just following up", "hope you're well", or "touching base"
+5. Sound like a consultative advisor, not a salesperson
+6. If tone is "breakup", make it respectful and leave the door open
+7. No subject line needed — just the email body
+
+Write only the email body. No preamble, no explanation.`;
+
+    // UI: loading state
+    btn.disabled = true;
+    if (spinner) spinner.style.display = 'inline-block';
+    if (label) label.textContent = 'Generating…';
+    if (result) result.style.display = 'none';
+    if (applyBtn) applyBtn.style.display = 'none';
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 400,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data?.content?.[0]?.text || '';
+
+      if (text) {
+        if (aiText) aiText.textContent = text;
+        if (result) result.style.display = 'block';
+        if (applyBtn) applyBtn.style.display = 'inline-flex';
+        window._cdxLastAIText = text;
+        showToast('✦ Email generated — review and apply');
+      } else {
+        showToast('AI returned no content. Try again.', true);
+      }
+    } catch(e) {
+      showToast('AI unavailable — check connection', true);
+    } finally {
+      btn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+      if (label) label.textContent = '✦ Generate Personalized Email';
+    }
+  };
+
+  window.cdxApplyToBody = function() {
+    const text = window._cdxLastAIText;
+    if (!text) return;
+    const body = document.getElementById('emailBody');
+    if (!body) return;
+    body.innerText = text;
+    cdxUpdateBodyStats();
+    // Collapse AI panel
+    document.getElementById('cdx-ai-panel').style.display = 'none';
+    showToast('✓ AI email applied to composer');
+  };
+
+  /* ── Helper: fallback toast if app.js showToast not loaded ── */
+  if (typeof showToast === 'undefined') {
+    window.showToast = function(msg, err) {
+      const t = document.getElementById('toast');
+      const m = document.getElementById('toast-msg');
+      if (!t || !m) return;
+      m.textContent = msg;
+      t.className = 'toast' + (err ? ' err' : '') + ' show';
+      setTimeout(() => t.classList.remove('show'), 3000);
+    };
+  }
+
+  /* ── Hook into existing ts panel open to refresh health score ── */
+  const origOpen = window.openTsPanel;
+  if (origOpen) {
+    window.openTsPanel = function() {
+      origOpen.apply(this, arguments);
+      setTimeout(cdxUpdateHealthScore, 400);
+    };
+  }
+
+  /* ── Hook into tsLoadTouch if it exists to auto-load tracks ── */
+  const origLoad = window.tsLoadTouch;
+  if (origLoad) {
+    window.tsLoadTouch = function(day) {
+      origLoad.apply(this, arguments);
+      cdxLoadTracks(day);
+      setTimeout(cdxUpdateBodyStats, 100);
+    };
+  }
+
+  // Also observe ts-touch-tabs for clicks to load tracks
+  document.addEventListener('click', function(e) {
+    const tabEl = e.target.closest('.ts-touch-item');
+    if (tabEl) {
+      const day = parseInt(tabEl.getAttribute('data-day') || tabEl.textContent.match(/\d+/)?.[0] || '1');
+      setTimeout(() => { cdxLoadTracks(day); cdxUpdateBodyStats(); }, 150);
+    }
+  });
+
+  console.log('[CDX] Cadence Enhancement Module loaded ✓');
+})();
+</script>
 <script src="app.js" defer></script>
 </body>
 </html>
