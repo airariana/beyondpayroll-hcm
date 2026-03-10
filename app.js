@@ -4542,129 +4542,109 @@ window.addEventListener('DOMContentLoaded', function(){
 
 // ── Feature 5: Intel action buttons ──────────────────────────────
 // ── cdtIntelEmail: prose-formatted email from intel agent output ──
+// ── cdtIntelEmail: prose-formatted email from intel agent output ──
 window.cdtIntelEmail = async function(day) {
   const p = window._hqProspect; if(!p) return;
   const result = cdtGetIntelResult(day);
   const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
+  const nm = (p.contact||'').split(' ')[0]||p.company;
 
-  // Build subject line — clean, human-sounding
   const subjectMap = {
     1: 'Quick thought on '+p.company+'\'s HR setup',
     8: 'Something came across my desk re: '+p.company,
     15: 'A competitor move worth flagging for '+p.company,
     22: 'Last thing I wanted to flag for '+p.company
   };
-  const subject = subjectMap[day] || ('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' — '+p.company);
+  const subject = subjectMap[day] || ('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' \u2014 '+p.company);
 
-  // Map day to prose touch key
   const dayKeyMap = {1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel'};
   const touchKey = p.track==='WFN' ? (dayKeyMap[day]||'wfn_day8_intel') : 'wfn_day8_intel';
 
-  // Build raw context for prose formatter
-  const rawContext = 'Company: '+p.company
-    +'
-Contact: '+((p.contact||'').split(' ')[0]||p.company)
-    +'
-Industry: '+(p.industry||'—')
-    +'
-Headcount: '+(p.headcount||'—')+' employees'
-    +'
-State: '+(p.state||'—')
-    +'
-Track: '+(p.track==='WFN'?'ADP WorkforceNow':'ADP TotalSource')
-    +'
-Cadence Day: '+day+' of 30'
-    +'
+  const rawContext = [
+    'Company: '+p.company,
+    'Contact: '+nm,
+    'Industry: '+(p.industry||'\u2014'),
+    'Headcount: '+(p.headcount||'\u2014')+' employees',
+    'State: '+(p.state||'\u2014'),
+    'Track: '+(p.track==='WFN'?'ADP WorkforceNow':'ADP TotalSource'),
+    'Cadence Day: '+day+' of 30',
+    '',
+    'INTEL AGENT OUTPUT:',
+    (result?result.result:'No intel available \u2014 use prospect profile only.')
+  ].join('\n');
 
-INTEL AGENT OUTPUT:
-'+(result?result.result:'No intel available — use prospect profile only.');
-
-  showToast('Formatting email…');
+  showToast('Formatting email\u2026');
   const proseBody = await bpProseFormat(touchKey, rawContext);
-  const sig = '
-
-—
-[Your Name]
-ADP | beyondpayroll.net';
+  const sig = '\n\n\u2014\n[Your Name]\nADP | beyondpayroll.net';
   const bodyText = proseBody + sig;
 
   window.location.href = 'mailto:'+encodeURIComponent(p.email||'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyText);
-  showToast('✓ Prose email ready — opening Outlook');
+  showToast('\u2713 Prose email ready \u2014 opening Outlook');
 };
 
 // ── cdtIntelLinkedIn: prose-formatted LinkedIn post from intel agent output ──
 window.cdtIntelLinkedIn = async function(day) {
   const p = window._hqProspect; if(!p) return;
   const result = cdtGetIntelResult(day);
-  const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
 
-  const rawContext = 'Company: '+p.company
-    +'
-Industry: '+(p.industry||'—')
-    +'
-Headcount: '+(p.headcount||'—')+' employees'
-    +'
-State: '+(p.state||'—')
-    +'
-Cadence Day: '+day+' of 30'
-    +'
+  const rawContext = [
+    'Company: '+p.company,
+    'Industry: '+(p.industry||'\u2014'),
+    'Headcount: '+(p.headcount||'\u2014')+' employees',
+    'State: '+(p.state||'\u2014'),
+    'Cadence Day: '+day+' of 30',
+    '',
+    'INTEL AGENT OUTPUT:',
+    (result?result.result:'No intel available.')
+  ].join('\n');
 
-INTEL AGENT OUTPUT:
-'+(result?result.result:'No intel available.');
+  const basePrompt = PROSE_TOUCH_PROMPTS['wfn_day'+day+'_intel'] || PROSE_TOUCH_PROMPTS['wfn_day8_intel'] || '';
+  const liSystemPrompt = basePrompt + '\n\nADDITIONAL RULE FOR LINKEDIN: Rewrite as a short, insight-driven LinkedIn post (3\u20134 sentences max). Use only 2\u20133 relevant hashtags at the end. Do not mention the prospect company by name. Write in first person as a knowledgeable HCM consultant sharing a market observation. No markdown, no bullet points.';
 
-  const liPrompt = PROSE_TOUCH_PROMPTS['wfn_day'+day+'_intel'] || PROSE_TOUCH_PROMPTS['wfn_day8_intel'];
-  const liSystemPrompt = liPrompt + '
-
-ADDITIONAL RULE FOR LINKEDIN: Rewrite as a short, insight-driven LinkedIn post (3–4 sentences max). No hashtag spam — use only 2–3 highly relevant hashtags at the end. Do not mention the prospect company by name. Write in first person, as a knowledgeable HCM consultant sharing a market observation. No markdown, no bullet points.';
-
-  showToast('Formatting LinkedIn post…');
+  showToast('Formatting LinkedIn post\u2026');
   try {
-    const resp = await bpGeminiFetch({ messages:[{role:'user', content: liSystemPrompt+'
-
-RAW DATA:
-'+rawContext}] });
+    const resp = await bpGeminiFetch({ messages:[{role:'user', content: liSystemPrompt+'\n\nRAW DATA:\n'+rawContext}] });
     const data = await resp.json();
     const post = bpGeminiText(data).trim() || rawContext.substring(0,260);
-    if(navigator.clipboard){ navigator.clipboard.writeText(post).then(function(){ showToast('✓ LinkedIn post copied — paste into LinkedIn'); }); }
+    if(navigator.clipboard){ navigator.clipboard.writeText(post).then(function(){ showToast('\u2713 LinkedIn post copied \u2014 paste into LinkedIn'); }); }
     window.open('https://www.linkedin.com/feed/', '_blank');
   } catch(e) {
-    showToast('Could not format post — copying raw intel', true);
+    showToast('Could not format post \u2014 copying raw intel', true);
     const fallback = (result?result.result.substring(0,260)+'...':'[Your insight here]');
     if(navigator.clipboard) navigator.clipboard.writeText(fallback);
     window.open('https://www.linkedin.com/feed/', '_blank');
   }
 };
 
+// ── cdtIntelSms: prose-formatted SMS from intel agent output ──
 window.cdtIntelSms = async function(day) {
   const p = window._hqProspect; if(!p) return;
   const result = cdtGetIntelResult(day);
   const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
   const nm = (p.contact||'').split(' ')[0]||p.company;
 
-  // Build a short prose SMS from intel — 160 chars max
-  const smsPrompt = 'You are formatting a short SMS follow-up for an ADP sales rep. Write ONE sentence (max 140 characters) that references a specific insight from the intel data below. Sound like a human, not a robot. No markdown. End with a soft CTA like "Worth a quick call?" Do not include the sign-off — that is added separately.';
-  const rawContext = 'Company: '+p.company+'
-Industry: '+(p.industry||'—')+'
-State: '+(p.state||'—')+'
-Cadence Day: '+day+'
+  const smsPrompt = 'You are formatting a short SMS follow-up for an ADP sales rep. Write ONE sentence (max 140 characters) that references a specific insight from the intel data below. Sound like a human, not a robot. No markdown. End with a soft CTA like "Worth a quick call?" Do not include the sign-off.';
+  const rawContext = [
+    'Company: '+p.company,
+    'Industry: '+(p.industry||'\u2014'),
+    'State: '+(p.state||'\u2014'),
+    'Cadence Day: '+day,
+    '',
+    'INTEL OUTPUT:',
+    (result?result.result.substring(0,400):'No intel \u2014 use prospect profile.')
+  ].join('\n');
 
-INTEL OUTPUT:
-'+(result?result.result.substring(0,400):'No intel — use prospect profile.');
-
-  let smsBody = 'Hi '+nm+' — saw something relevant to '+p.company+' I wanted to flag. Worth a quick call this week? — [Your Name], ADP';
+  let smsBody = 'Hi '+nm+' \u2014 saw something relevant to '+p.company+' I wanted to flag. Worth a quick call this week? \u2014 [Your Name], ADP';
   try {
-    const resp = await bpGeminiFetch({ messages:[{role:'user', content: smsPrompt+'
-
-'+rawContext}] });
+    const resp = await bpGeminiFetch({ messages:[{role:'user', content: smsPrompt+'\n\n'+rawContext}] });
     const data = await resp.json();
     const formatted = bpGeminiText(data).trim();
-    if(formatted) smsBody = 'Hi '+nm+' — '+formatted+' — [Your Name], ADP';
+    if(formatted) smsBody = 'Hi '+nm+' \u2014 '+formatted+' \u2014 [Your Name], ADP';
   } catch(e) { console.warn('[ProseFormat] SMS format failed:', e.message); }
 
-  ppShowSmsModal(p.phone||'', smsBody, 'Day '+day+' Intel — '+p.company);
+  ppShowSmsModal(p.phone||'', smsBody, 'Day '+day+' Intel \u2014 '+p.company);
 };
 
-// ── Feature 6: SMS Reminder ───────────────────────────────────────
 window.ppSendSmsReminder = function(idx) {
   const arr = getProspects();
   const p = arr[idx]||window._hqProspect; if(!p) return;
