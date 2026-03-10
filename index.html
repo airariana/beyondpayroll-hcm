@@ -3453,146 +3453,47 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   }
 
   /* ── Intercept saveProspect to preserve state on edit ─── */
-  // Fixes:
-  // 1. Match existing record by id first (not just company name) — survives AI-scan renames
-  // 2. In edit mode: own the entire save, block app.js from pushing a duplicate entry
-  // 3. Persist ALL modal fields including AI-discovered dynamic fields
   function patchSaveProspect() {
     const original = window.saveProspect;
     window.saveProspect = function() {
       const isEdit = !!window._editingOriginalProspect;
       const orig   = window._editingOriginalProspect || {};
 
-      if (isEdit) {
-        // ── EDIT PATH: build merged prospect ourselves, skip app.js push ──
-        var PROSPECTS_KEY = 'bp_prospects';
+      if (original) original.apply(this, arguments);
 
-        // Collect current modal field values
-        var fields = {
-          company:   (document.getElementById('f-company')   || {}).value || orig.company || '',
-          contact:   (document.getElementById('f-contact')   || {}).value || orig.contact || '',
-          email:     (document.getElementById('f-email')     || {}).value || orig.email || '',
-          phone:     (document.getElementById('f-phone')     || {}).value || orig.phone || '',
-          linkedin:  (document.getElementById('f-linkedin')  || {}).value || orig.linkedin || '',
-          industry:  (document.getElementById('f-industry')  || {}).value || orig.industry || '',
-          state:     (document.getElementById('f-state')     || {}).value || orig.state || orig.hqState || '',
-          headcount: (document.getElementById('f-headcount') || {}).value || orig.headcount || '',
-          persona:   (document.getElementById('f-persona')   || {}).value || orig.persona || '',
-        };
+      // After app.js runs saveProspect, restore fields that should not change on edit
+      if (isEdit && window._hqProspect) {
+        // Preserve original creation date and approval state
+        if (orig.createdAt)  window._hqProspect.createdAt  = orig.createdAt;
+        if (orig.approved)   window._hqProspect.approved   = orig.approved;
+        if (orig.cadence)    window._hqProspect.cadence    = orig.cadence;
+        if (orig.statuses)   window._hqProspect.statuses   = orig.statuses;
+        if (orig.touchNotes) window._hqProspect.touchNotes = orig.touchNotes;
+        if (orig.id)         window._hqProspect.id         = orig.id;
+        window._hqProspect.updatedAt = new Date().toISOString();
 
-        // Capture AI-discovered dynamic fields
-        document.querySelectorAll('#dyn-form-wrap input[id], #dyn-form-wrap select[id], #dyn-fields-grid input[id], #dyn-fields-grid select[id]').forEach(function(el) {
-          if (el.value && !fields[el.id]) fields[el.id] = el.value;
-        });
-
-        // Merge: original base -> new field values -> preserve immutables
-        var merged = Object.assign({}, orig, fields, {
-          id:         orig.id || orig.uid || orig.company,
-          createdAt:  orig.createdAt,
-          approved:   orig.approved,
-          cadence:    orig.cadence,
-          statuses:   orig.statuses,
-          touchNotes: orig.touchNotes,
-          transcript: orig.transcript,
-          updatedAt:  new Date().toISOString()
-        });
-
-        // Persist: find by id first, fall back to original company name
+        // Re-save to localStorage with preserved fields
         try {
-          var arr = JSON.parse(localStorage.getItem(PROSPECTS_KEY) || '[]');
-          var origId = orig.id || orig.uid || orig.company;
-          var idx = -1;
-          for (var i = 0; i < arr.length; i++) {
-            if (arr[i].id === origId || arr[i].uid === origId || arr[i].company === orig.company) {
-              idx = i; break;
-            }
-          }
+          const PROSPECTS_KEY = 'bp_prospects';
+          const arr = JSON.parse(localStorage.getItem(PROSPECTS_KEY) || '[]');
+          const idx = arr.findIndex(x => x.company === window._hqProspect.company);
           if (idx >= 0) {
-            arr[idx] = merged;
-          } else {
-            arr.push(merged); // safety fallback only
+            arr[idx] = Object.assign(arr[idx], window._hqProspect);
+            localStorage.setItem(PROSPECTS_KEY, JSON.stringify(arr));
           }
-          localStorage.setItem(PROSPECTS_KEY, JSON.stringify(arr));
         } catch(e) {}
 
-        // Update in-memory active prospect
-        if (window._hqProspect) {
-          Object.assign(window._hqProspect, merged);
-        } else {
-          window._hqProspect = merged;
-        }
-
-        // Re-render banner, close modal, show toast
+        // Re-render banner with updated data
         if (typeof hqRenderBanner === 'function') hqRenderBanner();
-        if (typeof closeModal === 'function') closeModal();
-        if (typeof showToast === 'function') showToast('✓ Prospect updated — ' + merged.company);
 
-      } else {
-        // ── NEW PROSPECT PATH: let app.js handle it normally ──
-        if (original) original.apply(this, arguments);
+        // Show correct toast
+        showToast('✓ Prospect updated — ' + window._hqProspect.company);
       }
 
       // Clear edit state
       window._editingProspectId = null;
       window._editingOriginalProspect = null;
     };
-  }
-
-  /* ── Guard drop-zone against creating duplicates in edit mode ── */
-  // When a profile is loaded from the drawer and the user drops a file,
-  // mfAnalyzeAll (app.js) runs and may internally call saveProspect.
-  // We keep _editingOriginalProspect alive across the async scan so our
-  // patched saveProspect handles it as an update — not a new push.
-  function patchDropZoneForEdit() {
-    function wrapMfAnalyzeAll() {
-      var origMf = window.mfAnalyzeAll;
-      if (!origMf || origMf._editPatched) return false;
-      window.mfAnalyzeAll = function() {
-        // Snapshot edit context before async scan can clear it
-        var savedEdit = window._editingOriginalProspect;
-        var savedId   = window._editingProspectId;
-        var result = origMf.apply(this, arguments);
-        // If the scan cleared edit context mid-flight, restore it
-        if (savedEdit && !window._editingOriginalProspect) {
-          window._editingOriginalProspect = savedEdit;
-          window._editingProspectId = savedId;
-        }
-        return result;
-      };
-      window.mfAnalyzeAll._editPatched = true;
-      console.log('[ModalFix] mfAnalyzeAll drop-zone edit guard applied ✓');
-      return true;
-    }
-
-    // Wrap saveAndRouteSRE in edit mode — update, don't create
-    function wrapSaveAndRoute() {
-      var origRoute = window.saveAndRouteSRE;
-      if (!origRoute || origRoute._editPatched) return false;
-      window.saveAndRouteSRE = function() {
-        if (window._editingOriginalProspect) {
-          if (typeof window.saveProspect === 'function') window.saveProspect();
-          // Re-route to SRE after save
-          setTimeout(function() {
-            if (typeof window.openSREFromProspect === 'function') window.openSREFromProspect();
-            else if (typeof window.openSRE === 'function') window.openSRE();
-            else if (typeof window.saveAndRouteSRE_orig === 'function') window.saveAndRouteSRE_orig();
-          }, 100);
-        } else {
-          origRoute.apply(this, arguments);
-        }
-      };
-      window.saveAndRouteSRE._editPatched = true;
-      console.log('[ModalFix] saveAndRouteSRE edit guard applied ✓');
-      return true;
-    }
-
-    wrapMfAnalyzeAll();
-    wrapSaveAndRoute();
-    window.addEventListener('load', function() {
-      wrapMfAnalyzeAll();
-      wrapSaveAndRoute();
-    });
-    setTimeout(function() { wrapMfAnalyzeAll(); wrapSaveAndRoute(); }, 1200);
   }
 
   /* ── Patch editProspect / ppEditProspect if called directly ── */
@@ -3613,7 +3514,6 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   function applyPatches() {
     patchOpenModal();
     patchSaveProspect();
-    patchDropZoneForEdit();
     exposeEditHelper();
     console.log('[ModalFix] Edit pre-population patch applied ✓');
   }
@@ -3696,7 +3596,6 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   /* ── Patch hqApprove to save scores back to prospect ─── */
   // When the rep enters scores and hits Approve, save them so they
   // restore correctly next time the panel opens.
-  // Also persists the Gong transcript textarea value back to the prospect.
   function patchHqApprove() {
     const origApprove = window.hqApprove;
     if (!origApprove) return;
@@ -3720,22 +3619,10 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
           if (urgVal)  p.sreUrgency    = urgVal;
         }
 
-        // Persist the Gong transcript from the SRE textarea
-        const ta = document.getElementById('sre-transcript');
-        if (ta && ta.value.trim()) {
-          p.transcript = ta.value.trim();
-        }
-
-        // Persist to localStorage — match by id first, then company name
+        // Persist to localStorage
         try {
           const arr = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
-          const origId = p.id || p.uid || p.company;
-          let idx = -1;
-          for (let i = 0; i < arr.length; i++) {
-            if (arr[i].id === origId || arr[i].uid === origId || arr[i].company === p.company) {
-              idx = i; break;
-            }
-          }
+          const idx = arr.findIndex(x => x.company === p.company);
           if (idx >= 0) {
             arr[idx] = Object.assign(arr[idx], p);
             localStorage.setItem('bp_prospects', JSON.stringify(arr));
@@ -3747,40 +3634,11 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
     console.log('[ModalFix] hqApprove score save patch applied ✓');
   }
 
-  /* ── Auto-persist transcript on SRE textarea blur ────── */
-  // Saves the Gong transcript to _hqProspect and localStorage
-  // whenever the user leaves the textarea — no explicit save needed.
-  function patchTranscriptAutosave() {
-    document.addEventListener('blur', function(e) {
-      const ta = e.target;
-      if (!ta || ta.id !== 'sre-transcript') return;
-      const p = window._hqProspect;
-      if (!p || !ta.value.trim()) return;
-      p.transcript = ta.value.trim();
-      try {
-        const arr = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
-        const origId = p.id || p.uid || p.company;
-        let idx = -1;
-        for (let i = 0; i < arr.length; i++) {
-          if (arr[i].id === origId || arr[i].uid === origId || arr[i].company === p.company) {
-            idx = i; break;
-          }
-        }
-        if (idx >= 0) {
-          arr[idx].transcript = p.transcript;
-          localStorage.setItem('bp_prospects', JSON.stringify(arr));
-        }
-      } catch(e) {}
-    }, true);
-    console.log('[ModalFix] Transcript auto-save on blur applied ✓');
-  }
-
   // Apply after load
   window.addEventListener('load', function() {
     patchSreRefresh();
     patchHqOpenScore();
     patchHqApprove();
-    patchTranscriptAutosave();
     // Also run immediately in case prospect is already loaded
     if (window._hqProspect) {
       const ta = document.getElementById('sre-transcript');
@@ -3793,6 +3651,8 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 
 })();
 </script>
+<script>
+/* ════════════════════════════════════════════════════════
    Adds: AI Email Personalization, Health Score, Talk Tracks,
          Status Flow, Word Count / Readability
 ════════════════════════════════════════════════════════ */
