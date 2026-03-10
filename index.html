@@ -3453,47 +3453,146 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   }
 
   /* ── Intercept saveProspect to preserve state on edit ─── */
+  // Fixes:
+  // 1. Match existing record by id first (not just company name) — survives AI-scan renames
+  // 2. In edit mode: own the entire save, block app.js from pushing a duplicate entry
+  // 3. Persist ALL modal fields including AI-discovered dynamic fields
   function patchSaveProspect() {
     const original = window.saveProspect;
     window.saveProspect = function() {
       const isEdit = !!window._editingOriginalProspect;
       const orig   = window._editingOriginalProspect || {};
 
-      if (original) original.apply(this, arguments);
+      if (isEdit) {
+        // ── EDIT PATH: build merged prospect ourselves, skip app.js push ──
+        var PROSPECTS_KEY = 'bp_prospects';
 
-      // After app.js runs saveProspect, restore fields that should not change on edit
-      if (isEdit && window._hqProspect) {
-        // Preserve original creation date and approval state
-        if (orig.createdAt)  window._hqProspect.createdAt  = orig.createdAt;
-        if (orig.approved)   window._hqProspect.approved   = orig.approved;
-        if (orig.cadence)    window._hqProspect.cadence    = orig.cadence;
-        if (orig.statuses)   window._hqProspect.statuses   = orig.statuses;
-        if (orig.touchNotes) window._hqProspect.touchNotes = orig.touchNotes;
-        if (orig.id)         window._hqProspect.id         = orig.id;
-        window._hqProspect.updatedAt = new Date().toISOString();
+        // Collect current modal field values
+        var fields = {
+          company:   (document.getElementById('f-company')   || {}).value || orig.company || '',
+          contact:   (document.getElementById('f-contact')   || {}).value || orig.contact || '',
+          email:     (document.getElementById('f-email')     || {}).value || orig.email || '',
+          phone:     (document.getElementById('f-phone')     || {}).value || orig.phone || '',
+          linkedin:  (document.getElementById('f-linkedin')  || {}).value || orig.linkedin || '',
+          industry:  (document.getElementById('f-industry')  || {}).value || orig.industry || '',
+          state:     (document.getElementById('f-state')     || {}).value || orig.state || orig.hqState || '',
+          headcount: (document.getElementById('f-headcount') || {}).value || orig.headcount || '',
+          persona:   (document.getElementById('f-persona')   || {}).value || orig.persona || '',
+        };
 
-        // Re-save to localStorage with preserved fields
+        // Capture AI-discovered dynamic fields
+        document.querySelectorAll('#dyn-form-wrap input[id], #dyn-form-wrap select[id], #dyn-fields-grid input[id], #dyn-fields-grid select[id]').forEach(function(el) {
+          if (el.value && !fields[el.id]) fields[el.id] = el.value;
+        });
+
+        // Merge: original base -> new field values -> preserve immutables
+        var merged = Object.assign({}, orig, fields, {
+          id:         orig.id || orig.uid || orig.company,
+          createdAt:  orig.createdAt,
+          approved:   orig.approved,
+          cadence:    orig.cadence,
+          statuses:   orig.statuses,
+          touchNotes: orig.touchNotes,
+          transcript: orig.transcript,
+          updatedAt:  new Date().toISOString()
+        });
+
+        // Persist: find by id first, fall back to original company name
         try {
-          const PROSPECTS_KEY = 'bp_prospects';
-          const arr = JSON.parse(localStorage.getItem(PROSPECTS_KEY) || '[]');
-          const idx = arr.findIndex(x => x.company === window._hqProspect.company);
-          if (idx >= 0) {
-            arr[idx] = Object.assign(arr[idx], window._hqProspect);
-            localStorage.setItem(PROSPECTS_KEY, JSON.stringify(arr));
+          var arr = JSON.parse(localStorage.getItem(PROSPECTS_KEY) || '[]');
+          var origId = orig.id || orig.uid || orig.company;
+          var idx = -1;
+          for (var i = 0; i < arr.length; i++) {
+            if (arr[i].id === origId || arr[i].uid === origId || arr[i].company === orig.company) {
+              idx = i; break;
+            }
           }
+          if (idx >= 0) {
+            arr[idx] = merged;
+          } else {
+            arr.push(merged); // safety fallback only
+          }
+          localStorage.setItem(PROSPECTS_KEY, JSON.stringify(arr));
         } catch(e) {}
 
-        // Re-render banner with updated data
-        if (typeof hqRenderBanner === 'function') hqRenderBanner();
+        // Update in-memory active prospect
+        if (window._hqProspect) {
+          Object.assign(window._hqProspect, merged);
+        } else {
+          window._hqProspect = merged;
+        }
 
-        // Show correct toast
-        showToast('✓ Prospect updated — ' + window._hqProspect.company);
+        // Re-render banner, close modal, show toast
+        if (typeof hqRenderBanner === 'function') hqRenderBanner();
+        if (typeof closeModal === 'function') closeModal();
+        if (typeof showToast === 'function') showToast('✓ Prospect updated — ' + merged.company);
+
+      } else {
+        // ── NEW PROSPECT PATH: let app.js handle it normally ──
+        if (original) original.apply(this, arguments);
       }
 
       // Clear edit state
       window._editingProspectId = null;
       window._editingOriginalProspect = null;
     };
+  }
+
+  /* ── Guard drop-zone against creating duplicates in edit mode ── */
+  // When a profile is loaded from the drawer and the user drops a file,
+  // mfAnalyzeAll (app.js) runs and may internally call saveProspect.
+  // We keep _editingOriginalProspect alive across the async scan so our
+  // patched saveProspect handles it as an update — not a new push.
+  function patchDropZoneForEdit() {
+    function wrapMfAnalyzeAll() {
+      var origMf = window.mfAnalyzeAll;
+      if (!origMf || origMf._editPatched) return false;
+      window.mfAnalyzeAll = function() {
+        // Snapshot edit context before async scan can clear it
+        var savedEdit = window._editingOriginalProspect;
+        var savedId   = window._editingProspectId;
+        var result = origMf.apply(this, arguments);
+        // If the scan cleared edit context mid-flight, restore it
+        if (savedEdit && !window._editingOriginalProspect) {
+          window._editingOriginalProspect = savedEdit;
+          window._editingProspectId = savedId;
+        }
+        return result;
+      };
+      window.mfAnalyzeAll._editPatched = true;
+      console.log('[ModalFix] mfAnalyzeAll drop-zone edit guard applied ✓');
+      return true;
+    }
+
+    // Wrap saveAndRouteSRE in edit mode — update, don't create
+    function wrapSaveAndRoute() {
+      var origRoute = window.saveAndRouteSRE;
+      if (!origRoute || origRoute._editPatched) return false;
+      window.saveAndRouteSRE = function() {
+        if (window._editingOriginalProspect) {
+          if (typeof window.saveProspect === 'function') window.saveProspect();
+          // Re-route to SRE after save
+          setTimeout(function() {
+            if (typeof window.openSREFromProspect === 'function') window.openSREFromProspect();
+            else if (typeof window.openSRE === 'function') window.openSRE();
+            else if (typeof window.saveAndRouteSRE_orig === 'function') window.saveAndRouteSRE_orig();
+          }, 100);
+        } else {
+          origRoute.apply(this, arguments);
+        }
+      };
+      window.saveAndRouteSRE._editPatched = true;
+      console.log('[ModalFix] saveAndRouteSRE edit guard applied ✓');
+      return true;
+    }
+
+    wrapMfAnalyzeAll();
+    wrapSaveAndRoute();
+    window.addEventListener('load', function() {
+      wrapMfAnalyzeAll();
+      wrapSaveAndRoute();
+    });
+    setTimeout(function() { wrapMfAnalyzeAll(); wrapSaveAndRoute(); }, 1200);
   }
 
   /* ── Patch editProspect / ppEditProspect if called directly ── */
@@ -3514,6 +3613,7 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   function applyPatches() {
     patchOpenModal();
     patchSaveProspect();
+    patchDropZoneForEdit();
     exposeEditHelper();
     console.log('[ModalFix] Edit pre-population patch applied ✓');
   }
@@ -3596,6 +3696,7 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   /* ── Patch hqApprove to save scores back to prospect ─── */
   // When the rep enters scores and hits Approve, save them so they
   // restore correctly next time the panel opens.
+  // Also persists the Gong transcript textarea value back to the prospect.
   function patchHqApprove() {
     const origApprove = window.hqApprove;
     if (!origApprove) return;
@@ -3619,10 +3720,22 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
           if (urgVal)  p.sreUrgency    = urgVal;
         }
 
-        // Persist to localStorage
+        // Persist the Gong transcript from the SRE textarea
+        const ta = document.getElementById('sre-transcript');
+        if (ta && ta.value.trim()) {
+          p.transcript = ta.value.trim();
+        }
+
+        // Persist to localStorage — match by id first, then company name
         try {
           const arr = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
-          const idx = arr.findIndex(x => x.company === p.company);
+          const origId = p.id || p.uid || p.company;
+          let idx = -1;
+          for (let i = 0; i < arr.length; i++) {
+            if (arr[i].id === origId || arr[i].uid === origId || arr[i].company === p.company) {
+              idx = i; break;
+            }
+          }
           if (idx >= 0) {
             arr[idx] = Object.assign(arr[idx], p);
             localStorage.setItem('bp_prospects', JSON.stringify(arr));
@@ -3634,11 +3747,40 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
     console.log('[ModalFix] hqApprove score save patch applied ✓');
   }
 
+  /* ── Auto-persist transcript on SRE textarea blur ────── */
+  // Saves the Gong transcript to _hqProspect and localStorage
+  // whenever the user leaves the textarea — no explicit save needed.
+  function patchTranscriptAutosave() {
+    document.addEventListener('blur', function(e) {
+      const ta = e.target;
+      if (!ta || ta.id !== 'sre-transcript') return;
+      const p = window._hqProspect;
+      if (!p || !ta.value.trim()) return;
+      p.transcript = ta.value.trim();
+      try {
+        const arr = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
+        const origId = p.id || p.uid || p.company;
+        let idx = -1;
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i].id === origId || arr[i].uid === origId || arr[i].company === p.company) {
+            idx = i; break;
+          }
+        }
+        if (idx >= 0) {
+          arr[idx].transcript = p.transcript;
+          localStorage.setItem('bp_prospects', JSON.stringify(arr));
+        }
+      } catch(e) {}
+    }, true);
+    console.log('[ModalFix] Transcript auto-save on blur applied ✓');
+  }
+
   // Apply after load
   window.addEventListener('load', function() {
     patchSreRefresh();
     patchHqOpenScore();
     patchHqApprove();
+    patchTranscriptAutosave();
     // Also run immediately in case prospect is already loaded
     if (window._hqProspect) {
       const ta = document.getElementById('sre-transcript');
@@ -4198,405 +4340,6 @@ Write only the subject line and email body as shown above. No preamble, no expla
   });
 
   console.log('[CDX] Cadence Enhancement Module loaded ✓');
-})();
-</script>
-
-<!-- ══════════════════════════════════════════════════════════════════
-     PEO SMART ROUTING ENGINE  v1.0
-     — Hard disqualifier detection (industry, size, workforce type)
-     — State-based compliance tier modifiers (CA/NY/IL → TX/FL)
-     — Positive / negative score modifiers for all signal types
-     — renderPEORoutingResult() UI injection into SRE results panel
-     — buildPEOAnalysisPrompt() enriches AI prompt with explicit
-       TotalSource eligibility rules + structured JSON output schema
-     Patch pattern: hooks window.runSRE after app.js loads via
-     window.addEventListener('load') — same as other patch modules.
-══════════════════════════════════════════════════════════════════ -->
-<script>
-(function() {
-  'use strict';
-
-  // ─────────────────────────────────────────────────────────────────
-  // 1. SCORING DATA
-  // ─────────────────────────────────────────────────────────────────
-
-  const PEO_ROUTING = {
-
-    // ── Hard disqualifiers — any match = immediate DISQUALIFY ──────
-    disqualifiers: {
-      under5:      { label: 'Under 5 employees',         reason: 'Below TotalSource minimum — consider referral partner' },
-      over500:     { label: '500+ employees',             reason: 'Enterprise size — route to WFN large market team' },
-      government:  { label: 'Government / public sector', reason: 'Ineligible for co-employment structure' },
-      unionized:   { label: 'Unionized workforce',        reason: 'CBA conflicts with PEO model — route to WFN' },
-      agriculture: { label: 'Agriculture / farming',      reason: 'Seasonal risk profile and WC exclusions' },
-      religious_np:{ label: 'Religious nonprofit',        reason: 'Co-employment conflicts with certain religious exemptions' },
-      no_w2:       { label: '1099-only workforce',        reason: 'No W-2 employees to co-employ' },
-    },
-
-    // ── State PEO value tiers ──────────────────────────────────────
-    // High-compliance = stronger PEO ROI pitch; low-compliance = weaker
-    stateModifiers: {
-      // Tier 1 — complex regulatory environment, max PEO value
-      California: +15, 'New York': +15, Illinois: +15,
-      Massachusetts: +10, 'New Jersey': +10, Washington: +10, Colorado: +10,
-      // Tier 2 — moderate / growing complexity (includes DMV territory)
-      Virginia: +5, Maryland: +5, 'District of Columbia': +5, Minnesota: +5,
-      Connecticut: +5, Oregon: +5, Hawaii: +5,
-      // Tier 3 — light regulatory burden, weaker compliance pitch
-      Texas: -5, Florida: -5, 'South Dakota': -5, Wyoming: -5,
-    },
-
-    // ── Size scoring ───────────────────────────────────────────────
-    getSizeScore(emp) {
-      emp = parseInt(emp, 10);
-      if (!emp || isNaN(emp)) return { score: 0, label: 'Unknown size' };
-      if (emp < 5)   return { score: 0, disq: 'under5' };
-      if (emp > 500) return { score: 0, disq: 'over500' };
-      if (emp <= 19)  return { score: 20, label: '5–19 EE' };
-      if (emp <= 49)  return { score: 30, label: '20–49 EE (core target)' };
-      if (emp <= 149) return { score: 25, label: '50–149 EE (prime)' };
-      if (emp <= 299) return { score: 15, label: '150–299 EE' };
-      return { score: 10, label: '300–500 EE (upper band)' };
-    },
-
-    // ── Main evaluation ────────────────────────────────────────────
-    evaluate(prospect) {
-      // prospect = { empCount, hqState, industryRisk, workforceType,
-      //              currentHR, signals[] }
-      const flags = [], reasons = [];
-      let score = 0;
-
-      // 1. Size
-      const sizeResult = this.getSizeScore(prospect.empCount);
-      if (sizeResult.disq) {
-        return {
-          verdict: 'DISQUALIFY', score: 0,
-          flags: [sizeResult.disq],
-          reasons: [this.disqualifiers[sizeResult.disq].reason]
-        };
-      }
-      score += sizeResult.score;
-      if (sizeResult.label) reasons.push('Size: ' + sizeResult.label + ' (+' + sizeResult.score + ')');
-
-      // 2. Industry hard disqualifiers
-      const industryDisqMap = {
-        government: 'government',
-        high: null  // high risk is a penalty, not a disqualifier
-      };
-      if (prospect.industryRisk === 'government') {
-        return { verdict: 'DISQUALIFY', score: 0, flags: ['government'], reasons: [this.disqualifiers.government.reason] };
-      }
-      if (prospect.workforceType === 'unionized') {
-        return { verdict: 'DISQUALIFY', score: 0, flags: ['unionized'], reasons: [this.disqualifiers.unionized.reason] };
-      }
-      if (prospect.workforceType === '1099only') {
-        return { verdict: 'DISQUALIFY', score: 0, flags: ['no_w2'], reasons: [this.disqualifiers.no_w2.reason] };
-      }
-      if (prospect.industryRisk === 'agriculture') {
-        return { verdict: 'DISQUALIFY', score: 0, flags: ['agriculture'], reasons: [this.disqualifiers.agriculture.reason] };
-      }
-      if (prospect.industryRisk === 'religious_np') {
-        return { verdict: 'DISQUALIFY', score: 0, flags: ['religious_np'], reasons: [this.disqualifiers.religious_np.reason] };
-      }
-
-      // 3. State modifier
-      const stateMod = this.stateModifiers[prospect.hqState] || 0;
-      if (stateMod !== 0) {
-        score += stateMod;
-        reasons.push('State (' + prospect.hqState + '): ' + (stateMod > 0 ? '+' : '') + stateMod);
-      }
-
-      // 4. Industry risk — positive / penalty
-      if (prospect.industryRisk === 'low') {
-        score += 12;
-        reasons.push('Industry (low risk — tech/professional/finance): +12');
-      } else if (prospect.industryRisk === 'med') {
-        score += 5;
-        reasons.push('Industry (medium risk): +5');
-      } else if (prospect.industryRisk === 'high') {
-        score -= 8;
-        reasons.push('Industry (higher risk — construction/mfg): −8');
-        flags.push('caution_wc');
-      }
-
-      // 5. Workforce type penalties
-      if (prospect.workforceType === 'seasonal') {
-        score -= 10;
-        reasons.push('High seasonal workforce: −10 (WC risk)');
-        flags.push('caution_seasonal');
-      }
-      if (prospect.workforceType === 'intl') {
-        score -= 10;
-        reasons.push('Heavy international workforce: −10 (TotalSource is US-only)');
-      }
-
-      // 6. Current HR setup
-      if (prospect.currentHR === 'competitor_peo') {
-        score += 10;
-        reasons.push('On competitor PEO (Insperity/TriNet/Justworks): +10 — displacement opportunity');
-        flags.push('competitor_target');
-      } else if (prospect.currentHR === 'happy_peo') {
-        score -= 12;
-        reasons.push('Happy in current PEO / under contract: −12');
-      } else if (prospect.currentHR === 'hostile') {
-        score -= 8;
-        reasons.push('Owner resistant to co-employment: −8 — consider WFN route');
-        flags.push('route_wfn');
-      }
-
-      // 7. Opportunity signals
-      const signalBonus = { multistate: 15, pe_backed: 8, growth: 10, renewal_window: 14 };
-      (prospect.signals || []).forEach(function(s) {
-        if (signalBonus[s]) {
-          score += signalBonus[s];
-          reasons.push('Signal (' + s + '): +' + signalBonus[s]);
-        }
-      });
-
-      // 8. Multi-location (proxy for multi-state complexity)
-      if (prospect.numLocations && parseInt(prospect.numLocations) >= 4) {
-        score += 8;
-        reasons.push('4+ locations (likely multi-state): +8');
-      } else if (prospect.numLocations && parseInt(prospect.numLocations) >= 2) {
-        score += 4;
-        reasons.push('2–3 locations: +4');
-      }
-
-      // 9. Clamp and verdict
-      const clamped = Math.max(0, Math.min(100, score));
-      const verdict = clamped >= 70 ? 'QUALIFIED'
-                    : clamped >= 40 ? 'CAUTION'
-                    : 'LOW_FIT';
-
-      return { verdict, score: clamped, rawScore: score, flags, reasons };
-    }
-  };
-
-  // ─────────────────────────────────────────────────────────────────
-  // 2. UI RENDERER
-  // Injects a routing result card into the SRE results panel
-  // ─────────────────────────────────────────────────────────────────
-
-  function renderPEORoutingResult(result) {
-    // Find or create the container — insert after sre-rec-hero (first results block)
-    let container = document.getElementById('peo-routing-result');
-    if (!container) {
-      const hero = document.querySelector('.sre-rec-hero');
-      if (!hero) return;
-      container = document.createElement('div');
-      container.id = 'peo-routing-result';
-      container.style.marginBottom = '16px';
-      hero.parentNode.insertBefore(container, hero.nextSibling);
-    }
-
-    const verdictConfig = {
-      QUALIFIED:  { icon: '✓', label: 'QUALIFIED — TotalSource', color: '#166534', bg: '#f0fdf4', border: '#bbf7d0', barColor: '#22c55e' },
-      CAUTION:    { icon: '⚠', label: 'CAUTION — Qualify Further', color: '#92400e', bg: '#fffbeb', border: '#fde68a', barColor: '#f59e0b' },
-      DISQUALIFY: { icon: '⛔', label: 'DISQUALIFIED — Route Elsewhere', color: '#991b1b', bg: '#fef2f2', border: '#fecaca', barColor: '#dc2626' },
-      LOW_FIT:    { icon: '→', label: 'LOW FIT — Consider WFN', color: '#374151', bg: '#f9fafb', border: '#e5e7eb', barColor: '#9ca3af' },
-    };
-
-    const flagLabels = {
-      competitor_target: '🎯 Competitor Displacement',
-      route_wfn:         '↗ Route: WFN',
-      caution_wc:        '⚠ WC Risk',
-      caution_seasonal:  '⚠ Seasonal Risk',
-    };
-
-    const cfg = verdictConfig[result.verdict] || verdictConfig.LOW_FIT;
-    const pct = Math.min(100, result.score);
-
-    const flagChips = result.flags.map(function(f) {
-      return '<span style="display:inline-flex;align-items:center;padding:2px 8px;background:' + cfg.bg + ';color:' + cfg.color + ';border:1px solid ' + cfg.border + ';border-radius:4px;font-size:10px;font-weight:700;font-family:var(--fm,monospace);margin-right:5px;">' + (flagLabels[f] || f) + '</span>';
-    }).join('');
-
-    const wfnRouteNote = result.flags.includes('route_wfn')
-      ? '<div style="margin-top:10px;padding:8px 12px;background:var(--blue-bg,#eff6ff);border:1px solid var(--blue-border,#bfdbfe);border-radius:5px;font-size:12px;color:var(--blue,#1e40af);">💡 <strong>WFN Route Suggested</strong> — Switch analyzer to WFN tab for full scoring</div>'
-      : '';
-
-    container.innerHTML =
-      '<div style="border:1.5px solid ' + cfg.border + ';border-radius:var(--radius-sm,8px);background:' + cfg.bg + ';padding:16px;font-family:var(--fb,sans-serif);">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">' +
-          '<span style="font-size:14px;font-weight:700;color:' + cfg.color + ';">' + cfg.icon + ' SMART ROUTING · ' + cfg.label + '</span>' +
-          '<span style="font-family:var(--fm,monospace);font-size:12px;color:var(--text-3,#888);">Score: ' + result.score + '/100</span>' +
-        '</div>' +
-        '<div style="background:var(--border,#e5e5e1);border-radius:3px;height:5px;margin:6px 0 10px;overflow:hidden;">' +
-          '<div style="width:' + pct + '%;height:100%;background:' + cfg.barColor + ';border-radius:3px;transition:width 1s ease;"></div>' +
-        '</div>' +
-        (flagChips ? '<div style="margin-bottom:8px;">' + flagChips + '</div>' : '') +
-        '<div style="font-size:11.5px;color:var(--text-3,#888);line-height:1.7;">' + result.reasons.join(' &nbsp;·&nbsp; ') + '</div>' +
-        wfnRouteNote +
-      '</div>';
-  }
-
-  // ─────────────────────────────────────────────────────────────────
-  // 3. ENRICHED AI PROMPT BUILDER
-  // Replaces the open-ended PEO fit question with explicit rules
-  // ─────────────────────────────────────────────────────────────────
-
-  function buildPEOAnalysisPrompt(prospect, sreResult) {
-    return [
-      'You are an expert ADP TotalSource PEO sales analyst.',
-      'Evaluate the following prospect for TotalSource PEO eligibility and provide a structured fit assessment.',
-      '',
-      '═══ PROSPECT DATA ═══',
-      'Company: ' + (prospect.companyName || 'Unknown'),
-      'Industry Risk Class: ' + (prospect.industryRisk || 'unknown'),
-      'Employee Count: ' + (prospect.empCount || 'unknown'),
-      'HQ State: ' + (prospect.hqState || 'unknown'),
-      'Locations: ' + (prospect.numLocations || 'unknown'),
-      'Workforce Type: ' + (prospect.workforceType || 'W-2 full-time assumed'),
-      'Current HR Setup: ' + (prospect.currentHR || 'unknown'),
-      'Signals: ' + ((prospect.signals || []).join(', ') || 'none'),
-      '',
-      '═══ SRE PRE-SCORE ═══',
-      'Score: ' + sreResult.score + '/100',
-      'Verdict: ' + sreResult.verdict,
-      'Flags: ' + (sreResult.flags.join(', ') || 'none'),
-      'Scoring breakdown: ' + sreResult.reasons.join(' | '),
-      '',
-      '═══ TOTALSOURCE ELIGIBILITY RULES ═══',
-      'HARD DISQUALIFIERS — return DISQUALIFIED if any apply:',
-      '- Under 5 employees (below viable minimum)',
-      '- Over 500 employees (route to WFN enterprise team)',
-      '- Government / public sector (co-employment not permitted)',
-      '- Unionized workforce (CBA conflicts with PEO model)',
-      '- Agriculture / farming (seasonal risk, WC exclusions)',
-      '- Religious nonprofits with co-employment exemptions',
-      '- 1099-only workforce (no W-2 employees to co-employ)',
-      '',
-      'STRONG FIT INDICATORS:',
-      '- 20–150 employees in benefits-sensitive industry',
-      '- Multi-state workforce with compliance exposure',
-      '- HQ in high-compliance state (CA, NY, IL, MA, NJ, WA, CO)',
-      '- Currently on competitor PEO (Insperity, TriNet, Justworks, Paychex PEO)',
-      '- PE-backed company with EBITDA/cost-discipline focus',
-      '- Benefits renewal within 90 days',
-      '- Rapid growth / recent hiring surge',
-      '',
-      'CAUTION SIGNALS (not disqualifying):',
-      '- High seasonal workforce (>40%) → workers comp risk',
-      '- Construction or staffing industry → WC exclusions possible',
-      '- HQ in low-compliance state (TX, FL, SD) → weaker ROI pitch',
-      '- Owner historically resistant to co-employment',
-      '- Heavy international workforce → TotalSource is US-only',
-      '- Currently locked in long-term PEO contract',
-      '',
-      'COMPETITIVE DISPLACEMENT GUIDANCE:',
-      '- Insperity: lead with TotalSource CPEO cert + named HRBP + ADP tech stack included',
-      '- TriNet or Justworks: lead with scale, Fortune 500 benefits pool, 75-year ADP track record',
-      '- Paychex PEO: lead with dedicated HRBP model vs. call center, CPEO certification',
-      '- Net-new to PEO: lead with compliance risk reduction and total cost of employment',
-      '',
-      '═══ OUTPUT FORMAT ═══',
-      'Return a JSON object with EXACTLY this structure (no preamble, no markdown):',
-      '{',
-      '  "fitRating": "STRONG_FIT" | "MODERATE_FIT" | "WEAK_FIT" | "DISQUALIFIED",',
-      '  "confidence": 0-100,',
-      '  "primaryRecommendation": "TotalSource" | "WFN" | "Both" | "Decline",',
-      '  "keyStrengths": ["string", ...],',
-      '  "keyRisks": ["string", ...],',
-      '  "disqualifyingFactors": ["string", ...],',
-      '  "competitiveAngle": "one-sentence TotalSource differentiator for this specific prospect",',
-      '  "suggestedOpeningLine": "one-sentence opener for first call or email",',
-      '  "urgencyTriggers": ["string", ...]',
-      '}'
-    ].join('\n');
-  }
-
-  // ─────────────────────────────────────────────────────────────────
-  // 4. PATCH: Hook into app.js runSRE after it loads
-  // ─────────────────────────────────────────────────────────────────
-
-  function patchRunSRE() {
-    const origRunSRE = window.runSRE;
-    if (!origRunSRE) return false;
-
-    window.runSRE = function() {
-      // Call original first so the results panel renders
-      origRunSRE.apply(this, arguments);
-
-      // Build prospect snapshot from SRE form fields
-      setTimeout(function() {
-        try {
-          const empEl      = document.getElementById('sre-num-ee') || document.getElementById('numEE');
-          const stateEl    = document.getElementById('sre-state')  || document.getElementById('hqState');
-          const indEl      = document.getElementById('sre-industry')|| document.getElementById('industry');
-          const locsEl     = document.getElementById('sre-locations')|| document.getElementById('numLocations');
-
-          // Read checked pain-point checkboxes for signals
-          const signals = [];
-          document.querySelectorAll('.sre-cb.ck input').forEach(function(cb) {
-            const val = cb.value || cb.id || '';
-            if (val.toLowerCase().includes('multi') || val.toLowerCase().includes('state'))  signals.push('multistate');
-            if (val.toLowerCase().includes('growth') || val.toLowerCase().includes('hiring')) signals.push('growth');
-            if (val.toLowerCase().includes('renewal')) signals.push('renewal_window');
-            if (val.toLowerCase().includes('private') || val.toLowerCase().includes('equity')) signals.push('pe_backed');
-          });
-
-          // Detect competitor PEO from silo selection or transcript
-          const siloEl     = document.querySelector('.sre-silo-opt.active-existing');
-          const transcriptEl = document.getElementById('sre-transcript');
-          let currentHR = 'none';
-          const transcriptText = (transcriptEl && transcriptEl.value) ? transcriptEl.value.toLowerCase() : '';
-          if (/insperity|trinet|justworks|paychex peo|peo/i.test(transcriptText)) currentHR = 'competitor_peo';
-          if (siloEl) currentHR = 'competitor_peo';
-
-          const prospect = {
-            companyName:   (document.getElementById('sre-company') || document.getElementById('companyName') || {}).value || '',
-            empCount:      empEl ? empEl.value : '',
-            hqState:       stateEl ? stateEl.value : '',
-            industryRisk:  indEl ? indEl.value : '',
-            numLocations:  locsEl ? locsEl.value : '',
-            workforceType: 'w2', // default — extend if SRE gains a workforce-type field
-            currentHR:     currentHR,
-            signals:       [...new Set(signals)]
-          };
-
-          const sreResult = PEO_ROUTING.evaluate(prospect);
-
-          // Render routing card in SRE results panel
-          const resultsEl = document.querySelector('.sre-results.show') || document.querySelector('.sre-results');
-          if (resultsEl) renderPEORoutingResult(sreResult);
-
-          // Expose on window so app.js AI call can use the enriched prompt
-          window._sreRoutingResult  = sreResult;
-          window._sreRoutingProspect = prospect;
-
-          // If app.js has an AI analysis function, enrich its prompt
-          if (typeof window._sreAIPromptOverride === 'undefined') {
-            window._sreAIPromptOverride = buildPEOAnalysisPrompt(prospect, sreResult);
-          }
-
-          console.log('[PEORouting] Score:', sreResult.score, '| Verdict:', sreResult.verdict, '| Flags:', sreResult.flags);
-        } catch(e) {
-          console.warn('[PEORouting] Patch error:', e);
-        }
-      }, 400); // allow app.js results to render first
-    };
-
-    console.log('[PEORouting] runSRE patch applied ✓');
-    return true;
-  }
-
-  // ─────────────────────────────────────────────────────────────────
-  // 5. EXPOSE HELPERS GLOBALLY
-  // so app.js or future modules can call them directly
-  // ─────────────────────────────────────────────────────────────────
-
-  window.PEO_ROUTING              = PEO_ROUTING;
-  window.renderPEORoutingResult   = renderPEORoutingResult;
-  window.buildPEOAnalysisPrompt   = buildPEOAnalysisPrompt;
-
-  // Apply patch after app.js loads (it's deferred)
-  window.addEventListener('load', function() {
-    if (!patchRunSRE()) {
-      // app.js might have loaded but runSRE not yet defined — retry once
-      setTimeout(patchRunSRE, 800);
-    }
-  });
-
-  console.log('[PEORouting] Smart Routing Engine v1.0 initialized ✓');
 })();
 </script>
 <script src="app.js" defer></script>
