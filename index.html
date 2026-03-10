@@ -2943,7 +2943,9 @@ function initHQ(session){
   const n=document.getElementById('hq-wb-name');if(n)n.textContent='Welcome back, '+session.first;
   const de=document.getElementById('hq-wb-detail');if(de)de.textContent=session.role==='WFN'?'Track A · ADP WorkforceNow Specialist':'Track B · ADP TotalSource Specialist';
   window._hqProspect=null;window._hqPipelineStep=0;window._hqApproved=false;
-  window._ecActiveIdx=0;window._ecStatuses={};window._ecNotes={};window._ecLaunched={};window._ecChecks={};
+  window._ecActiveIdx=0;
+  if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
+  window._ecStatuses={};window._ecNotes={};window._ecLaunched={};window._ecChecks={};
 }
 
 window.hqTab=function(tab){
@@ -4499,12 +4501,14 @@ window.ecFireMailto=function(){
 
 window.ecMarkSent=function(){
   window._ecStatuses[window._ecActiveIdx]='Sent';
+  if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
   window._ecNotes[window._ecActiveIdx]=document.getElementById('ec-notes').value;
   ecRenderAll();showToast('Touch logged as Sent');
 };
 
 window.ecSetSt=function(val){
   window._ecStatuses[window._ecActiveIdx]=val;
+  if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
   document.getElementById('ec-ssel').style.color=ecStColor(val);
   const tabs=document.getElementById('ec-tabs');
   if(tabs&&window._hqProspect){
@@ -4821,6 +4825,7 @@ window.cdtSetView = function(view){
 window.cdtResetAll = function(){
   if(!confirm('Reset all touch statuses and restart the cadence from today?')) return;
   window._ecStatuses={};window._ecNotes={};window._ecLaunched={};window._ecChecks={};
+  if(window._hqProspect) ecSaveStatuses(window._hqProspect.company); // clear persisted statuses for reset
   cdtResetStart();
   cdtSetStart(new Date().toISOString().split('T')[0]);
   ecRenderAll();
@@ -4876,6 +4881,18 @@ window.ecSetSt = function(val){
 // ═══════════════════════════════════════════════════════════════════════
 const NOTIF_KEY = 'bp_notifications';
 var _notifTab = 'all';
+
+// ── Cadence status persistence (per prospect) ────────────────────────
+function ecStatusKey(company){ return 'bp_ec_statuses_'+(company||'').replace(/\s+/g,'_'); }
+function ecSaveStatuses(company){
+  if(!company) return;
+  localStorage.setItem(ecStatusKey(company), JSON.stringify(window._ecStatuses||{}));
+}
+function ecLoadStatuses(company){
+  if(!company){ window._ecStatuses={}; return; }
+  try{ window._ecStatuses=JSON.parse(localStorage.getItem(ecStatusKey(company))||'{}'); }
+  catch{ window._ecStatuses={}; }
+}
 
 function notifGetAll(){ try{ return JSON.parse(localStorage.getItem(NOTIF_KEY)||'[]'); }catch{ return []; } }
 function notifSave(arr){ localStorage.setItem(NOTIF_KEY, JSON.stringify(arr.slice(0,100))); }
@@ -4975,19 +4992,136 @@ function notifRequestPermission(){
   }
 }
 
-// Check for overdue touches daily on load
+// ── Push notification: check ALL prospects for due/overdue tasks on login ──
+const PUSH_DATE_KEY = 'bp_push_last_date'; // dedup: only fire once per calendar day
+
 function notifCheckOverdue(){
-  const p = window._hqProspect; if(!p) return;
-  const touches = buildTouches(p);
-  const todayNum = cdtTodayNum(); if(!todayNum) return;
-  const overdue = touches.filter((t,i)=>{
-    const s = window._ecStatuses[i]||'Pending';
-    return t.day < todayNum && s==='Pending';
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Only fire once per calendar day per browser
+  const lastChecked = localStorage.getItem(PUSH_DATE_KEY);
+  if(lastChecked === todayStr) return;
+
+  // If no permission yet, request it silently — will fire tomorrow once granted
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'denied') return;
+  if(Notification.permission === 'default'){
+    Notification.requestPermission().then(function(p){
+      if(p === 'granted') notifCheckOverdue();
+    });
+    return;
+  }
+
+  const prospects = getProspects();
+  if(!prospects.length) return;
+
+  let totalDueToday = 0, totalOverdue = 0;
+  const dueLines   = []; // "CompanyName — Day X: Label"
+  const overdueLines = [];
+
+  prospects.forEach(function(prospect){
+    if(!prospect || !prospect.company) return;
+
+    // Compute cadence start for this prospect
+    const key = 'cdt_start_' + prospect.company.replace(/\s+/g,'_');
+    const startISO = localStorage.getItem(key);
+    if(!startISO) return; // cadence not started
+
+    const start = new Date(startISO); const today = new Date();
+    start.setHours(0,0,0,0); today.setHours(0,0,0,0);
+    const todayNum = Math.floor((today - start) / 86400000) + 1;
+    if(todayNum < 1 || todayNum > 30) return;
+
+    // Load saved statuses for this prospect
+    const statusKey = 'bp_ec_statuses_' + prospect.company.replace(/\s+/g,'_');
+    let statuses = {};
+    try{ statuses = JSON.parse(localStorage.getItem(statusKey)||'{}'); }catch{}
+
+    // Build touches for this prospect
+    let touches = [];
+    try{
+      // Temporarily swap _hqProspect so buildTouches works
+      const prev = window._hqProspect;
+      window._hqProspect = prospect;
+      touches = buildTouches(prospect);
+      window._hqProspect = prev;
+    }catch(e){ return; }
+
+    touches.forEach(function(t, i){
+      const s = statuses[i] || window._ecStatuses[i] || 'Pending';
+      if(s === 'Sent' || s === 'Meeting Booked') return; // already done
+      const name = prospect.company;
+      if(t.day === todayNum){
+        totalDueToday++;
+        dueLines.push(name + ' — Day ' + t.day + ': ' + t.label);
+      } else if(t.day < todayNum){
+        totalOverdue++;
+        overdueLines.push(name + ' — Day ' + t.day + ': ' + t.label);
+      }
+    });
   });
-  if(overdue.length > 0){
-    notifAdd('alerts', `⚠ ${overdue.length} overdue touch${overdue.length!==1?'es':''} — ${p.company}`,
-      overdue.map(t=>'Day '+t.day+' '+t.label).join(', '), 'ALERT');
-    notifBrowserPush('⚠ Overdue cadence touches — '+p.company, overdue.length+' touch'+( overdue.length!==1?'es':'')+' need action');
+
+  // Mark as checked for today (even if nothing due, so we don't re-check on every tab open)
+  localStorage.setItem(PUSH_DATE_KEY, todayStr);
+
+  // Nothing to alert
+  if(totalDueToday === 0 && totalOverdue === 0) return;
+
+  // ── Fire browser push notifications ──────────────────────────────
+  // Due today — one notification per prospect (max 3 to avoid spam)
+  const dueBatch = dueLines.slice(0, 3);
+  dueBatch.forEach(function(line){
+    const parts = line.split(' — ');
+    const company = parts[0];
+    const task = parts.slice(1).join(' — ');
+    try{
+      new Notification('📋 Due Today: ' + company, {
+        body: task,
+        icon: 'https://beyondpayroll.net/favicon.ico',
+        badge: 'https://beyondpayroll.net/favicon.ico',
+        tag: 'bp-due-' + company.replace(/\s+/g,'-'),
+        requireInteraction: false
+      });
+    }catch(e){}
+  });
+  if(dueLines.length > 3){
+    try{
+      new Notification('📋 ' + (dueLines.length - 3) + ' more tasks due today', {
+        body: dueLines.slice(3).map(function(l){ return l.split(' — ')[0]; }).join(', '),
+        icon: 'https://beyondpayroll.net/favicon.ico',
+        tag: 'bp-due-overflow'
+      });
+    }catch(e){}
+  }
+
+  // Overdue — single grouped notification
+  if(totalOverdue > 0){
+    const overdueCompanies = [...new Set(overdueLines.map(function(l){ return l.split(' — ')[0]; }))];
+    try{
+      new Notification('⚠️ ' + totalOverdue + ' Overdue Task' + (totalOverdue!==1?'s':''), {
+        body: overdueCompanies.slice(0,4).join(', ') + (overdueCompanies.length>4 ? ' +more' : ''),
+        icon: 'https://beyondpayroll.net/favicon.ico',
+        badge: 'https://beyondpayroll.net/favicon.ico',
+        tag: 'bp-overdue',
+        requireInteraction: true  // stays until dismissed
+      });
+    }catch(e){}
+  }
+
+  // ── Also add to in-app notification bell ─────────────────────────
+  if(totalDueToday > 0){
+    notifAdd('alerts',
+      '📋 ' + totalDueToday + ' task' + (totalDueToday!==1?'s':'') + ' due today',
+      dueLines.slice(0,3).join(' · ') + (dueLines.length>3?' +more':''),
+      'TODAY'
+    );
+  }
+  if(totalOverdue > 0){
+    notifAdd('alerts',
+      '⚠️ ' + totalOverdue + ' overdue task' + (totalOverdue!==1?'s':''),
+      overdueLines.slice(0,3).join(' · ') + (overdueLines.length>3?' +more':''),
+      'OVERDUE'
+    );
   }
 }
 
@@ -5544,9 +5678,15 @@ function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function pdLoadProspect(idx){
   const arr=getProspects();
   const p=arr[idx];if(!p)return;
+  // Save statuses for the outgoing prospect before switching
+  if(window._hqProspect && window._hqProspect.company){
+    ecSaveStatuses(window._hqProspect.company);
+  }
   window._hqProspect=p;
   window._hqPipelineStep=p.pipelineStep||1;
   window._hqApproved=p.approved||false;
+  // Load persisted statuses for incoming prospect
+  if(typeof ecLoadStatuses==='function') ecLoadStatuses(p.company);
   hqRenderBanner();
   hqAdvancePipeline(p.pipelineStep||1);
   closeProfileDropdown();
