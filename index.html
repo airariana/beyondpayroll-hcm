@@ -3,7 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Cache-Control" content="public, max-age=3600">
+<!-- CRITICAL: minimal splash style — must be first, paints before rest of <head> parses -->
+<style>
+html,body{margin:0;padding:0;height:100%;background:#0d1535}
+#bp-splash{position:fixed;inset:0;background:#0d1535;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:99999}
+#bp-splash-logo{font-size:48px;font-weight:700;color:#c8a84b;font-family:Georgia,serif;letter-spacing:-1px}
+#bp-splash-sub{font-size:12px;color:rgba(255,255,255,.45);letter-spacing:2.5px;text-transform:uppercase;font-family:sans-serif}
+#bp-splash-bar{width:160px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+#bp-splash-bar::after{content:'';display:block;height:100%;width:40%;background:linear-gradient(90deg,transparent,#c8a84b,transparent);animation:bp-sh 1.2s infinite}
+@keyframes bp-sh{0%{transform:translateX(-200%)}100%{transform:translateX(400%)}}
+#bp-splash.hide{opacity:0;transition:opacity .35s ease;pointer-events:none}
+</style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBmMWYzZCIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNjOGE4NGIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkJQPC90ZXh0Pjwvc3ZnPg==">
 <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjAiIGZpbGw9IiMwZjFmM2QiLz48dGV4dCB4PSI5MCIgeT0iMTIyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI5MCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2M4YTg0YiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QlA8L3RleHQ+PC9zdmc+">
 <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIkJleW9uZFBheXJvbGwgSENNIiwgInNob3J0X25hbWUiOiAiQmV5b25kUGF5cm9sbCIsICJkZXNjcmlwdGlvbiI6ICJBRFAgU2FsZXMgSW50ZWxsaWdlbmNlIFBsYXRmb3JtIiwgInN0YXJ0X3VybCI6ICIvIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZjFmM2QiLCAidGhlbWVfY29sb3IiOiAiIzBmMWYzZCIsICJvcmllbnRhdGlvbiI6ICJhbnkiLCAiaWNvbnMiOiBbeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQXhPVElnTVRreUlqNDhjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnY25nOUlqTTRJaUJtYVd4c1BTSWpNR1l4WmpOa0lpOCtQSFJsZUhRZ2VEMGlPVFlpSUhrOUlqRXpNQ0lnWm05dWRDMW1ZVzFwYkhrOUlrZGxiM0puYVdFc2MyVnlhV1lpSUdadmJuUXRjMmw2WlQwaU9UWWlJR1p2Ym5RdGQyVnBaMmgwUFNJM01EQWlJR1pwYkd3OUlpTmpPR0U0TkdJaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlQa0pRUEM5MFpYaDBQand2YzNablBnPT0iLCAic2l6ZXMiOiAiMTkyeDE5MiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifSwgeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQTFNVElnTlRFeUlqNDhjbVZqZENCM2FXUjBhRDBpTlRFeUlpQm9aV2xuYUhROUlqVXhNaUlnY25nOUlqazJJaUJtYVd4c1BTSWpNR1l4WmpOa0lpOCtQSFJsZUhRZ2VEMGlNalUySWlCNVBTSXpOREFpSUdadmJuUXRabUZ0YVd4NVBTSkhaVzl5WjJsaExITmxjbWxtSWlCbWIyNTBMWE5wZW1VOUlqSTBNQ0lnWm05dWRDMTNaV2xuYUhROUlqY3dNQ0lnWm1sc2JEMGlJMk00WVRnMFlpSWdkR1Y0ZEMxaGJtTm9iM0k5SW0xcFpHUnNaU0krUWxBOEwzUmxlSFErUEM5emRtYysiLCAic2l6ZXMiOiAiNTEyeDUxMiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifV19">
@@ -23,6 +33,17 @@
 <noscript>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </noscript>
+
+</head>
+<body>
+<!-- ══ INSTANT SPLASH — visible before any JS parses ══ -->
+<div id="bp-splash">
+  <div id="bp-splash-logo">BP</div>
+  <div id="bp-splash-sub">Sales Intelligence Platform</div>
+  <div id="bp-splash-bar"></div>
+</div>
+
+<!-- Main CSS — loads after splash paints -->
 <style>
 :root {
   --white:#ffffff; --off-white:#f8f8f6; --light:#f0f0ed;
@@ -1365,14 +1386,6 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .sa-prospect-select .sa-ps-name{font-size:14px;font-weight:600;color:var(--text)}
 .sa-prospect-select .sa-ps-detail{font-size:11px;color:var(--text-3);margin-top:2px}
 </style>
-</head>
-<body>
-<!-- ══ INSTANT SPLASH — visible before any JS parses ══ -->
-<div id="bp-splash">
-  <div id="bp-splash-logo">BP</div>
-  <div id="bp-splash-sub">Sales Intelligence Platform</div>
-  <div id="bp-splash-bar"></div>
-</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"><span class="toast-icon" id="toast-icon">⚡</span><span id="toast-msg">Done</span></div>
