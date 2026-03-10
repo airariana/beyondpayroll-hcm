@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBmMWYzZCIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNjOGE4NGIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkJQPC90ZXh0Pgo8L3N2Zz4=">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBmMWYzZCIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNjOGE4NGIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkJQPC90ZXh0Pjwvc3ZnPg==">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjAiIGZpbGw9IiMwZjFmM2QiLz48dGV4dCB4PSI5MCIgeT0iMTIyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI5MCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2M4YTg0YiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QlA8L3RleHQ+PC9zdmc+">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIkJleW9uZFBheXJvbGwgSENNIiwgInNob3J0X25hbWUiOiAiQmV5b25kUGF5cm9sbCIsICJkZXNjcmlwdGlvbiI6ICJBRFAgU2FsZXMgSW50ZWxsaWdlbmNlIFBsYXRmb3JtIiwgInN0YXJ0X3VybCI6ICIvIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZjFmM2QiLCAidGhlbWVfY29sb3IiOiAiIzBmMWYzZCIsICJvcmllbnRhdGlvbiI6ICJhbnkiLCAiaWNvbnMiOiBbeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQXhPVElnTVRreUlqNDhjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnY25nOUlqTTRJaUJtYVd4c1BTSWpNR1l4WmpOa0lpOCtQSFJsZUhRZ2VEMGlPVFlpSUhrOUlqRXpNQ0lnWm05dWRDMW1ZVzFwYkhrOUlrZGxiM0puYVdFc2MyVnlhV1lpSUdadmJuUXRjMmw2WlQwaU9UWWlJR1p2Ym5RdGQyVnBaMmgwUFNJM01EQWlJR1pwYkd3OUlpTmpPR0U0TkdJaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlQa0pRUEM5MFpYaDBQand2YzNablBnPT0iLCAic2l6ZXMiOiAiMTkyeDE5MiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifSwgeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQTFNVElnTlRFeUlqNDhjbVZqZENCM2FXUjBhRDBpTlRFeUlpQm9aV2xuYUhROUlqVXhNaUlnY25nOUlqazJJaUJtYVd4c1BTSWpNR1l4WmpOa0lpOCtQSFJsZUhRZ2VEMGlNalUySWlCNVBTSXpOREFpSUdadmJuUXRabUZ0YVd4NVBTSkhaVzl5WjJsaExITmxjbWxtSWlCbWIyNTBMWE5wZW1VOUlqSTBNQ0lnWm05dWRDMTNaV2xuYUhROUlqY3dNQ0lnWm1sc2JEMGlJMk00WVRnMFlpSWdkR1Y0ZEMxaGJtTm9iM0k5SW0xcFpHUnNaU0krUWxBOEwzUmxlSFErUEM5emRtYysiLCAic2l6ZXMiOiAiNTEyeDUxMiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifV19">
+<meta name="theme-color" content="#0f1f3d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BeyondPayroll">
+<meta name="application-name" content="BeyondPayroll HCM">
 <title>BeyondPayroll HCM — Sales Intelligence Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -1598,16 +1606,80 @@ function doRegister(){
   const nu={email,first,last,password:pass,role:selectedRole,created:new Date().toLocaleDateString('en-US')};
   users.push(nu);saveUsers(users);
   const session={email,first,last,role:selectedRole};saveSession(session);
+  // Push new account to Firestore immediately so other devices can log in
+  if(FIREBASE_CONFIG.apiKey!=='YOUR_API_KEY'){
+    try{
+      const pushUser=async function(){
+        if(typeof firebase==='undefined'){
+          await new Promise(function(res,rej){
+            const s1=document.createElement('script');
+            s1.src='https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+            s1.onload=function(){
+              const s2=document.createElement('script');
+              s2.src='https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+              s2.onload=res;s2.onerror=rej;document.head.appendChild(s2);
+            };s1.onerror=rej;document.head.appendChild(s1);
+          });
+        }
+        if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        const db=firebase.firestore();
+        await db.collection('users').doc(email).set(Object.assign({},nu,{updatedAt:new Date().toISOString()}),{merge:true});
+      };
+      pushUser().catch(function(e){console.warn('Register push:',e.message);});
+    }catch(e){console.warn('Register Firebase:',e.message);}
+  }
   showToast('Account created! Welcome to Sales HQ ⚡');
   setTimeout(()=>enterHQ(session),600);
 }
 
-function doSignIn(){
+async function doSignIn(){
   clearErrors();
   const email=document.getElementById('si-email').value.trim().toLowerCase();
   const pass=document.getElementById('si-pass').value;
   if(!email||!pass){showBanner('signin-err','signin-err-msg','Please enter your email and password.');return}
-  const user=getUsers().find(u=>u.email===email&&u.password===pass);
+
+  // Show loading state
+  const btn=document.querySelector('#form-signin .auth-btn');
+  if(btn){btn.disabled=true;btn.textContent='Signing in…';}
+
+  // Try local first
+  let user=getUsers().find(u=>u.email===email&&u.password===pass);
+
+  // If not found locally, try pulling from Firestore
+  if(!user && FIREBASE_CONFIG.apiKey!=='YOUR_API_KEY'){
+    try{
+      // Load Firebase SDK if not already loaded
+      if(typeof firebase==='undefined'){
+        await new Promise(function(resolve,reject){
+          const s1=document.createElement('script');
+          s1.src='https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
+          s1.onload=function(){
+            const s2=document.createElement('script');
+            s2.src='https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+            s2.onload=resolve; s2.onerror=reject;
+            document.head.appendChild(s2);
+          };
+          s1.onerror=reject;
+          document.head.appendChild(s1);
+        });
+      }
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      const tmpDb=firebase.firestore();
+      const doc=await tmpDb.collection('users').doc(email).get();
+      if(doc.exists){
+        const remoteUser=doc.data();
+        if(remoteUser.password===pass){
+          // Save to local for future offline use
+          const users=getUsers();
+          if(!users.find(u=>u.email===email)){users.push(remoteUser);saveUsers(users);}
+          user=remoteUser;
+        }
+      }
+    }catch(e){console.warn('Firebase sign-in lookup:',e.message);}
+  }
+
+  if(btn){btn.disabled=false;btn.textContent='Sign In';}
+
   if(!user){showBanner('signin-err','signin-err-msg','Email or password is incorrect. Please try again.');document.getElementById('si-pass').value='';return}
   const session={email:user.email,first:user.first,last:user.last,role:user.role};
   saveSession(session);showToast('Welcome back, '+user.first+'!');
@@ -1630,7 +1702,7 @@ function enterHQ(session){
   // Update profile dropdown
   document.getElementById('pb-avatar').textContent=initials;
   document.getElementById('pb-name').textContent=session.first+' '+session.last;
-  document.getElementById('pb-role').textContent=session.role==='WFN'?'TRACK A · WFN':'TRACK B · TS';
+  document.getElementById('pb-role').textContent='';
   document.getElementById('pd-avatar-lg').textContent=initials;
   document.getElementById('pd-username').textContent=session.first+' '+session.last;
   document.getElementById('pd-useremail').textContent=session.email||'';
@@ -4721,8 +4793,10 @@ function fbInit(session){
           if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
           _fbDb=firebase.firestore();
           fbSetStatus('live','● Live');
-          fbSyncNow();
-          fbListen(session);
+          // Sync user account to Firestore so other devices can log in
+          fbSyncUser(session);
+          // Pull prospects from Firestore first, then push any local-only ones
+          fbInitialSync(session);
         }catch(e){console.warn('Firebase init:',e.message);fbSetStatus('error','● Error');}
       };
       s2.onerror=function(){fbSetStatus('offline','● Offline');};
@@ -4731,6 +4805,94 @@ function fbInit(session){
     s1.onerror=function(){fbSetStatus('offline','● Offline');};
     document.head.appendChild(s1);
   }catch(e){fbSetStatus('error','● Error');}
+}
+
+// Sync current user account to Firestore (so mobile can log in)
+async function fbSyncUser(session){
+  if(!_fbDb) return;
+  try{
+    const users = getUsers();
+    const u = users.find(function(x){return x.email===session.email;});
+    if(!u) return;
+    // Store user in Firestore (never store raw password — store a hash hint)
+    const userDoc = {
+      email: u.email,
+      first: u.first,
+      last: u.last,
+      role: u.role,
+      password: u.password, // platform handles auth, not Firebase Auth
+      created: u.created||new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    await _fbDb.collection('users').doc(u.email).set(userDoc, {merge:true});
+  }catch(e){console.warn('fbSyncUser:',e.message);}
+}
+
+// Pull users from Firestore into localStorage (for mobile login)
+async function fbPullUsers(){
+  if(!_fbDb) return;
+  try{
+    const snap = await _fbDb.collection('users').get();
+    if(snap.empty) return;
+    const remoteUsers = [];
+    snap.forEach(function(d){ remoteUsers.push(d.data()); });
+    const local = getUsers();
+    let changed = false;
+    remoteUsers.forEach(function(ru){
+      if(!local.find(function(l){return l.email===ru.email;})){
+        local.push(ru);
+        changed = true;
+      }
+    });
+    if(changed){ saveUsers(local); }
+  }catch(e){console.warn('fbPullUsers:',e.message);}
+}
+
+// On first login to a new device: pull Firestore prospects, then push local-only ones, then listen
+async function fbInitialSync(session){
+  if(!_fbDb) return;
+  try{
+    // 1. Pull all prospects for this user from Firestore
+    const snap = await _fbDb.collection('prospects')
+      .where('userEmail','==',session.email)
+      .orderBy('updatedAt','desc')
+      .get();
+    const remote = [];
+    snap.forEach(function(d){ remote.push(Object.assign({id:d.id}, d.data())); });
+
+    // 2. Merge with local: remote wins for existing, keep local-only ones
+    const local = getProspects();
+    const merged = [...remote];
+    local.forEach(function(lp){
+      const exists = remote.find(function(rp){
+        return rp.company===lp.company && rp.userEmail===session.email;
+      });
+      if(!exists && !lp.id){
+        // Local-only prospect — push to Firestore
+        merged.push(lp);
+        _fbDb.collection('prospects').add(
+          Object.assign({},lp,{userEmail:session.email,updatedAt:new Date().toISOString()})
+        ).then(function(r){
+          lp.id=r.id;
+          const arr=getProspects();
+          const i=arr.findIndex(function(x){return x.company===lp.company;});
+          if(i>=0){arr[i].id=r.id; saveProspectsLocal(arr);}
+        }).catch(function(e){console.warn('push local:',e.message);});
+      }
+    });
+
+    saveProspectsLocal(merged);
+    renderSavedProspects();
+    if(remote.length>0) showToast('☁ '+remote.length+' prospect(s) loaded from cloud');
+
+    // 3. Start real-time listener for future changes
+    fbListen(session);
+  }catch(e){
+    console.warn('fbInitialSync:',e.message);
+    // Fall back to push-only sync
+    fbSyncNow();
+    fbListen(session);
+  }
 }
 
 function fbListen(session){
@@ -10829,5 +10991,40 @@ document.addEventListener('keydown', function(e){
     <button class="pp-ftr-btn" onclick="exportProspects()" style="padding:9px 12px;font-size:12px;font-weight:600;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">⬇ Export</button>
   </div>
 </div>
+
+<script>
+// ── PWA: Service Worker + Install Prompt ──────────────────────────
+if('serviceWorker' in navigator){
+  const swCode = [
+    "const CACHE='bpHcmV1';",
+    "self.addEventListener('install',function(e){self.skipWaiting();e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(['/']);}));});",
+    "self.addEventListener('activate',function(e){e.waitUntil(clients.claim());});",
+    "self.addEventListener('fetch',function(e){if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).catch(function(){return caches.match('/');}));}});"
+  ].join('\n');
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(function(){});
+}
+
+window.addEventListener('DOMContentLoaded', function(){
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  if(isIOS && !isStandalone && !sessionStorage.getItem('bpIosBanner')){
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#0f1f3d;color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:-apple-system,sans-serif;box-shadow:0 -4px 20px rgba(0,0,0,.3)';
+    const icon = document.createElement('div');
+    icon.style.cssText = 'width:40px;height:40px;background:#c8a84b;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#0f1f3d;flex-shrink:0';
+    icon.textContent = 'BP';
+    const text = document.createElement('div');
+    text.style.flex = '1';
+    text.innerHTML = '<div style="font-weight:600;font-size:13px">Add to Home Screen</div><div style="font-size:11px;opacity:.65;margin-top:2px">Tap <b>Share</b> &#8594; <b>Add to Home Screen</b> for the best experience</div>';
+    const close = document.createElement('button');
+    close.style.cssText = 'background:rgba(255,255,255,.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;flex-shrink:0';
+    close.innerHTML = '&#10005;';
+    close.onclick = function(){ banner.remove(); sessionStorage.setItem('bpIosBanner','1'); };
+    banner.appendChild(icon); banner.appendChild(text); banner.appendChild(close);
+    document.body.appendChild(banner);
+  }
+});
+</script>
 </body>
 </html>
