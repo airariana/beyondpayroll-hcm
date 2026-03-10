@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="public, max-age=3600">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBmMWYzZCIvPjx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNjOGE4NGIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkJQPC90ZXh0Pjwvc3ZnPg==">
 <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjAiIGZpbGw9IiMwZjFmM2QiLz48dGV4dCB4PSI5MCIgeT0iMTIyIiBmb250LWZhbWlseT0iR2VvcmdpYSxzZXJpZiIgZm9udC1zaXplPSI5MCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2M4YTg0YiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QlA8L3RleHQ+PC9zdmc+">
 <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIkJleW9uZFBheXJvbGwgSENNIiwgInNob3J0X25hbWUiOiAiQmV5b25kUGF5cm9sbCIsICJkZXNjcmlwdGlvbiI6ICJBRFAgU2FsZXMgSW50ZWxsaWdlbmNlIFBsYXRmb3JtIiwgInN0YXJ0X3VybCI6ICIvIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZjFmM2QiLCAidGhlbWVfY29sb3IiOiAiIzBmMWYzZCIsICJvcmllbnRhdGlvbiI6ICJhbnkiLCAiaWNvbnMiOiBbeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQXhPVElnTVRreUlqNDhjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnY25nOUlqTTRJaUJtYVd4c1BTSWpNR1l4WmpOa0lpOCtQSFJsZUhRZ2VEMGlPVFlpSUhrOUlqRXpNQ0lnWm05dWRDMW1ZVzFwYkhrOUlrZGxiM0puYVdFc2MyVnlhV1lpSUdadmJuUXRjMmw2WlQwaU9UWWlJR1p2Ym5RdGQyVnBaMmgwUFNJM01EQWlJR1pwYkd3OUlpTmpPR0U0TkdJaUlIUmxlSFF0WVc1amFHOXlQU0p0YVdSa2JHVWlQa0pRUEM5MFpYaDBQand2YzNablBnPT0iLCAic2l6ZXMiOiAiMTkyeDE5MiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifSwgeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQTFNVElnTlRFeUlqNDhjbVZqZENCM2FXUjBhRDBpTlRFeUlpQm9aV2xuYUhROUlqVXhNaUlnY25nOUlqazJJaUJtYVd4c1BTSWpNR1l4WmpOa0lpOCtQSFJsZUhRZ2VEMGlNalUySWlCNVBTSXpOREFpSUdadmJuUXRabUZ0YVd4NVBTSkhaVzl5WjJsaExITmxjbWxtSWlCbWIyNTBMWE5wZW1VOUlqSTBNQ0lnWm05dWRDMTNaV2xuYUhROUlqY3dNQ0lnWm1sc2JEMGlJMk00WVRnMFlpSWdkR1Y0ZEMxaGJtTm9iM0k5SW0xcFpHUnNaU0krUWxBOEwzUmxlSFErUEM5emRtYysiLCAic2l6ZXMiOiAiNTEyeDUxMiIsICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiLCAicHVycG9zZSI6ICJhbnkgbWFza2FibGUifV19">
@@ -13,8 +14,15 @@
 <meta name="apple-mobile-web-app-title" content="BeyondPayroll">
 <meta name="application-name" content="BeyondPayroll HCM">
 <title>BeyondPayroll HCM — Sales Intelligence Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Preconnect so DNS/TLS is ready before font CSS fires -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Non-blocking font load: media=print swaps to all once loaded -->
+<link rel="stylesheet" media="print" fetchpriority="low" onload="this.media='all'"
+  href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</noscript>
 <style>
 :root {
   --white:#ffffff; --off-white:#f8f8f6; --light:#f0f0ed;
@@ -37,6 +45,32 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
 body{background:var(--off-white);color:var(--text);font-family:var(--fb);-webkit-font-smoothing:antialiased}
+
+/* ── INSTANT SPLASH — pure CSS, no JS required ── */
+#bp-splash{
+  position:fixed;inset:0;z-index:99999;
+  background:#0d1535;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  transition:opacity .4s ease .2s, visibility .4s ease .2s;
+}
+#bp-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#bp-splash-logo{
+  font-size:42px;font-weight:700;color:#c8a84b;
+  font-family:Georgia,serif;letter-spacing:-1px;
+}
+#bp-splash-sub{font-size:13px;color:rgba(255,255,255,.5);letter-spacing:2px;text-transform:uppercase;}
+#bp-splash-bar{
+  width:160px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;
+}
+#bp-splash-bar::after{
+  content:'';display:block;height:100%;width:40%;
+  background:linear-gradient(90deg,transparent,#c8a84b,transparent);
+  animation:bp-shimmer 1.2s infinite;
+}
+@keyframes bp-shimmer{
+  0%{transform:translateX(-200%)}
+  100%{transform:translateX(400%)}
+}
 
 /* ── VIEWS ── */
 .portal-view{display:none;height:100vh}
@@ -1333,6 +1367,12 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 </style>
 </head>
 <body>
+<!-- ══ INSTANT SPLASH — visible before any JS parses ══ -->
+<div id="bp-splash">
+  <div id="bp-splash-logo">BP</div>
+  <div id="bp-splash-sub">Sales Intelligence Platform</div>
+  <div id="bp-splash-bar"></div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"><span class="toast-icon" id="toast-icon">⚡</span><span id="toast-msg">Done</span></div>
@@ -1778,6 +1818,7 @@ async function doSignIn(){
   if(!isApprovedUser){showBanner('signin-err','signin-err-msg','Access denied. Contact admin@beyondpayroll.net to request access.');document.getElementById('si-pass').value='';return}
   const session={email:user.email,first:user.first,last:user.last,role:user.role};
   saveSession(session);showToast('Welcome back, '+user.first+'!');
+  const _sp=document.getElementById('bp-splash');if(_sp)_sp.classList.add('hide');
   setTimeout(()=>enterHQ(session),400);
 }
 
@@ -1794,6 +1835,9 @@ function doLogout(){
 }
 
 function enterHQ(session){
+  // Ensure splash is hidden
+  const _splash = document.getElementById('bp-splash');
+  if(_splash) _splash.classList.add('hide');
   document.getElementById('view-auth').classList.remove('active');
   document.getElementById('view-hq').classList.add('active');
   const initials=(session.first[0]+session.last[0]).toUpperCase();
@@ -1830,7 +1874,15 @@ function enterHQ(session){
   });
 }
 
-window.addEventListener('DOMContentLoaded',()=>{const s=getSession();if(s)enterHQ(s)});
+window.addEventListener('DOMContentLoaded',function(){
+  // Hide splash once DOM is ready and session check runs
+  requestAnimationFrame(function(){
+    const splash = document.getElementById('bp-splash');
+    if(splash) splash.classList.add('hide');
+  });
+  const s = getSession();
+  if(s) enterHQ(s);
+});
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     const si=document.getElementById('form-signin');
@@ -10169,7 +10221,6 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   </div><!-- /ts-body -->
 </div><!-- /ts-panel -->
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <script>
 // ═══════════════════════════════════════════════════════
