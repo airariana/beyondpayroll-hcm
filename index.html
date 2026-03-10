@@ -1782,6 +1782,9 @@ async function doSignIn(){
 }
 
 function doLogout(){
+  // Stop real-time listener
+  if(window._fbUnsubscribe){ try{window._fbUnsubscribe();}catch(e){} window._fbUnsubscribe=null; }
+  _fbDb=null; _fbOnline=false; _fbSession=null;
   clearSession();
   document.getElementById('view-hq').classList.remove('active');
   document.getElementById('view-auth').classList.add('active');
@@ -5277,120 +5280,214 @@ async function fbPullUsers(){
 async function fbInitialSync(session){
   if(!_fbDb) return;
   try{
-    // 1. Pull all prospects for this user from Firestore
+    // ── Pull remote ──────────────────────────────────────────────
     const snap = await _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
-      .orderBy('updatedAt','desc')
       .get();
     const remote = [];
     snap.forEach(function(d){ remote.push(Object.assign({id:d.id}, d.data())); });
 
-    // 2. Merge with local: remote wins for existing, keep local-only ones
+    // ── Merge: newer updatedAt wins per company ──────────────────
     const local = getProspects();
-    const merged = [...remote];
+    const merged = {};
+
+    // Index remote by Firestore doc id and by company name
+    remote.forEach(function(rp){
+      merged[rp.id] = rp;
+    });
+
+    // Walk local prospects — push any that are missing from Firestore
+    const pushJobs = [];
     local.forEach(function(lp){
-      const exists = remote.find(function(rp){
-        return rp.company===lp.company && rp.userEmail===session.email;
-      });
-      if(!exists && !lp.id){
-        // Local-only prospect — push to Firestore
-        merged.push(lp);
-        _fbDb.collection('prospects').add(
-          Object.assign({},lp,{userEmail:session.email,updatedAt:new Date().toISOString()})
-        ).then(function(r){
-          lp.id=r.id;
-          const arr=getProspects();
-          const i=arr.findIndex(function(x){return x.company===lp.company;});
-          if(i>=0){arr[i].id=r.id; saveProspectsLocal(arr);}
-        }).catch(function(e){console.warn('push local:',e.message);});
+      if(lp.id && merged[lp.id]){
+        // Both exist — keep whichever is newer
+        const remoteTs = new Date(merged[lp.id].updatedAt||0).getTime();
+        const localTs  = new Date(lp.updatedAt||0).getTime();
+        if(localTs > remoteTs){
+          // Local is newer — update Firestore
+          merged[lp.id] = lp;
+          pushJobs.push(_fbDb.collection('prospects').doc(lp.id).set(
+            Object.assign({},lp,{userEmail:session.email}),{merge:true}
+          ).catch(function(e){console.warn('fbSync push:',e.message);}));
+        }
+      } else if(!lp.id){
+        // No id at all — check by company name match in remote
+        const match = remote.find(function(rp){
+          return rp.company && lp.company &&
+                 rp.company.trim().toLowerCase()===lp.company.trim().toLowerCase();
+        });
+        if(match){
+          // Same company exists remotely — adopt its id, keep newer data
+          const remoteTs = new Date(match.updatedAt||0).getTime();
+          const localTs  = new Date(lp.updatedAt||0).getTime();
+          lp.id = match.id;
+          merged[match.id] = localTs > remoteTs ? lp : match;
+          if(localTs > remoteTs){
+            pushJobs.push(_fbDb.collection('prospects').doc(match.id).set(
+              Object.assign({},lp,{userEmail:session.email}),{merge:true}
+            ).catch(function(e){console.warn('fbSync merge:',e.message);}));
+          }
+        } else {
+          // Genuinely new local prospect — push to Firestore
+          pushJobs.push(
+            _fbDb.collection('prospects').add(
+              Object.assign({},lp,{userEmail:session.email,updatedAt:lp.updatedAt||new Date().toISOString()})
+            ).then(function(r){
+              lp.id=r.id;
+              merged[r.id]=lp;
+            }).catch(function(e){console.warn('fbSync add:',e.message);})
+          );
+        }
+      } else {
+        // lp has an id but it's not in remote — push it
+        merged[lp.id] = lp;
+        pushJobs.push(_fbDb.collection('prospects').doc(lp.id).set(
+          Object.assign({},lp,{userEmail:session.email}),{merge:true}
+        ).catch(function(e){console.warn('fbSync restore:',e.message);}));
       }
     });
 
-    saveProspectsLocal(merged);
-    renderSavedProspects();
-    if(remote.length>0) showToast('☁ '+remote.length+' prospect(s) loaded from cloud');
+    if(pushJobs.length) await Promise.all(pushJobs);
 
-    // 3. Start real-time listener for future changes
+    const finalArr = Object.values(merged).sort(function(a,b){
+      return new Date(b.updatedAt||0) - new Date(a.updatedAt||0);
+    });
+    saveProspectsLocal(finalArr);
+    renderSavedProspects();
+
+    const msg = remote.length > 0
+      ? '☁ Synced — '+finalArr.length+' prospect'+(finalArr.length!==1?'s':'')+' across devices'
+      : (finalArr.length>0 ? '☁ Local prospects backed up to cloud' : '');
+    if(msg) showToast(msg);
+
+    // Start real-time listener
     fbListen(session);
   }catch(e){
-    console.warn('fbInitialSync:',e.message);
-    // Fall back to push-only sync
-    fbSyncNow();
-    fbListen(session);
+    console.warn('fbInitialSync error:',e.message);
+    fbListen(session); // still start listener even if initial sync fails
   }
 }
 
 function fbListen(session){
-  if(!_fbDb)return;
+  if(!_fbDb) return;
+  // Unsubscribe any existing listener
+  if(window._fbUnsubscribe) try{ window._fbUnsubscribe(); }catch(e){}
   try{
-    let _firstSnap=true;
-    _fbDb.collection('prospects')
+    window._fbUnsubscribe = _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
       .orderBy('updatedAt','desc')
       .onSnapshot(function(snap){
-        // Skip the first snapshot — already handled by fbInitialSync
-        if(_firstSnap){_firstSnap=false;return;}
-        const arr=[];
-        snap.forEach(function(d){arr.push(Object.assign({id:d.id},d.data()));});
-        if(arr.length>0){
-          saveProspectsLocal(arr);
-          renderSavedProspects();
-          showToast('☁ Prospects synced from another device');
+        // Build map of incoming remote docs
+        const remote = {};
+        snap.forEach(function(d){ remote[d.id] = Object.assign({id:d.id}, d.data()); });
+
+        // Merge with current local: remote wins unless local is newer
+        const local = getProspects();
+        const localMap = {};
+        local.forEach(function(p){ if(p.id) localMap[p.id] = p; });
+
+        // Add/update from remote
+        Object.values(remote).forEach(function(rp){
+          const lp = localMap[rp.id];
+          if(!lp){
+            localMap[rp.id] = rp; // new remote prospect
+          } else {
+            const remoteTs = new Date(rp.updatedAt||0).getTime();
+            const localTs  = new Date(lp.updatedAt||0).getTime();
+            if(remoteTs >= localTs) localMap[rp.id] = rp; // remote wins tie or newer
+          }
+        });
+
+        const merged = Object.values(localMap).sort(function(a,b){
+          return new Date(b.updatedAt||0) - new Date(a.updatedAt||0);
+        });
+
+        const prevCount = local.length;
+        saveProspectsLocal(merged);
+        renderSavedProspects();
+
+        // Only toast if something actually changed
+        const changed = merged.some(function(mp){
+          const lp = local.find(function(x){return x.id===mp.id;});
+          return !lp || lp.updatedAt !== mp.updatedAt;
+        });
+        if(changed && merged.length > 0){
+          showToast('☁ '+(merged.length > prevCount ? 'New prospect synced from another device' : 'Prospects updated from another device'));
         }
-      },function(err){console.warn('Firestore listener:',err.message);});
-  }catch(e){console.warn('fbListen:',e);}
+      }, function(err){ console.warn('fbListen error:',err.message); });
+  }catch(e){ console.warn('fbListen setup:',e); }
 }
 
 async function fbSyncNow(){
-  if(!_fbDb||!_fbSession){showToast('Add Firebase config to enable cloud sync',true);return;}
+  if(!_fbDb||!_fbSession){showToast('Connect Firebase to sync across devices',true);return;}
   const arr=getProspects();
-  let n=0;
+  let pushed=0, updated=0;
   for(const p of arr){
     try{
       const d=Object.assign({},p,{userEmail:_fbSession.email,updatedAt:new Date().toISOString()});
-      if(p.id){await _fbDb.collection('prospects').doc(p.id).set(d,{merge:true});}
-      else{const r=await _fbDb.collection('prospects').add(d);p.id=r.id;n++;}
-    }catch(e){console.warn('Sync:',p.company,e.message);}
+      // Strip undefined/function values
+      Object.keys(d).forEach(function(k){if(d[k]===undefined||typeof d[k]==='function') delete d[k];});
+      if(p.id){
+        await _fbDb.collection('prospects').doc(p.id).set(d,{merge:true});
+        updated++;
+      } else {
+        const r=await _fbDb.collection('prospects').add(d);
+        p.id=r.id; pushed++;
+      }
+    }catch(e){console.warn('fbSyncNow:',p.company,e.message);}
   }
   saveProspectsLocal(arr);
   renderSavedProspects();
-  showToast(n>0?`☁ ${n} prospect(s) pushed`:'☁ Sync complete');
+  showToast('☁ Sync complete — '+(pushed+updated)+' prospect'+(pushed+updated!==1?'s':'')+' up to date');
 }
 
 async function fbSaveProspect(p){
   if(!p) return;
-  const now=new Date().toISOString();
-  p.updatedAt=now;
-  // Always stamp userEmail
-  if(_fbSession && !p.userEmail) p.userEmail=_fbSession.email;
-  // Update localStorage
-  const arr=getProspects();
-  const idx=arr.findIndex(function(x){return x.company===p.company&&x.contact===p.contact;});
-  if(idx>=0){
-    p.id=p.id||arr[idx].id;
-    p.createdAt=p.createdAt||arr[idx].createdAt||now;
-    arr[idx]=p;
+  const now = new Date().toISOString();
+  p.updatedAt = now;
+  if(_fbSession && !p.userEmail) p.userEmail = _fbSession.email;
+
+  // ── Update localStorage — match by id first, then company name ──
+  const arr = getProspects();
+  let idx = p.id ? arr.findIndex(function(x){return x.id===p.id;}) : -1;
+  if(idx < 0){
+    // fallback: match by company name (case-insensitive)
+    idx = arr.findIndex(function(x){
+      return x.company && p.company &&
+             x.company.trim().toLowerCase() === p.company.trim().toLowerCase();
+    });
+  }
+  if(idx >= 0){
+    p.id      = p.id      || arr[idx].id;
+    p.createdAt = p.createdAt || arr[idx].createdAt || now;
+    arr[idx]  = p;
   } else {
-    p.createdAt=p.createdAt||now;
+    p.createdAt = p.createdAt || now;
     arr.unshift(p);
   }
   saveProspectsLocal(arr);
   renderSavedProspects();
-  // Push to Firestore
-  if(_fbDb && _fbSession){
-    try{
-      const d=Object.assign({},p,{userEmail:_fbSession.email,updatedAt:now});
-      if(p.id){
-        await _fbDb.collection('prospects').doc(p.id).set(d,{merge:true});
-      } else {
-        const r=await _fbDb.collection('prospects').add(d);
-        p.id=r.id;
-        const local=getProspects();
-        const li=local.findIndex(function(x){return x.company===p.company&&x.contact===p.contact;});
-        if(li>=0){local[li].id=p.id;saveProspectsLocal(local);}
-      }
-    }catch(e){console.warn('fbSave:',e.message);}
-  }
+
+  // ── Push to Firestore ─────────────────────────────────────────
+  if(!_fbDb || !_fbSession) return;
+  try{
+    const d = Object.assign({}, p, {userEmail:_fbSession.email, updatedAt:now});
+    // Remove undefined/function values that Firestore rejects
+    Object.keys(d).forEach(function(k){ if(d[k]===undefined||typeof d[k]==='function') delete d[k]; });
+    if(p.id){
+      await _fbDb.collection('prospects').doc(p.id).set(d, {merge:true});
+    } else {
+      const r = await _fbDb.collection('prospects').add(d);
+      p.id = r.id;
+      // Write id back to localStorage
+      const local = getProspects();
+      const li = local.findIndex(function(x){
+        return x.company && p.company &&
+               x.company.trim().toLowerCase()===p.company.trim().toLowerCase();
+      });
+      if(li >= 0){ local[li].id = p.id; saveProspectsLocal(local); }
+    }
+  }catch(e){ console.warn('fbSaveProspect error:',e.message); }
 }
 
 // ── Profile dropdown ──────────────────────────────────────────────────
