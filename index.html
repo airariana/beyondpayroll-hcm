@@ -3537,6 +3537,118 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   });
   _observer.observe(document.body, { childList: true, subtree: true });
 
+  /* ── Patch sreRefresh to restore saved transcript ─────── */
+  // app.js sreRefresh() populates SRE fields but skips the transcript textarea.
+  // This patch fills it from _hqProspect.transcript whenever a prospect loads.
+  function patchSreRefresh() {
+    const origSre = window.sreRefresh;
+    if (!origSre) return;
+    window.sreRefresh = function() {
+      origSre.apply(this, arguments);
+      const p  = window._hqProspect;
+      const ta = document.getElementById('sre-transcript');
+      if (ta && p && p.transcript && !ta.value.trim()) {
+        ta.value = p.transcript;
+        // Fire the oninput handler so keyword detection runs automatically
+        ta.dispatchEvent(new Event('input'));
+      }
+    };
+    console.log('[ModalFix] sreRefresh transcript patch applied ✓');
+  }
+
+  /* ── Patch hqOpenScore to restore saved scores ────────── */
+  // app.js hqOpenScore() only pulls from _sreAnalysis / _atResults (live run data).
+  // When loading a saved prospect those are empty — scores show "—".
+  // This patch restores srePeoScore, sreWfnScore, sreConfidence from _hqProspect.
+  function patchHqOpenScore() {
+    const origOpen = window.hqOpenScore;
+    if (!origOpen) return;
+    window.hqOpenScore = function(track) {
+      origOpen.apply(this, arguments);
+      const p = window._hqProspect;
+      if (!p) return;
+
+      // Give app.js a tick to render the score boxes first
+      setTimeout(function() {
+        const fitEl  = document.getElementById('sc-fit');
+        const discEl = document.getElementById('sc-disc');
+        const riskEl = document.getElementById('sc-risk');
+        const oppEl  = document.getElementById('sc-opp');
+        const urgEl  = document.getElementById('sc-urg');
+
+        if (track === 'TS') {
+          if (fitEl  && !fitEl.value  && p.srePeoScore)   fitEl.value  = p.srePeoScore;
+          if (discEl && !discEl.value && p.sreConfidence) discEl.value = p.sreConfidence;
+          if (riskEl && !riskEl.value && p.sreUwRisk)     riskEl.value = p.sreUwRisk;
+        } else {
+          if (fitEl && !fitEl.value && p.sreWfnScore)     fitEl.value  = p.sreWfnScore;
+          if (oppEl && !oppEl.value && p.sreConfidence)   oppEl.value  = p.sreConfidence;
+          if (urgEl && !urgEl.value && p.sreUrgency)      urgEl.value  = p.sreUrgency;
+        }
+
+        // Re-trigger the recommendation update if any values were restored
+        if (typeof hqUpdateRec === 'function') hqUpdateRec();
+      }, 50);
+    };
+    console.log('[ModalFix] hqOpenScore score restore patch applied ✓');
+  }
+
+  /* ── Patch hqApprove to save scores back to prospect ─── */
+  // When the rep enters scores and hits Approve, save them so they
+  // restore correctly next time the panel opens.
+  function patchHqApprove() {
+    const origApprove = window.hqApprove;
+    if (!origApprove) return;
+    window.hqApprove = function() {
+      const p = window._hqProspect;
+      if (p) {
+        const track  = (document.getElementById('sap-badge')?.textContent || '').includes('TotalSource') ? 'TS' : 'WFN';
+        const fitVal  = document.getElementById('sc-fit')?.value;
+        const discVal = document.getElementById('sc-disc')?.value;
+        const riskVal = document.getElementById('sc-risk')?.value;
+        const oppVal  = document.getElementById('sc-opp')?.value;
+        const urgVal  = document.getElementById('sc-urg')?.value;
+
+        if (track === 'TS') {
+          if (fitVal)  p.srePeoScore   = fitVal;
+          if (discVal) p.sreConfidence = discVal;
+          if (riskVal) p.sreUwRisk     = riskVal;
+        } else {
+          if (fitVal)  p.sreWfnScore   = fitVal;
+          if (oppVal)  p.sreConfidence = oppVal;
+          if (urgVal)  p.sreUrgency    = urgVal;
+        }
+
+        // Persist to localStorage
+        try {
+          const arr = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
+          const idx = arr.findIndex(x => x.company === p.company);
+          if (idx >= 0) {
+            arr[idx] = Object.assign(arr[idx], p);
+            localStorage.setItem('bp_prospects', JSON.stringify(arr));
+          }
+        } catch(e) {}
+      }
+      origApprove.apply(this, arguments);
+    };
+    console.log('[ModalFix] hqApprove score save patch applied ✓');
+  }
+
+  // Apply after load
+  window.addEventListener('load', function() {
+    patchSreRefresh();
+    patchHqOpenScore();
+    patchHqApprove();
+    // Also run immediately in case prospect is already loaded
+    if (window._hqProspect) {
+      const ta = document.getElementById('sre-transcript');
+      if (ta && window._hqProspect.transcript && !ta.value.trim()) {
+        ta.value = window._hqProspect.transcript;
+        ta.dispatchEvent(new Event('input'));
+      }
+    }
+  });
+
 })();
 </script>
    Adds: AI Email Personalization, Health Score, Talk Tracks,
@@ -3778,34 +3890,221 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
     const numEE = document.getElementById('numEE')?.value || '';
     const industry = document.getElementById('industry')?.value || '';
 
-    // Build prompt
-    const prompt = `You are an elite ADP TotalSource PEO sales rep writing a sales cadence email.
+    // ── Per-touch SOP system prompts (from ADP Cadence Prose Guide) ──
+    const p = window._hqProspect || {};
+    const repName    = 'AJ';
+    const repCompany = 'ADP';
+    const repSite    = 'beyondpayroll.net';
+    const firstName  = (contactName || '').split(' ')[0] || 'there';
 
-PROSPECT INFO:
+    // Detect which cadence day/touch we're on from the touch label
+    const touchNum = parseInt((touchLabel || '').match(/\d+/)?.[0]) || 1;
+    const dayMatch = (touchLabel || '').toLowerCase();
+    const isDay1   = touchNum === 1 || dayMatch.includes('day 1');
+    const isDay2   = touchNum === 2 || dayMatch.includes('day 2');
+    const isDay8i  = dayMatch.includes('day 8') && dayMatch.includes('intel');
+    const isDay8   = touchNum === 3 || (dayMatch.includes('day 8') && !dayMatch.includes('intel'));
+    const isDay15i = dayMatch.includes('day 15') && dayMatch.includes('intel');
+    const isDay15  = touchNum === 6 || (dayMatch.includes('day 15') && !dayMatch.includes('intel'));
+    const isDay22i = dayMatch.includes('day 22') && dayMatch.includes('intel');
+    const isDay22  = touchNum === 8 || (dayMatch.includes('day 22') && !dayMatch.includes('intel'));
+    const isDay30  = touchNum === 9 || dayMatch.includes('day 30');
+
+    // Universal rules that apply to every touch
+    const UNIVERSAL_RULES = `
+UNIVERSAL WRITING RULES (non-negotiable for every touch):
+- Never render markdown. No asterisks, no ### headers, no bullet points, no bold via **.
+- Never paste raw data as a list. Always convert to flowing prose.
+- One insight per email. If you have multiple data points, pick the sharpest one.
+- Use the prospect's first name only in the greeting.
+- Sign off exactly as: — ${repName} / ${repCompany} / ${repSite} (three separate lines)
+- Never use the phrase "Worth a quick conversation?" — use a specific time ask instead.
+- Email body: 3–5 sentences for most touches. Breakup and Community Invite may go to 6.
+- Tone benchmark: a knowledgeable colleague passing along a useful heads-up — not a salesperson.
+- Never say "checking in", "just following up", "hope you're well", or "touching base".
+- Never start a sentence with "I" if you can restructure it.
+- No exclamation points. No emojis.`;
+
+    // Touch-specific system prompts directly from the SOP
+    let touchSystemPrompt = '';
+
+    if (isDay1) {
+      touchSystemPrompt = `TOUCH: Research Brief (Day 1)
+You are a post-processing formatter converting intel agent data into a human-written cold email.
+
+TOUCH-SPECIFIC RULES:
+1. Never list the prospect profile as bullet points. Weave company name, size, and state into a single natural sentence.
+2. Reference only ONE competitor threat — the most relevant one given their industry and state. Do not list all threats.
+3. End with a single low-friction question that implies you've done homework, not that you're cold-calling.
+4. Subject line must feel personal, not like a campaign — e.g. "Quick thought on ${companyName}'s HR setup".
+5. Email body: 4 sentences max.
+6. The goal is to establish credibility by showing you already know their world before they've agreed to a meeting.`;
+
+    } else if (isDay2) {
+      touchSystemPrompt = `TOUCH: Insight Hook (Day 2)
+You are a post-processing formatter converting intel agent data into a human-written email.
+
+TOUCH-SPECIFIC RULES:
+1. Lead with the financial or operational insight — not with an introduction or re-introduction.
+2. Reference specific unused ADP WFN features but frame them as a discovery, not a data report.
+3. Do not say "I noticed" more than once.
+4. Keep it under 5 sentences. No lists. No bullet points.
+5. CTA should create mild urgency: offer to pull the full breakdown — nothing harder than that.
+6. Subject line should reference the cost angle directly.
+7. The goal is to create urgency around value they're already paying for but not using.`;
+
+    } else if (isDay8i) {
+      touchSystemPrompt = `TOUCH: Mid-Cadence Intel Refresh (Day 8 — Intel Touch)
+You are a post-processing formatter converting fresh intel into a human-written email.
+
+TOUCH-SPECIFIC RULES:
+1. Open with the freshest, most specific piece of intel — not a re-introduction or recap.
+2. Do not reference previous messages. Assume they were received.
+3. One data point only. Do not stack multiple insights in the same email.
+4. The email should feel like a timely heads-up from a peer, not a follow-up from a rep working a sequence.
+5. 3 sentences max. A CTA is optional — genuine curiosity is sufficient.
+6. The goal is re-engagement through relevance, not through persistence.`;
+
+    } else if (isDay8) {
+      touchSystemPrompt = `TOUCH: Cost Benchmark (Day 8)
+You are a post-processing formatter converting benchmark data into a human-written email.
+
+TOUCH-SPECIFIC RULES:
+1. Lead with the benchmark number or gap — not with a greeting about yourself or what you do.
+2. Use one specific number or range. Do not list multiple figures.
+3. Frame the data as something pulled specifically for their profile — make it feel tailored to ${companyName}, not generic.
+4. CTA: offer to share the full benchmark report. Keep it soft — no pressure.
+5. No more than 4 sentences. No bullet points or tables.
+6. The goal is to anchor the prospect to a concrete cost comparison that makes ADP's value tangible.`;
+
+    } else if (isDay15i) {
+      touchSystemPrompt = `TOUCH: Competitive Intel Pull (Day 15 — Intel Touch)
+You are a post-processing formatter converting competitive intelligence into a human-written email.
+
+TOUCH-SPECIFIC RULES:
+1. Name the competitor and the specific move. Be concrete — vague competitive intel has no impact.
+2. Connect the competitor move directly to a risk or opportunity for ${companyName} specifically.
+3. Do not editorialize or oversell the threat. Let the data do the persuading.
+4. 3–4 sentences. Close with a soft check-in — not a hard ask or a pitch.
+5. The goal is to surface a competitor move that affects their decision window before they find out from someone else.`;
+
+    } else if (isDay15) {
+      touchSystemPrompt = `TOUCH: Compliance Trigger (Day 15)
+You are a post-processing formatter converting compliance data into a human-written email.
+
+TOUCH-SPECIFIC RULES:
+1. Open with the compliance fact — not with a sales angle. The regulation leads, not the solution.
+2. Name the specific regulation or update. Do not be vague about what changed or when.
+3. Connect the compliance gap to one specific ADP WFN feature that addresses it.
+4. Frame the entire email as informational first. The ask should feel like you're doing them a favor, not pitching.
+5. 4 sentences max. Subject line should reference compliance or their state directly.
+6. The goal is urgency through a real, time-sensitive regulatory gap — not manufactured urgency.`;
+
+    } else if (isDay22i) {
+      touchSystemPrompt = `TOUCH: Final Push Intel (Day 22 — Intel Touch)
+You are a post-processing formatter writing the last intel-driven touch in the cadence.
+
+TOUCH-SPECIFIC RULES:
+1. This is the final intel touch — it must feel like the most relevant and time-sensitive message yet.
+2. Use the sharpest, most specific data point available. Vagueness kills this email.
+3. Do not reference previous emails or mention that this is late in a cadence.
+4. Tone: peer-to-peer. Think "colleague passing along a useful heads-up" not "rep trying to close."
+5. 3 sentences max. CTA is a light nudge — not a close, not a last-chance appeal.
+6. The goal is to make this feel valuable enough to reply to on its own merits.`;
+
+    } else if (isDay22) {
+      touchSystemPrompt = `TOUCH: Breakup Email (Day 22)
+You are a post-processing formatter writing the final outreach email in the cadence.
+
+TOUCH-SPECIFIC RULES:
+1. This email must feel genuinely human and slightly self-aware. It is the only email in the cadence that can gently acknowledge the outreach itself.
+2. Reference one concrete thing from earlier in the cadence — a competitor, a compliance update, or a cost benchmark. Do not leave it fully generic.
+3. The "breakup" framing must be light — not dramatic, not guilt-inducing.
+4. End with a clear, low-pressure door-opener for the future. Make it easy to re-engage later.
+5. 5 sentences max. No links, no attachments mentioned, no bullet points.
+6. The goal: leave the door open gracefully while creating one final moment of quiet FOMO.`;
+
+    } else if (isDay30) {
+      touchSystemPrompt = `TOUCH: Community Invite (Day 30)
+You are a post-processing formatter writing the final email in the cadence — a value-add invite.
+
+TOUCH-SPECIFIC RULES:
+1. This is not a sales email. It is an invitation. The tone must reflect that completely.
+2. Lead with what they receive — not who you are or what you do.
+3. Reference an HCM Scorecard as something already prepared specifically for ${companyName} — make it feel exclusive, not templated.
+4. The briefing invite should feel like a peer event, not a vendor webinar.
+5. 4 sentences max. CTA is a simple RSVP or a reply to confirm — nothing more.
+6. The goal: re-engage with a value-add that removes all sales pressure and offers something tangible.`;
+
+    } else {
+      // Generic fallback for unlabeled touches
+      touchSystemPrompt = `TOUCH: Sales Cadence Email
+You are a post-processing formatter writing a human-sounding outreach email for ADP.
+
+TOUCH-SPECIFIC RULES:
+1. Lead with the most relevant insight for this prospect — never with pleasantries or a self-introduction.
+2. One idea per email. Do not stack multiple value propositions.
+3. Tone: knowledgeable colleague sharing a useful heads-up — not a sales rep working a sequence.
+4. 3–5 sentences max. End with a specific, low-friction ask.`;
+    }
+
+    // Tone modifier layer
+    const toneModifiers = {
+      consultative: 'Write as a trusted advisor who has done genuine homework on this company. Credibility comes from specificity.',
+      direct: 'Lead with data. Be efficient. Executives respect brevity and numbers over relationship language.',
+      urgency: 'There is a real deadline or window here — communicate it factually without manufactured pressure. Let the timing speak for itself.',
+      pattern_interrupt: 'The opening line must be unexpected. Do not start with the company name, the rep name, or a pleasantry. Start with the most surprising or counterintuitive fact you have.',
+      warm: 'Maintain warmth without sacrificing professionalism. This is a follow-up that should feel like a continuation of a real relationship, even if one hasn\'t been established yet.'
+    };
+    const toneLayer = toneModifiers[tone] || toneModifiers.consultative;
+
+    // Focus modifier layer
+    const focusModifiers = {
+      benefits: `Focus angle: Benefits cost and access. For a ${numEE || '~50'}-person ${industry || 'company'} in ${p.state || 'their state'}, the most compelling angle is what they're overpaying on premiums vs. what TotalSource's pooled buying power delivers.`,
+      compliance: `Focus angle: Compliance risk. Frame the email around a specific regulatory exposure relevant to ${industry || 'their industry'} in ${p.state || 'their state'}.`,
+      talent: `Focus angle: Talent and retention. Connect ADP's HR infrastructure to their ability to hire and keep people in a competitive market for ${industry || 'their industry'}.`,
+      payroll: `Focus angle: Payroll accuracy and efficiency. Anchor on error rates, manual processes, or multi-state complexity as the entry point.`,
+      competitive: `Focus angle: Competitive displacement. Name a specific competitor that is active in ${industry || 'their space'} and connect it to a decision window.`,
+      roi: `Focus angle: ROI and cost justification. Use a specific number — benchmark, savings estimate, or cost gap — as the email's anchor.`
+    };
+    const focusLayer = focusModifiers[focus] || focusModifiers.benefits;
+
+    // Build the full prompt
+    const prompt = `${touchSystemPrompt}
+
+PROSPECT PROFILE:
 - Company: ${companyName}
-- Contact: ${contactName}
+- First Name: ${firstName}
 - Employees: ${numEE || 'unknown'}
 - Industry: ${industry || 'unknown'}
+- State: ${p.state || 'unknown'}
+- Track: ${p.track || 'WFN'}
+- Persona: ${p.persona || 'unknown'}
 
-CADENCE TOUCH: ${touchLabel}
-TONE: ${tone}
-FOCUS: ${focus}
-EXISTING TEMPLATE (improve/personalize this):
-${existingBody || subject || '(generate fresh)'}
+TONE DIRECTION: ${toneLayer}
 
-ADDITIONAL CONTEXT / INTEL:
-${context || 'None provided'}
+FOCUS DIRECTION: ${focusLayer}
 
-WRITING RULES:
-1. Keep under 150 words — executives don't read long emails
-2. One specific, relevant insight or number anchored to their profile
-3. Clear, specific CTA at the end (15-minute call, a specific date/time question)
-4. Never say "checking in", "just following up", "hope you're well", or "touching base"
-5. Sound like a consultative advisor, not a salesperson
-6. If tone is "breakup", make it respectful and leave the door open
-7. No subject line needed — just the email body
+EXISTING EMAIL TEMPLATE TO IMPROVE (rewrite or personalize this):
+${existingBody || subject || '(no template — generate fresh from prospect profile)'}
 
-Write only the email body. No preamble, no explanation.`;
+ADDITIONAL INTEL / CONTEXT FROM REP:
+${context || 'None provided — use prospect profile and focus direction only.'}
+
+${UNIVERSAL_RULES}
+
+OUTPUT FORMAT:
+Subject: [subject line]
+
+Hi ${firstName},
+
+[Email body — prose only, 3–5 sentences, no markdown, no lists]
+
+— ${repName}
+${repCompany}
+${repSite}
+
+Write only the subject line and email body as shown above. No preamble, no explanation, no alternatives.`;
 
     // UI: loading state
     btn.disabled = true;
