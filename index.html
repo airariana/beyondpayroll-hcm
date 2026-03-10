@@ -1127,18 +1127,157 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .sre-action-btn.secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border)}
 .sre-action-btn.secondary:hover{border-color:var(--text);background:var(--off-white)}
 /* Image upload vision */
-.img-scan-wrap{border:1.5px dashed var(--border-2);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--off-white)}
-.img-scan-wrap:hover{border-color:var(--text-2);background:var(--white)}
-.img-scan-wrap.drag{border-color:var(--blue);background:var(--blue-bg)}
-.img-scan-icon{font-size:24px;margin-bottom:6px}
-.img-scan-lbl{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:3px}
-.img-scan-sub{font-size:11px;color:var(--text-3)}
-.img-scan-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.img-scan-preview{width:100%;max-height:120px;object-fit:contain;border-radius:5px;margin-bottom:10px;display:none}
-.img-scan-progress{font-size:11px;color:var(--blue);font-weight:600;display:none;margin-top:8px}
+/* ══ AI Import Drop Zone ══════════════════════════════════════ */
+.img-scan-wrap{
+  position:relative;border-radius:12px;padding:0;margin-bottom:0;
+  background:linear-gradient(135deg,var(--navy) 0%,#1a2460 100%);
+  overflow:hidden;cursor:pointer;transition:all .2s;
+}
+.img-scan-wrap::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 70% 50%,rgba(184,146,10,.18) 0%,transparent 65%);
+  pointer-events:none;
+}
+.img-scan-wrap:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(13,21,53,.25)}
+.img-scan-wrap.drag{box-shadow:0 0 0 2px var(--gold),0 8px 32px rgba(184,146,10,.2)}
+.mf-dz-inner{display:flex;align-items:center;gap:14px;padding:14px 18px}
+.mf-dz-icon-wrap{
+  width:42px;height:42px;border-radius:10px;flex-shrink:0;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  transition:all .2s;
+}
+.img-scan-wrap:hover .mf-dz-icon-wrap,.img-scan-wrap.drag .mf-dz-icon-wrap{
+  background:rgba(184,146,10,.25);border-color:rgba(184,146,10,.4);
+}
+.mf-dz-text{flex:1;min-width:0}
+.img-scan-lbl{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;letter-spacing:.1px}
+.img-scan-sub{font-size:11px;color:rgba(255,255,255,.5);line-height:1.4}
+.img-scan-progress{font-size:11px;color:rgba(255,255,255,.7);font-weight:600;margin-top:3px;display:none}
 .img-scan-progress.show{display:block}
-.img-scan-result-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);border:1px solid var(--green-border);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green);margin-top:8px;display:none}
+.mf-dz-cta{
+  flex-shrink:0;padding:6px 14px;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);border-radius:6px;
+  font-size:11px;font-weight:700;color:#fff;letter-spacing:.5px;
+  font-family:var(--fb);white-space:nowrap;transition:all .15s;
+}
+.img-scan-wrap:hover .mf-dz-cta{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.35)}
+/* Progress bar — sits at bottom of drop zone */
+.mf-progress-bar{height:3px;background:rgba(255,255,255,.1);border-radius:0 0 12px 12px;overflow:hidden;display:none;position:absolute;bottom:0;left:0;right:0}
+.mf-progress-bar.show{display:block}
+.mf-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),#e8c840);border-radius:0;transition:width .35s ease;width:0%}
+/* Success badge */
+.img-scan-result-badge{
+  display:none;align-items:center;gap:6px;
+  background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);
+  border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;
+  color:#4ade80;margin-top:8px;
+}
 .img-scan-result-badge.show{display:inline-flex}
+/* File chips */
+.mf-chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 18px 10px;border-top:1px solid rgba(255,255,255,.08)}
+.mf-chips:empty{display:none}
+.mf-chip{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;padding:3px 8px 3px 7px;
+  font-size:10px;font-weight:600;color:rgba(255,255,255,.85);max-width:150px;
+}
+.mf-chip-icon{font-size:11px;flex-shrink:0}
+.mf-chip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mf-chip-rm{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:11px;padding:0 0 0 2px;line-height:1;flex-shrink:0;transition:color .12s}
+.mf-chip-rm:hover{color:#f87171}
+/* Analyze button */
+.mf-analyze-btn{
+  width:100%;margin-top:10px;padding:11px;
+  background:linear-gradient(135deg,var(--navy) 0%,#1a2460 100%);
+  color:#fff;border:1.5px solid rgba(255,255,255,.12);border-radius:9px;
+  font-family:var(--fb);font-weight:700;font-size:12px;letter-spacing:.6px;
+  cursor:pointer;transition:all .18s;display:none;position:relative;overflow:hidden;
+}
+.mf-analyze-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(184,146,10,.15),transparent);pointer-events:none}
+.mf-analyze-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(13,21,53,.3);border-color:var(--gold-border)}
+.mf-analyze-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.mf-analyze-btn.show{display:block}
+/* ══ Standard Form Field Styling ═══════════════════════════════ */
+.pm-section{margin-bottom:18px}
+.pm-section-hdr{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px;
+  padding-bottom:7px;border-bottom:1px solid var(--border);
+}
+.pm-section-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+}
+.pm-section-dot.navy{background:var(--navy)}
+.pm-section-dot.gold{background:var(--gold)}
+.pm-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-3)}
+.pm-field-grid{display:grid;gap:8px}
+.pm-field-grid.g2{grid-template-columns:1fr 1fr}
+.pm-field-grid.g3{grid-template-columns:1fr 1fr 1fr}
+.pm-field-grid.g1{grid-template-columns:1fr}
+/* ══ AI Extra Field Cards (draggable) ══════════════════════════ */
+.dyn-fields-container{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.dyn-card{
+  display:flex;align-items:stretch;
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:9px;overflow:hidden;transition:all .18s;
+  cursor:default;user-select:none;
+}
+.dyn-card:hover{border-color:var(--gold-border);box-shadow:0 2px 10px rgba(184,146,10,.1)}
+.dyn-card.dragging{opacity:.45;border-style:dashed;transform:scale(.98)}
+.dyn-card.drag-over{border-color:var(--gold);background:var(--gold-bg);box-shadow:0 0 0 2px rgba(184,146,10,.2)}
+.dyn-card-grip{
+  width:28px;flex-shrink:0;background:var(--off-white);border-right:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:grab;
+  color:var(--text-3);font-size:11px;transition:background .15s;letter-spacing:0;
+}
+.dyn-card-grip:active{cursor:grabbing}
+.dyn-card:hover .dyn-card-grip{background:var(--light);color:var(--text-2)}
+.dyn-card-body{flex:1;display:grid;grid-template-columns:120px 1fr;align-items:center;min-height:0}
+.dyn-card-lbl{
+  padding:9px 10px 9px 12px;font-size:10px;font-weight:700;
+  text-transform:uppercase;letter-spacing:1px;color:var(--text-3);
+  border-right:1px solid var(--border);background:rgba(248,248,246,.6);
+  line-height:1.3;
+}
+.dyn-card-inp{
+  border:none;outline:none;padding:9px 12px;font-size:12px;
+  font-family:var(--fb);color:var(--text);background:transparent;
+  width:100%;box-sizing:border-box;
+}
+.dyn-card-inp:focus{background:rgba(184,146,10,.03)}
+.dyn-card-tag{
+  padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.8px;margin-right:8px;flex-shrink:0;
+}
+.dyn-card-tag.sales{background:rgba(239,68,68,.08);color:#dc2626}
+.dyn-card-tag.comp{background:rgba(168,85,247,.08);color:#9333ea}
+.dyn-card-tag.fin{background:rgba(22,163,74,.08);color:#16a34a}
+.dyn-card-tag.time{background:rgba(234,88,12,.08);color:#ea580c}
+/* ══ AI Insights Panel ════════════════════════════════════════= */
+.dyn-insights-panel{
+  margin-top:12px;border-radius:10px;overflow:hidden;
+  border:1.5px solid var(--gold-border);
+}
+.dyn-insights-hdr{
+  display:flex;align-items:center;gap:8px;padding:9px 14px;
+  background:linear-gradient(135deg,var(--navy),#1a2460);
+}
+.dyn-insights-hdr-icon{font-size:14px}
+.dyn-insights-hdr-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.9);flex:1}
+.dyn-insights-hdr-src{font-size:9px;color:rgba(255,255,255,.4);font-style:italic}
+.dyn-insight-item{
+  display:flex;align-items:flex-start;gap:0;
+  border-bottom:1px solid rgba(232,212,138,.15);
+}
+.dyn-insight-item:last-child{border-bottom:none}
+.dyn-insight-k{
+  padding:8px 12px;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--gold);min-width:120px;flex-shrink:0;
+  background:rgba(184,146,10,.04);border-right:1px solid rgba(232,212,138,.2);
+  line-height:1.4;
+}
+.dyn-insight-v{padding:8px 12px;font-size:11px;color:var(--text);line-height:1.55;flex:1}
 
 /* ═══════════════════════════════════════════
    SALES AGENT TAB STYLES
@@ -1205,46 +1344,77 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
     <div class="modal-title">New Prospect</div>
     <div class="modal-sub">Enter prospect details to initialize the 30-day cadence</div>
 
-    <!-- IMAGE SCAN -->
-    <div style="margin-bottom:16px">
-      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">📸 Auto-Fill via Image Scan</div>
-      <div class="img-scan-wrap" id="imgScanWrap" ondragover="imgDragOver(event)" ondragleave="imgDragLeave(event)" ondrop="imgDrop(event)">
-        <input type="file" class="img-scan-input" id="imgScanInput" accept="image/*,.pdf,.txt,.png,.jpg,.jpeg" onchange="imgFileSelected(event)">
-        <img id="imgScanPreview" class="img-scan-preview" alt="Preview">
-        <div id="imgScanIcon" class="img-scan-icon">📄</div>
-        <div class="img-scan-lbl" id="imgScanLbl">Drop business card, doc, or Gong transcript here</div>
-        <div class="img-scan-sub" id="imgScanSub">Business cards · Letterheads · Screenshots · Gong transcripts — auto-populates fields &amp; SRE pain points</div>
-        <div class="img-scan-progress" id="imgScanProgress">⟳ Extracting text with AI Vision...</div>
-        <div class="img-scan-result-badge" id="imgScanBadge">✓ Fields auto-filled from scan</div>
+    <!-- ── AI IMPORT DROP ZONE ─────────────────────────── -->
+    <div style="margin-bottom:18px">
+      <div class="img-scan-wrap" id="imgScanWrap" ondragover="mfDragOver(event)" ondragleave="mfDragLeave(event)" ondrop="mfDrop(event)" onclick="document.getElementById('mfFileInput').click()">
+        <input type="file" id="mfFileInput" style="display:none" accept="image/*,.pdf,.txt,.png,.jpg,.jpeg" multiple onchange="mfFilesSelected(event)">
+        <div class="mf-dz-inner">
+          <div class="mf-dz-icon-wrap" id="imgScanIcon">📂</div>
+          <div class="mf-dz-text">
+            <div class="img-scan-lbl" id="imgScanLbl">Drop files to auto-build profile</div>
+            <div class="img-scan-sub" id="imgScanSub">Business cards · LinkedIn · PDFs · emails · screenshots</div>
+            <div class="img-scan-progress" id="imgScanProgress"></div>
+          </div>
+          <div class="mf-dz-cta" id="mfDzCta">BROWSE</div>
+        </div>
+        <div class="mf-chips" id="mfChips"></div>
+        <div class="mf-progress-bar" id="mfProgressBar"><div class="mf-progress-fill" id="mfProgressFill"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <button class="mf-analyze-btn" id="mfAnalyzeBtn" onclick="mfAnalyzeAll()" style="flex:1;margin:0">⚡ BUILD PROFILE FROM FILES</button>
+        <div class="img-scan-result-badge" id="imgScanBadge" style="margin:0;flex-shrink:0">✓ Profile built</div>
       </div>
     </div>
 
-    <div class="field-row" style="margin-bottom:14px">
-      <div><label class="fl">Company Name *</label><input class="fi" id="f-company" placeholder="Acme Corp"></div>
-      <div><label class="fl">Contact Name</label><input class="fi" id="f-contact" placeholder="Jane Smith"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div><label class="fl">Email</label><input class="fi" id="f-email" type="email" placeholder="jane@acme.com"></div>
-      <div><label class="fl">Phone</label><input class="fi" id="f-phone" placeholder="(555) 000-0000"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
-      <div><label class="fl">Industry</label><input class="fi" id="f-industry" placeholder="Manufacturing"></div>
-      <div><label class="fl">State</label><input class="fi" id="f-state" placeholder="TX"></div>
-      <div><label class="fl">Headcount</label><input class="fi" id="f-headcount" placeholder="75"></div>
-    </div>
-    <div style="margin-bottom:14px">
-      <label class="fl">Persona / Decision Maker</label>
-      <select class="fi" id="f-persona">
-        <option>CFO</option><option>HR Director</option><option>VP HR</option>
-        <option>Controller</option><option>CEO/Owner</option><option>Operations</option>
-      </select>
-    </div>
-    <div style="margin-bottom:14px">
-      <label class="fl">LinkedIn URL</label>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input class="fi" id="f-linkedin" placeholder="linkedin.com/in/janesmith" style="flex:1;margin-bottom:0">
-        <button onclick="openLinkedIn()" title="Open LinkedIn profile" style="flex-shrink:0;padding:8px 12px;background:#0077B5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--fb)">in</button>
+    <!-- ── FORM SECTIONS ──────────────────────────────── -->
+    <div id="dyn-form-wrap">
+
+      <!-- IDENTITY -->
+      <div class="pm-section">
+        <div class="pm-section-hdr">
+          <div class="pm-section-dot navy"></div>
+          <span class="pm-section-lbl">Identity</span>
+        </div>
+        <div class="pm-field-grid g2" style="margin-bottom:8px">
+          <div><label class="fl">Company Name *</label><input class="fi" id="f-company" placeholder="Acme Corp"></div>
+          <div><label class="fl">Contact Name</label><input class="fi" id="f-contact" placeholder="Jane Smith"></div>
+        </div>
+        <div class="pm-field-grid g2" style="margin-bottom:8px">
+          <div><label class="fl">Email</label><input class="fi" id="f-email" type="email" placeholder="jane@acme.com"></div>
+          <div><label class="fl">Phone</label><input class="fi" id="f-phone" placeholder="(555) 000-0000"></div>
+        </div>
+        <div>
+          <label class="fl">LinkedIn URL</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input class="fi" id="f-linkedin" placeholder="linkedin.com/in/janesmith" style="flex:1;margin-bottom:0">
+            <button onclick="openLinkedIn()" title="Open LinkedIn" style="flex-shrink:0;padding:8px 12px;background:#0077B5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--fb)">in</button>
+          </div>
+        </div>
       </div>
+
+      <!-- FIRMOGRAPHIC -->
+      <div class="pm-section">
+        <div class="pm-section-hdr">
+          <div class="pm-section-dot navy"></div>
+          <span class="pm-section-lbl">Company Profile</span>
+        </div>
+        <div class="pm-field-grid g3" style="margin-bottom:8px">
+          <div><label class="fl">Industry</label><input class="fi" id="f-industry" placeholder="Manufacturing"></div>
+          <div><label class="fl">State</label><input class="fi" id="f-state" placeholder="TX" maxlength="2"></div>
+          <div><label class="fl">Headcount</label><input class="fi" id="f-headcount" placeholder="75" type="number"></div>
+        </div>
+        <div>
+          <label class="fl">Persona / Decision Maker</label>
+          <select class="fi" id="f-persona">
+            <option>CFO</option><option>HR Director</option><option>VP HR</option>
+            <option>Controller</option><option>CEO/Owner</option><option>Operations</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- AI-DISCOVERED FIELDS — rendered dynamically below -->
+      <div id="dyn-fields-grid" style="display:none"></div>
+
     </div>
     <div class="modal-footer" style="flex-direction:column;gap:10px;align-items:stretch">
       <div style="display:flex;gap:8px">
@@ -2779,8 +2949,15 @@ window.hqTab=function(tab){
   document.getElementById('hq-container').scrollTop=0;
 };
 
-window.openModal=function(){document.getElementById('prospectModal').classList.add('open')};
-window.closeModal=function(){document.getElementById('prospectModal').classList.remove('open')};
+window.openModal=function(){
+  document.getElementById('prospectModal').classList.add('open');
+};
+window.closeModal=function(){
+  document.getElementById('prospectModal').classList.remove('open');
+  // Reset multi-file import on cancel
+  _mfFiles=[]; window._mfProfileSummary='';
+  if(typeof mfRenderChips==='function') mfRenderChips();
+};
 window.selectTrack=function(t){
   selectedRole=t;
   const wfnEl=document.getElementById('trackOptWFN');
@@ -2792,10 +2969,67 @@ window.selectTrack=function(t){
 // ═══════════════════════════════════════════════════════
 // GOOGLE VISION IMAGE SCAN — Auto-fill prospect fields
 // ═══════════════════════════════════════════════════════
-function imgDragOver(e){e.preventDefault();document.getElementById('imgScanWrap').classList.add('drag')}
-function imgDragLeave(){document.getElementById('imgScanWrap').classList.remove('drag')}
-function imgDrop(e){e.preventDefault();imgDragLeave();const f=e.dataTransfer.files[0];if(f)imgProcess(f)}
-function imgFileSelected(e){const f=e.target.files[0];if(f)imgProcess(f)}
+// ── Multi-File AI Import ─────────────────────────────────────────
+let _mfFiles = [];
+
+function mfDragOver(e){e.preventDefault();document.getElementById('imgScanWrap').classList.add('drag');}
+function mfDragLeave(){document.getElementById('imgScanWrap').classList.remove('drag');}
+function mfDrop(e){
+  e.preventDefault(); e.stopPropagation();
+  mfDragLeave();
+  mfAddFiles(Array.from(e.dataTransfer.files));
+}
+function mfFilesSelected(e){
+  mfAddFiles(Array.from(e.target.files));
+  e.target.value=''; // allow re-selecting same file
+}
+function mfAddFiles(files){
+  files.forEach(function(f){
+    const dup = _mfFiles.find(function(x){return x.name===f.name&&x.size===f.size;});
+    if(!dup) _mfFiles.push(f);
+  });
+  mfRenderChips();
+}
+function mfRemoveFile(idx){
+  _mfFiles.splice(idx,1);
+  mfRenderChips();
+}
+function mfFileIcon(f){
+  const t = f.type||'';
+  if(t.startsWith('image/')) return '🖼';
+  if(t==='application/pdf') return '📄';
+  if(t==='text/plain') return '📝';
+  return '📎';
+}
+function mfRenderChips(){
+  const wrap = document.getElementById('mfChips');
+  const btn  = document.getElementById('mfAnalyzeBtn');
+  const icon = document.getElementById('imgScanIcon');
+  const lbl  = document.getElementById('imgScanLbl');
+  const sub  = document.getElementById('imgScanSub');
+  const badge= document.getElementById('imgScanBadge');
+  if(!wrap) return;
+  badge.classList.remove('show');
+  if(_mfFiles.length===0){
+    wrap.innerHTML='';
+    btn.classList.remove('show');
+    icon.style.display='';
+    lbl.textContent='Drop files here or click to browse';
+    sub.style.display='';
+    return;
+  }
+  icon.style.display='none';
+  lbl.textContent=_mfFiles.length+' file'+ (_mfFiles.length!==1?'s':'') +' queued';
+  sub.style.display='none';
+  wrap.innerHTML=_mfFiles.map(function(f,i){
+    return '<div class="mf-chip">'+
+      '<span class="mf-chip-icon">'+mfFileIcon(f)+'</span>'+
+      '<span class="mf-chip-name" title="'+f.name+'">'+f.name+'</span>'+
+      '<button class="mf-chip-rm" onclick="event.stopPropagation();mfRemoveFile('+i+')" title="Remove">&#10005;</button>'+
+    '</div>';
+  }).join('');
+  btn.classList.add('show');
+}
 
 // ── Gong transcript → SRE pain point keyword map ─────────────────────
 // Loaded from gong-keywords.json — edit that file to add/remove triggers
@@ -2897,153 +3131,303 @@ function sreApplyFromScan(parsed){
   if(typeof sreRefresh==='function') sreRefresh();
 }
 
-async function imgProcess(file){
-  const preview=document.getElementById('imgScanPreview');
-  const progress=document.getElementById('imgScanProgress');
-  const badge=document.getElementById('imgScanBadge');
-  const icon=document.getElementById('imgScanIcon');
-  const lbl=document.getElementById('imgScanLbl');
-  const sub=document.getElementById('imgScanSub');
+async function mfAnalyzeAll(){
+  if(_mfFiles.length===0){showToast('Add at least one file first',true);return;}
+  const progress = document.getElementById('imgScanProgress');
+  const badge    = document.getElementById('imgScanBadge');
+  const bar      = document.getElementById('mfProgressBar');
+  const fill     = document.getElementById('mfProgressFill');
+  const btn      = document.getElementById('mfAnalyzeBtn');
+  const lbl      = document.getElementById('imgScanLbl');
+
   badge.classList.remove('show');
-  // Show preview
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    preview.src=ev.target.result;
-    preview.style.display='block';
-  };
-  reader.readAsDataURL(file);
-  icon.style.display='none';
-  lbl.textContent='Scanning with Gemini Vision...';
-  sub.style.display='none';
-  progress.classList.add('show');
-  // Convert to base64
-  const base64=await new Promise(res=>{
-    const r=new FileReader();
-    r.onload=()=>res(r.result.split(',')[1]);
-    r.readAsDataURL(file);
-  });
-  // Detect if this looks like a Gong transcript (text-heavy) vs a contact card
-  const isTranscript=file.type==='text/plain'||file.name.toLowerCase().includes('transcript')||file.name.toLowerCase().includes('gong');
-  const prompt=isTranscript
-    ? `This is a Gong call transcript or sales notes document. Extract ALL of the following and return ONLY valid JSON, no markdown:
+  btn.disabled = true;
+  btn.textContent = '⟳ Analyzing files...';
+  bar.classList.add('show');
+  fill.style.width = '0%';
+
+  // ── Read all files ────────────────────────────────────────────
+  const parts = [];
+  for(let i=0;i<_mfFiles.length;i++){
+    const f = _mfFiles[i];
+    lbl.textContent = 'Reading '+f.name+' ('+(i+1)+'/'+_mfFiles.length+')...';
+    fill.style.width = Math.round(((i+0.5)/_mfFiles.length)*55)+'%';
+    try{
+      if(f.type==='text/plain'||f.name.match(/\.(txt|csv|md)$/i)){
+        const text = await new Promise(function(res,rej){const r=new FileReader();r.onload=function(e){res(e.target.result);};r.onerror=rej;r.readAsText(f);});
+        parts.push({text:'[FILE '+(i+1)+': '+f.name+' -- text content below]\n'+text});
+      } else {
+        const b64 = await new Promise(function(res,rej){const r=new FileReader();r.onload=function(e){res(e.target.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(f);});
+        parts.push({text:'[FILE '+(i+1)+': '+f.name+']'});
+        parts.push({inline_data:{mime_type:f.type||'image/jpeg',data:b64}});
+      }
+    }catch(e){console.warn('mfRead:',f.name,e);}
+  }
+
+  fill.style.width = '60%';
+  lbl.textContent = 'AI building prospect profile from '+_mfFiles.length+' file'+(_mfFiles.length!==1?'s':'')+'...';
+
+  const prompt = `You are a senior ADP sales intelligence analyst. I am giving you ${_mfFiles.length} file(s) about a prospect — images, PDFs, screenshots, emails, transcripts, or any combination. Read ALL of them together and build the most complete, useful client prospect profile possible.
+
+Return ONLY a valid JSON object. No markdown. No explanation. The structure must be exactly:
 {
-  "company": "",
-  "contact": "",
-  "title": "",
-  "email": "",
-  "phone": "",
-  "industry": "",
-  "state": "",
-  "headcount": "",
-  "linkedin": "",
-  "client_type": "new or existing",
-  "adp_products": ["run","classic","wfn","ts","etime","other"],
-  "pain_points": ["sre-401k","sre-wc","sre-aca","sre-benefits","sre-tax","sre-platform","sre-gl","sre-support","sre-i9","sre-multi","sre-manual"],
-  "transcript_text": "full verbatim text of the document"
+  "core": {
+    "company": "",
+    "contact": "",
+    "title": "",
+    "email": "",
+    "phone": "",
+    "linkedin": ""
+  },
+  "fields": [
+    { "label": "Industry", "value": "", "group": "firmographic" },
+    { "label": "State", "value": "", "group": "firmographic" },
+    { "label": "Headcount", "value": "", "group": "firmographic" }
+  ],
+  "insights": [
+    { "label": "Pain Point", "value": "" }
+  ],
+  "sre": {
+    "client_type": "new or existing",
+    "adp_products": [],
+    "pain_points": [],
+    "transcript_text": ""
+  },
+  "summary": ""
 }
-Rules:
-- client_type: "existing" if they currently use any ADP product, "new" if net-new prospect
-- adp_products: ONLY include products explicitly mentioned as currently in use
-- pain_points: include ONLY the IDs from the list above where the transcript clearly mentions that pain. Map these keywords: 401k/retirement→sre-401k, workers comp/mod rate→sre-wc, ACA/1095→sre-aca, benefits error/cobra→sre-benefits, multi-state tax/nexus→sre-tax, system down/platform issue→sre-platform, GL/ledger/ERP→sre-gl, no response/support issue→sre-support, I-9/e-verify→sre-i9, multiple entities/EINs→sre-multi, manual/spreadsheet/rekeying→sre-manual
-- state: 2-letter abbreviation
-- headcount: number only
-- Use "" for any field not found`
-    : `Extract contact and company info from this image (business card, letterhead, screenshot, or any document). Also identify any ADP product mentions and business pain points. Return ONLY valid JSON, no markdown:
-{
-  "company": "",
-  "contact": "",
-  "title": "",
-  "email": "",
-  "phone": "",
-  "industry": "",
-  "state": "",
-  "headcount": "",
-  "linkedin": "",
-  "client_type": "new or existing",
-  "adp_products": [],
-  "pain_points": [],
-  "transcript_text": ""
-}
-Rules: state=2-letter abbrev, headcount=number only, client_type="existing" if ADP product visible, pain_points from: [sre-401k,sre-wc,sre-aca,sre-benefits,sre-tax,sre-platform,sre-gl,sre-support,sre-i9,sre-multi,sre-manual]. Use "" for missing fields.`;
+
+INSTRUCTIONS:
+- core: always populate these 6 fields if data exists. These are the minimum required fields.
+- fields: this is open-ended. Include ANY field that would be useful for a sales rep preparing for a discovery call. Standard ones: Industry, State, Headcount, Website, HQ Address. But also add any that appear in the files: Current Vendor, Contract End Date, Decision Timeline, Key Stakeholders, Annual Revenue, Number of Locations, ERP/HRIS System, Benefits Broker, Recent News, Competitive Risk, Objections Raised, Budget Mentioned, etc. Only include fields where you actually found data. Each field needs: label (clear human-readable name), value (the data), group (one of: firmographic | contact_info | sales_intel | competitive | financial | timeline).
+- insights: list of key intelligence points a sales rep must know — pain points confirmed, signals spotted, risks, opportunities. Each needs label and value.
+- sre: pain_points must only use these exact IDs where evidence exists: sre-401k, sre-wc, sre-aca, sre-benefits, sre-tax, sre-platform, sre-gl, sre-support, sre-i9, sre-multi, sre-manual. adp_products only if currently in use.
+- summary: 3-4 sentence executive brief for the sales rep — who this prospect is, what they need, why they are a strong ADP opportunity, and recommended first move.
+- Use "" or [] for anything not found. Do not guess or hallucinate values.`;
+
+  parts.push({text: prompt});
 
   try{
-    const resp=await fetch(window.CF_WORKER_URL||'https://beyondpayroll-proxy.aj-3ab.workers.dev',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-Service':'gemini'},
-      body:JSON.stringify({
-        contents:[{
-          parts:[
-            {inline_data:{mime_type:file.type||'image/jpeg',data:base64}},
-            {text:prompt}
-          ]
-        }]
-      })
+    const resp = await fetch(window.CF_WORKER_URL||'https://beyondpayroll-proxy.aj-3ab.workers.dev',{
+      method:'POST', headers:{'Content-Type':'application/json','X-Service':'gemini'},
+      body:JSON.stringify({contents:[{parts}]})
     });
-    const data=await resp.json();
-    // Gemini response format: candidates[0].content.parts[0].text
-    const raw=(data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts
-      ? data.candidates[0].content.parts.map(p=>p.text||'').join('')
-      : (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('')
+    const data = await resp.json();
+    const raw = (data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts
+      ? data.candidates[0].content.parts.map(function(p){return p.text||'';}).join('')
+      : (data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('')
     );
-    const clean=raw.replace(/```json|```/g,'').trim();
-    const parsed=JSON.parse(clean);
+    const clean = raw.replace(/```json[\s\S]*?```|```/g,'').trim();
+    const parsed = JSON.parse(clean);
 
-    // ── 1. Prospect modal fields ──────────────────────────────────────
-    if(parsed.company)   document.getElementById('f-company').value=parsed.company;
-    if(parsed.contact)   document.getElementById('f-contact').value=parsed.contact;
-    if(parsed.email)     document.getElementById('f-email').value=parsed.email;
-    if(parsed.phone)     document.getElementById('f-phone').value=parsed.phone;
-    if(parsed.industry)  document.getElementById('f-industry').value=parsed.industry;
-    if(parsed.state)     document.getElementById('f-state').value=parsed.state;
-    if(parsed.headcount) document.getElementById('f-headcount').value=parsed.headcount;
-    if(parsed.linkedin)  document.getElementById('f-linkedin').value=parsed.linkedin;
-    if(parsed.title){
-      const t=parsed.title.toLowerCase();
-      const sel=document.getElementById('f-persona');
-      if(t.includes('cfo')||t.includes('finance'))             sel.value='CFO';
-      else if(t.includes('hr dir'))                            sel.value='HR Director';
-      else if(t.includes('vp hr')||t.includes('vp, hr'))       sel.value='VP HR';
-      else if(t.includes('controller'))                        sel.value='Controller';
-      else if(t.includes('ceo')||t.includes('owner')||t.includes('president')) sel.value='CEO/Owner';
-      else if(t.includes('oper'))                              sel.value='Operations';
-    }
+    fill.style.width = '80%';
 
-    // ── 2. SRE — run keyword fallback on transcript_text if pains not detected ─
-    if(parsed.transcript_text&&(!parsed.pain_points||!parsed.pain_points.length)){
-      parsed.pain_points=gongMapPains(parsed.transcript_text);
-    }
-    // Also detect client type from transcript text as fallback
-    if(parsed.transcript_text&&!parsed.client_type){
-      const detected=gongDetectClientType(parsed.transcript_text);
-      if(!parsed.client_type) parsed.client_type=detected.clientType;
-      if(!parsed.adp_products||!parsed.adp_products.length) parsed.adp_products=detected.adpProducts;
-    }
+    // ── Store full AI result for saveProspect ─────────────────
+    window._mfAIResult = parsed;
 
-    // ── 3. Apply to SRE panel ─────────────────────────────────────────
-    sreApplyFromScan(parsed);
+    // ── Populate core hidden fields (SRE compatibility) ───────
+    const c = parsed.core||{};
+    document.getElementById('f-company').value  = c.company||'';
+    document.getElementById('f-contact').value  = c.contact||'';
+    document.getElementById('f-email').value    = c.email||'';
+    document.getElementById('f-phone').value    = c.phone||'';
+    document.getElementById('f-linkedin').value = c.linkedin||'';
 
-    const painCount=(parsed.pain_points||[]).length;
-    const fieldCount=[parsed.company,parsed.contact,parsed.email,parsed.phone].filter(Boolean).length;
-    progress.classList.remove('show');
-    badge.classList.add('show');
-    lbl.textContent='Scan complete — '+fieldCount+' fields + '+painCount+' pain point'+(painCount!==1?'s':'')+' detected';
-    showToast('✓ Scan complete — SRE auto-populated');
-      // ── 3. Auto-fill SRE transcript field with extracted text ─────────
-    if(parsed.transcript_text){
+    // Map standard fields to hidden legacy inputs
+    const fields = parsed.fields||[];
+    fields.forEach(function(f){
+      const lc = (f.label||'').toLowerCase();
+      if(lc==='industry')  document.getElementById('f-industry').value  = f.value||'';
+      if(lc==='state')     document.getElementById('f-state').value     = (f.value||'').toUpperCase().substring(0,2);
+      if(lc==='headcount') document.getElementById('f-headcount').value = (f.value||'').replace(/\D/g,'');
+      if(lc.includes('persona')||lc.includes('title')||lc.includes('decision'))
+        dynSetPersona(c.title||f.value||'');
+    });
+    if(c.title) dynSetPersona(c.title);
+
+    // ── Render the dynamic form ───────────────────────────────
+    dynRenderForm(parsed);
+
+    // ── Apply SRE data ────────────────────────────────────────
+    if(parsed.sre) sreApplyFromScan(parsed.sre);
+    if(parsed.sre&&parsed.sre.transcript_text){
       const ta=document.getElementById('sre-transcript');
-      if(ta&&!ta.value) ta.value=parsed.transcript_text;
+      if(ta&&!ta.value) ta.value=parsed.sre.transcript_text;
     }
+
+    // ── Build notes from summary ──────────────────────────────
+    const srcLine = 'Sources: '+_mfFiles.map(function(f){return f.name;}).join(', ');
+    window._mfProfileSummary = srcLine+'\n\n'+(parsed.summary||'');
+
+    fill.style.width = '100%';
+    const fieldCount = fields.filter(function(f){return f.value;}).length;
+    const painCount  = (parsed.sre&&parsed.sre.pain_points||[]).length;
+
+    setTimeout(function(){
+      bar.classList.remove('show');
+      badge.classList.add('show');
+      lbl.textContent = '✓ '+(fieldCount+Object.keys(c).filter(function(k){return c[k];}).length)+' fields built, '+painCount+' pain point'+(painCount!==1?'s':'')+' identified';
+      btn.textContent = '⟳ Re-analyze';
+      btn.disabled = false;
+      showToast('✓ Prospect profile built from '+_mfFiles.length+' file'+(_mfFiles.length!==1?'s':''));
+    },400);
 
   }catch(err){
-    progress.classList.remove('show');
-    lbl.textContent='Scan failed — please fill fields manually';
-    sub.style.display='';
-    // Show specific error to help debug worker/API issues
-    const errMsg=err.message||String(err);
-    sub.textContent='Error: '+errMsg+' — check your connection and try again';
-    console.error('[BeyondPayroll] Vision scan error:',err);
+    bar.classList.remove('show');
+    btn.disabled=false; btn.textContent='⚡ Build Profile from Files →';
+    lbl.textContent='Analysis failed — check connection and retry';
+    const sub=document.getElementById('imgScanSub');
+    if(sub){sub.style.display='';sub.textContent='Error: '+(err.message||String(err));}
+    console.error('[BeyondPayroll] mfAnalyzeAll:',err);
   }
 }
+
+function dynSetPersona(title){
+  const t=(title||'').toLowerCase();
+  const sel=document.getElementById('f-persona');
+  if(!sel) return;
+  if(t.includes('cfo')||t.includes('financ'))           sel.value='CFO';
+  else if(t.includes('hr dir'))                          sel.value='HR Director';
+  else if(t.includes('vp hr')||t.includes('vp, hr'))     sel.value='VP HR';
+  else if(t.includes('controller'))                      sel.value='Controller';
+  else if(t.includes('ceo')||t.includes('owner')||t.includes('president')) sel.value='CEO/Owner';
+  else if(t.includes('oper'))                            sel.value='Operations';
+}
+
+const DYN_GROUP_LABELS = {
+  firmographic:  'Company Info',
+  contact_info:  'Contact Details',
+  sales_intel:   'Sales Intelligence',
+  competitive:   'Competitive Intel',
+  financial:     'Financial & Budget',
+  timeline:      'Timeline & Process'
+};
+
+// Labels that map to standard form fields — skip from AI extras
+const DYN_STANDARD_LABELS = ['company','contact','email','phone','industry','state','headcount','linkedin','persona','title','decision maker','decision-maker','name'];
+
+const DYN_TAG_MAP = {
+  firmographic:'',contact_info:'',
+  sales_intel:'sales',competitive:'comp',financial:'fin',timeline:'time'
+};
+const DYN_TAG_LABELS = {sales:'Sales Intel',comp:'Competitive',fin:'Financial',time:'Timeline'};
+
+function dynRenderForm(parsed){
+  const grid = document.getElementById('dyn-fields-grid');
+  if(!grid) return;
+
+  // Filter out fields already in standard form
+  const fields = (parsed.fields||[]).filter(function(f){
+    if(!f.value||!String(f.value).trim()) return false;
+    const lc = (f.label||'').toLowerCase().trim();
+    return !DYN_STANDARD_LABELS.some(function(s){return lc===s||lc===s+'name'||lc.startsWith(s+' ');});
+  });
+  const insights = (parsed.insights||[]).filter(function(i){return i.value&&String(i.value).trim();});
+
+  if(fields.length===0 && insights.length===0){ grid.style.display='none'; return; }
+
+  let html = '';
+
+  // Section header
+  html += '<div class="pm-section-hdr" style="margin-bottom:10px">';
+  html += '<div class="pm-section-dot gold"></div>';
+  html += '<span class="pm-section-lbl">AI-Discovered Fields</span>';
+  html += '<span style="font-size:9px;color:var(--text-3);margin-left:auto;font-style:italic">drag to reorder</span>';
+  html += '</div>';
+
+  // Draggable field cards
+  if(fields.length>0){
+    html += '<div class="dyn-fields-container" id="dynCardContainer">';
+    fields.forEach(function(f,i){
+      const tag = DYN_TAG_MAP[f.group||'']||'';
+      const tagLabel = tag ? DYN_TAG_LABELS[tag]||'' : '';
+      const fid = 'dynf-'+f.label.replace(/\s+/g,'-').toLowerCase()+'-'+i;
+      html += '<div class="dyn-card" draggable="true" data-idx="'+i+'" '+
+        'ondragstart="dynDragStart(event,'+i+')" ondragover="dynDragOver(event,'+i+')" '+
+        'ondragleave="dynDragLeave(event)" ondrop="dynDragDrop(event,'+i+')" ondragend="dynDragEnd()">';
+      html += '<div class="dyn-card-grip" title="Drag to reorder">⣿</div>';
+      html += '<div class="dyn-card-body">';
+      html += '<div class="dyn-card-lbl">'+escHtml(f.label)+'</div>';
+      html += '<input class="dyn-card-inp" id="'+fid+'" value="'+escHtml(String(f.value))+'" data-key="'+escHtml(f.label)+'">';
+      if(tag) html += '<div class="dyn-card-tag '+tag+'">'+escHtml(tagLabel)+'</div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Insights panel
+  if(insights.length>0){
+    const srcs = window._mfFiles ? window._mfFiles.map(function(f){return f.name;}).join(', ') : '';
+    html += '<div class="dyn-insights-panel">';
+    html += '<div class="dyn-insights-hdr">';
+    html += '<span class="dyn-insights-hdr-icon">⚡</span>';
+    html += '<span class="dyn-insights-hdr-lbl">AI Sales Intelligence</span>';
+    if(srcs) html += '<span class="dyn-insights-hdr-src">'+escHtml(srcs)+'</span>';
+    html += '</div>';
+    insights.forEach(function(ins){
+      html += '<div class="dyn-insight-item">';
+      html += '<div class="dyn-insight-k">'+escHtml(ins.label||'')+'</div>';
+      html += '<div class="dyn-insight-v">'+escHtml(String(ins.value))+'</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  grid.innerHTML = html;
+  grid.style.display = 'block';
+}
+
+// ── Drag-to-reorder logic for AI field cards ─────────────────────
+let _dynDragSrc = null;
+function dynDragStart(e,idx){
+  _dynDragSrc = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function dynDragOver(e,idx){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.dyn-card').forEach(function(c){c.classList.remove('drag-over');});
+  if(idx !== _dynDragSrc) e.currentTarget.classList.add('drag-over');
+}
+function dynDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function dynDragDrop(e,idx){
+  e.preventDefault();
+  if(_dynDragSrc === null || _dynDragSrc === idx) return;
+  const container = document.getElementById('dynCardContainer');
+  if(!container) return;
+  const cards = Array.from(container.querySelectorAll('.dyn-card'));
+  const src  = cards[_dynDragSrc];
+  const dest = cards[idx];
+  if(!src||!dest) return;
+  if(_dynDragSrc < idx) container.insertBefore(src, dest.nextSibling);
+  else container.insertBefore(src, dest);
+  // Re-index data-idx
+  Array.from(container.querySelectorAll('.dyn-card')).forEach(function(c,i){ c.setAttribute('data-idx',i); });
+}
+function dynDragEnd(){
+  document.querySelectorAll('.dyn-card').forEach(function(c){
+    c.classList.remove('dragging','drag-over');
+  });
+  _dynDragSrc = null;
+}
+
+function dynOnManualInput(){
+  // no-op — kept for safety, form is always visible now
+}
+
+function dynCollectFields(){
+  // Collect all dynamic field values keyed by their label
+  const result = {};
+  document.querySelectorAll('#dyn-fields-grid .dyn-inp').forEach(function(inp){
+    const key = inp.getAttribute('data-key');
+    if(key) result[key] = inp.value;
+  });
+  return result;
+}
+
+// Backward-compat stub
+async function imgProcess(file){ _mfFiles=[file]; mfRenderChips(); await mfAnalyzeAll(); }
+
 
 // ═══════════════════════════════════════════════════════
 // SMART ROUTING ENGINE
@@ -3246,32 +3630,42 @@ document.addEventListener('DOMContentLoaded',function(){
 window.saveProspect=function(){
   const company=document.getElementById('f-company').value.trim();
   if(!company){showToast('Company name is required',true);return}
-  // Collect SRE context at save time
   const sreCtx = typeof atCollectSreContext === 'function' ? atCollectSreContext() : {};
   const transcriptEl=document.getElementById('sre-transcript');
+  const aiNotes = window._mfProfileSummary||'';
+  // Collect any dynamic AI-generated fields from the form
+  const dynFields = typeof dynCollectFields==='function' ? dynCollectFields() : {};
+  const aiResult  = window._mfAIResult||null;
   window._hqProspect={
-    company,contact:document.getElementById('f-contact').value.trim(),
-    persona:document.getElementById('f-persona').value,
-    industry:document.getElementById('f-industry').value.trim(),
-    state:document.getElementById('f-state').value.trim(),
+    company,
+    contact:  document.getElementById('f-contact').value.trim(),
+    persona:  document.getElementById('f-persona').value,
+    industry: document.getElementById('f-industry').value.trim(),
+    state:    document.getElementById('f-state').value.trim(),
     headcount:document.getElementById('f-headcount').value.trim(),
-    email:document.getElementById('f-email').value.trim(),
-    phone:document.getElementById('f-phone').value.trim(),
-    linkedin:document.getElementById('f-linkedin').value.trim(),
-    track:selectedRole||'WFN',
+    email:    document.getElementById('f-email').value.trim(),
+    phone:    document.getElementById('f-phone').value.trim(),
+    linkedin: document.getElementById('f-linkedin').value.trim(),
+    track:    selectedRole||'WFN',
     // SRE data
-    painPoints: sreCtx.painPoints||[],
-    adpProducts: sreCtx.adpProducts||[],
-    clientType: sreCtx.clientType||'new',
-    sreRecommendation: sreCtx.sreRecommendation||'',
-    sreConfidence: sreCtx.sreConfidence||'',
-    sreWfnScore: sreCtx.sreWfnScore||'',
-    srePeoScore: sreCtx.srePeoScore||'',
-    transcript: transcriptEl?transcriptEl.value.trim():'',
-    notes:'',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    approved: false
+    painPoints:      sreCtx.painPoints||[],
+    adpProducts:     sreCtx.adpProducts||[],
+    clientType:      sreCtx.clientType||'new',
+    sreRecommendation:sreCtx.sreRecommendation||'',
+    sreConfidence:   sreCtx.sreConfidence||'',
+    sreWfnScore:     sreCtx.sreWfnScore||'',
+    srePeoScore:     sreCtx.srePeoScore||'',
+    transcript:      transcriptEl?transcriptEl.value.trim():'',
+    notes:           aiNotes,
+    // AI-discovered extra fields merged flat (e.g. "Current Vendor", "Contract End Date")
+    aiFields:   dynFields,
+    aiInsights: aiResult ? (aiResult.insights||[]) : [],
+    aiSources:  window._mfFiles ? window._mfFiles.map(function(f){return f.name;}) : [],
+    // Also spread aiFields flat so Firestore treats them as standard fields
+    ...dynFields,
+    createdAt:  new Date().toISOString(),
+    updatedAt:  new Date().toISOString(),
+    approved:   false
   };
   // Persist to saved prospects list
   const arr=getProspects();
@@ -3281,6 +3675,17 @@ window.saveProspect=function(){
   saveProspectsLocal(arr);
   // Push to Firestore
   if(typeof fbSaveProspect==='function') fbSaveProspect(window._hqProspect);
+  // Reset multi-file import state
+  _mfFiles=[]; window._mfProfileSummary=''; window._mfAIResult=null;
+  mfRenderChips();
+  // Reset dynamic AI extras grid
+  const grid=document.getElementById('dyn-fields-grid');
+  if(grid){grid.innerHTML='';grid.style.display='none';}
+  // Clear standard fields
+  ['f-company','f-contact','f-email','f-phone','f-industry','f-state','f-headcount','f-linkedin'].forEach(function(id){
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const ps=document.getElementById('f-persona'); if(ps) ps.selectedIndex=0;
   closeModal();hqRenderBanner();hqAdvancePipeline(1);
   setTimeout(sreRefresh,80);
   renderSavedProspects();
@@ -5055,6 +5460,23 @@ window.ppShowProfile = function(idx) {
           '<div class="pp-section-ttl">Gong / Transcript Extract</div>',
           transcriptHtml,
         '</div>',
+        // ── AI-discovered extra fields — rendered inline with standard data ──
+        ...(Object.keys(p.aiFields||{}).length ? [
+          '<div class="pp-section">',
+            '<div class="pp-section-ttl">',
+              'Additional Details',
+              (p.aiSources&&p.aiSources.length ? '<span style="font-size:9px;color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px">via AI: '+escHtml(p.aiSources.join(', '))+'</span>' : ''),
+            '</div>',
+            '<div class="pp-grid">',
+            ...Object.entries(p.aiFields||{}).filter(function(e){return e[1]&&String(e[1]).trim();}).map(function(e){
+              return '<div class="pp-field"><div class="pp-field-lbl">'+escHtml(e[0])+'</div><div class="pp-field-val">'+escHtml(String(e[1]))+'</div></div>';
+            }),
+            ...(p.aiInsights&&p.aiInsights.length ? p.aiInsights.filter(function(i){return i.value;}).map(function(ins){
+              return '<div class="pp-field"><div class="pp-field-lbl">'+escHtml(ins.label||'')+'</div><div class="pp-field-val">'+escHtml(String(ins.value))+'</div></div>';
+            }) : []),
+            '</div>',
+          '</div>'
+        ] : []),
         '<div class="pp-section">',
           '<div class="pp-section-ttl">Rep Notes</div>',
           '<textarea class="pp-notes-area" id="pp-notes-inp" placeholder="Add notes, objections, renewal timing, follow-up context&hellip;">'+escHtml(p.notes||'')+'</textarea>',
@@ -9164,6 +9586,23 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 .admin-add-row{display:flex;gap:8px;align-items:flex-end}
 .admin-add-btn{padding:9px 16px;font-size:12px;font-weight:700;border-radius:6px;border:none;background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap;transition:all .15s}
 .admin-add-btn:hover{background:#0f1729}
+
+/* ── Dynamic AI Form Fields ── */
+.dyn-section-ttl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-3);margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.dyn-fields-row{display:grid;gap:8px;margin-bottom:8px}
+.dyn-fields-row.cols-1{grid-template-columns:1fr}
+.dyn-fields-row.cols-2{grid-template-columns:1fr 1fr}
+.dyn-fields-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+.dyn-field{display:flex;flex-direction:column;gap:3px}
+.dyn-field .dyn-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-3)}
+.dyn-field .dyn-inp{width:100%;padding:8px 10px;font-size:12px;font-family:var(--fb);border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--text);box-sizing:border-box;transition:border-color .15s}
+.dyn-field .dyn-inp:focus{outline:none;border-color:var(--navy)}
+.dyn-field .dyn-inp.ai-filled{border-color:var(--gold-border);background:rgba(200,168,75,.04)}
+.dyn-insights-section{background:var(--off-white);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:12px}
+.dyn-insights-ttl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);margin-bottom:10px}
+.dyn-insight-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px}
+.dyn-insight-lbl{font-size:11px;font-weight:700;color:var(--text-2);min-width:110px;padding-top:1px}
+.dyn-insight-val{font-size:11px;color:var(--text);line-height:1.5;flex:1}
 </style>
 
 <div id="ts-panel">
