@@ -1360,6 +1360,16 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
         <div class="mf-chips" id="mfChips"></div>
         <div class="mf-progress-bar" id="mfProgressBar"><div class="mf-progress-fill" id="mfProgressFill"></div></div>
       </div>
+      <!-- URL input row -->
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <input id="mfUrlInput" type="url" placeholder="Or paste a website URL — acme.com, LinkedIn page, news article…"
+          style="flex:1;padding:9px 12px;font-size:12px;font-family:var(--fb);border:1.5px solid var(--border);border-radius:8px;background:var(--off-white);color:var(--text);outline:none;transition:border-color .15s"
+          onfocus="this.style.borderColor='var(--navy)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();mfAddUrlFromInput();}">
+        <button onclick="mfAddUrlFromInput()"
+          style="flex-shrink:0;padding:9px 14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.5px;cursor:pointer;white-space:nowrap;transition:all .15s"
+          onmouseover="this.style.background='#1a2460'" onmouseout="this.style.background='var(--navy)'">+ ADD</button>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
         <button class="mf-analyze-btn" id="mfAnalyzeBtn" onclick="mfAnalyzeAll()" style="flex:1;margin:0">⚡ BUILD PROFILE FROM FILES</button>
         <div class="img-scan-result-badge" id="imgScanBadge" style="margin:0;flex-shrink:0">✓ Profile built</div>
@@ -1416,12 +1426,12 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
       <div id="dyn-fields-grid" style="display:none"></div>
 
     </div>
-    <div class="modal-footer" style="flex-direction:column;gap:10px;align-items:stretch">
+    <div class="modal-footer" style="flex-direction:column;gap:8px;align-items:stretch;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
       <div style="display:flex;gap:8px">
-        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-dark" onclick="saveProspect()" style="flex:2;padding:10px 22px;font-size:13px">Initialize Prospect →</button>
+        <button onclick="closeModal()" style="flex:1;padding:10px 16px;background:var(--off-white);color:var(--text-2);border:1.5px solid var(--border);border-radius:8px;font-family:var(--fb);font-weight:600;font-size:13px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background='var(--off-white)'">Cancel</button>
+        <button onclick="saveProspect()" style="flex:2;padding:10px 22px;background:var(--navy);color:#fff;border:1.5px solid transparent;border-radius:8px;font-family:var(--fb);font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;letter-spacing:.3px" onmouseover="this.style.background='#1a2460'" onmouseout="this.style.background='var(--navy)'">Initialize Prospect →</button>
       </div>
-      <button class="btn" onclick="saveAndRouteSRE()" style="background:var(--red);color:#fff;border:none;padding:11px;border-radius:6px;font-family:var(--fb);font-weight:700;font-size:12px;letter-spacing:.5px;cursor:pointer;text-transform:uppercase">
+      <button onclick="saveAndRouteSRE()" style="width:100%;padding:10px;background:transparent;color:var(--gold);border:1.5px solid var(--gold-border);border-radius:8px;font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.8px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--gold-bg)'" onmouseout="this.style.background='transparent'">
         🎯 Save &amp; Route to Smart Product Engine →
       </button>
     </div>
@@ -2955,8 +2965,9 @@ window.openModal=function(){
 window.closeModal=function(){
   document.getElementById('prospectModal').classList.remove('open');
   // Reset multi-file import on cancel
-  _mfFiles=[]; window._mfProfileSummary='';
+  _mfFiles=[]; _mfUrls=[]; window._mfProfileSummary=''; window._mfAIResult=null;
   if(typeof mfRenderChips==='function') mfRenderChips();
+  const urlInp=document.getElementById('mfUrlInput'); if(urlInp) urlInp.value='';
 };
 window.selectTrack=function(t){
   selectedRole=t;
@@ -2971,13 +2982,24 @@ window.selectTrack=function(t){
 // ═══════════════════════════════════════════════════════
 // ── Multi-File AI Import ─────────────────────────────────────────
 let _mfFiles = [];
+let _mfUrls  = [];  // dropped / typed URLs
 
 function mfDragOver(e){e.preventDefault();document.getElementById('imgScanWrap').classList.add('drag');}
 function mfDragLeave(){document.getElementById('imgScanWrap').classList.remove('drag');}
 function mfDrop(e){
   e.preventDefault(); e.stopPropagation();
   mfDragLeave();
-  mfAddFiles(Array.from(e.dataTransfer.files));
+  // Check for dropped URL (text/uri-list or text/plain that looks like a URL)
+  const urlData = e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text/plain')||'';
+  const urls = urlData.split('\n').map(function(u){return u.trim();}).filter(function(u){
+    return u && !u.startsWith('#') && (u.startsWith('http://') || u.startsWith('https://'));
+  });
+  if(urls.length){
+    urls.forEach(mfAddUrl);
+  }
+  // Also handle any actual files dropped alongside
+  const files = Array.from(e.dataTransfer.files);
+  if(files.length) mfAddFiles(files);
 }
 function mfFilesSelected(e){
   mfAddFiles(Array.from(e.target.files));
@@ -2988,6 +3010,29 @@ function mfAddFiles(files){
     const dup = _mfFiles.find(function(x){return x.name===f.name&&x.size===f.size;});
     if(!dup) _mfFiles.push(f);
   });
+  mfRenderChips();
+}
+function mfAddUrlFromInput(){
+  const inp = document.getElementById('mfUrlInput');
+  if(!inp) return;
+  let val = inp.value.trim();
+  if(!val) return;
+  if(!val.startsWith('http://') && !val.startsWith('https://')) val = 'https://'+val;
+  mfAddUrl(val);
+  inp.value = '';
+  inp.focus();
+}
+function mfAddUrl(rawUrl){
+  try{
+    const url = new URL(rawUrl.trim());
+    const hostname = url.hostname.replace(/^www\./,'');
+    const dup = _mfUrls.find(function(u){return u.raw===url.href;});
+    if(!dup) _mfUrls.push({raw:url.href, label:hostname});
+    mfRenderChips();
+  }catch(e){ showToast('Invalid URL: '+rawUrl, true); }
+}
+function mfRemoveUrl(idx){
+  _mfUrls.splice(idx,1);
   mfRenderChips();
 }
 function mfRemoveFile(idx){
@@ -3010,24 +3055,36 @@ function mfRenderChips(){
   const badge= document.getElementById('imgScanBadge');
   if(!wrap) return;
   badge.classList.remove('show');
-  if(_mfFiles.length===0){
+  if(_mfFiles.length===0 && _mfUrls.length===0){
     wrap.innerHTML='';
     btn.classList.remove('show');
     icon.style.display='';
-    lbl.textContent='Drop files here or click to browse';
+    lbl.textContent='Drop files to auto-build profile';
     sub.style.display='';
+    const urlInp=document.getElementById('mfUrlInput');if(urlInp)urlInp.value='';
     return;
   }
   icon.style.display='none';
-  lbl.textContent=_mfFiles.length+' file'+ (_mfFiles.length!==1?'s':'') +' queued';
+  const totalItems = _mfFiles.length + _mfUrls.length;
+  lbl.textContent = totalItems+' source'+ (totalItems!==1?'s':'') +' ready to analyze';
   sub.style.display='none';
-  wrap.innerHTML=_mfFiles.map(function(f,i){
+  // Render file chips
+  const fileChips = _mfFiles.map(function(f,i){
     return '<div class="mf-chip">'+
       '<span class="mf-chip-icon">'+mfFileIcon(f)+'</span>'+
       '<span class="mf-chip-name" title="'+f.name+'">'+f.name+'</span>'+
       '<button class="mf-chip-rm" onclick="event.stopPropagation();mfRemoveFile('+i+')" title="Remove">&#10005;</button>'+
     '</div>';
-  }).join('');
+  });
+  // Render URL chips
+  const urlChips = _mfUrls.map(function(u,i){
+    return '<div class="mf-chip" style="background:rgba(184,146,10,.2);border-color:rgba(184,146,10,.35)">'+
+      '<span class="mf-chip-icon">🌐</span>'+
+      '<span class="mf-chip-name" title="'+u.raw+'">'+u.label+'</span>'+
+      '<button class="mf-chip-rm" onclick="event.stopPropagation();mfRemoveUrl('+i+')" title="Remove">&#10005;</button>'+
+    '</div>';
+  });
+  wrap.innerHTML = fileChips.concat(urlChips).join('');
   btn.classList.add('show');
 }
 
@@ -3164,10 +3221,38 @@ async function mfAnalyzeAll(){
     }catch(e){console.warn('mfRead:',f.name,e);}
   }
 
-  fill.style.width = '60%';
-  lbl.textContent = 'AI building prospect profile from '+_mfFiles.length+' file'+(_mfFiles.length!==1?'s':'')+'...';
+  // ── Fetch URL content via CF Worker ────────────────────────
+  for(let u=0; u<_mfUrls.length; u++){
+    const urlObj = _mfUrls[u];
+    lbl.textContent = 'Fetching '+urlObj.label+'...';
+    fill.style.width = (60 + Math.round((u+0.5)/_mfUrls.length*15))+'%';
+    try{
+      const fetchResp = await fetch(window.CF_WORKER_URL||'https://beyondpayroll-proxy.aj-3ab.workers.dev',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Service':'fetch-url'},
+        body:JSON.stringify({url: urlObj.raw})
+      });
+      const fetchData = await fetchResp.json();
+      const pageText = fetchData.text||fetchData.content||fetchData.body||'';
+      if(pageText){
+        // Truncate to avoid token overload — 8000 chars is plenty for a company page
+        const truncated = pageText.substring(0,8000);
+        parts.push({text:'[WEBSITE: '+urlObj.raw+']\n'+truncated});
+      } else {
+        parts.push({text:'[WEBSITE: '+urlObj.raw+' — fetched but no readable content extracted]'});
+      }
+    }catch(urlErr){
+      console.warn('URL fetch failed for',urlObj.raw, urlErr);
+      parts.push({text:'[WEBSITE: '+urlObj.raw+' — could not be fetched, use for context only]'});
+    }
+  }
 
-  const prompt = `You are a senior ADP sales intelligence analyst. I am giving you ${_mfFiles.length} file(s) about a prospect — images, PDFs, screenshots, emails, transcripts, or any combination. Read ALL of them together and build the most complete, useful client prospect profile possible.
+  const totalSources = _mfFiles.length + _mfUrls.length;
+  fill.style.width = '60%';
+  lbl.textContent = 'AI building prospect profile from '+totalSources+' source'+(totalSources!==1?'s':'')+'...';
+
+  const totalSrcs = _mfFiles.length + _mfUrls.length;
+  const prompt = `You are a senior ADP sales intelligence analyst. I am giving you ${totalSrcs} source(s) about a prospect (files, screenshots, and/or website content) — images, PDFs, screenshots, emails, transcripts, or any combination. Read ALL of them together and build the most complete, useful client prospect profile possible.
 
 Return ONLY a valid JSON object. No markdown. No explanation. The structure must be exactly:
 {
@@ -3216,8 +3301,18 @@ INSTRUCTIONS:
       ? data.candidates[0].content.parts.map(function(p){return p.text||'';}).join('')
       : (data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('')
     );
-    const clean = raw.replace(/```json[\s\S]*?```|```/g,'').trim();
-    const parsed = JSON.parse(clean);
+    // Robust JSON extraction — strip fences, find outermost { }
+    let clean = raw.replace(/```json|```/g,'').trim();
+    const jsonStart = clean.indexOf('{');
+    const jsonEnd   = clean.lastIndexOf('}');
+    if(jsonStart !== -1 && jsonEnd !== -1) clean = clean.slice(jsonStart, jsonEnd+1);
+    let parsed;
+    try{ parsed = JSON.parse(clean); }
+    catch(pe){
+      // Last-resort: try to extract partial JSON
+      console.error('[BP] JSON parse failed, raw:', clean.substring(0,200));
+      throw new Error('AI returned invalid JSON — try again or fill manually');
+    }
 
     fill.style.width = '80%';
 
@@ -3660,7 +3755,7 @@ window.saveProspect=function(){
     // AI-discovered extra fields merged flat (e.g. "Current Vendor", "Contract End Date")
     aiFields:   dynFields,
     aiInsights: aiResult ? (aiResult.insights||[]) : [],
-    aiSources:  window._mfFiles ? window._mfFiles.map(function(f){return f.name;}) : [],
+    aiSources:  (window._mfFiles||[]).map(function(f){return f.name;}).concat((window._mfUrls||[]).map(function(u){return u.label;})),
     // Also spread aiFields flat so Firestore treats them as standard fields
     ...dynFields,
     createdAt:  new Date().toISOString(),
@@ -3676,7 +3771,7 @@ window.saveProspect=function(){
   // Push to Firestore
   if(typeof fbSaveProspect==='function') fbSaveProspect(window._hqProspect);
   // Reset multi-file import state
-  _mfFiles=[]; window._mfProfileSummary=''; window._mfAIResult=null;
+  _mfFiles=[]; _mfUrls=[]; window._mfProfileSummary=''; window._mfAIResult=null;
   mfRenderChips();
   // Reset dynamic AI extras grid
   const grid=document.getElementById('dyn-fields-grid');
