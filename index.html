@@ -3341,37 +3341,36 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   function patchOpenModal() {
     const original = window.openModal;
     window.openModal = function(prospectOrId) {
-      // Call original to open/reset the modal
+      // Call original to open the modal
       if (original) original();
 
-      // If called with a prospect object or ID, populate fields
-      if (!prospectOrId) {
-        // New prospect mode
-        window._editingProspectId = null;
-        setModalMode('new');
-        return;
-      }
-
-      // Resolve prospect object
+      // Resolve the prospect to edit
       let p = null;
-      if (typeof prospectOrId === 'object') {
+
+      if (prospectOrId && typeof prospectOrId === 'object') {
         p = prospectOrId;
-      } else {
-        // Try to find by ID in common storage locations
+      } else if (prospectOrId) {
+        // ID passed — look up in storage
         const allProspects = window.prospects || window.PROSPECTS ||
           (window.state && window.state.prospects) ||
           (window.appState && window.appState.prospects) || {};
         p = allProspects[prospectOrId] ||
             Object.values(allProspects).find(x => x.id === prospectOrId || x.uid === prospectOrId);
+      } else {
+        // No arg passed — this is the Edit button click from app.js
+        // Use the currently active prospect from window._hqProspect
+        p = window._hqProspect || null;
       }
 
       if (!p) {
-        console.warn('[ModalFix] Could not resolve prospect:', prospectOrId);
+        // Genuinely new prospect
+        window._editingProspectId = null;
         setModalMode('new');
         return;
       }
 
-      window._editingProspectId = p.id || p.uid || null;
+      window._editingProspectId = p.id || p.uid || p.company || null;
+      window._editingOriginalProspect = p; // store original for save merge
       setModalMode('edit', p);
     };
   }
@@ -3453,24 +3452,47 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
     }
   }
 
-  /* ── Intercept saveProspect to merge on edit ──────────── */
+  /* ── Intercept saveProspect to preserve state on edit ─── */
   function patchSaveProspect() {
     const original = window.saveProspect;
     window.saveProspect = function() {
-      // If in edit mode, inject the editing ID so app.js merges rather than creates
-      if (window._editingProspectId) {
-        // Many app.js patterns check window._editingId or window.editProspectId
-        window._editingId      = window._editingProspectId;
-        window.editProspectId  = window._editingProspectId;
-        window._isEditing      = true;
-      } else {
-        window._editingId      = null;
-        window.editProspectId  = null;
-        window._isEditing      = false;
-      }
+      const isEdit = !!window._editingOriginalProspect;
+      const orig   = window._editingOriginalProspect || {};
+
       if (original) original.apply(this, arguments);
-      // Reset after save
+
+      // After app.js runs saveProspect, restore fields that should not change on edit
+      if (isEdit && window._hqProspect) {
+        // Preserve original creation date and approval state
+        if (orig.createdAt)  window._hqProspect.createdAt  = orig.createdAt;
+        if (orig.approved)   window._hqProspect.approved   = orig.approved;
+        if (orig.cadence)    window._hqProspect.cadence    = orig.cadence;
+        if (orig.statuses)   window._hqProspect.statuses   = orig.statuses;
+        if (orig.touchNotes) window._hqProspect.touchNotes = orig.touchNotes;
+        if (orig.id)         window._hqProspect.id         = orig.id;
+        window._hqProspect.updatedAt = new Date().toISOString();
+
+        // Re-save to localStorage with preserved fields
+        try {
+          const PROSPECTS_KEY = 'bp_prospects';
+          const arr = JSON.parse(localStorage.getItem(PROSPECTS_KEY) || '[]');
+          const idx = arr.findIndex(x => x.company === window._hqProspect.company);
+          if (idx >= 0) {
+            arr[idx] = Object.assign(arr[idx], window._hqProspect);
+            localStorage.setItem(PROSPECTS_KEY, JSON.stringify(arr));
+          }
+        } catch(e) {}
+
+        // Re-render banner with updated data
+        if (typeof hqRenderBanner === 'function') hqRenderBanner();
+
+        // Show correct toast
+        showToast('✓ Prospect updated — ' + window._hqProspect.company);
+      }
+
+      // Clear edit state
       window._editingProspectId = null;
+      window._editingOriginalProspect = null;
     };
   }
 
@@ -3483,82 +3505,9 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
     };
   }
 
-  /* ── Observe prospect strip Edit button clicks ────────── */
-  // The Edit button is rendered dynamically in the prospect strip by app.js
-  // Strategy: intercept click in capture phase, read data from window.prospects
-  // OR scrape visible fields from the strip as fallback
-  document.addEventListener('click', function(e) {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-
-    const txt = btn.textContent.trim();
-    // Match "Edit", "⇐ Edit", "← Edit", "✎ Edit" patterns
-    if (!/edit/i.test(txt) || txt.length > 12) return;
-
-    // Wait a tick to let app.js open the modal first, then populate
-    setTimeout(function() {
-      // Get prospect from all known storage locations
-      const allProspects =
-        window.prospects ||
-        window.PROSPECTS ||
-        (window.appState && window.appState.prospects) ||
-        (window.state && window.state.prospects) ||
-        {};
-
-      // Try current active prospect
-      const currentId =
-        window.currentProspectId ||
-        window.activeProspectId ||
-        (window.appState && window.appState.currentProspectId) ||
-        (window.state && window.state.currentProspectId);
-
-      let p = currentId ? (allProspects[currentId] || Object.values(allProspects).find(x => (x.id||x.uid) === currentId)) : null;
-
-      // Fallback: if only one prospect, use it
-      if (!p) {
-        const vals = Object.values(allProspects);
-        if (vals.length === 1) p = vals[0];
-      }
-
-      // Last resort: scrape visible data from the prospect strip DOM
-      if (!p) {
-        p = scrapeStripData();
-      }
-
-      if (!p) return;
-
-      window._editingProspectId = p.id || p.uid || p.key || currentId || null;
-      setModalMode('edit', p);
-    }, 80);
-
-  }, true);
-
-  /* ── Scrape prospect data from visible strip ────────── */
-  function scrapeStripData() {
-    const strip = document.querySelector('.prospect-strip');
-    if (!strip) return null;
-
-    const p = {};
-    strip.querySelectorAll('.psf-item').forEach(item => {
-      const lbl = (item.querySelector('.psf-lbl')?.textContent || '').toLowerCase().trim();
-      const val = (item.querySelector('.psf-val')?.textContent || '').trim();
-      if (!val) return;
-      if (lbl.includes('company')) p.company = val;
-      else if (lbl.includes('contact') || lbl.includes('name')) p.contact = val;
-      else if (lbl.includes('email')) p.email = val;
-      else if (lbl.includes('phone')) p.phone = val;
-      else if (lbl.includes('industry')) p.industry = val;
-      else if (lbl.includes('state')) p.state = val.replace(/·.*/, '').trim();
-      else if (lbl.includes('hc') || lbl.includes('ee') || lbl.includes('employee') || lbl.includes('head')) {
-        const n = val.match(/\d+/);
-        if (n) p.headcount = n[0];
-      }
-      else if (lbl.includes('persona') || lbl.includes('title') || lbl.includes('role')) p.persona = val;
-      else if (lbl.includes('track')) p.track = val;
-    });
-
-    return Object.keys(p).length > 0 ? p : null;
-  }
+  /* ── No extra click interception needed ─────────────────
+     app.js Edit button calls openModal() with no args.
+     Our patched openModal() reads window._hqProspect directly. */
 
   /* ── Apply patches once app.js has loaded ─────────────── */
   // Try immediately, then retry after app.js loads
