@@ -1352,7 +1352,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
           </button>
 
           <div class="form-note">
-            Access is by invitation only. Contact <strong>admin@beyondpayroll.net</strong> to request an account.
+            Access is by invitation only. Contact <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e283868f8b8ca280879b8d8c8692839b908d8e8ecc8c8796">[email&#160;protected]</a></strong> to request an account.
           </div>
         </div>
 
@@ -1360,7 +1360,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
           <div class="demo-label" style="color:var(--navy)">🔒 Restricted Access</div>
           <div class="demo-creds" style="color:var(--text-2);font-size:12px;line-height:1.6">
             This platform is for authorized BeyondPayroll team members only.<br>
-            Contact <strong>admin@beyondpayroll.net</strong> to request access.
+            Contact <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c2a3a6afabac82a0a7bbadaca6b2a3bbb0adaeaeecaca7b6">[email&#160;protected]</a></strong> to request access.
           </div>
         </div>
       </div>
@@ -1375,7 +1375,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
           <div style="background:var(--off-white);border:1px solid var(--border);border-radius:8px;padding:16px 20px;text-align:left;margin-bottom:24px">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-3);margin-bottom:8px">To request access:</div>
             <div style="font-size:13px;color:var(--text-2);line-height:1.7">
-              Email <strong>admin@beyondpayroll.net</strong> with your name and work email.<br>
+              Email <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7b1a1f1612153b191e0214151f0b1a020914171755151e0f">[email&#160;protected]</a></strong> with your name and work email.<br>
               The admin will create your account directly.
             </div>
           </div>
@@ -1462,7 +1462,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 </div>
 
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ══════════════════════════════════════════════════
 //  STORAGE
 // ══════════════════════════════════════════════════
@@ -3279,6 +3279,8 @@ window.saveProspect=function(){
   if(existing>=0){arr[existing]=Object.assign(arr[existing],window._hqProspect);}
   else{arr.unshift(window._hqProspect);}
   saveProspectsLocal(arr);
+  // Push to Firestore
+  if(typeof fbSaveProspect==='function') fbSaveProspect(window._hqProspect);
   closeModal();hqRenderBanner();hqAdvancePipeline(1);
   setTimeout(sreRefresh,80);
   renderSavedProspects();
@@ -3871,7 +3873,13 @@ window.hqApprove=function(){
   if(p){
     const arr=getProspects();
     const idx=arr.findIndex(function(x){return x.company===p.company;});
-    if(idx>=0){arr[idx].approved=true;saveProspectsLocal(arr);}
+    if(idx>=0){
+      arr[idx].approved=true;
+      arr[idx].updatedAt=new Date().toISOString();
+      saveProspectsLocal(arr);
+      // Push approval to Firestore
+      if(typeof fbSaveProspect==='function') fbSaveProspect(arr[idx]);
+    }
     window._hqProspect.approved=true;
   }
   showToast('Cadence approved — 30-Day Cadence unlocked ⚡');
@@ -4815,15 +4823,20 @@ async function fbInitialSync(session){
 function fbListen(session){
   if(!_fbDb)return;
   try{
+    let _firstSnap=true;
     _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
       .orderBy('updatedAt','desc')
       .onSnapshot(function(snap){
+        // Skip the first snapshot — already handled by fbInitialSync
+        if(_firstSnap){_firstSnap=false;return;}
         const arr=[];
         snap.forEach(function(d){arr.push(Object.assign({id:d.id},d.data()));});
-        saveProspectsLocal(arr);
-        renderSavedProspects();
-        showToast('☁ Prospects synced');
+        if(arr.length>0){
+          saveProspectsLocal(arr);
+          renderSavedProspects();
+          showToast('☁ Prospects synced from another device');
+        }
       },function(err){console.warn('Firestore listener:',err.message);});
   }catch(e){console.warn('fbListen:',e);}
 }
@@ -4845,22 +4858,35 @@ async function fbSyncNow(){
 }
 
 async function fbSaveProspect(p){
-  const arr=getProspects();
-  const idx=arr.findIndex(x=>x.company===p.company&&x.contact===p.contact);
+  if(!p) return;
   const now=new Date().toISOString();
   p.updatedAt=now;
-  if(idx>=0){p.id=arr[idx].id;p.createdAt=arr[idx].createdAt||now;arr[idx]=p;}
-  else{p.createdAt=now;arr.unshift(p);}
+  // Always stamp userEmail
+  if(_fbSession && !p.userEmail) p.userEmail=_fbSession.email;
+  // Update localStorage
+  const arr=getProspects();
+  const idx=arr.findIndex(function(x){return x.company===p.company&&x.contact===p.contact;});
+  if(idx>=0){
+    p.id=p.id||arr[idx].id;
+    p.createdAt=p.createdAt||arr[idx].createdAt||now;
+    arr[idx]=p;
+  } else {
+    p.createdAt=p.createdAt||now;
+    arr.unshift(p);
+  }
   saveProspectsLocal(arr);
   renderSavedProspects();
-  if(_fbDb&&_fbSession){
+  // Push to Firestore
+  if(_fbDb && _fbSession){
     try{
-      const d=Object.assign({},p,{userEmail:_fbSession.email});
-      if(p.id){await _fbDb.collection('prospects').doc(p.id).set(d,{merge:true});}
-      else{
-        const r=await _fbDb.collection('prospects').add(d);p.id=r.id;
+      const d=Object.assign({},p,{userEmail:_fbSession.email,updatedAt:now});
+      if(p.id){
+        await _fbDb.collection('prospects').doc(p.id).set(d,{merge:true});
+      } else {
+        const r=await _fbDb.collection('prospects').add(d);
+        p.id=r.id;
         const local=getProspects();
-        const li=local.findIndex(x=>x.company===p.company&&x.contact===p.contact);
+        const li=local.findIndex(function(x){return x.company===p.company&&x.contact===p.contact;});
         if(li>=0){local[li].id=p.id;saveProspectsLocal(local);}
       }
     }catch(e){console.warn('fbSave:',e.message);}
@@ -5052,6 +5078,8 @@ window.ppSaveNotes = function(idx) {
   const notes = document.getElementById('pp-notes-inp');
   if(notes){ arr[idx].notes = notes.value; arr[idx].updatedAt = new Date().toISOString(); }
   saveProspectsLocal(arr);
+  // Push notes update to Firestore
+  if(typeof fbSaveProspect==='function') fbSaveProspect(arr[idx]);
   if(window._hqProspect && window._hqProspect.company === arr[idx].company) window._hqProspect.notes = arr[idx].notes;
   showToast('Notes saved for '+arr[idx].company);
 };
@@ -5060,8 +5088,13 @@ window.ppDeleteProspect = function(idx) {
   const arr = getProspects();
   if(!arr[idx]) return;
   if(!confirm('Delete '+arr[idx].company+' from Prospect Profiles?')) return;
-  arr.splice(idx, 1);
+  const removed = arr.splice(idx, 1)[0];
   saveProspectsLocal(arr);
+  // Delete from Firestore
+  if(_fbDb && removed && removed.id){
+    _fbDb.collection('prospects').doc(removed.id).delete()
+      .catch(function(e){console.warn('fbDelete:',e.message);});
+  }
   renderSavedProspects();
   const ov = document.getElementById('pp-modal-overlay');
   if(ov) ov.remove();
@@ -11091,19 +11124,4 @@ window.adminAddUser = function(){
 window.adminRemoveUser = function(idx){
   const users = getUsers();
   if(!users[idx]) return;
-  if(users[idx].email === ADMIN_EMAIL){ showToast('Cannot remove the owner account', true); return; }
-  if(!confirm('Remove '+users[idx].email+' from approved users? They will no longer be able to sign in.')) return;
-  const removed = users.splice(idx, 1)[0];
-  saveUsers(users);
-  // Remove from Firestore if connected
-  if(_fbDb && removed.email){
-    _fbDb.collection('users').doc(removed.email).delete()
-      .catch(function(e){console.warn('adminRemoveUser Firestore:',e.message);});
-  }
-  adminRenderUsers();
-  showToast(removed.email+' removed');
-};
-
-</script>
-</body>
-</html>
+  if(users[idx].email === ADMIN_EMAIL){ showToast('Cannot remove the owner account', true); return;
