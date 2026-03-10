@@ -3389,15 +3389,15 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 
       // Map field IDs to prospect properties
       const fieldMap = {
-        'f-company':   ['company', 'companyName', 'co'],
-        'f-contact':   ['contact', 'contactName', 'name'],
-        'f-email':     ['email'],
-        'f-phone':     ['phone'],
-        'f-linkedin':  ['linkedin', 'linkedinUrl'],
-        'f-industry':  ['industry'],
-        'f-state':     ['state', 'hqState'],
-        'f-headcount': ['headcount', 'numEE', 'employees', 'ee'],
-        'f-persona':   ['persona', 'title', 'role'],
+        'f-company':   ['company', 'companyName', 'co', 'firm', 'org', 'account'],
+        'f-contact':   ['contact', 'contactName', 'name', 'firstName', 'fullName', 'first_name', 'fname'],
+        'f-email':     ['email', 'emailAddress', 'email_address', 'contactEmail', 'mail', 'workEmail'],
+        'f-phone':     ['phone', 'phoneNumber', 'phone_number', 'contactPhone', 'mobile', 'cell', 'tel', 'direct', 'workPhone'],
+        'f-linkedin':  ['linkedin', 'linkedinUrl', 'linkedin_url', 'linkedIn', 'liUrl'],
+        'f-industry':  ['industry', 'industryType', 'sector', 'vertical'],
+        'f-state':     ['state', 'hqState', 'st', 'hq_state', 'stateCode'],
+        'f-headcount': ['headcount', 'numEE', 'employees', 'ee', 'employeeCount', 'headCount', 'size', 'numEmployees'],
+        'f-persona':   ['persona', 'title', 'role', 'jobTitle', 'job_title', 'contactTitle', 'decisionMaker', 'buyerType'],
       };
 
       for (const [fieldId, keys] of Object.entries(fieldMap)) {
@@ -3411,6 +3411,18 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
           }
         }
       }
+
+      // Brute-force fallback: try every key in prospect object against field IDs
+      const allKeys = Object.keys(p);
+      const bruteMap = { email: ["f-email"], phone: ["f-phone"], mobile: ["f-phone"], cell: ["f-phone"], tel: ["f-phone"], mail: ["f-email"] };
+      allKeys.forEach(k => {
+        const kl = k.toLowerCase();
+        const targets = bruteMap[kl] || (kl.includes("email") || kl.includes("mail") ? ["f-email"] : kl.includes("phone") || kl.includes("mobile") || kl.includes("cell") || kl.includes("tel") ? ["f-phone"] : []);
+        targets.forEach(fid => {
+          const el = document.getElementById(fid);
+          if (el && !el.value && p[k]) el.value = p[k];
+        });
+      });
 
       // Track selection in cadence track selector if present
       if (p.track) {
