@@ -1325,7 +1325,18 @@ window.hqTab=function(tab){
   if(analysisView)analysisView.style.display=tab==='analysis'?'block':'none';
   document.querySelectorAll('.hq-tab').forEach(t=>t.classList.remove('active'));
   const el=document.getElementById('htab-'+tab);if(el)el.classList.add('active');
-  if(tab==='composer')ecRenderAll();
+  if(tab==='composer'){
+    // Sync renewal fields from live tool inputs into _hqProspect before rendering
+    if(window._hqProspect){
+      var _rdEl=document.getElementById('medicalRenewalDate');
+      var _rnEl=document.getElementById('renewalNotes');
+      var _omEl=document.getElementById('openMarketStatus')||document.getElementById('omStatus');
+      if(_rdEl&&_rdEl.value) window._hqProspect.medicalRenewalDate=_rdEl.value;
+      if(_rnEl&&_rnEl.value.trim()) window._hqProspect.renewalNotes=_rnEl.value.trim();
+      if(_omEl&&_omEl.value) window._hqProspect.openMarketStatus=_omEl.value;
+    }
+    ecRenderAll();
+  }
   if(tab==='agent')saInit();
   if(tab==='analysis')atInit();
   document.getElementById('hq-container').scrollTop=0;
@@ -2114,6 +2125,10 @@ window.saveProspect=function(){
     phone:    document.getElementById('f-phone').value.trim(),
     linkedin: document.getElementById('f-linkedin').value.trim(),
     track:    selectedRole||'WFN',
+    // Renewal data — pulled from WFN/TS tool fields if present
+    medicalRenewalDate: (function(){ var el=document.getElementById('medicalRenewalDate'); return el?el.value:''; })(),
+    renewalNotes:       (function(){ var el=document.getElementById('renewalNotes'); return el?el.value.trim():''; })(),
+    openMarketStatus:   (function(){ var el=document.getElementById('openMarketStatus')||document.getElementById('omStatus'); return el?el.value:''; })(),
     // SRE data
     painPoints:      sreCtx.painPoints||[],
     adpProducts:     sreCtx.adpProducts||[],
@@ -2202,6 +2217,17 @@ window.pullProspectToTool = function(tool) {
   });
 
   showToast('Prospect data pulled into ' + (tool === 'wfn' ? 'WFN' : 'TotalSource') + ' tool');
+
+  // ── Sync renewal fields back to _hqProspect whenever tool is used ──
+  // This ensures cadence emails pick up renewal date entered in the tool
+  if(window._hqProspect){
+    var rdEl=document.getElementById('medicalRenewalDate');
+    var rnEl=document.getElementById('renewalNotes');
+    var omEl=document.getElementById('openMarketStatus')||document.getElementById('omStatus');
+    if(rdEl&&rdEl.value) window._hqProspect.medicalRenewalDate=rdEl.value;
+    if(rnEl&&rnEl.value.trim()) window._hqProspect.renewalNotes=rnEl.value.trim();
+    if(omEl&&omEl.value) window._hqProspect.openMarketStatus=omEl.value;
+  }
 };
 
 // Build pain point summary for AI prompts
@@ -2758,22 +2784,99 @@ window.hqApprove=function(){
 };
 
 // ── COMPOSER ──
+// ── Renewal context helper ──────────────────────────────────
+// Reads medicalRenewalDate from tool fields OR from _hqProspect
+function getRenewalContext() {
+  // Try live tool field first
+  var rdEl = document.getElementById('medicalRenewalDate');
+  var rdStr = (rdEl && rdEl.value) ? rdEl.value : (window._hqProspect && window._hqProspect.medicalRenewalDate) || '';
+  var notesEl = document.getElementById('renewalNotes');
+  var notes = (notesEl && notesEl.value) ? notesEl.value.trim() : (window._hqProspect && window._hqProspect.renewalNotes) || '';
+  var omEl = document.getElementById('openMarketStatus') || document.getElementById('omStatus');
+  var isOM = omEl ? omEl.value === 'yes' : !!(window._hqProspect && window._hqProspect.openMarketStatus === 'yes');
+
+  if (!rdStr) return { days: null, label: null, notes: notes, isOM: isOM, urgency: null };
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var rd = new Date(rdStr + 'T00:00:00');
+  if (isNaN(rd)) return { days: null, label: null, notes: notes, isOM: isOM, urgency: null };
+
+  var days = Math.round((rd - today) / (1000 * 60 * 60 * 24));
+  var label = rd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  var urgency = days <= 0 ? 'past' : days <= 60 ? 'critical' : days <= 90 ? 'urgent' : days <= 180 ? 'approaching' : 'future';
+
+  return { days: days, label: label, notes: notes, isOM: isOM, urgency: urgency };
+}
+
+// ── Renewal sentence injector ───────────────────────────────
+// Returns a single renewal-aware sentence to append to a touch body
+// touchNum: 1=day2, 2=day8, 3=day15, 4=day22, 5=day30
+function getRenewalLine(rc, touchNum, track) {
+  if (!rc || !rc.urgency) return '';
+  var d = rc.days, lbl = rc.label;
+
+  if (rc.urgency === 'past') {
+    // Renewal already happened — acknowledge post-renewal window
+    if (touchNum === 1) return '\n\nGiven your renewal just passed, this is actually an ideal time to run a benchmark — you have 12 months to build a case before the next cycle.';
+    if (touchNum === 2) return '\n\nPost-renewal is the best time to benchmark without pressure. I can run a comparison now so you have real data when ' + lbl + ' comes back around.';
+    return '';
+  }
+
+  if (rc.urgency === 'critical') {
+    // 0-60 days — high urgency
+    if (touchNum === 1) return '\n\nWith your renewal ' + (d <= 30 ? 'less than 30 days away' : 'in roughly ' + d + ' days') + ', the window to run a parallel analysis before you re-commit is closing fast. This is worth a 15-minute call this week.';
+    if (touchNum === 2) return '\n\nYour ' + lbl + ' renewal is ' + d + ' days out. At this stage I can still run a side-by-side comparison in time for you to make a fully informed decision — but that window closes soon.';
+    if (touchNum === 3) return '\n\nI want to be direct: with ' + d + ' days to your renewal, there is still time to benchmark — but not much. I can turn around a full cost comparison in 48 hours if you can give me 20 minutes.';
+    if (touchNum === 4) return '\n\nWith your renewal this close, I\'d rather give you the data and let you decide than go quiet. If there\'s any openness to a quick comparison before ' + lbl + ', I can make it happen fast.';
+    return '';
+  }
+
+  if (rc.urgency === 'urgent') {
+    // 61-90 days
+    if (touchNum === 1) return '\n\nYour ' + lbl + ' renewal is about 90 days out — which is exactly the right time to run a benchmark. Enough runway to be thoughtful, close enough to matter.';
+    if (touchNum === 2) return '\n\nWith a ' + lbl + ' renewal on the horizon, the timing on this analysis is actually ideal. 90 days gives us enough runway to run a real comparison without any pressure.';
+    if (touchNum === 3) return '\n\nYour ' + lbl + ' renewal window is opening. Companies that benchmark at this stage consistently get better outcomes — either they switch and save, or they negotiate harder with their existing carrier.';
+    return '';
+  }
+
+  if (rc.urgency === 'approaching') {
+    // 91-180 days
+    if (touchNum === 1) return '\n\nI flagged your ' + lbl + ' renewal — that gives us roughly ' + Math.round(d/30) + ' months to build a real comparison at a comfortable pace.';
+    if (touchNum === 2) return '\n\nWith your renewal in ' + lbl + ', there\'s enough time to do this properly. Running a benchmark now means you\'re not making a rushed decision when the deadline arrives.';
+    return '';
+  }
+
+  if (rc.urgency === 'future') {
+    // 180+ days
+    if (touchNum === 1) return '\n\nI noted your ' + lbl + ' renewal — plenty of runway, but the best benchmarks start early. Starting now gives you 12+ months of data to make the case internally.';
+    return '';
+  }
+
+  return '';
+}
+
 function buildTouches(p){
   const co=p.company||'[Company]',nm=(p.contact||'').split(' ')[0]||'[Name]';
   const ind=p.industry||'[Industry]',st=p.state||'[State]',hc=p.headcount||'[X]';
-  const sig='\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net';
+  const sig='\n\n—\nAJ Jaghori\nADP | beyondpayroll.net';
+
+  // Get renewal context from live tool fields or saved prospect
+  const rc = getRenewalContext();
+  // Helper: get renewal line for a given touch position
+  function rl(touchNum) { return getRenewalLine(rc, touchNum, p.track); }
+
   const wfn=[
-    {day:2,label:'Insight Hook',subject:`${co} is paying for ADP features you're not using — here's the data`,body:`Hi ${nm},\n\nI pulled benchmarking data specific to ${co}'s ADP WorkforceNow setup this week.\n\nCompanies at ${hc} employees in ${ind} are typically overpaying by 15–22% for features they don't fully use — and the compliance gap around ${st} regulations is worth a separate conversation.\n\nI'd love to walk you through what we found in 15 minutes. No slides, no pitch — just the numbers.\n\nAre you open this week or next?${sig}`},
-    {day:8,label:'Cost Benchmark',subject:`What ${co} is actually spending on HR tech vs. the benchmark`,body:`Hi ${nm},\n\nA cost benchmark built around ${co}'s profile — ${hc} employees, ${ind}, ${st}.\n\nA few data points worth flagging:\n\n• PEPM benchmarks for ${ind} at ${hc} EEs are running $X–$X\n• Feature utilization at this headcount averages ~60%\n• ${st} compliance exposure adds additional HR cost\n\nCan you share your current per-employee cost? I'd like to run a real comparison.\n\nWhat does your schedule look like this week?${sig}`},
-    {day:15,label:'Compliance Trigger',subject:`${st} compliance update: What ADP WFN clients in ${ind} are missing`,body:`Hi ${nm},\n\nWanted to put something on your radar.\n\nThere's a compliance requirement specific to ${ind} companies in ${st} that's catching WorkforceNow clients off guard. The exposure for companies at ${hc} employees is material.\n\nI put together a 15-minute briefing — I can walk you through exactly what it means for ${co}. No commitment, just a conversation.\n\nI have time Thursday or Friday — does either work?${sig}`},
-    {day:22,label:'Breakup Email',subject:`Last note from me, ${nm} — then I'll get out of your inbox`,body:`Hi ${nm},\n\nI've shared benchmarking data, a compliance brief, and a cost analysis for ${co} over the past few weeks. I'm not going to keep filling your inbox if the timing isn't right.\n\nIf renewal is 6+ months out, I'd rather check back in then than push now.\n\nHere's my direct calendar: [link]. If anything changes, I'm easy to find.\n\nEither way — I hope the data was useful.${sig}`},
+    {day:2,label:'Insight Hook',subject:`${co} is paying for ADP features you're not using — here's the data`,body:`Hi ${nm},\n\nI pulled benchmarking data specific to ${co}'s ADP WorkforceNow setup this week.\n\nCompanies at ${hc} employees in ${ind} are typically overpaying by 15–22% for features they don't fully use — and the compliance gap around ${st} regulations is worth a separate conversation.${rl(1)}\n\nI'd love to walk you through what we found in 15 minutes. No slides, no pitch — just the numbers.\n\nAre you open this week or next?${sig}`},
+    {day:8,label:'Cost Benchmark',subject:`What ${co} is actually spending on HR tech vs. the benchmark`,body:`Hi ${nm},\n\nA cost benchmark built around ${co}'s profile — ${hc} employees, ${ind}, ${st}.\n\nA few data points worth flagging:\n\n• PEPM benchmarks for ${ind} at ${hc} EEs are running $X–$X\n• Feature utilization at this headcount averages ~60%\n• ${st} compliance exposure adds additional HR cost${rl(2)}\n\nCan you share your current per-employee cost? I'd like to run a real comparison.\n\nWhat does your schedule look like this week?${sig}`},
+    {day:15,label:'Compliance Trigger',subject:`${st} compliance update: What ADP WFN clients in ${ind} are missing`,body:`Hi ${nm},\n\nWanted to put something on your radar.\n\nThere's a compliance requirement specific to ${ind} companies in ${st} that's catching WorkforceNow clients off guard. The exposure for companies at ${hc} employees is material.${rl(3)}\n\nI put together a 15-minute briefing — I can walk you through exactly what it means for ${co}. No commitment, just a conversation.\n\nI have time Thursday or Friday — does either work?${sig}`},
+    {day:22,label:'Breakup Email',subject:`Last note from me, ${nm} — then I'll get out of your inbox`,body:`Hi ${nm},\n\nI've shared benchmarking data, a compliance brief, and a cost analysis for ${co} over the past few weeks. I'm not going to keep filling your inbox if the timing isn't right.${rl(4)}\n\nHere's my direct calendar: [link]. If anything changes, I'm easy to find.\n\nEither way — I hope the data was useful.${sig}`},
     {day:30,label:'Community Invite',subject:`${co} HCM Scorecard + your spot in our quarterly briefing`,body:`Hi ${nm},\n\nWrapping up my outreach to ${co} — attaching your HCM Platform Scorecard as promised. It's yours to keep regardless of next steps.\n\nI'm enrolling you in our quarterly HCM Intelligence Briefing — real benchmarking data, no sales pitch, easy to unsubscribe.\n\nJoin here: beyondpayroll.net\n\nThanks for your time this month, ${nm}.${sig}`},
   ];
   const ts=[
-    {day:2,label:'PEO Reality Check',subject:`Is ADP TotalSource still the right model for ${co} at ${hc} employees?`,body:`Hi ${nm},\n\nMost PEO clients evaluate alternatives somewhere between 75–150 employees. At ${hc} employees in ${ind}, the PEPM math starts shifting in a way that surprises most CFOs — and the co-employment liability looks different than when you first signed.\n\nI'd love to run a side-by-side comparison. 15 minutes, no commitment.\n\nDo you have any time this week?${sig}`},
-    {day:8,label:'Cost Comparison',subject:`The math on TotalSource at ${hc} employees — what the data shows`,body:`Hi ${nm},\n\nA PEO vs. HCM cost comparison built around ${co}'s profile.\n\n• Estimated TotalSource PEPM at ${hc} EEs: $[X]–$[X]\n• Comparable HCM platform PEPM: $[X]–$[X]\n• Estimated annual delta: $[X]\n• Benefits markup on TotalSource (est.): [X]%\n\nI'd love to run the real numbers with you. Can you share your current PEPM?${sig}`},
-    {day:15,label:'Case Study',subject:`How a ${ind} company at ${hc} employees restructured HCM and saved $[X]/year`,body:`Hi ${nm},\n\nWanted to share a case study of a company similar to ${co} — same industry, similar headcount, also on TotalSource.\n\nAt ${hc} employees in ${ind}, the PEO model was costing them significantly more per year than a comparable HCM platform.\n\nI can run the same analysis for ${co} in about 20 minutes. Want to take a look together?${sig}`},
-    {day:22,label:'Breakup Email',subject:`Last email from me, ${nm} — with one final thought on ${co}'s TotalSource setup`,body:`Hi ${nm},\n\nI've shared a lot of data on ${co}'s PEO cost structure over the past few weeks.\n\nWhether you act now or at renewal, I hope it was useful.\n\nHere's everything in one place: [link]\nMy calendar: [calendar link]\n\nThanks for your time, ${nm}.${sig}`},
+    {day:2,label:'PEO Reality Check',subject:`Is ADP TotalSource still the right model for ${co} at ${hc} employees?`,body:`Hi ${nm},\n\nMost PEO clients evaluate alternatives somewhere between 75–150 employees. At ${hc} employees in ${ind}, the PEPM math starts shifting in a way that surprises most CFOs — and the co-employment liability looks different than when you first signed.${rl(1)}\n\nI'd love to run a side-by-side comparison. 15 minutes, no commitment.\n\nDo you have any time this week?${sig}`},
+    {day:8,label:'Cost Comparison',subject:`The math on TotalSource at ${hc} employees — what the data shows`,body:`Hi ${nm},\n\nA PEO vs. HCM cost comparison built around ${co}'s profile.\n\n• Estimated TotalSource PEPM at ${hc} EEs: $[X]–$[X]\n• Comparable HCM platform PEPM: $[X]–$[X]\n• Estimated annual delta: $[X]\n• Benefits markup on TotalSource (est.): [X]%${rl(2)}\n\nI'd love to run the real numbers with you. Can you share your current PEPM?${sig}`},
+    {day:15,label:'Case Study',subject:`How a ${ind} company at ${hc} employees restructured HCM and saved $[X]/year`,body:`Hi ${nm},\n\nWanted to share a case study of a company similar to ${co} — same industry, similar headcount, also on TotalSource.\n\nAt ${hc} employees in ${ind}, the PEO model was costing them significantly more per year than a comparable HCM platform.${rl(3)}\n\nI can run the same analysis for ${co} in about 20 minutes. Want to take a look together?${sig}`},
+    {day:22,label:'Breakup Email',subject:`Last email from me, ${nm} — with one final thought on ${co}'s TotalSource setup`,body:`Hi ${nm},\n\nI've shared a lot of data on ${co}'s PEO cost structure over the past few weeks.\n\nWhether you act now or at renewal, I hope it was useful.${rl(4)}\n\nHere's everything in one place: [link]\nMy calendar: [calendar link]\n\nThanks for your time, ${nm}.${sig}`},
     {day:30,label:'Community Invite',subject:`${co}'s PEO Scorecard + invitation to BeyondPayroll HCM Intelligence Community`,body:`Hi ${nm},\n\nFinal email from my end. Attaching your TotalSource Renewal Scorecard — yours to keep.\n\nI'm enrolling you in our quarterly PEO & HCM Benchmarking Briefing — no commitment, no pitch, just data.\n\nJoin here: beyondpayroll.net\n\nThanks for your time.${sig}`},
   ];
   return p.track==='WFN'?wfn:ts;
@@ -2788,6 +2891,30 @@ function ecRenderAll(){
   document.getElementById('ecs-track').textContent=p.track==='WFN'?'Track A':'Track B';
   document.getElementById('ecs-track').style.color=p.track==='WFN'?'var(--blue)':'var(--red)';
   document.getElementById('ecs-profile').textContent=`${p.industry||'—'} · ${p.state||'—'} · ${p.headcount||'—'} EEs`;
+  // ── Renewal badge ──────────────────────────────────────────
+  var renewalBadgeEl=document.getElementById('ecs-renewal-badge');
+  if(!renewalBadgeEl){
+    // Create it once, insert after ecs-profile
+    renewalBadgeEl=document.createElement('div');
+    renewalBadgeEl.id='ecs-renewal-badge';
+    renewalBadgeEl.style.cssText='margin-top:6px;font-size:12px;font-weight:600;letter-spacing:.02em;';
+    var profileEl=document.getElementById('ecs-profile');
+    if(profileEl&&profileEl.parentNode) profileEl.parentNode.insertBefore(renewalBadgeEl,profileEl.nextSibling);
+  }
+  var rc=getRenewalContext();
+  if(rc.urgency==='critical'){
+    renewalBadgeEl.innerHTML='🔴 Renewal in <strong>'+rc.days+' days</strong> ('+rc.label+') — <span style="color:var(--orange)">Critical window</span>';
+  } else if(rc.urgency==='urgent'){
+    renewalBadgeEl.innerHTML='🟠 Renewal in <strong>'+rc.days+' days</strong> ('+rc.label+') — <span style="color:var(--orange)">Urgent</span>';
+  } else if(rc.urgency==='approaching'){
+    renewalBadgeEl.innerHTML='🟡 Renewal in ~<strong>'+Math.round(rc.days/30)+' months</strong> ('+rc.label+') — Approaching';
+  } else if(rc.urgency==='future'){
+    renewalBadgeEl.innerHTML='🔵 Renewal '+rc.label+' — <span style="color:var(--muted)">Early stage</span>';
+  } else if(rc.urgency==='past'){
+    renewalBadgeEl.innerHTML='⚪ Renewal passed ('+rc.label+') — Post-renewal window';
+  } else {
+    renewalBadgeEl.innerHTML='';
+  }
   const tabsEl=document.getElementById('ec-tabs');
   if(!tabsEl)return;
   tabsEl.innerHTML=touches.map((t,i)=>{
@@ -3808,23 +3935,12 @@ async function fbPullUsers(){
 async function fbInitialSync(session){
   if(!_fbDb) return;
   try{
-    // Load local tombstone
-    let tombstone = [];
-    try { tombstone = JSON.parse(localStorage.getItem('bp_deleted_ids') || '[]'); } catch(e){}
-
     // ── Pull remote ──────────────────────────────────────────────
     const snap = await _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
       .get();
     const remote = [];
-    snap.forEach(function(d){
-      const data = d.data();
-      // Skip deleted/tombstoned docs
-      if(data._deleted) return;
-      if(tombstone.indexOf(d.id) !== -1) return;
-      if(data.company && tombstone.indexOf(data.company) !== -1) return;
-      remote.push(Object.assign({id:d.id}, data));
-    });
+    snap.forEach(function(d){ remote.push(Object.assign({id:d.id}, d.data())); });
 
     // ── Merge: newer updatedAt wins per company ──────────────────
     const local = getProspects();
@@ -3888,12 +4004,7 @@ async function fbInitialSync(session){
 
     if(pushJobs.length) await Promise.all(pushJobs);
 
-    const finalArr = Object.values(merged).filter(function(p){
-      if(tombstone.indexOf(p.id) !== -1) return false;
-      if(p.company && tombstone.indexOf(p.company) !== -1) return false;
-      if(p._deleted) return false;
-      return true;
-    }).sort(function(a,b){
+    const finalArr = Object.values(merged).sort(function(a,b){
       return new Date(b.updatedAt||0) - new Date(a.updatedAt||0);
     });
     saveProspectsLocal(finalArr);
@@ -3920,20 +4031,9 @@ function fbListen(session){
     window._fbUnsubscribe = _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
       .onSnapshot(function(snap){
-        // Load local tombstone of deleted ids
-        let tombstone = [];
-        try { tombstone = JSON.parse(localStorage.getItem('bp_deleted_ids') || '[]'); } catch(e){}
-
-        // Build map of incoming remote docs — skip any marked _deleted or in tombstone
+        // Build map of incoming remote docs
         const remote = {};
-        snap.forEach(function(d){
-          const data = d.data();
-          // Skip tombstoned/deleted docs
-          if(data._deleted) return;
-          if(tombstone.indexOf(d.id) !== -1) return;
-          if(data.company && tombstone.indexOf(data.company) !== -1) return;
-          remote[d.id] = Object.assign({id:d.id}, data);
-        });
+        snap.forEach(function(d){ remote[d.id] = Object.assign({id:d.id}, d.data()); });
 
         // Merge with current local: remote wins unless local is newer
         const local = getProspects();
@@ -3952,12 +4052,7 @@ function fbListen(session){
           }
         });
 
-        // Also filter out any locally tombstoned records that snuck in
-        const merged = Object.values(localMap).filter(function(p){
-          if(tombstone.indexOf(p.id) !== -1) return false;
-          if(p.company && tombstone.indexOf(p.company) !== -1) return false;
-          return true;
-        }).sort(function(a,b){
+        const merged = Object.values(localMap).sort(function(a,b){
           return new Date(b.updatedAt||0) - new Date(a.updatedAt||0);
         });
 
@@ -4269,36 +4364,11 @@ window.ppDeleteProspect = function(idx) {
   if(!confirm('Delete '+arr[idx].company+' from Prospect Profiles?')) return;
   const removed = arr.splice(idx, 1)[0];
   saveProspectsLocal(arr);
-
-  // Mark as deleted in Firestore (tombstone) AND delete the doc
-  // Using a tombstone prevents fbListen from re-adding it on next snapshot
+  // Delete from Firestore
   if(_fbDb && removed && removed.id){
-    // First write the tombstone so the listener sees _deleted:true before the doc disappears
-    _fbDb.collection('prospects').doc(removed.id).set(
-      { _deleted: true, userEmail: (_fbSession && _fbSession.email) || '', updatedAt: new Date().toISOString() },
-      { merge: true }
-    ).then(function(){
-      // Then delete the actual doc after a short delay
-      setTimeout(function(){
-        _fbDb.collection('prospects').doc(removed.id).delete()
-          .catch(function(e){ console.warn('fbDelete:', e.message); });
-      }, 2000);
-    }).catch(function(e){
-      // Fallback: just delete directly
-      _fbDb.collection('prospects').doc(removed.id).delete()
-        .catch(function(e2){ console.warn('fbDelete:', e2.message); });
-    });
+    _fbDb.collection('prospects').doc(removed.id).delete()
+      .catch(function(e){console.warn('fbDelete:',e.message);});
   }
-
-  // Also save deleted id to localStorage tombstone so offline deletes persist
-  try {
-    const tombstone = JSON.parse(localStorage.getItem('bp_deleted_ids') || '[]');
-    const delId = removed.id || removed.company || '';
-    if(delId && tombstone.indexOf(delId) === -1) tombstone.push(delId);
-    if(removed.company && tombstone.indexOf(removed.company) === -1) tombstone.push(removed.company);
-    localStorage.setItem('bp_deleted_ids', JSON.stringify(tombstone));
-  } catch(e) {}
-
   renderSavedProspects();
   const ov = document.getElementById('pp-modal-overlay');
   if(ov) ov.remove();
