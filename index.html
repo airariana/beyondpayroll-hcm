@@ -1695,7 +1695,7 @@ function getHQHTML(session){
           <span class="notif-badge" id="notif-badge">0</span>
         </button>
       </div>
-      <button onclick="toggleProfileDropdown()" style="padding:9px 14px;font-size:12px;font-weight:700;border-radius:6px;border:1.5px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);display:inline-flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.borderColor='var(--navy)';this.style.color='var(--navy)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'" title="Prospect Profiles">
+      <button id="profiles-drawer-btn" onclick="ppToggleDrawer()" style="padding:9px 14px;font-size:12px;font-weight:700;border-radius:6px;border:1.5px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);display:inline-flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.borderColor='var(--navy)';this.style.color='var(--navy)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'" title="Prospect Profiles">
         📁 Profiles <span id="header-prospect-count" style="font-size:10px;background:var(--navy);color:#fff;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center"></span>
       </button>
       <button class="btn btn-dark" onclick="openModal()" style="padding:9px 18px;font-size:13px">+ New Prospect</button>
@@ -8964,6 +8964,69 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
   padding:12px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;
   font-size:12px;color:#991b1b;
 }
+
+/* ── Prospect Profiles Drawer ── */
+.pp-drawer{
+  position:fixed;top:0;right:-420px;width:420px;max-width:100vw;height:100vh;
+  background:var(--white);box-shadow:-4px 0 40px rgba(0,0,0,.18);
+  z-index:4500;display:flex;flex-direction:column;
+  transition:right .28s cubic-bezier(.4,0,.2,1);
+  font-family:var(--fb);
+}
+.pp-drawer.open{right:0}
+.pp-drawer-backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:4499;
+}
+.pp-drawer-backdrop.open{display:block}
+.pp-drawer-hdr{
+  background:var(--navy);color:#fff;
+  padding:18px 20px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.pp-drawer-title{font-family:var(--fd);font-size:16px;font-weight:600}
+.pp-drawer-sub{font-size:11px;opacity:.5;margin-top:2px}
+.pp-drawer-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.pp-drawer-close:hover{background:rgba(255,255,255,.28)}
+.pp-drawer-search{padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.pp-drawer-search input{
+  width:100%;padding:8px 12px;font-size:12px;font-family:var(--fb);
+  border:1.5px solid var(--border);border-radius:6px;background:var(--off-white);
+  color:var(--text);box-sizing:border-box;
+}
+.pp-drawer-search input:focus{outline:none;border-color:var(--navy)}
+.pp-drawer-filters{display:flex;gap:6px;padding:0 16px 10px;flex-shrink:0}
+.pp-drawer-filter{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text-3);font-family:var(--fb);transition:all .12s}
+.pp-drawer-filter.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pp-drawer-list{flex:1;overflow-y:auto;padding:8px 0}
+.pp-drawer-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);
+  transition:background .1s;
+}
+.pp-drawer-item:hover{background:var(--off-white)}
+.pp-drawer-item.active-prospect{background:var(--blue-bg);border-left:3px solid var(--blue)}
+.pp-di-avatar{
+  width:38px;height:38px;border-radius:8px;background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;color:var(--gold);font-family:var(--fd);
+  flex-shrink:0;
+}
+.pp-di-avatar.ts{background:#14532d}
+.pp-di-info{flex:1;min-width:0}
+.pp-di-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-di-meta{font-size:11px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-di-badges{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.pp-di-track{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px}
+.pp-di-track.wfn{background:var(--blue-bg);color:var(--blue)}
+.pp-di-track.ts{background:var(--red-bg);color:var(--red)}
+.pp-di-active{font-size:9px;font-weight:700;color:#16a34a;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);padding:1px 5px;border-radius:3px}
+.pp-drawer-item-actions{display:flex;gap:4px;margin-top:6px}
+.pp-dia-btn{font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:var(--fb);border:1px solid var(--border);background:var(--white);color:var(--text-2);transition:all .12s}
+.pp-dia-btn:hover{background:var(--off-white);border-color:var(--text)}
+.pp-dia-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.pp-dia-btn.primary:hover{background:#0f1729}
+.pp-drawer-empty{padding:40px 20px;text-align:center;color:var(--text-3);font-size:13px}
+.pp-drawer-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
 </style>
 
 <div id="ts-panel">
@@ -10606,6 +10669,165 @@ window.atClearAll = function() {
   showToast('Analysis tools reset');
 };
 
+
+// ══ PROSPECT PROFILES DRAWER ══════════════════════════════════════
+let _ppDrawerFilter = 'all';
+let _ppDrawerQuery = '';
+
+window.ppToggleDrawer = function() {
+  const drawer = document.getElementById('pp-drawer');
+  if (!drawer) return;
+  const isOpen = drawer.classList.contains('open');
+  if (isOpen) { ppCloseDrawer(); } else { ppOpenDrawer(); }
+};
+
+window.ppOpenDrawer = function() {
+  const drawer = document.getElementById('pp-drawer');
+  const backdrop = document.getElementById('pp-drawer-backdrop');
+  if (!drawer) return;
+  drawer.classList.add('open');
+  if (backdrop) backdrop.classList.add('open');
+  ppRenderDrawer();
+  const inp = document.getElementById('pp-drawer-search-inp');
+  if (inp) setTimeout(function(){ inp.focus(); }, 300);
+};
+
+window.ppCloseDrawer = function() {
+  const drawer = document.getElementById('pp-drawer');
+  const backdrop = document.getElementById('pp-drawer-backdrop');
+  if (drawer) drawer.classList.remove('open');
+  if (backdrop) backdrop.classList.remove('open');
+};
+
+window.ppDrawerSearch = function(q) {
+  _ppDrawerQuery = q.toLowerCase().trim();
+  ppRenderDrawer();
+};
+
+window.ppDrawerFilter = function(f) {
+  _ppDrawerFilter = f;
+  ['all','active','wfn','ts'].forEach(function(k){
+    const el = document.getElementById('ppf-'+k);
+    if (el) el.classList.toggle('active', k === f);
+  });
+  ppRenderDrawer();
+};
+
+function ppRenderDrawer() {
+  const list = document.getElementById('pp-drawer-list');
+  const sub = document.getElementById('pp-drawer-sub');
+  if (!list) return;
+
+  let arr = getProspects();
+
+  // Filter
+  if (_ppDrawerFilter === 'active') arr = arr.filter(function(p){ return p.approved; });
+  else if (_ppDrawerFilter === 'wfn') arr = arr.filter(function(p){ return !(p.track||'').toLowerCase().includes('ts'); });
+  else if (_ppDrawerFilter === 'ts') arr = arr.filter(function(p){ return (p.track||'').toLowerCase().includes('ts'); });
+
+  // Search
+  if (_ppDrawerQuery) {
+    arr = arr.filter(function(p){
+      return (p.company||'').toLowerCase().includes(_ppDrawerQuery)
+          || (p.contact||'').toLowerCase().includes(_ppDrawerQuery)
+          || (p.industry||'').toLowerCase().includes(_ppDrawerQuery)
+          || (p.state||'').toLowerCase().includes(_ppDrawerQuery);
+    });
+  }
+
+  const all = getProspects();
+  if (sub) sub.textContent = all.length + ' prospect' + (all.length !== 1 ? 's' : '') + (arr.length !== all.length ? ' · ' + arr.length + ' shown' : '');
+
+  if (!arr.length) {
+    list.innerHTML = '<div class="pp-drawer-empty">'
+      + (all.length ? 'No prospects match your filter.' : 'No prospects yet.<br>Click + New Prospect to get started.')
+      + '</div>';
+    return;
+  }
+
+  const activeCompany = window._hqProspect ? window._hqProspect.company : null;
+
+  // Get real index in full array for actions
+  const fullArr = getProspects();
+
+  list.innerHTML = arr.map(function(p) {
+    const realIdx = fullArr.findIndex(function(x){ return x.company === p.company && x.contact === p.contact; });
+    const isTS = (p.track||'').toLowerCase().includes('ts');
+    const initials = (p.company||'?').substring(0,2).toUpperCase();
+    const isActive = p.company === activeCompany;
+    const trackCls = isTS ? 'ts' : 'wfn';
+    const trackLabel = isTS ? 'TotalSource' : 'WFN';
+    const meta = [p.contact, p.industry, p.state, p.headcount ? p.headcount+' EEs' : ''].filter(Boolean).join(' · ');
+
+    return '<div class="pp-drawer-item'+(isActive?' active-prospect':'')+'">'
+      + '<div class="pp-di-avatar'+(isTS?' ts':'')+'">'+escHtml(initials)+'</div>'
+      + '<div class="pp-di-info">'
+        + '<div class="pp-di-name">'+escHtml(p.company||'Unknown')+'</div>'
+        + '<div class="pp-di-meta">'+escHtml(meta||'—')+'</div>'
+        + '<div class="pp-drawer-item-actions">'
+          + '<button class="pp-dia-btn primary" onclick="ppDrawerLoad('+realIdx+')">▶ Load</button>'
+          + '<button class="pp-dia-btn" onclick="ppShowProfile('+realIdx+')">👁 Profile</button>'
+          + '<button class="pp-dia-btn" onclick="ppSendSmsReminder('+realIdx+')">📱 SMS</button>'
+          + (p.approved ? '<button class="pp-dia-btn" onclick="ppDrawerLoad('+realIdx+');hqTab(\'composer\');ppCloseDrawer()">📅 Cadence</button>' : '')
+        + '</div>'
+      + '</div>'
+      + '<div class="pp-di-badges">'
+        + '<span class="pp-di-track '+trackCls+'">'+trackLabel+'</span>'
+        + (p.approved ? '<span class="pp-di-active">ACTIVE</span>' : '')
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+window.ppDrawerLoad = function(idx) {
+  pdLoadProspect(idx);
+  ppCloseDrawer();
+};
+
+// Keep drawer list in sync whenever prospects change
+const _origRenderSaved = window.renderSavedProspects;
+window.renderSavedProspects = function() {
+  if (_origRenderSaved) _origRenderSaved();
+  ppRenderDrawer();
+  // Update header count
+  const arr = getProspects();
+  const hdrCount = document.getElementById('header-prospect-count');
+  if (hdrCount) hdrCount.textContent = arr.length > 0 ? arr.length : '';
+};
+
+// Close drawer on Escape
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') ppCloseDrawer();
+});
+
 </script>
+
+<!-- ══ PROSPECT PROFILES DRAWER ══ -->
+<div class="pp-drawer-backdrop" id="pp-drawer-backdrop" onclick="ppCloseDrawer()"></div>
+<div class="pp-drawer" id="pp-drawer">
+  <div class="pp-drawer-hdr">
+    <div>
+      <div class="pp-drawer-title">📁 Prospect Profiles</div>
+      <div class="pp-drawer-sub" id="pp-drawer-sub">0 prospects</div>
+    </div>
+    <button class="pp-drawer-close" onclick="ppCloseDrawer()">✕</button>
+  </div>
+  <div class="pp-drawer-search">
+    <input type="text" id="pp-drawer-search-inp" placeholder="Search by company, contact, industry…" oninput="ppDrawerSearch(this.value)">
+  </div>
+  <div class="pp-drawer-filters">
+    <button class="pp-drawer-filter active" id="ppf-all" onclick="ppDrawerFilter('all')">All</button>
+    <button class="pp-drawer-filter" id="ppf-active" onclick="ppDrawerFilter('active')">🟢 Active</button>
+    <button class="pp-drawer-filter" id="ppf-wfn" onclick="ppDrawerFilter('wfn')">WFN</button>
+    <button class="pp-drawer-filter" id="ppf-ts" onclick="ppDrawerFilter('ts')">TotalSource</button>
+  </div>
+  <div class="pp-drawer-list" id="pp-drawer-list">
+    <div class="pp-drawer-empty">No prospects yet.<br>Click + New Prospect to get started.</div>
+  </div>
+  <div class="pp-drawer-footer">
+    <button class="pp-ftr-btn primary" onclick="ppCloseDrawer();openModal()" style="flex:1;padding:9px;font-size:12px;font-weight:700;background:var(--navy);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--fb)">+ New Prospect</button>
+    <button class="pp-ftr-btn" onclick="exportProspects()" style="padding:9px 12px;font-size:12px;font-weight:600;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">⬇ Export</button>
+  </div>
+</div>
 </body>
 </html>
