@@ -3711,23 +3711,50 @@ function fbInit(session){
     fbSetStatus('offline','● Local only');
     return;
   }
+
+  function _fbBoot(){
+    try{
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      _fbDb=firebase.firestore();
+      fbSetStatus('live','● Live');
+      fbSyncUser(session);
+      fbInitialSync(session);
+    }catch(e){console.warn('Firebase init:',e.message);fbSetStatus('error','● Error');}
+  }
+
+  // If Firebase SDK already loaded (e.g. from sign-in flow), boot directly
+  if(typeof firebase!=='undefined' && typeof firebase.firestore!=='undefined'){
+    _fbBoot();
+    return;
+  }
+
+  // Check if scripts are already injected but not yet executed
+  const existing = document.querySelector('script[src*="firebase-app-compat"]');
+  if(existing){
+    // Wait for it to finish loading
+    existing.addEventListener('load', function(){
+      const existing2 = document.querySelector('script[src*="firebase-firestore-compat"]');
+      if(existing2){ existing2.addEventListener('load', _fbBoot); }
+      else {
+        const s2=document.createElement('script');
+        s2.src='https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
+        s2.onload=_fbBoot;
+        s2.onerror=function(){fbSetStatus('offline','● Offline');};
+        document.head.appendChild(s2);
+      }
+    });
+    return;
+  }
+
+  // Fresh load
   try{
     const s1=document.createElement('script');
     s1.src='https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js';
     s1.onload=function(){
+      if(typeof firebase.firestore!=='undefined'){ _fbBoot(); return; }
       const s2=document.createElement('script');
       s2.src='https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js';
-      s2.onload=function(){
-        try{
-          if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-          _fbDb=firebase.firestore();
-          fbSetStatus('live','● Live');
-          // Sync user account to Firestore so other devices can log in
-          fbSyncUser(session);
-          // Pull prospects from Firestore first, then push any local-only ones
-          fbInitialSync(session);
-        }catch(e){console.warn('Firebase init:',e.message);fbSetStatus('error','● Error');}
-      };
+      s2.onload=_fbBoot;
       s2.onerror=function(){fbSetStatus('offline','● Offline');};
       document.head.appendChild(s2);
     };
@@ -3876,7 +3903,6 @@ function fbListen(session){
   try{
     window._fbUnsubscribe = _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
-      .orderBy('updatedAt','desc')
       .onSnapshot(function(snap){
         // Build map of incoming remote docs
         const remote = {};
