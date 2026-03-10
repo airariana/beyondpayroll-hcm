@@ -143,16 +143,19 @@ function doLogout(){
   _fbDb=null; _fbOnline=false; _fbSession=null;
   clearSession();
   document.getElementById('view-hq').classList.remove('active');
-  document.getElementById('view-auth').classList.add('active');
+  var _lndL = document.getElementById('view-landing');
+  if(_lndL) _lndL.classList.add('active');
+  else document.getElementById('view-auth').classList.add('active');
   switchMode('signin');
   document.getElementById('si-email').value='';document.getElementById('si-pass').value='';
   showToast('Signed out successfully');
 }
 
 function enterHQ(session){
-  // Ensure splash is hidden
   const _splash = document.getElementById('bp-splash');
   if(_splash) _splash.classList.add('hide');
+  const _lnd = document.getElementById('view-landing');
+  if(_lnd) _lnd.classList.remove('active');
   document.getElementById('view-auth').classList.remove('active');
   document.getElementById('view-hq').classList.add('active');
   const initials=(session.first[0]+session.last[0]).toUpperCase();
@@ -190,14 +193,25 @@ function enterHQ(session){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
-  // Hide splash once DOM is ready and session check runs
   requestAnimationFrame(function(){
     const splash = document.getElementById('bp-splash');
     if(splash) splash.classList.add('hide');
   });
   const s = getSession();
-  if(s) enterHQ(s);
+  if(s){
+    enterHQ(s);
+  } else {
+    const landing = document.getElementById('view-landing');
+    if(landing) landing.classList.add('active');
+  }
 });
+
+function lvGoToPortal(){
+  const landing = document.getElementById('view-landing');
+  const auth = document.getElementById('view-auth');
+  if(landing) landing.classList.remove('active');
+  if(auth){ auth.classList.add('active'); auth.scrollTop=0; }
+}
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     const si=document.getElementById('form-signin');
