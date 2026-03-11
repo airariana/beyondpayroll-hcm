@@ -662,99 +662,6 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 }
 
 /* ═══════════════════════════════════════
-   PROFILES LEFT SIDEBAR
-═══════════════════════════════════════ */
-.profiles-sidebar{
-  position:fixed;top:58px;left:-300px;width:280px;
-  height:calc(100vh - 58px);
-  background:var(--white);border-right:1px solid var(--border);
-  box-shadow:4px 0 24px rgba(0,0,0,.08);
-  z-index:1500;transition:left .25s cubic-bezier(.4,0,.2,1);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-.profiles-sidebar.open{left:0}
-.psb-hdr{
-  padding:14px 16px 12px;border-bottom:1px solid var(--border);
-  background:var(--navy);color:#fff;flex-shrink:0;
-}
-.psb-hdr-row{display:flex;align-items:center;justify-content:space-between}
-.psb-title{font-family:var(--fd);font-size:14px;font-weight:600}
-.psb-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;}
-.psb-close:hover{background:rgba(255,255,255,.25)}
-.psb-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;font-family:var(--fm)}
-.psb-search{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
-.psb-search input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:11px;font-family:var(--fb);outline:none;background:var(--off-white);color:var(--text)}
-.psb-search input:focus{border-color:var(--navy);background:#fff}
-.psb-filters{display:flex;gap:5px;padding:8px 12px;flex-shrink:0;flex-wrap:wrap}
-.psb-filter{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text-3);font-family:var(--fb);transition:all .12s}
-.psb-filter.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-.psb-list{flex:1;overflow-y:auto;padding:6px 0}
-.psb-item{
-  padding:10px 14px;cursor:pointer;transition:background .1s;
-  border-left:3px solid transparent;position:relative;
-}
-.psb-item:hover{background:var(--off-white)}
-.psb-item.active-prospect{background:var(--blue-bg);border-left-color:var(--blue)}
-.psb-item-co{font-size:12px;font-weight:700;color:var(--text);line-height:1.3}
-.psb-item-contact{font-size:11px;color:var(--text-3);margin-top:1px}
-.psb-item-meta{display:flex;gap:5px;margin-top:5px;align-items:center;flex-wrap:wrap}
-.psb-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase;font-family:var(--fb)}
-.psb-tag.wfn{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
-.psb-tag.ts{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
-.psb-tag.today{background:#fff0ed;color:#c0411d;border:1px solid #fcc;font-weight:800}
-.psb-item-day{font-size:9px;color:var(--text-3);font-family:var(--fm)}
-.psb-empty{padding:32px 16px;text-align:center;color:var(--text-3);font-size:12px}
-.psb-ftr{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
-.psb-new-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:6px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb);transition:opacity .15s}
-.psb-new-btn:hover{opacity:.85}
-
-/* ═══════════════════════════════════════
-   ACTIVITY RIGHT DRAWER (All/Outreach/Intel/Alerts)
-═══════════════════════════════════════ */
-.activity-drawer{
-  position:fixed;top:58px;right:-380px;width:360px;
-  height:calc(100vh - 58px);
-  background:var(--white);border-left:1px solid var(--border);
-  box-shadow:-4px 0 24px rgba(0,0,0,.1);
-  z-index:1500;transition:right .25s cubic-bezier(.4,0,.2,1);
-  display:flex;flex-direction:column;overflow:hidden;
-}
-.activity-drawer.open{right:0}
-.act-drawer-hdr{
-  padding:14px 18px;border-bottom:1px solid var(--border);
-  background:var(--navy);color:#fff;flex-shrink:0;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.act-drawer-title{font-family:var(--fd);font-size:14px;font-weight:600}
-.act-drawer-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
-.act-drawer-close:hover{background:rgba(255,255,255,.25)}
-.act-drawer-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--white)}
-.act-dtab{flex:1;padding:9px 4px;font-size:11px;font-weight:700;border:none;background:transparent;cursor:pointer;color:var(--text-3);font-family:var(--fb);border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap}
-.act-dtab:hover{color:var(--navy)}
-.act-dtab.active{color:var(--navy);border-bottom-color:var(--navy)}
-.act-list{flex:1;overflow-y:auto;padding:10px}
-.act-item{
-  background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);
-  padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:border-color .1s;
-  position:relative;
-}
-.act-item:hover{border-color:var(--border-2)}
-.act-item.outreach{border-left:3px solid var(--blue)}
-.act-item.intel{border-left:3px solid var(--gold)}
-.act-item.alert{border-left:3px solid #c2410c}
-.act-item-type{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
-.act-item-type.outreach{color:var(--blue)}
-.act-item-type.intel{color:var(--gold)}
-.act-item-type.alert{color:#c2410c}
-.act-item-msg{font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:2px}
-.act-item-sub{font-size:11px;color:var(--text-3)}
-.act-item-time{font-size:9px;color:var(--text-3);margin-top:4px;font-family:var(--fm)}
-.act-empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:12px}
-.act-drawer-ftr{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:6px}
-.act-ftr-btn{flex:1;padding:7px;font-size:11px;font-weight:600;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);transition:all .12s}
-.act-ftr-btn:hover{border-color:var(--navy);color:var(--navy)}
-
-/* ═══════════════════════════════════════
    EMAIL GENERATOR ENGINE MODAL
 ═══════════════════════════════════════ */
 .eg-overlay{
@@ -833,10 +740,6 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .eg-empty-sub{font-size:11px;max-width:240px;line-height:1.6;opacity:.55}
 /* Spinner */
 .eg-spin{width:13px;height:13px;border:2px solid rgba(13,21,53,.25);border-top-color:var(--navy);border-radius:50%;animation:spin .6s linear infinite;display:none}
-
-/* Sidebar backdrop */
-.sidebar-backdrop{position:fixed;inset:0;z-index:1400;background:rgba(0,0,0,.25);display:none}
-.sidebar-backdrop.open{display:block}
 
 /* Inline intel refresh panel */
 .cdt-intel-result{
@@ -2049,12 +1952,12 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
     <span class="tb-sub">Sales HQ</span>
 
     <div class="tb-right">
-      <!-- Profiles sidebar button -->
-      <button class="tb-icon-btn" id="tb-profiles-btn" onclick="toggleProfilesSidebar()" title="Prospect Profiles">
-        📁 Profiles <span id="tb-profiles-count" style="font-size:10px;color:var(--text-3);font-weight:500"></span>
+      <!-- Profiles sidebar button — wired to app.js ppToggleDrawer() -->
+      <button class="tb-icon-btn" id="tb-profiles-btn" onclick="ppToggleDrawer()" title="Prospect Profiles">
+        📁 Profiles
       </button>
-      <!-- Activity drawer button -->
-      <button class="tb-icon-btn" id="tb-activity-btn" onclick="toggleActivityDrawer()" title="Activity & Alerts">
+      <!-- Activity/Alerts drawer button — wired to app.js notifOpenDrawer() -->
+      <button class="tb-icon-btn" id="tb-activity-btn" onclick="notifOpenDrawer()" title="Activity & Alerts">
         🔔 Activity
       </button>
       <!-- Firebase sync status -->
@@ -3509,62 +3412,6 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 
 <!-- ══ PROSPECT PROFILES DRAWER ══ -->
 <!-- ═══════════════════════════════════════════════════
-     PROFILES LEFT SIDEBAR
-═══════════════════════════════════════════════════ -->
-<div class="sidebar-backdrop" id="profiles-backdrop" onclick="closeProfilesSidebar()"></div>
-<div class="profiles-sidebar" id="profiles-sidebar">
-  <div class="psb-hdr">
-    <div class="psb-hdr-row">
-      <div class="psb-title">📁 Prospect Profiles</div>
-      <button class="psb-close" onclick="closeProfilesSidebar()">✕</button>
-    </div>
-    <div class="psb-sub" id="psb-sub">0 profiles loaded</div>
-  </div>
-  <div class="psb-search">
-    <input type="text" id="psb-search-inp" placeholder="Search company, contact, industry…" oninput="psbSearch(this.value)">
-  </div>
-  <div class="psb-filters">
-    <button class="psb-filter active" id="psbf-all" onclick="psbFilter('all')">All</button>
-    <button class="psb-filter" id="psbf-active" onclick="psbFilter('active')">🟢 Active</button>
-    <button class="psb-filter" id="psbf-today" onclick="psbFilter('today')">📅 Today</button>
-    <button class="psb-filter" id="psbf-wfn" onclick="psbFilter('wfn')">WFN</button>
-    <button class="psb-filter" id="psbf-ts" onclick="psbFilter('ts')">PEO</button>
-  </div>
-  <div class="psb-list" id="psb-list">
-    <div class="psb-empty">No prospects yet.<br>Click + New Prospect to get started.</div>
-  </div>
-  <div class="psb-ftr">
-    <button class="psb-new-btn" onclick="closeProfilesSidebar();openModal()">+ New Prospect</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     ACTIVITY & ALERTS RIGHT DRAWER
-═══════════════════════════════════════════════════ -->
-<div class="sidebar-backdrop" id="activity-backdrop" onclick="closeActivityDrawer()"></div>
-<div class="activity-drawer" id="activity-drawer">
-  <div class="act-drawer-hdr">
-    <div>
-      <div class="act-drawer-title">🔔 Activity & Alerts</div>
-    </div>
-    <button class="act-drawer-close" onclick="closeActivityDrawer()">✕</button>
-  </div>
-  <div class="act-drawer-tabs">
-    <button class="act-dtab active" id="actab-all" onclick="actTab('all')">All</button>
-    <button class="act-dtab" id="actab-outreach" onclick="actTab('outreach')">Outreach</button>
-    <button class="act-dtab" id="actab-intel" onclick="actTab('intel')">Intel</button>
-    <button class="act-dtab" id="actab-alerts" onclick="actTab('alerts')">Alerts</button>
-  </div>
-  <div class="act-list" id="act-list">
-    <div class="act-empty">No activity yet. Activity will appear as you work through your cadences.</div>
-  </div>
-  <div class="act-drawer-ftr">
-    <button class="act-ftr-btn" onclick="actMarkAllRead()">✓ Mark All Read</button>
-    <button class="act-ftr-btn" onclick="actClearAll()">Clear All</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
      EMAIL GENERATOR ENGINE MODAL
 ═══════════════════════════════════════════════════ -->
 <div class="eg-overlay" id="eg-overlay" onclick="egOverlayClick(event)">
@@ -4823,208 +4670,6 @@ No preamble. No explanation. No alternatives. Just the email.`;
 
 <script>
 /* ════════════════════════════════════════════════════
-   PROFILES SIDEBAR
-════════════════════════════════════════════════════ */
-(function(){
-  var _filter = 'all', _search = '';
-
-  window.toggleProfilesSidebar = function(){
-    var sb = document.getElementById('profiles-sidebar');
-    if(sb.classList.contains('open')){ closeProfilesSidebar(); return; }
-    psbRender();
-    sb.classList.add('open');
-    document.getElementById('profiles-backdrop').classList.add('open');
-    document.getElementById('tb-profiles-btn').classList.add('active');
-  };
-
-  window.closeProfilesSidebar = function(){
-    document.getElementById('profiles-sidebar').classList.remove('open');
-    document.getElementById('profiles-backdrop').classList.remove('open');
-    document.getElementById('tb-profiles-btn').classList.remove('active');
-  };
-
-  window.psbFilter = function(f){
-    _filter = f;
-    document.querySelectorAll('.psb-filter').forEach(function(b){ b.classList.remove('active'); });
-    var el = document.getElementById('psbf-'+f);
-    if(el) el.classList.add('active');
-    psbRender();
-  };
-
-  window.psbSearch = function(v){ _search = (v||'').toLowerCase(); psbRender(); };
-
-  function getProspects(){
-    var src = window.prospects || window.PROSPECTS ||
-      (window.state && window.state.prospects) ||
-      (window.appState && window.appState.prospects) || {};
-    return Object.values(src);
-  }
-
-  function psbRender(){
-    var all = getProspects();
-    var today = new Date().toDateString();
-    // Update count badge
-    var countEl = document.getElementById('tb-profiles-count');
-    if(countEl) countEl.textContent = '('+all.length+')';
-    var subEl = document.getElementById('psb-sub');
-    if(subEl) subEl.textContent = all.length + ' profile'+(all.length===1?'':'s')+' loaded';
-
-    // Filter
-    var list = all.filter(function(p){
-      if(_filter==='active' && !p.approved && !p.active) return false;
-      if(_filter==='wfn' && !(p.track||'').toLowerCase().includes('wfn')) return false;
-      if(_filter==='ts' && !(p.track||'').toLowerCase().includes('ts') && !(p.track||'').toLowerCase().includes('total')) return false;
-      if(_filter==='today'){
-        var next = p.nextTouchDate || p.nextTouch || '';
-        if(next && new Date(next).toDateString() !== today) return false;
-      }
-      if(_search){
-        var blob = ((p.company||'')+(p.contact||p.contactName||'')+(p.industry||'')).toLowerCase();
-        if(!blob.includes(_search)) return false;
-      }
-      return true;
-    });
-
-    var container = document.getElementById('psb-list');
-    if(!container) return;
-    if(!list.length){ container.innerHTML='<div class="psb-empty">No profiles match.<br>Try a different filter.</div>'; return; }
-
-    var activeId = window._hqProspect && (window._hqProspect.id||window._hqProspect.company);
-    container.innerHTML = list.map(function(p){
-      var id = p.id||p.company;
-      var isActive = activeId && (id===activeId);
-      var track = (p.track||'WFN').toUpperCase();
-      var isTS = track.includes('TS')||track.includes('TOTAL');
-      var isToday = p.nextTouchDate && new Date(p.nextTouchDate).toDateString()===today;
-      return '<div class="psb-item'+(isActive?' active-prospect':'')+'" onclick="psbSelectProspect('+JSON.stringify(id)+')">'
-        +'<div class="psb-item-co">'+(p.company||'Unknown Company')+'</div>'
-        +'<div class="psb-item-contact">'+(p.contact||p.contactName||'—')+(p.title?' · '+p.title:'')+'</div>'
-        +'<div class="psb-item-meta">'
-        +'<span class="psb-tag '+(isTS?'ts':'wfn')+'">'+(isTS?'PEO':'WFN')+'</span>'
-        +(isToday?'<span class="psb-tag today">TODAY</span>':'')
-        +(p.industry?'<span class="psb-item-day">'+p.industry+'</span>':'')
-        +'</div>'
-        +'</div>';
-    }).join('');
-  }
-
-  window.psbSelectProspect = function(id){
-    // Try to load the prospect into the active cadence view
-    if(window.openCadenceForProspect) window.openCadenceForProspect(id);
-    else if(window.loadProspect) window.loadProspect(id);
-    else if(window.ppSelectProspect) window.ppSelectProspect(id);
-    closeProfilesSidebar();
-    if(typeof showToast==='function') showToast('Profile loaded ✓');
-  };
-
-  // Re-render count when prospects update
-  setInterval(function(){
-    var btn = document.getElementById('tb-profiles-count');
-    if(btn){
-      var all = getProspects();
-      btn.textContent = all.length ? '('+all.length+')' : '';
-    }
-  }, 3000);
-})();
-
-/* ════════════════════════════════════════════════════
-   ACTIVITY & ALERTS DRAWER
-════════════════════════════════════════════════════ */
-(function(){
-  var _tab = 'all';
-  var _activity = [];  // {type:'outreach'|'intel'|'alert', msg, sub, time, read}
-
-  window.toggleActivityDrawer = function(){
-    var d = document.getElementById('activity-drawer');
-    if(d.classList.contains('open')){ closeActivityDrawer(); return; }
-    actRender();
-    d.classList.add('open');
-    document.getElementById('activity-backdrop').classList.add('open');
-    document.getElementById('tb-activity-btn').classList.add('active');
-  };
-
-  window.closeActivityDrawer = function(){
-    document.getElementById('activity-drawer').classList.remove('open');
-    document.getElementById('activity-backdrop').classList.remove('open');
-    document.getElementById('tb-activity-btn').classList.remove('active');
-  };
-
-  window.actTab = function(t){
-    _tab = t;
-    document.querySelectorAll('.act-dtab').forEach(function(b){ b.classList.remove('active'); });
-    var el = document.getElementById('actab-'+t);
-    if(el) el.classList.add('active');
-    actRender();
-  };
-
-  window.actMarkAllRead = function(){
-    _activity.forEach(function(a){ a.read=true; });
-    actRender();
-    updateActivityBadge();
-  };
-
-  window.actClearAll = function(){
-    if(_tab==='all'){ _activity=[]; }
-    else { _activity = _activity.filter(function(a){ return a.type!==_tab; }); }
-    actRender();
-    updateActivityBadge();
-  };
-
-  function updateActivityBadge(){
-    var unread = _activity.filter(function(a){ return !a.read; }).length;
-    var btn = document.getElementById('tb-activity-btn');
-    if(!btn) return;
-    var existing = btn.querySelector('.tb-badge');
-    if(existing) existing.remove();
-    if(unread>0){
-      var span = document.createElement('span');
-      span.className='tb-badge';
-      span.textContent=unread;
-      btn.appendChild(span);
-    }
-  }
-
-  function actRender(){
-    var list = _tab==='all' ? _activity : _activity.filter(function(a){ return a.type===_tab; });
-    var el = document.getElementById('act-list');
-    if(!el) return;
-    if(!list.length){
-      var labels = {all:'No activity yet.', outreach:'No outreach activity yet.', intel:'No intel refreshes yet.', alerts:'No alerts yet.'};
-      el.innerHTML='<div class="act-empty">'+(labels[_tab]||'Nothing here yet.')+'</div>';
-      return;
-    }
-    el.innerHTML = list.map(function(a,i){
-      return '<div class="act-item '+a.type+(a.read?'':' unread')+'" onclick="actMarkRead('+i+')">'
-        +'<div class="act-item-type '+a.type+'">'+a.type.toUpperCase()+'</div>'
-        +'<div class="act-item-msg">'+a.msg+'</div>'
-        +'<div class="act-item-sub">'+a.sub+'</div>'
-        +'<div class="act-item-time">'+a.time+'</div>'
-        +'</div>';
-    }).join('');
-  }
-
-  window.actMarkRead = function(i){ if(_activity[i]) _activity[i].read=true; actRender(); updateActivityBadge(); };
-
-  // Public: add activity item
-  window.addActivity = function(type, msg, sub){
-    _activity.unshift({type:type, msg:msg, sub:sub||'', time:new Date().toLocaleTimeString(), read:false});
-    if(_activity.length>100) _activity.pop();
-    updateActivityBadge();
-    if(document.getElementById('activity-drawer').classList.contains('open')) actRender();
-  };
-
-  // Hook into existing toast to mirror activity
-  var origShowToast = window.showToast;
-  if(typeof origShowToast === 'function'){
-    window.showToast = function(msg, err){
-      origShowToast(msg, err);
-      if(msg && msg.includes('generated')) addActivity('outreach', msg, window._hqProspect && window._hqProspect.company ? window._hqProspect.company : '');
-      if(msg && msg.includes('Intel')) addActivity('intel', msg, '');
-    };
-  }
-})();
-
-/* ════════════════════════════════════════════════════
    EMAIL GENERATOR ENGINE MODAL
 ════════════════════════════════════════════════════ */
 (function(){
@@ -5211,7 +4856,8 @@ beyondpayroll.net`;
       if(text){
         egRenderOutput(text, firstName, companyName, persona, touchLabel);
         document.getElementById('eg-output-actions').style.display='flex';
-        if(window.addActivity) addActivity('outreach','Email generated for '+companyName,touchLabel);
+        // Log to app.js native activity system
+        if(typeof notifAdd==='function') notifAdd('outreach', '⚡ Email Engine: ' + touchLabel, companyName + ' · AI draft ready', 'ENGINE');
       } else {
         document.getElementById('eg-output-area').innerHTML='<div class="eg-empty"><div class="eg-empty-icon">⚠️</div><div class="eg-empty-sub">AI returned no content. Try again.</div></div>';
       }
