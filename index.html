@@ -898,7 +898,8 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .cdt-day-row.is-today{border-color:var(--gold);box-shadow:0 0 0 2px rgba(184,146,10,.25);animation:cdt-today-pulse 2.5s ease-in-out infinite}
 @keyframes cdt-today-pulse{0%,100%{box-shadow:0 0 0 2px rgba(184,146,10,.25)}50%{box-shadow:0 0 0 6px rgba(184,146,10,.1),0 0 18px rgba(184,146,10,.15)}}
 .cdt-day-row.is-overdue{border-left:3px solid var(--red)}
-.cdt-day-num{width:52px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px;border-right:1px solid var(--border);background:var(--off-white)}
+.cdt-day-num{width:52px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px;border-right:1px solid var(--border);background:var(--off-white);transition:background .15s}
+.cdt-day-num:hover{background:#fffbea;border-right-color:var(--gold)}
 .cdt-day-num .num{font-family:var(--fd);font-size:18px;font-weight:700;color:var(--text);line-height:1}
 .cdt-day-num .lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-3);font-weight:700}
 .cdt-day-row.is-today .cdt-day-num{background:#fff7ed}
@@ -4352,6 +4353,6 @@ Write only the subject line and email body as shown above. No preamble, no expla
 })();
 </script>
 
-<script src="app.js?v=6" defer></script>
+<script src="app.js?v=7" defer></script>
 </body>
 </html>

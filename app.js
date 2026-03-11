@@ -783,6 +783,22 @@ function getHQHTML(session){
         </div>
       </div>
 
+      <!-- Reschedule modal (hidden by default) -->
+      <div id="cdt-reschedule-modal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)" onclick="cdtCloseReschedule()"></div>
+        <div style="position:relative;background:var(--white);border-radius:12px;padding:28px 28px 24px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:1">
+          <div style="font-family:var(--fd);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px" id="cdt-rs-title">Reschedule Touch</div>
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:20px" id="cdt-rs-sub">Choose a new date for this touch</div>
+          <label style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-3);display:block;margin-bottom:6px">New Send Date</label>
+          <input type="date" id="cdt-rs-date" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;font-family:var(--fb);color:var(--text);background:var(--white);box-sizing:border-box;margin-bottom:16px">
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:20px;line-height:1.5" id="cdt-rs-impact">Changing this touch will shift the cadence start date so all other touches adjust proportionally.</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="cdtCloseReschedule()" style="flex:1;padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--text-3);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb)">Cancel</button>
+            <button onclick="cdtConfirmReschedule()" style="flex:2;padding:10px;border-radius:6px;border:none;background:var(--navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb)">Reschedule Touch</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Timeline view -->
       <div id="cdt-timeline-view">
         <div class="cdt-timeline" id="cdt-timeline"></div>
@@ -3453,15 +3469,17 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
       const isSentStatus = status==='Sent'||status==='Meeting Booked'||status==='Replied'||status==='Opened';
 
       html += `<div class="${rowCls}" onclick="cdtJumpTo(${idx})">
-        <div class="cdt-day-num">
+        <div class="cdt-day-num" onclick="event.stopPropagation();cdtOpenReschedule(${idx},${day})" title="Click to reschedule this touch" style="cursor:pointer;position:relative" onmouseenter="this.querySelector('.cdt-rs-hint')&&(this.querySelector('.cdt-rs-hint').style.opacity=1)" onmouseleave="this.querySelector('.cdt-rs-hint')&&(this.querySelector('.cdt-rs-hint').style.opacity=0)">
           <div class="num">${day}</div>
           <div class="lbl">DAY</div>
+          <div class="cdt-rs-hint" style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;color:var(--gold);letter-spacing:.4px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none">✎ EDIT</div>
         </div>
         <div class="cdt-day-mid">
           <div class="cdt-touch-label">${touch.label}</div>
           <div class="cdt-touch-sub">${touch.subject}</div>
-          ${isSentStatus && sentAtLabel ? `<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:3px">✓ Sent ${sentAtLabel}</div>` : ''}
-          ${isSentStatus && !sentAtLabel ? `<div style="font-size:10px;color:var(--green);font-weight:500;margin-top:3px">✓ Completed</div>` : ''}
+          ${(()=>{ try{ const s=cdtGetStart(); if(!s) return ''; const d=new Date(s); d.setHours(0,0,0,0); d.setDate(d.getDate()+(day-1)); return '<div style="font-size:10px;color:var(--text-3);margin-top:3px">📅 '+d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+'</div>'; }catch(e){return '';} })()}
+          ${isSentStatus && sentAtLabel ? `<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:2px">✓ Sent ${sentAtLabel}</div>` : ''}
+          ${isSentStatus && !sentAtLabel ? `<div style="font-size:10px;color:var(--green);font-weight:500;margin-top:2px">✓ Completed</div>` : ''}
         </div>
         <div class="cdt-day-right">
           ${isToday ? '<span class="cdt-today-badge">TODAY</span>' : ''}
@@ -3540,6 +3558,87 @@ window.cdtSetView = function(view){
 };
 
 // Reset all statuses and restart
+// ── Reschedule: open modal for a specific touch ───────────────────────────
+window._cdtRsIdx = null; // touch index being rescheduled
+window._cdtRsDayNum = null; // cadence day number (2, 8, 15, 22, 30)
+
+window.cdtOpenReschedule = function(touchIdx, dayNum){
+  const p = window._hqProspect;
+  if(!p) return;
+  const touches = buildTouches(p);
+  const touch = touches[touchIdx];
+  if(!touch) return;
+
+  window._cdtRsIdx = touchIdx;
+  window._cdtRsDayNum = dayNum;
+
+  // Compute the current absolute date for this touch
+  const startISO = cdtGetStart();
+  let currentDateStr = '';
+  if(startISO){
+    const start = new Date(startISO);
+    start.setHours(0,0,0,0);
+    const touchDate = new Date(start);
+    touchDate.setDate(touchDate.getDate() + (dayNum - 1));
+    currentDateStr = touchDate.toISOString().split('T')[0];
+  } else {
+    // Default to today
+    currentDateStr = new Date().toISOString().split('T')[0];
+  }
+
+  // Populate modal
+  const title = document.getElementById('cdt-rs-title');
+  const sub = document.getElementById('cdt-rs-sub');
+  const impact = document.getElementById('cdt-rs-impact');
+  const dateInput = document.getElementById('cdt-rs-date');
+
+  if(title) title.textContent = 'Reschedule: Day ' + dayNum + ' — ' + touch.label;
+  if(sub) sub.textContent = p.company + ' · ' + (p.contact || 'No contact');
+  if(impact) impact.innerHTML = 'Choosing a new date for <strong>Day ' + dayNum + '</strong> will shift the cadence start date so all other touches adjust automatically.<br><span style="color:var(--text-3)">Marked-sent touches are not affected.</span>';
+  if(dateInput){
+    dateInput.value = currentDateStr;
+    // Set min to today to prevent scheduling in the past (allow override by removing this line if desired)
+    // dateInput.min = new Date().toISOString().split('T')[0];
+  }
+
+  const modal = document.getElementById('cdt-reschedule-modal');
+  if(modal){ modal.style.display = 'flex'; setTimeout(()=>{ if(dateInput) dateInput.focus(); }, 100); }
+};
+
+window.cdtCloseReschedule = function(){
+  const modal = document.getElementById('cdt-reschedule-modal');
+  if(modal) modal.style.display = 'none';
+  window._cdtRsIdx = null;
+  window._cdtRsDayNum = null;
+};
+
+window.cdtConfirmReschedule = function(){
+  const p = window._hqProspect;
+  if(!p || window._cdtRsDayNum === null) return;
+
+  const dateInput = document.getElementById('cdt-rs-date');
+  if(!dateInput || !dateInput.value){ showToast('Please choose a date', true); return; }
+
+  const chosenDate = new Date(dateInput.value + 'T00:00:00');
+  if(isNaN(chosenDate.getTime())){ showToast('Invalid date', true); return; }
+
+  // Calculate new start date: if this touch is on day N, start = chosenDate - (N-1) days
+  const newStart = new Date(chosenDate);
+  newStart.setDate(newStart.getDate() - (window._cdtRsDayNum - 1));
+  const newStartISO = newStart.toISOString().split('T')[0];
+
+  // Save new start date
+  cdtSetStart(newStartISO);
+
+  // Close modal and re-render
+  cdtCloseReschedule();
+  cdtRender();
+
+  const touch = buildTouches(p)[window._cdtRsIdx];
+  const dateLabel = chosenDate.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'});
+  showToast('📅 Day ' + window._cdtRsDayNum + ' rescheduled to ' + dateLabel);
+};
+
 window.cdtResetAll = function(){
   if(!confirm('Reset all touch statuses and restart the cadence from today?')) return;
   window._ecStatuses={};window._ecNotes={};window._ecLaunched={};window._ecChecks={};
