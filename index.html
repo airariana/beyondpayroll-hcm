@@ -688,14 +688,18 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .hq-tab{
   font-family:var(--fb);font-size:13px;font-weight:600;padding:8px 16px;
   border-radius:6px;border:none;cursor:pointer;background:transparent;
-  color:var(--text-3);transition:all .15s;display:flex;align-items:center;gap:7px;
+  color:var(--text-2);transition:all .15s;display:flex;align-items:center;gap:7px;
+  opacity:1;
 }
 .hq-tab:hover{color:var(--text);background:var(--off-white)}
 .hq-tab.active{background:var(--text);color:var(--white)}
-.hq-tab.locked{opacity:.4;cursor:not-allowed}
-.hq-tab.locked.active{opacity:1;cursor:pointer}
-.tab-badge{font-size:9px;background:rgba(255,255,255,.15);border-radius:3px;padding:1px 5px;font-family:var(--fm)}
+/* locked = step not yet reached — still visible, just not bold */
+.hq-tab.locked{opacity:.65;cursor:pointer;color:var(--text-3)}
+.hq-tab.locked:hover{opacity:1;background:var(--off-white);color:var(--text)}
+.hq-tab.locked.active,.hq-tab.active{opacity:1;cursor:pointer}
+.tab-badge{font-size:9px;background:rgba(255,255,255,.15);border-radius:3px;padding:1px 5px;font-family:var(--fm);letter-spacing:.3px}
 .hq-tab:not(.active) .tab-badge{background:var(--light);color:var(--text-3)}
+.hq-tab.active .tab-badge{background:rgba(255,255,255,.2);color:rgba(255,255,255,.85)}
 
 /* Prospect strip */
 .prospect-strip{
@@ -4354,6 +4358,6 @@ Write only the subject line and email body as shown above. No preamble, no expla
 })();
 </script>
 
-<script src="app.js?v=13" defer></script>
+<script src="app.js?v=14" defer></script>
 </body>
 </html>
