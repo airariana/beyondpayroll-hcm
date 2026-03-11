@@ -3963,6 +3963,28 @@ const FIREBASE_CONFIG={
 };
 
 const PROSPECTS_KEY='bp_prospects';
+const TOMBSTONE_KEY='bp_deleted_ids';
+
+// ── Tombstone helpers ─────────────────────────────────────────────
+// A tombstone is a locally-persisted set of Firestore doc IDs that
+// the current user has explicitly deleted. It prevents fbInitialSync
+// from re-pushing deleted prospects back to Firestore, and prevents
+// fbListen from re-adding them when a snapshot fires.
+function getTombstones(){
+  try{ return JSON.parse(localStorage.getItem(TOMBSTONE_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+function addTombstone(id){
+  if(!id) return;
+  const t = getTombstones();
+  if(t.indexOf(id)===-1){ t.push(id); localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(t)); }
+}
+function isTombstoned(id){
+  if(!id) return false;
+  return getTombstones().indexOf(id) !== -1;
+}
+// ── End tombstone helpers ─────────────────────────────────────────
+
 let _fbDb=null,_fbOnline=false,_fbSession=null;
 
 function getProspects(){try{return JSON.parse(localStorage.getItem(PROSPECTS_KEY)||'[]');}catch{return[];}}
@@ -4142,11 +4164,16 @@ async function fbInitialSync(session){
           );
         }
       } else {
-        // lp has an id but it's not in remote — push it
-        merged[lp.id] = lp;
-        pushJobs.push(_fbDb.collection('prospects').doc(lp.id).set(
-          Object.assign({},lp,{userEmail:session.email}),{merge:true}
-        ).catch(function(e){console.warn('fbSync restore:',e.message);}));
+        // lp has an id but it's not in remote —
+        // Only re-push if it has NOT been locally tombstoned (i.e. deleted).
+        // Without this check, deleted prospects get resurrected on every app load.
+        if(!isTombstoned(lp.id)){
+          merged[lp.id] = lp;
+          pushJobs.push(_fbDb.collection('prospects').doc(lp.id).set(
+            Object.assign({},lp,{userEmail:session.email}),{merge:true}
+          ).catch(function(e){console.warn('fbSync restore:',e.message);}));
+        }
+        // If tombstoned: silently drop it — do not restore to Firestore or keep locally
       }
     });
 
@@ -4179,9 +4206,13 @@ function fbListen(session){
     window._fbUnsubscribe = _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
       .onSnapshot(function(snap){
-        // Build map of incoming remote docs
+        // Build map of incoming remote docs — skip any this device has tombstoned
         const remote = {};
-        snap.forEach(function(d){ remote[d.id] = Object.assign({id:d.id}, d.data()); });
+        snap.forEach(function(d){
+          if(!isTombstoned(d.id)){
+            remote[d.id] = Object.assign({id:d.id}, d.data());
+          }
+        });
 
         // Merge with current local: remote wins unless local is newer
         const local = getProspects();
@@ -4200,6 +4231,14 @@ function fbListen(session){
           }
         });
 
+        // Remove any local prospect whose Firestore doc no longer exists in the snapshot.
+        // This is what makes deletions on one device propagate to all others in real time.
+        Object.keys(localMap).forEach(function(id){
+          if(!remote[id]){
+            delete localMap[id];
+          }
+        });
+
         const merged = Object.values(localMap).sort(function(a,b){
           return new Date(b.updatedAt||0) - new Date(a.updatedAt||0);
         });
@@ -4208,13 +4247,19 @@ function fbListen(session){
         saveProspectsLocal(merged);
         renderSavedProspects();
 
-        // Only toast if something actually changed
-        const changed = merged.some(function(mp){
+        // Toast only if something actually changed
+        const changed = merged.length !== prevCount || merged.some(function(mp){
           const lp = local.find(function(x){return x.id===mp.id;});
           return !lp || lp.updatedAt !== mp.updatedAt;
         });
-        if(changed && merged.length > 0){
-          showToast('☁ '+(merged.length > prevCount ? 'New prospect synced from another device' : 'Prospects updated from another device'));
+        if(changed){
+          if(merged.length < prevCount){
+            showToast('☁ Prospect removed on another device');
+          } else if(merged.length > prevCount){
+            showToast('☁ New prospect synced from another device');
+          } else {
+            showToast('☁ Prospects updated from another device');
+          }
         }
       }, function(err){ console.warn('fbListen error:',err.message); });
   }catch(e){ console.warn('fbListen setup:',e); }
@@ -4512,11 +4557,31 @@ window.ppDeleteProspect = function(idx) {
   if(!confirm('Delete '+arr[idx].company+' from Prospect Profiles?')) return;
   const removed = arr.splice(idx, 1)[0];
   saveProspectsLocal(arr);
-  // Delete from Firestore
-  if(_fbDb && removed && removed.id){
-    _fbDb.collection('prospects').doc(removed.id).delete()
-      .catch(function(e){console.warn('fbDelete:',e.message);});
+
+  if(_fbDb && removed){
+    if(removed.id){
+      // 1. Tombstone the id locally so fbInitialSync never re-pushes it
+      addTombstone(removed.id);
+      // 2. Hard-delete from Firestore so all other devices' listeners fire
+      _fbDb.collection('prospects').doc(removed.id).delete()
+        .catch(function(e){ console.warn('fbDelete:',e.message); });
+    } else if(_fbSession && removed.company){
+      // Prospect was never assigned a Firestore id (created offline) —
+      // query by userEmail + company and delete any matching docs
+      _fbDb.collection('prospects')
+        .where('userEmail','==',_fbSession.email)
+        .where('company','==',removed.company)
+        .get()
+        .then(function(snap){
+          snap.forEach(function(doc){
+            addTombstone(doc.id);
+            doc.ref.delete();
+          });
+        })
+        .catch(function(e){ console.warn('fbDelete (no-id):',e.message); });
+    }
   }
+
   renderSavedProspects();
   const ov = document.getElementById('pp-modal-overlay');
   if(ov) ov.remove();
