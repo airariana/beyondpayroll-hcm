@@ -143,16 +143,19 @@ function doLogout(){
   _fbDb=null; _fbOnline=false; _fbSession=null;
   clearSession();
   document.getElementById('view-hq').classList.remove('active');
-  document.getElementById('view-auth').classList.add('active');
+  var _lndL = document.getElementById('view-landing');
+  if(_lndL) _lndL.classList.add('active');
+  else document.getElementById('view-auth').classList.add('active');
   switchMode('signin');
   document.getElementById('si-email').value='';document.getElementById('si-pass').value='';
   showToast('Signed out successfully');
 }
 
 function enterHQ(session){
-  // Ensure splash is hidden
   const _splash = document.getElementById('bp-splash');
   if(_splash) _splash.classList.add('hide');
+  const _lnd = document.getElementById('view-landing');
+  if(_lnd) _lnd.classList.remove('active');
   document.getElementById('view-auth').classList.remove('active');
   document.getElementById('view-hq').classList.add('active');
   const initials=(session.first[0]+session.last[0]).toUpperCase();
@@ -190,14 +193,25 @@ function enterHQ(session){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
-  // Hide splash once DOM is ready and session check runs
   requestAnimationFrame(function(){
     const splash = document.getElementById('bp-splash');
     if(splash) splash.classList.add('hide');
   });
   const s = getSession();
-  if(s) enterHQ(s);
+  if(s){
+    enterHQ(s);
+  } else {
+    const landing = document.getElementById('view-landing');
+    if(landing) landing.classList.add('active');
+  }
 });
+
+function lvGoToPortal(){
+  const landing = document.getElementById('view-landing');
+  const auth = document.getElementById('view-auth');
+  if(landing) landing.classList.remove('active');
+  if(auth){ auth.classList.add('active'); auth.scrollTop=0; }
+}
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     const si=document.getElementById('form-signin');
@@ -1325,18 +1339,7 @@ window.hqTab=function(tab){
   if(analysisView)analysisView.style.display=tab==='analysis'?'block':'none';
   document.querySelectorAll('.hq-tab').forEach(t=>t.classList.remove('active'));
   const el=document.getElementById('htab-'+tab);if(el)el.classList.add('active');
-  if(tab==='composer'){
-    // Sync renewal fields from live tool inputs into _hqProspect before rendering
-    if(window._hqProspect){
-      var _rdEl=document.getElementById('medicalRenewalDate');
-      var _rnEl=document.getElementById('renewalNotes');
-      var _omEl=document.getElementById('openMarketStatus')||document.getElementById('omStatus');
-      if(_rdEl&&_rdEl.value) window._hqProspect.medicalRenewalDate=_rdEl.value;
-      if(_rnEl&&_rnEl.value.trim()) window._hqProspect.renewalNotes=_rnEl.value.trim();
-      if(_omEl&&_omEl.value) window._hqProspect.openMarketStatus=_omEl.value;
-    }
-    ecRenderAll();
-  }
+  if(tab==='composer')ecRenderAll();
   if(tab==='agent')saInit();
   if(tab==='analysis')atInit();
   document.getElementById('hq-container').scrollTop=0;
@@ -2125,10 +2128,6 @@ window.saveProspect=function(){
     phone:    document.getElementById('f-phone').value.trim(),
     linkedin: document.getElementById('f-linkedin').value.trim(),
     track:    selectedRole||'WFN',
-    // Renewal data — pulled from WFN/TS tool fields if present
-    medicalRenewalDate: (function(){ var el=document.getElementById('medicalRenewalDate'); return el?el.value:''; })(),
-    renewalNotes:       (function(){ var el=document.getElementById('renewalNotes'); return el?el.value.trim():''; })(),
-    openMarketStatus:   (function(){ var el=document.getElementById('openMarketStatus')||document.getElementById('omStatus'); return el?el.value:''; })(),
     // SRE data
     painPoints:      sreCtx.painPoints||[],
     adpProducts:     sreCtx.adpProducts||[],
@@ -2217,17 +2216,6 @@ window.pullProspectToTool = function(tool) {
   });
 
   showToast('Prospect data pulled into ' + (tool === 'wfn' ? 'WFN' : 'TotalSource') + ' tool');
-
-  // ── Sync renewal fields back to _hqProspect whenever tool is used ──
-  // This ensures cadence emails pick up renewal date entered in the tool
-  if(window._hqProspect){
-    var rdEl=document.getElementById('medicalRenewalDate');
-    var rnEl=document.getElementById('renewalNotes');
-    var omEl=document.getElementById('openMarketStatus')||document.getElementById('omStatus');
-    if(rdEl&&rdEl.value) window._hqProspect.medicalRenewalDate=rdEl.value;
-    if(rnEl&&rnEl.value.trim()) window._hqProspect.renewalNotes=rnEl.value.trim();
-    if(omEl&&omEl.value) window._hqProspect.openMarketStatus=omEl.value;
-  }
 };
 
 // Build pain point summary for AI prompts
@@ -2784,100 +2772,282 @@ window.hqApprove=function(){
 };
 
 // ── COMPOSER ──
-// ── Renewal context helper ──────────────────────────────────
-// Reads medicalRenewalDate from tool fields OR from _hqProspect
-function getRenewalContext() {
-  // Try live tool field first
-  var rdEl = document.getElementById('medicalRenewalDate');
-  var rdStr = (rdEl && rdEl.value) ? rdEl.value : (window._hqProspect && window._hqProspect.medicalRenewalDate) || '';
-  var notesEl = document.getElementById('renewalNotes');
-  var notes = (notesEl && notesEl.value) ? notesEl.value.trim() : (window._hqProspect && window._hqProspect.renewalNotes) || '';
-  var omEl = document.getElementById('openMarketStatus') || document.getElementById('omStatus');
-  var isOM = omEl ? omEl.value === 'yes' : !!(window._hqProspect && window._hqProspect.openMarketStatus === 'yes');
+// ═══════════════════════════════════════════════════════════════════════
+//  PROSE FORMATTING ENGINE
+//  Post-processing layer: converts raw intel agent output into
+//  human-written email prose. Runs AFTER agent, BEFORE email render.
+//  Called by buildTouches() for intel-driven touches, and by
+//  cdtRunIntelRefresh() after agent completes.
+// ═══════════════════════════════════════════════════════════════════════
 
-  if (!rdStr) return { days: null, label: null, notes: notes, isOM: isOM, urgency: null };
+// Master prose rules injected into every formatting prompt
+const PROSE_UNIVERSAL_RULES = `
+UNIVERSAL EMAIL WRITING RULES — apply to every touch without exception:
+- Never render markdown in the output. No asterisks, no ### headers, no bullet points, no bold via **.
+- Never paste raw agent data directly. Always convert to natural prose first.
+- One insight per email. If the agent returned multiple data points, use only the sharpest one.
+- Prospect first name only in the greeting. Never leave placeholder brackets visible.
+- Email length: 3–5 sentences for most touches.
+- Tone: a knowledgeable colleague passing along a useful heads-up — not a salesperson.
+- Never use the phrase "Worth a quick conversation?" — use a specific time ask instead.
+- Sign-off is always on its own line: rep name, then company, then website. Nothing else.
+- Output only the email body text. No subject line. No labels. No explanation.
+`;
 
-  var today = new Date(); today.setHours(0,0,0,0);
-  var rd = new Date(rdStr + 'T00:00:00');
-  if (isNaN(rd)) return { days: null, label: null, notes: notes, isOM: isOM, urgency: null };
+// Per-touch prose system prompts
+const PROSE_TOUCH_PROMPTS = {
+  wfn_day1: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 1 — Research Brief (first touch, intel-driven)
+Goal: Establish credibility by showing you already know their world before the first contact.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Weave company name, headcount, state, and industry into one natural sentence — never list them as a profile.
+2. Reference only ONE competitor threat from the intel — the most relevant one. Do not list all three.
+3. End with a single low-friction question such as "Worth a 10-minute call this week?" — keep it specific.
+4. Maximum 4 sentences in the body.
+INPUT: You will receive raw competitive intel data. Convert it into a short, natural email body.`,
 
-  var days = Math.round((rd - today) / (1000 * 60 * 60 * 24));
-  var label = rd.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  var urgency = days <= 0 ? 'past' : days <= 60 ? 'critical' : days <= 90 ? 'urgent' : days <= 180 ? 'approaching' : 'future';
+  wfn_day2: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 2 — Insight Hook
+Goal: Create curiosity around unused ADP features the prospect is already paying for.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Lead with the financial or operational insight — not with a re-introduction.
+2. Reference the specific unused feature or cost gap but frame it as a discovery, not a report.
+3. Do not say "I noticed" more than once.
+4. CTA: offer to pull the full breakdown. Keep it soft — "I can send it over if useful."
+5. Maximum 4 sentences.`,
 
-  return { days: days, label: label, notes: notes, isOM: isOM, urgency: urgency };
+  wfn_day8_intel: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 8 — Mid-Cadence Intel (intel refresh touch)
+Goal: Re-engage with a fresh data point that shows continued research.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Open with the freshest, most specific piece of intel — not a re-introduction.
+2. Do not recap previous messages. Assume they received them.
+3. One data point only. Do not stack multiple insights.
+4. Feel like a timely heads-up from a peer, not a follow-up from a salesperson.
+5. Maximum 3 sentences. CTA is optional — curiosity is enough.`,
+
+  wfn_day8_cost: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 8 — Cost Benchmark
+Goal: Anchor the prospect to a cost comparison that makes ADP's value concrete.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Lead with a benchmark number or cost gap — not with a greeting about yourself.
+2. Use one specific number or range. Do not list multiple figures.
+3. Frame the data as pulled "for their specific profile" — make it feel tailored.
+4. CTA: offer to share the full benchmark. Keep it soft.
+5. Maximum 4 sentences. No bullet points or lists under any circumstances.`,
+
+  wfn_day15_intel: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 15 — Competitive Intel Pull (intel refresh touch)
+Goal: Surface a competitor move that directly affects the prospect's decision window.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Name the competitor and the specific move. Be concrete — vague intel has no impact.
+2. Connect the competitor move directly to a risk or opportunity for this prospect.
+3. Do not oversell the threat. Let the data do the work.
+4. 3–4 sentences. Close with a soft check-in, not a hard ask.`,
+
+  wfn_day15_compliance: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 15 — Compliance Trigger
+Goal: Create urgency through a real, time-sensitive compliance gap for their state and industry.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Open with the compliance fact — not a sales angle.
+2. Name the specific regulation or update. Do not be vague.
+3. Connect the compliance gap to one ADP feature that addresses it.
+4. Frame as informational first. The ask should feel like a favor, not a pitch.
+5. Maximum 4 sentences.`,
+
+  wfn_day22_intel: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 22 — Final Push Intel (last intel touch before breakup)
+Goal: Most specific and valuable intel touch yet — make it feel time-sensitive.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Use the sharpest, most specific data point from the agent output.
+2. Do not reference previous emails or mention the cadence timeline.
+3. Tone: peer-to-peer. Think "colleague passing along a useful heads-up."
+4. Maximum 3 sentences. CTA is a light nudge, not a close.`,
+
+  wfn_day22_breakup: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 22 — Breakup Email
+Goal: Leave the door open gracefully while creating a final moment of awareness.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. This email can be slightly self-aware — acknowledge you've reached out a few times.
+2. Reference one concrete thing from the cadence (a competitor, compliance update, or cost benchmark) — do not leave it generic.
+3. The breakup framing should be light, not dramatic. No guilt-tripping.
+4. End with a clear, low-pressure door-opener for the future.
+5. Maximum 5 sentences. No links, no attachments mentioned.`,
+
+  wfn_day30: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 30 — Community Invite (final touch)
+Goal: Re-engage with a value-add invite that removes all sales pressure.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. This is an invitation, not a sales email. Tone should reflect that completely.
+2. Lead with what they get, not who you are.
+3. Reference the HCM Scorecard as something already prepared for them — make it feel exclusive.
+4. The briefing invite should feel like a peer event, not a webinar pitch.
+5. Maximum 4 sentences. CTA is a simple reply to confirm.`,
+
+  ts_day2: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
+Touch: Day 2 — PEO Reality Check
+Goal: Plant the seed that the PEO model may no longer fit at their current size.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Reference their specific headcount as the natural inflection point — not a generic threshold.
+2. Frame this as a data-driven observation, not a sales pitch.
+3. The ask is a comparison, not a close.
+4. Maximum 4 sentences.`,
+
+  ts_day8: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
+Touch: Day 8 — Cost Comparison
+Goal: Make the PEPM cost gap tangible and personal to this prospect.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Lead with the cost insight — not with a re-introduction.
+2. Use one specific number or estimated range. No bullet-point cost breakdowns.
+3. Frame as data pulled for their profile specifically.
+4. CTA: ask for their current PEPM to run a real comparison.
+5. Maximum 4 sentences.`,
+
+  ts_day15: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
+Touch: Day 15 — Case Study
+Goal: Use a comparable company story to make the alternative feel real and proven.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Lead with the outcome of the case study company — not with "I wanted to share."
+2. Connect their industry and headcount to the case study naturally in one sentence.
+3. The ask is to run the same analysis for them — keep it low-commitment.
+4. Maximum 4 sentences.`,
+
+  ts_day22_breakup: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
+Touch: Day 22 — Breakup Email
+Goal: Close the loop gracefully while leaving the door open at renewal.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Acknowledge the outreach briefly without being self-deprecating.
+2. Reference the TotalSource cost data shared — make it feel like a useful resource, not a last pitch.
+3. Point to renewal as the natural next checkpoint.
+4. Maximum 4 sentences.`,
+
+  ts_day30: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
+Touch: Day 30 — Community Invite
+Goal: Leave with a tangible deliverable and a no-pressure community connection.
+${PROSE_UNIVERSAL_RULES}
+RULES FOR THIS TOUCH:
+1. Lead with the scorecard as a delivered asset — not as a closing tactic.
+2. Frame the briefing invite as informational and easy to opt out of.
+3. Warm, peer-level close. No sales language.
+4. Maximum 4 sentences.`
+};
+
+// Core prose formatter — calls the AI proxy with a touch-specific system prompt
+// and raw intel/context data, returns clean email body text
+async function bpProseFormat(touchKey, rawContext) {
+  const systemPrompt = PROSE_TOUCH_PROMPTS[touchKey];
+  if (!systemPrompt) return rawContext; // fallback: return as-is if no prompt found
+
+  const userMsg = `Here is the raw prospect and intel data. Convert it into a natural, human-written email body following your instructions exactly.\n\nRAW DATA:\n${rawContext}`;
+
+  try {
+    const resp = await bpGeminiFetch({ messages: [{ role: 'user', content: systemPrompt + '\n\n' + userMsg }] });
+    const data = await resp.json();
+    const result = bpGeminiText(data).trim();
+    return result || rawContext;
+  } catch(e) {
+    console.warn('[ProseFormat] Formatting failed, using raw context:', e.message);
+    return rawContext;
+  }
 }
 
-// ── Renewal sentence injector ───────────────────────────────
-// Returns a single renewal-aware sentence to append to a touch body
-// touchNum: 1=day2, 2=day8, 3=day15, 4=day22, 5=day30
-function getRenewalLine(rc, touchNum, track) {
-  if (!rc || !rc.urgency) return '';
-  var d = rc.days, lbl = rc.label;
+// Called after cdtRunIntelRefresh completes — reformats the intel result
+// into a clean email body and updates the active touch in the composer
+window.bpApplyIntelToEmail = async function(day, intelText) {
+  const p = window._hqProspect; if (!p) return;
+  const co = p.company || '[Company]';
+  const ind = p.industry || '[Industry]';
+  const st = p.state || '[State]';
+  const hc = p.headcount || '[X]';
 
-  if (rc.urgency === 'past') {
-    // Renewal already happened — acknowledge post-renewal window
-    if (touchNum === 1) return '\n\nGiven your renewal just passed, this is actually an ideal time to run a benchmark — you have 12 months to build a case before the next cycle.';
-    if (touchNum === 2) return '\n\nPost-renewal is the best time to benchmark without pressure. I can run a comparison now so you have real data when ' + lbl + ' comes back around.';
-    return '';
+  // Map cadence day to prose touch key
+  const dayToKey = { 1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel' };
+  const touchKey = p.track === 'WFN' ? (dayToKey[day] || 'wfn_day8_intel') : 'wfn_day8_intel';
+
+  const rawContext = `Company: ${co}\nIndustry: ${ind}\nHeadcount: ${hc} employees\nState: ${st}\nTrack: ${p.track === 'WFN' ? 'ADP WorkforceNow' : 'ADP TotalSource'}\nCadence Day: ${day} of 30\n\nINTEL AGENT OUTPUT:\n${intelText}`;
+
+  showToast('Formatting email prose…');
+  const proseBody = await bpProseFormat(touchKey, rawContext);
+
+  // Update the email composer body if it's currently showing this touch
+  const bodyEl = document.getElementById('ec-body-disp') || document.getElementById('emailBody');
+  if (bodyEl && window._ecActiveIdx !== undefined) {
+    const touches = buildTouches(p);
+    const activeTouch = touches[window._ecActiveIdx];
+    if (activeTouch && activeTouch.day === day) {
+      // Inject prose body into the active touch display
+      const sig = '\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net';
+      activeTouch._proseBody = proseBody + sig;
+      ecRenderAll();
+      showToast('✓ Email updated with intel prose');
+    }
   }
-
-  if (rc.urgency === 'critical') {
-    // 0-60 days — high urgency
-    if (touchNum === 1) return '\n\nWith your renewal ' + (d <= 30 ? 'less than 30 days away' : 'in roughly ' + d + ' days') + ', the window to run a parallel analysis before you re-commit is closing fast. This is worth a 15-minute call this week.';
-    if (touchNum === 2) return '\n\nYour ' + lbl + ' renewal is ' + d + ' days out. At this stage I can still run a side-by-side comparison in time for you to make a fully informed decision — but that window closes soon.';
-    if (touchNum === 3) return '\n\nI want to be direct: with ' + d + ' days to your renewal, there is still time to benchmark — but not much. I can turn around a full cost comparison in 48 hours if you can give me 20 minutes.';
-    if (touchNum === 4) return '\n\nWith your renewal this close, I\'d rather give you the data and let you decide than go quiet. If there\'s any openness to a quick comparison before ' + lbl + ', I can make it happen fast.';
-    return '';
-  }
-
-  if (rc.urgency === 'urgent') {
-    // 61-90 days
-    if (touchNum === 1) return '\n\nYour ' + lbl + ' renewal is about 90 days out — which is exactly the right time to run a benchmark. Enough runway to be thoughtful, close enough to matter.';
-    if (touchNum === 2) return '\n\nWith a ' + lbl + ' renewal on the horizon, the timing on this analysis is actually ideal. 90 days gives us enough runway to run a real comparison without any pressure.';
-    if (touchNum === 3) return '\n\nYour ' + lbl + ' renewal window is opening. Companies that benchmark at this stage consistently get better outcomes — either they switch and save, or they negotiate harder with their existing carrier.';
-    return '';
-  }
-
-  if (rc.urgency === 'approaching') {
-    // 91-180 days
-    if (touchNum === 1) return '\n\nI flagged your ' + lbl + ' renewal — that gives us roughly ' + Math.round(d/30) + ' months to build a real comparison at a comfortable pace.';
-    if (touchNum === 2) return '\n\nWith your renewal in ' + lbl + ', there\'s enough time to do this properly. Running a benchmark now means you\'re not making a rushed decision when the deadline arrives.';
-    return '';
-  }
-
-  if (rc.urgency === 'future') {
-    // 180+ days
-    if (touchNum === 1) return '\n\nI noted your ' + lbl + ' renewal — plenty of runway, but the best benchmarks start early. Starting now gives you 12+ months of data to make the case internally.';
-    return '';
-  }
-
-  return '';
-}
+};
 
 function buildTouches(p){
   const co=p.company||'[Company]',nm=(p.contact||'').split(' ')[0]||'[Name]';
   const ind=p.industry||'[Industry]',st=p.state||'[State]',hc=p.headcount||'[X]';
-  const sig='\n\n—\nAJ Jaghori\nADP | beyondpayroll.net';
+  const sig='\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net';
 
-  // Get renewal context from live tool fields or saved prospect
-  const rc = getRenewalContext();
-  // Helper: get renewal line for a given touch position
-  function rl(touchNum) { return getRenewalLine(rc, touchNum, p.track); }
+  // Helper: use prose-formatted body if available, otherwise use base template
+  const body = (touch) => touch._proseBody || touch._baseBody;
 
   const wfn=[
-    {day:2,label:'Insight Hook',subject:`${co} is paying for ADP features you're not using — here's the data`,body:`Hi ${nm},\n\nI pulled benchmarking data specific to ${co}'s ADP WorkforceNow setup this week.\n\nCompanies at ${hc} employees in ${ind} are typically overpaying by 15–22% for features they don't fully use — and the compliance gap around ${st} regulations is worth a separate conversation.${rl(1)}\n\nI'd love to walk you through what we found in 15 minutes. No slides, no pitch — just the numbers.\n\nAre you open this week or next?${sig}`},
-    {day:8,label:'Cost Benchmark',subject:`What ${co} is actually spending on HR tech vs. the benchmark`,body:`Hi ${nm},\n\nA cost benchmark built around ${co}'s profile — ${hc} employees, ${ind}, ${st}.\n\nA few data points worth flagging:\n\n• PEPM benchmarks for ${ind} at ${hc} EEs are running $X–$X\n• Feature utilization at this headcount averages ~60%\n• ${st} compliance exposure adds additional HR cost${rl(2)}\n\nCan you share your current per-employee cost? I'd like to run a real comparison.\n\nWhat does your schedule look like this week?${sig}`},
-    {day:15,label:'Compliance Trigger',subject:`${st} compliance update: What ADP WFN clients in ${ind} are missing`,body:`Hi ${nm},\n\nWanted to put something on your radar.\n\nThere's a compliance requirement specific to ${ind} companies in ${st} that's catching WorkforceNow clients off guard. The exposure for companies at ${hc} employees is material.${rl(3)}\n\nI put together a 15-minute briefing — I can walk you through exactly what it means for ${co}. No commitment, just a conversation.\n\nI have time Thursday or Friday — does either work?${sig}`},
-    {day:22,label:'Breakup Email',subject:`Last note from me, ${nm} — then I'll get out of your inbox`,body:`Hi ${nm},\n\nI've shared benchmarking data, a compliance brief, and a cost analysis for ${co} over the past few weeks. I'm not going to keep filling your inbox if the timing isn't right.${rl(4)}\n\nHere's my direct calendar: [link]. If anything changes, I'm easy to find.\n\nEither way — I hope the data was useful.${sig}`},
-    {day:30,label:'Community Invite',subject:`${co} HCM Scorecard + your spot in our quarterly briefing`,body:`Hi ${nm},\n\nWrapping up my outreach to ${co} — attaching your HCM Platform Scorecard as promised. It's yours to keep regardless of next steps.\n\nI'm enrolling you in our quarterly HCM Intelligence Briefing — real benchmarking data, no sales pitch, easy to unsubscribe.\n\nJoin here: beyondpayroll.net\n\nThanks for your time this month, ${nm}.${sig}`},
+    {day:2,label:'Insight Hook',
+      subject:`Quick thought on ${co}'s ADP setup`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nMost ADP WorkforceNow clients at ${co}'s size are only actively using about 60% of what they're paying for — the rest sits idle. I ran your feature profile and there are a few modules that could either be activated to save time or negotiated out of your renewal to cut costs.\n\nI can pull the full breakdown if helpful — takes about 10 minutes to walk through.\n\nAre you open later this week?${sig}`},
+    {day:8,label:'Cost Benchmark',
+      subject:`What ${co} is actually spending on HR tech vs. the benchmark`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\n${ind} organizations at ${co}'s size in ${st} are typically spending between $85–$110 per employee annually on HR tech — I ran your profile against our benchmark and the gap was worth flagging.\n\nI put together a quick cost comparison specific to your headcount and state if you'd like to take a look — no strings, just data.\n\nWhat does your calendar look like this week?${sig}`},
+    {day:15,label:'Compliance Trigger',
+      subject:`${st} compliance update relevant to ${co}`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\n${st} updated its leave tracking and reporting requirements for ${ind} organizations this quarter, and a number of ADP WorkforceNow clients in your category have had to adjust their configurations to stay current. There's a specific module in WFN that handles this automatically — most clients at your size don't have it enabled by default.\n\nI can walk you through the update in about 15 minutes if you want to make sure ${co} is covered.\n\nI have time Thursday or Friday — does either work?${sig}`},
+    {day:22,label:'Breakup Email',
+      subject:`Last note from me, ${nm}`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nI've reached out a few times over the past few weeks — between the cost benchmark, the compliance update, and the competitive intel on ${ind} — and I don't want to keep showing up in your inbox if the timing isn't right.\n\nI'll get out of your way for now, but if anything I flagged becomes relevant down the road, you know where to find me.\n\nHope the data was useful either way.${sig}`},
+    {day:30,label:'Community Invite',
+      subject:`${co} HCM Scorecard + your spot in our quarterly briefing`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nI put together an HCM Scorecard for ${co} based on everything I've pulled this month — it benchmarks your current setup against comparable ${ind} organizations in ${st} and flags a few areas worth watching.\n\nI'm also hosting a small quarterly briefing for HR leaders in your space next week — no pitch, just data and a conversation. I'd love to hold a seat for you.\n\nReply here and I'll send over both.${sig}`},
   ];
   const ts=[
-    {day:2,label:'PEO Reality Check',subject:`Is ADP TotalSource still the right model for ${co} at ${hc} employees?`,body:`Hi ${nm},\n\nMost PEO clients evaluate alternatives somewhere between 75–150 employees. At ${hc} employees in ${ind}, the PEPM math starts shifting in a way that surprises most CFOs — and the co-employment liability looks different than when you first signed.${rl(1)}\n\nI'd love to run a side-by-side comparison. 15 minutes, no commitment.\n\nDo you have any time this week?${sig}`},
-    {day:8,label:'Cost Comparison',subject:`The math on TotalSource at ${hc} employees — what the data shows`,body:`Hi ${nm},\n\nA PEO vs. HCM cost comparison built around ${co}'s profile.\n\n• Estimated TotalSource PEPM at ${hc} EEs: $[X]–$[X]\n• Comparable HCM platform PEPM: $[X]–$[X]\n• Estimated annual delta: $[X]\n• Benefits markup on TotalSource (est.): [X]%${rl(2)}\n\nI'd love to run the real numbers with you. Can you share your current PEPM?${sig}`},
-    {day:15,label:'Case Study',subject:`How a ${ind} company at ${hc} employees restructured HCM and saved $[X]/year`,body:`Hi ${nm},\n\nWanted to share a case study of a company similar to ${co} — same industry, similar headcount, also on TotalSource.\n\nAt ${hc} employees in ${ind}, the PEO model was costing them significantly more per year than a comparable HCM platform.${rl(3)}\n\nI can run the same analysis for ${co} in about 20 minutes. Want to take a look together?${sig}`},
-    {day:22,label:'Breakup Email',subject:`Last email from me, ${nm} — with one final thought on ${co}'s TotalSource setup`,body:`Hi ${nm},\n\nI've shared a lot of data on ${co}'s PEO cost structure over the past few weeks.\n\nWhether you act now or at renewal, I hope it was useful.${rl(4)}\n\nHere's everything in one place: [link]\nMy calendar: [calendar link]\n\nThanks for your time, ${nm}.${sig}`},
-    {day:30,label:'Community Invite',subject:`${co}'s PEO Scorecard + invitation to BeyondPayroll HCM Intelligence Community`,body:`Hi ${nm},\n\nFinal email from my end. Attaching your TotalSource Renewal Scorecard — yours to keep.\n\nI'm enrolling you in our quarterly PEO & HCM Benchmarking Briefing — no commitment, no pitch, just data.\n\nJoin here: beyondpayroll.net\n\nThanks for your time.${sig}`},
+    {day:2,label:'PEO Reality Check',
+      subject:`Is ADP TotalSource still the right model for ${co} at ${hc} employees?`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nMost PEO clients start evaluating alternatives somewhere around ${hc} employees — not because TotalSource isn't working, but because the PEPM math shifts in a way that surprises most CFOs at that threshold, and the co-employment structure looks different than it did at signing.\n\nI'd love to run a side-by-side comparison for ${co}'s specific profile — 15 minutes, no commitment, just the numbers.\n\nDo you have any time this week?${sig}`},
+    {day:8,label:'Cost Comparison',
+      subject:`The math on TotalSource at ${hc} employees — what the data shows for ${co}`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nI ran a PEO vs. HCM cost comparison specific to ${co}'s profile — ${hc} employees in ${ind} — and the annual delta between TotalSource and a comparable HCM platform was meaningful enough to flag.\n\nI'd rather show you the real numbers than estimate. Can you share your current PEPM so I can build an accurate comparison?${sig}`},
+    {day:15,label:'Case Study',
+      subject:`How a ${ind} company at ${hc} employees restructured HCM — and what it meant for their bottom line`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nI worked with a company in ${ind} at a similar headcount to ${co} that was on TotalSource — the PEO model was adding significant cost per year once we ran the actual numbers against a comparable HCM platform.\n\nI can run the same analysis for ${co} in about 20 minutes. Want to take a look together?${sig}`},
+    {day:22,label:'Breakup Email',
+      subject:`Last email from me, ${nm}`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nI've shared cost comparisons and restructuring data on ${co}'s TotalSource setup over the past few weeks — whether you act now or revisit at renewal, I hope it gave you a useful baseline.\n\nMy calendar is always open if the timing changes: [calendar link]. Either way, thanks for your time.${sig}`},
+    {day:30,label:'Community Invite',
+      subject:`${co}'s PEO Scorecard + an invitation to our HCM briefing`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nWrapping up my outreach — I put together a TotalSource Renewal Scorecard for ${co} that's yours to keep regardless of next steps. It benchmarks your current PEO cost structure against comparable ${ind} organizations.\n\nI'm also hosting a quarterly PEO & HCM Benchmarking Briefing for HR leaders in your space — no sales pitch, easy to unsubscribe, just data. I'd love to include you.\n\nReply here and I'll send both over.${sig}`},
   ];
   return p.track==='WFN'?wfn:ts;
 }
@@ -2891,30 +3061,6 @@ function ecRenderAll(){
   document.getElementById('ecs-track').textContent=p.track==='WFN'?'Track A':'Track B';
   document.getElementById('ecs-track').style.color=p.track==='WFN'?'var(--blue)':'var(--red)';
   document.getElementById('ecs-profile').textContent=`${p.industry||'—'} · ${p.state||'—'} · ${p.headcount||'—'} EEs`;
-  // ── Renewal badge ──────────────────────────────────────────
-  var renewalBadgeEl=document.getElementById('ecs-renewal-badge');
-  if(!renewalBadgeEl){
-    // Create it once, insert after ecs-profile
-    renewalBadgeEl=document.createElement('div');
-    renewalBadgeEl.id='ecs-renewal-badge';
-    renewalBadgeEl.style.cssText='margin-top:6px;font-size:12px;font-weight:600;letter-spacing:.02em;';
-    var profileEl=document.getElementById('ecs-profile');
-    if(profileEl&&profileEl.parentNode) profileEl.parentNode.insertBefore(renewalBadgeEl,profileEl.nextSibling);
-  }
-  var rc=getRenewalContext();
-  if(rc.urgency==='critical'){
-    renewalBadgeEl.innerHTML='🔴 Renewal in <strong>'+rc.days+' days</strong> ('+rc.label+') — <span style="color:var(--orange)">Critical window</span>';
-  } else if(rc.urgency==='urgent'){
-    renewalBadgeEl.innerHTML='🟠 Renewal in <strong>'+rc.days+' days</strong> ('+rc.label+') — <span style="color:var(--orange)">Urgent</span>';
-  } else if(rc.urgency==='approaching'){
-    renewalBadgeEl.innerHTML='🟡 Renewal in ~<strong>'+Math.round(rc.days/30)+' months</strong> ('+rc.label+') — Approaching';
-  } else if(rc.urgency==='future'){
-    renewalBadgeEl.innerHTML='🔵 Renewal '+rc.label+' — <span style="color:var(--muted)">Early stage</span>';
-  } else if(rc.urgency==='past'){
-    renewalBadgeEl.innerHTML='⚪ Renewal passed ('+rc.label+') — Post-renewal window';
-  } else {
-    renewalBadgeEl.innerHTML='';
-  }
   const tabsEl=document.getElementById('ec-tabs');
   if(!tabsEl)return;
   tabsEl.innerHTML=touches.map((t,i)=>{
@@ -3688,6 +3834,8 @@ Keep it concise — this is a cadence refresh, not a full report. Focus on what'
     notifAdd('intel', '📊 Intel Refresh Complete — Day '+day+' · '+(intelDay?.label||'Intel'), p.company+' · Competitive brief ready', 'INTEL');
     notifBrowserPush('📊 Intel ready — '+p.company, 'Day '+day+' '+( intelDay?.label||'Intel')+' brief is ready');
     showToast('Intel refresh complete — Day '+day);
+    // ── PROSE FORMATTING LAYER ── auto-convert intel output to email prose
+    bpApplyIntelToEmail(day, text).catch(function(e){ console.warn('[ProseFormat] Intel-to-email failed:', e.message); });
   } catch(e){
     if(resultEl) resultEl.innerHTML = '<div class="cdt-intel-result" style="border-color:#fecaca;background:#fef2f2;color:var(--red)">Error running intel refresh. Check your connection and try again.</div>';
     showToast('Intel refresh failed',true);
@@ -4393,39 +4541,110 @@ window.addEventListener('DOMContentLoaded', function(){
 });
 
 // ── Feature 5: Intel action buttons ──────────────────────────────
-window.cdtIntelEmail = function(day) {
+// ── cdtIntelEmail: prose-formatted email from intel agent output ──
+// ── cdtIntelEmail: prose-formatted email from intel agent output ──
+window.cdtIntelEmail = async function(day) {
   const p = window._hqProspect; if(!p) return;
   const result = cdtGetIntelResult(day);
   const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
-  const subject = encodeURIComponent('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' — '+p.company);
-  const snippet = result ? result.result.substring(0,320)+'...\n\n' : '[Paste your intel brief here]\n\n';
-  const bodyText = 'Hi '+((p.contact||'').split(' ')[0]||p.company)+',\n\n'+snippet+'Worth a quick conversation?\n\n— [Your Name]\nADP | beyondpayroll.net';
-  window.location.href = 'mailto:'+encodeURIComponent(p.email||'')+'?subject='+subject+'&body='+encodeURIComponent(bodyText);
+  const nm = (p.contact||'').split(' ')[0]||p.company;
+
+  const subjectMap = {
+    1: 'Quick thought on '+p.company+'\'s HR setup',
+    8: 'Something came across my desk re: '+p.company,
+    15: 'A competitor move worth flagging for '+p.company,
+    22: 'Last thing I wanted to flag for '+p.company
+  };
+  const subject = subjectMap[day] || ('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' \u2014 '+p.company);
+
+  const dayKeyMap = {1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel'};
+  const touchKey = p.track==='WFN' ? (dayKeyMap[day]||'wfn_day8_intel') : 'wfn_day8_intel';
+
+  const rawContext = [
+    'Company: '+p.company,
+    'Contact: '+nm,
+    'Industry: '+(p.industry||'\u2014'),
+    'Headcount: '+(p.headcount||'\u2014')+' employees',
+    'State: '+(p.state||'\u2014'),
+    'Track: '+(p.track==='WFN'?'ADP WorkforceNow':'ADP TotalSource'),
+    'Cadence Day: '+day+' of 30',
+    '',
+    'INTEL AGENT OUTPUT:',
+    (result?result.result:'No intel available \u2014 use prospect profile only.')
+  ].join('\n');
+
+  showToast('Formatting email\u2026');
+  const proseBody = await bpProseFormat(touchKey, rawContext);
+  const sig = '\n\n\u2014\n[Your Name]\nADP | beyondpayroll.net';
+  const bodyText = proseBody + sig;
+
+  window.location.href = 'mailto:'+encodeURIComponent(p.email||'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyText);
+  showToast('\u2713 Prose email ready \u2014 opening Outlook');
 };
 
-window.cdtIntelLinkedIn = function(day) {
+// ── cdtIntelLinkedIn: prose-formatted LinkedIn post from intel agent output ──
+window.cdtIntelLinkedIn = async function(day) {
+  const p = window._hqProspect; if(!p) return;
+  const result = cdtGetIntelResult(day);
+
+  const rawContext = [
+    'Company: '+p.company,
+    'Industry: '+(p.industry||'\u2014'),
+    'Headcount: '+(p.headcount||'\u2014')+' employees',
+    'State: '+(p.state||'\u2014'),
+    'Cadence Day: '+day+' of 30',
+    '',
+    'INTEL AGENT OUTPUT:',
+    (result?result.result:'No intel available.')
+  ].join('\n');
+
+  const basePrompt = PROSE_TOUCH_PROMPTS['wfn_day'+day+'_intel'] || PROSE_TOUCH_PROMPTS['wfn_day8_intel'] || '';
+  const liSystemPrompt = basePrompt + '\n\nADDITIONAL RULE FOR LINKEDIN: Rewrite as a short, insight-driven LinkedIn post (3\u20134 sentences max). Use only 2\u20133 relevant hashtags at the end. Do not mention the prospect company by name. Write in first person as a knowledgeable HCM consultant sharing a market observation. No markdown, no bullet points.';
+
+  showToast('Formatting LinkedIn post\u2026');
+  try {
+    const resp = await bpGeminiFetch({ messages:[{role:'user', content: liSystemPrompt+'\n\nRAW DATA:\n'+rawContext}] });
+    const data = await resp.json();
+    const post = bpGeminiText(data).trim() || rawContext.substring(0,260);
+    if(navigator.clipboard){ navigator.clipboard.writeText(post).then(function(){ showToast('\u2713 LinkedIn post copied \u2014 paste into LinkedIn'); }); }
+    window.open('https://www.linkedin.com/feed/', '_blank');
+  } catch(e) {
+    showToast('Could not format post \u2014 copying raw intel', true);
+    const fallback = (result?result.result.substring(0,260)+'...':'[Your insight here]');
+    if(navigator.clipboard) navigator.clipboard.writeText(fallback);
+    window.open('https://www.linkedin.com/feed/', '_blank');
+  }
+};
+
+// ── cdtIntelSms: prose-formatted SMS from intel agent output ──
+window.cdtIntelSms = async function(day) {
   const p = window._hqProspect; if(!p) return;
   const result = cdtGetIntelResult(day);
   const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
-  const post = '📊 '+(intelDay?intelDay.label:'Competitive Intel')+' — '
-    +p.industry+' companies at '+p.headcount+' employees.\n\n'
-    +(result?result.result.substring(0,260)+'...\n\n':'[Your insight here]\n\n')
-    +'#HCM #ADP #WorkforceNow #PEO #HRTech';
-  if(navigator.clipboard){ navigator.clipboard.writeText(post).then(function(){ showToast('LinkedIn post copied — paste into LinkedIn'); }); }
-  window.open('https://www.linkedin.com/feed/', '_blank');
+  const nm = (p.contact||'').split(' ')[0]||p.company;
+
+  const smsPrompt = 'You are formatting a short SMS follow-up for an ADP sales rep. Write ONE sentence (max 140 characters) that references a specific insight from the intel data below. Sound like a human, not a robot. No markdown. End with a soft CTA like "Worth a quick call?" Do not include the sign-off.';
+  const rawContext = [
+    'Company: '+p.company,
+    'Industry: '+(p.industry||'\u2014'),
+    'State: '+(p.state||'\u2014'),
+    'Cadence Day: '+day,
+    '',
+    'INTEL OUTPUT:',
+    (result?result.result.substring(0,400):'No intel \u2014 use prospect profile.')
+  ].join('\n');
+
+  let smsBody = 'Hi '+nm+' \u2014 saw something relevant to '+p.company+' I wanted to flag. Worth a quick call this week? \u2014 [Your Name], ADP';
+  try {
+    const resp = await bpGeminiFetch({ messages:[{role:'user', content: smsPrompt+'\n\n'+rawContext}] });
+    const data = await resp.json();
+    const formatted = bpGeminiText(data).trim();
+    if(formatted) smsBody = 'Hi '+nm+' \u2014 '+formatted+' \u2014 [Your Name], ADP';
+  } catch(e) { console.warn('[ProseFormat] SMS format failed:', e.message); }
+
+  ppShowSmsModal(p.phone||'', smsBody, 'Day '+day+' Intel \u2014 '+p.company);
 };
 
-window.cdtIntelSms = function(day) {
-  const p = window._hqProspect; if(!p) return;
-  const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
-  ppShowSmsModal(
-    p.phone||'',
-    'Hi '+((p.contact||'').split(' ')[0]||p.company)+' — quick follow-up on '+(intelDay?intelDay.label:'my research')+' for '+p.company+'. Worth a 15-min call this week? — [Your Name], ADP',
-    'Day '+day+' Intel — '+p.company
-  );
-};
-
-// ── Feature 6: SMS Reminder ───────────────────────────────────────
 window.ppSendSmsReminder = function(idx) {
   const arr = getProspects();
   const p = arr[idx]||window._hqProspect; if(!p) return;
