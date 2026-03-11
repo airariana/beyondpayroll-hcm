@@ -307,7 +307,7 @@ function getHQHTML(session){
   <!-- Nav -->
   <div class="hq-nav">
     <button class="hq-tab active" id="htab-cmd" onclick="hqTab('cmd')">🏠 Command Center <span class="tab-badge">HQ</span></button>
-    <button class="hq-tab locked" id="htab-composer" onclick="hqTab('composer')" title="Complete Score Approval (Step 4) to unlock">📅 30-Day Cadence <span class="tab-badge">STEP 5</span></button>
+    <button class="hq-tab" id="htab-composer" onclick="hqTab('composer')" title="Complete Score Approval (Step 4) to unlock">📅 30-Day Cadence <span class="tab-badge">STEP 5</span></button>
     <button class="hq-tab" id="htab-agent" onclick="hqTab('agent')">🤖 Sales Agent <span class="tab-badge" style="background:rgba(34,197,94,.15);color:#16a34a">LIVE</span></button>
     <button class="hq-tab" id="htab-analysis" onclick="hqTab('analysis')">📊 Analysis Tools <span class="tab-badge" style="background:rgba(184,146,10,.15);color:var(--gold)">NEW</span></button>
   </div>
@@ -1355,7 +1355,7 @@ window.hqTab=function(tab){
   if(analysisView)analysisView.style.display=tab==='analysis'?'block':'none';
   document.querySelectorAll('.hq-tab').forEach(t=>t.classList.remove('active'));
   const el=document.getElementById('htab-'+tab);
-  if(el){ el.classList.add('active'); el.classList.remove('locked'); el.style.opacity='1'; el.style.cursor='pointer'; }
+  if(el) el.classList.add('active');
   if(tab==='composer')ecRenderAll();
   if(tab==='agent')saInit();
   if(tab==='analysis')atInit();
@@ -2756,8 +2756,7 @@ function hqUpdateRec(){
 window.hqApprove=function(){
   window._hqApproved=true;hqAdvancePipeline(4);
   document.getElementById('hq-sap').classList.remove('open');
-  const tab=document.getElementById('htab-composer');
-  if(tab){tab.classList.remove('locked');tab.removeAttribute('title')}
+  // Tab is always visible; approval just enables the content
   const btn=document.getElementById('hq-composer-btn');
   if(btn){btn.style.opacity='1';btn.style.cursor='pointer';btn.style.background='var(--green-bg)';btn.style.color='var(--green)';btn.style.borderColor='var(--green-border)'}
   // ── Feature 4: Cadence jump banner ──
