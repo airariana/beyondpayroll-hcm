@@ -2787,11 +2787,14 @@ UNIVERSAL EMAIL WRITING RULES — apply to every touch without exception:
 - Never paste raw agent data directly. Always convert to natural prose first.
 - One insight per email. If the agent returned multiple data points, use only the sharpest one.
 - Prospect first name only in the greeting. Never leave placeholder brackets visible.
-- Email length: 3–5 sentences for most touches.
-- Tone: a knowledgeable colleague passing along a useful heads-up — not a salesperson.
-- Never use the phrase "Worth a quick conversation?" — use a specific time ask instead.
+- Email length: 3–5 sentences for most touches. Never exceed 5 sentences in the body.
+- Tone: a knowledgeable colleague passing along a useful heads-up — not a salesperson. Warm, direct, peer-level.
+- Never use the phrase "Worth a quick conversation?" — use a specific, low-friction ask instead.
+- Never say "I hope this finds you well", "I wanted to reach out", or "Just following up."
+- Never use "synergy", "value-add", "leverage", "circle back", or "touch base."
 - Sign-off is always on its own line: rep name, then company, then website. Nothing else.
-- Output only the email body text. No subject line. No labels. No explanation.
+- Output only the email body text. No subject line. No labels. No preamble. No explanation.
+- The email must read as if written by a human who genuinely knows this company — never generic.
 `;
 
 // Per-touch prose system prompts
@@ -2801,148 +2804,190 @@ Touch: Day 1 — Research Brief (first touch, intel-driven)
 Goal: Establish credibility by showing you already know their world before the first contact.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Weave company name, headcount, state, and industry into one natural sentence — never list them as a profile.
-2. Reference only ONE competitor threat from the intel — the most relevant one. Do not list all three.
-3. End with a single low-friction question such as "Worth a 10-minute call this week?" — keep it specific.
-4. Maximum 4 sentences in the body.
-INPUT: You will receive raw competitive intel data. Convert it into a short, natural email body.`,
+1. Weave company name, headcount, state, and industry into one natural sentence — never list them as a profile dump.
+2. Reference only ONE competitor threat from the intel — the most relevant one. Do not list all of them.
+3. The opening line should feel like you pulled something specific for them today — not a template.
+4. End with a single low-friction ask: a specific time offer, not an open-ended "let me know."
+5. Maximum 4 sentences in the body. No subject line in output.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"I work with a number of [industry] companies in [state], and after looking at [Company]'s setup — [headcount] employees on [current product] — I noticed [Competitor] has been making a push into your space recently. There are usually a few underutilized features in [current product] at your size that could close the gap before that becomes a real problem. I can pull the full breakdown if useful. Would [specific day] work for a 15-minute call?"`,
 
   wfn_day2: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 2 — Insight Hook
 Goal: Create curiosity around unused ADP features the prospect is already paying for.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with the financial or operational insight — not with a re-introduction.
-2. Reference the specific unused feature or cost gap but frame it as a discovery, not a report.
-3. Do not say "I noticed" more than once.
-4. CTA: offer to pull the full breakdown. Keep it soft — "I can send it over if useful."
-5. Maximum 4 sentences.`,
+1. Lead with the financial or operational insight — not with a re-introduction or "following up on my last email."
+2. Reference the specific unused feature or cost gap but frame it as a discovery, not a data report.
+3. Do not say "I noticed" more than once in the entire email.
+4. The CTA should offer to send more — soft and easy to say yes to: "I can send it over if useful."
+5. Maximum 4 sentences. No bullet points or lists under any circumstances.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"Most [product] clients at [Company]'s size are only actively using about 60% of what they're paying for — the rest sits idle. I pulled [Company]'s feature profile and there are [2-3 specific items] that could be running automatically right now. I can send the full breakdown if that's worth a look."`,
 
   wfn_day8_intel: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 8 — Mid-Cadence Intel (intel refresh touch)
-Goal: Re-engage with a fresh data point that shows continued research.
+Goal: Re-engage with a fresh, specific data point that shows continued research — not a follow-up.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Open with the freshest, most specific piece of intel — not a re-introduction.
-2. Do not recap previous messages. Assume they received them.
+1. Open with the freshest, most specific piece of intel — not "I wanted to share something."
+2. Do not recap previous messages. Assume they received them and move forward.
 3. One data point only. Do not stack multiple insights.
-4. Feel like a timely heads-up from a peer, not a follow-up from a salesperson.
-5. Maximum 3 sentences. CTA is optional — curiosity is enough.`,
+4. This should feel like a timely heads-up from a peer, not a follow-up from a salesperson.
+5. Maximum 3 sentences. A CTA is optional here — curiosity alone is a valid close.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"[Competitor] just rolled out an updated [module] specifically targeting [industry] companies in [state] — it's getting traction in your space. Wanted to flag it given the [compliance/cost/feature] overlap with where [Company] is right now. Happy to share what I'm seeing if it's useful."`,
 
   wfn_day8_cost: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 8 — Cost Benchmark
-Goal: Anchor the prospect to a cost comparison that makes ADP's value concrete.
+Goal: Anchor the prospect to a concrete cost comparison that makes ADP's value tangible and personal.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with a benchmark number or cost gap — not with a greeting about yourself.
-2. Use one specific number or range. Do not list multiple figures.
-3. Frame the data as pulled "for their specific profile" — make it feel tailored.
-4. CTA: offer to share the full benchmark. Keep it soft.
-5. Maximum 4 sentences. No bullet points or lists under any circumstances.`,
+1. Lead with a benchmark number or cost gap — the first word of the email should not be "I."
+2. Use one specific number or range. Do not list multiple figures or create a breakdown.
+3. Frame the data as pulled for their specific profile — make it feel tailored, not templated.
+4. CTA: offer to share the full benchmark. Keep it frictionless.
+5. Maximum 4 sentences. No bullet points or lists under any circumstances.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"What [Company] is actually spending on HR tech vs. the benchmark for [headcount]-person [industry] firms in [state] is worth a look — there's usually a [X–Y]% gap that most clients don't realize until they run the comparison. I pulled the numbers for your profile specifically. I can send the full breakdown if that's useful."`,
 
   wfn_day15_intel: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 15 — Competitive Intel Pull (intel refresh touch)
-Goal: Surface a competitor move that directly affects the prospect's decision window.
+Goal: Surface a specific competitor move that directly affects this prospect's decision window.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
 1. Name the competitor and the specific move. Be concrete — vague intel has no impact.
-2. Connect the competitor move directly to a risk or opportunity for this prospect.
-3. Do not oversell the threat. Let the data do the work.
-4. 3–4 sentences. Close with a soft check-in, not a hard ask.`,
+2. Connect the competitor move directly to a risk or opportunity for this prospect in one sentence.
+3. Do not oversell the threat. Let the specificity do the work — trust the data.
+4. 3–4 sentences. Close with a soft check-in, not a hard ask.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"[Competitor] expanded their [module] last week with a new [feature] targeting [segment] — which puts [Company] squarely in their crosshairs. Thought you'd want to know before it shows up in your inbox from them first. Worth a quick sync on how [Company]'s current setup compares?"`,
 
   wfn_day15_compliance: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 15 — Compliance Trigger
-Goal: Create urgency through a real, time-sensitive compliance gap for their state and industry.
+Goal: Create urgency through a real, time-sensitive compliance gap relevant to their state and industry.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Open with the compliance fact — not a sales angle.
-2. Name the specific regulation or update. Do not be vague.
-3. Connect the compliance gap to one ADP feature that addresses it.
+1. Open with the compliance fact — not a sales angle. The first sentence should state the regulation or update directly.
+2. Name the specific regulation or update. Do not be vague about what changed.
+3. Connect the compliance gap to one ADP feature that addresses it automatically.
 4. Frame as informational first. The ask should feel like a favor, not a pitch.
-5. Maximum 4 sentences.`,
+5. Maximum 4 sentences.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"[State] updated its [leave/wage/compliance] requirements for [industry] companies this quarter, and a number of [product] clients in [Company]'s category have had to make manual adjustments to stay compliant. There's a specific module in [product] that handles this automatically — [Company] may already have access to it. Happy to walk through it if that's useful."`,
 
   wfn_day22_intel: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 22 — Final Push Intel (last intel touch before breakup)
-Goal: Most specific and valuable intel touch yet — make it feel time-sensitive.
+Goal: The most specific and time-sensitive intel touch of the cadence — make it feel genuinely urgent.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Use the sharpest, most specific data point from the agent output.
-2. Do not reference previous emails or mention the cadence timeline.
-3. Tone: peer-to-peer. Think "colleague passing along a useful heads-up."
-4. Maximum 3 sentences. CTA is a light nudge, not a close.`,
+1. Use the sharpest, most specific data point from the agent output. This is not the time for a soft opener.
+2. Do not reference previous emails or acknowledge the cadence timeline.
+3. Tone: peer-to-peer — a colleague passing along something actionable, not a rep checking in.
+4. Maximum 3 sentences. CTA is a light nudge toward a conversation — not a close.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"[Competitor] made a move in [Company]'s space this week — [specific action] that's already getting traction with [segment]. Given [Company]'s renewal timing and current setup, the window to get ahead of it is narrow. Happy to share what I'm seeing if it's useful."`,
 
   wfn_day22_breakup: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 22 — Breakup Email
-Goal: Leave the door open gracefully while creating a final moment of awareness.
+Goal: Leave the door open gracefully while creating one final moment of genuine awareness.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. This email can be slightly self-aware — acknowledge you've reached out a few times.
-2. Reference one concrete thing from the cadence (a competitor, compliance update, or cost benchmark) — do not leave it generic.
-3. The breakup framing should be light, not dramatic. No guilt-tripping.
-4. End with a clear, low-pressure door-opener for the future.
-5. Maximum 5 sentences. No links, no attachments mentioned.`,
+1. This email can be slightly self-aware — it is the only touch in the cadence that can acknowledge the outreach pattern. Keep it light.
+2. Reference one concrete thing from the cadence (a competitor, compliance update, or cost benchmark) — never leave it generic.
+3. The breakup framing should be understated, not dramatic. No guilt-tripping or manufactured urgency.
+4. End with a clear, low-pressure door-opener that points to a future trigger (renewal, growth, a new hire).
+5. Maximum 5 sentences. No links, no attachments mentioned.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"I've reached out a few times over the past few weeks — I'll make this the last one for now. The [competitor move / compliance gap / cost benchmark] I flagged is still worth watching as [Company] heads into [renewal period / Q-end / hiring push]. If any of that becomes more relevant down the road, I'm easy to find. The door stays open."`,
 
   wfn_day30: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 30 — Community Invite (final touch)
-Goal: Re-engage with a value-add invite that removes all sales pressure.
+Goal: Re-engage with a genuine value-add invite that removes all sales pressure and leaves a lasting impression.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. This is an invitation, not a sales email. Tone should reflect that completely.
-2. Lead with what they get, not who you are.
-3. Reference the HCM Scorecard as something already prepared for them — make it feel exclusive.
-4. The briefing invite should feel like a peer event, not a webinar pitch.
-5. Maximum 4 sentences. CTA is a simple reply to confirm.`,
+1. This is an invitation, not a sales email. The tone must reflect that completely — no pitch language.
+2. Lead with what they get, not who you are or what you sell.
+3. Reference the HCM Scorecard as something already prepared for them — make it feel exclusive, not promotional.
+4. The briefing invite should feel like a peer event — small, specific, no pitch — not a webinar or product demo.
+5. Maximum 4 sentences. CTA is a simple reply to confirm attendance or request the scorecard.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"I put together an HCM Scorecard for [Company] — it benchmarks [Company]'s current setup against comparable [industry] firms in [state] and flags a few areas worth watching. I'm also hosting a small quarterly briefing next week for HR leaders in your space — no pitch, just data and a conversation. I'd love to hold a seat for you if you're interested."`,
 
   ts_day2: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 2 — PEO Reality Check
-Goal: Plant the seed that the PEO model may no longer fit at their current size.
+Goal: Plant the seed that the current PEO model may no longer be the right fit at their size and stage.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
 1. Reference their specific headcount as the natural inflection point — not a generic threshold.
-2. Frame this as a data-driven observation, not a sales pitch.
-3. The ask is a comparison, not a close.
-4. Maximum 4 sentences.`,
+2. Frame this as a data-driven observation that you're passing along — not a sales pitch.
+3. The ask is to run a comparison, not to close a deal.
+4. Maximum 4 sentences.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"At [headcount] employees, [Company] is at the size where the math on PEO co-employment usually starts to shift — the fixed PEPM model that works well at smaller headcounts often becomes less efficient as the company scales. I've run this comparison for a few [industry] firms in [state] and the results are usually worth seeing. Happy to do the same for [Company] if that's useful."`,
 
   ts_day8: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 8 — Cost Comparison
-Goal: Make the PEPM cost gap tangible and personal to this prospect.
+Goal: Make the PEPM cost gap tangible, personal, and tied directly to this prospect's situation.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with the cost insight — not with a re-introduction.
+1. Lead with the cost insight — not with a re-introduction or reference to a previous email.
 2. Use one specific number or estimated range. No bullet-point cost breakdowns.
-3. Frame as data pulled for their profile specifically.
-4. CTA: ask for their current PEPM to run a real comparison.
-5. Maximum 4 sentences.`,
+3. Frame as data pulled for their profile specifically — not a general range.
+4. CTA: ask for their current PEPM to run a real, side-by-side comparison.
+5. Maximum 4 sentences.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"For a [headcount]-person [industry] company in [state], the difference between a standard PEO PEPM and what TotalSource typically delivers is usually in the [range] per employee per month range — which adds up quickly at [Company]'s size. I'd need your current PEPM to run a real comparison, but the initial numbers usually tell the story. Worth a 10-minute look?"`,
 
   ts_day15: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 15 — Case Study
-Goal: Use a comparable company story to make the alternative feel real and proven.
+Goal: Use a comparable company outcome to make the alternative feel proven and real — not theoretical.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
 1. Lead with the outcome of the case study company — not with "I wanted to share."
-2. Connect their industry and headcount to the case study naturally in one sentence.
-3. The ask is to run the same analysis for them — keep it low-commitment.
-4. Maximum 4 sentences.`,
+2. Connect their industry and headcount to the case study naturally in one sentence — make the comparison feel obvious.
+3. The ask is to run the same analysis for them — keep it low-commitment and easy to say yes to.
+4. Maximum 4 sentences.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"A [headcount]-person [industry] company in [state] recently made the switch from their previous PEO to TotalSource and locked in a [X]% reduction in health premiums in the first year. [Company]'s profile is similar enough that the numbers would likely be in the same range. Happy to run the same analysis if you'd like to see it."`,
 
   ts_day22_breakup: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 22 — Breakup Email
-Goal: Close the loop gracefully while leaving the door open at renewal.
+Goal: Close the loop gracefully, reference the value shared, and leave a clear door open at renewal.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Acknowledge the outreach briefly without being self-deprecating.
-2. Reference the TotalSource cost data shared — make it feel like a useful resource, not a last pitch.
-3. Point to renewal as the natural next checkpoint.
-4. Maximum 4 sentences.`,
+1. Acknowledge the outreach briefly — light self-awareness, not self-deprecation.
+2. Reference the TotalSource cost data or case study shared earlier — make it feel like a useful resource left behind, not a last-ditch pitch.
+3. Point to renewal as the natural next checkpoint — no pressure, just a logical future moment.
+4. Maximum 4 sentences.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"I've reached out a few times — I'll keep this one short. The cost comparison I ran for [Company] is still sitting in my notes whenever the timing is right. Renewal cycles are usually the natural moment to revisit this, so if [Company]'s is coming up in the next 6 months, I'm easy to find. The door stays open."`,
 
   ts_day30: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 30 — Community Invite
-Goal: Leave with a tangible deliverable and a no-pressure community connection.
+Goal: Leave with a tangible deliverable and a no-pressure community connection that keeps the relationship alive.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with the scorecard as a delivered asset — not as a closing tactic.
-2. Frame the briefing invite as informational and easy to opt out of.
-3. Warm, peer-level close. No sales language.
-4. Maximum 4 sentences.`
+1. Lead with the scorecard as a delivered asset — not as a closing tactic. It's a gift, not a hook.
+2. Frame the briefing invite as informational, small, and easy to opt out of — peer event, not webinar.
+3. Warm, peer-level close. No sales language. No urgency.
+4. Maximum 4 sentences.
+
+EXAMPLE TONE (do not copy, use as style reference):
+"I put together a TotalSource Scorecard for [Company] — it benchmarks [Company]'s current PEO setup against comparable [industry] firms in [state] and flags a few areas worth watching as you scale. I'm also hosting a small briefing next week for HR and ops leaders in your space — no pitch, just data. I'd love to hold a spot for you if you're interested."`,
 };
 
 // Core prose formatter — calls the AI proxy with a touch-specific system prompt
@@ -3965,26 +4010,9 @@ const FIREBASE_CONFIG={
 const PROSPECTS_KEY='bp_prospects';
 const TOMBSTONE_KEY='bp_deleted_ids';
 
-// ── Tombstone helpers ─────────────────────────────────────────────
-// A tombstone is a locally-persisted set of Firestore doc IDs that
-// the current user has explicitly deleted. It prevents fbInitialSync
-// from re-pushing deleted prospects back to Firestore, and prevents
-// fbListen from re-adding them when a snapshot fires.
-function getTombstones(){
-  try{ return JSON.parse(localStorage.getItem(TOMBSTONE_KEY)||'[]'); }
-  catch(e){ return []; }
-}
-function addTombstone(id){
-  if(!id) return;
-  const t = getTombstones();
-  if(t.indexOf(id)===-1){ t.push(id); localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(t)); }
-}
-function isTombstoned(id){
-  if(!id) return false;
-  return getTombstones().indexOf(id) !== -1;
-}
-// ── End tombstone helpers ─────────────────────────────────────────
-
+function getTombstones(){ try{ return JSON.parse(localStorage.getItem(TOMBSTONE_KEY)||'[]'); }catch(e){ return []; } }
+function addTombstone(id){ if(!id) return; const t=getTombstones(); if(t.indexOf(id)===-1){ t.push(id); localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(t)); } }
+function isTombstoned(id){ if(!id) return false; return getTombstones().indexOf(id)!==-1; }
 let _fbDb=null,_fbOnline=false,_fbSession=null;
 
 function getProspects(){try{return JSON.parse(localStorage.getItem(PROSPECTS_KEY)||'[]');}catch{return[];}}
@@ -4164,16 +4192,13 @@ async function fbInitialSync(session){
           );
         }
       } else {
-        // lp has an id but it's not in remote —
-        // Only re-push if it has NOT been locally tombstoned (i.e. deleted).
-        // Without this check, deleted prospects get resurrected on every app load.
+        // lp has an id but it's not in remote — only restore if NOT tombstoned (deleted)
         if(!isTombstoned(lp.id)){
           merged[lp.id] = lp;
           pushJobs.push(_fbDb.collection('prospects').doc(lp.id).set(
             Object.assign({},lp,{userEmail:session.email}),{merge:true}
           ).catch(function(e){console.warn('fbSync restore:',e.message);}));
         }
-        // If tombstoned: silently drop it — do not restore to Firestore or keep locally
       }
     });
 
@@ -4206,38 +4231,25 @@ function fbListen(session){
     window._fbUnsubscribe = _fbDb.collection('prospects')
       .where('userEmail','==',session.email)
       .onSnapshot(function(snap){
-        // Build map of incoming remote docs — skip any this device has tombstoned
         const remote = {};
-        snap.forEach(function(d){
-          if(!isTombstoned(d.id)){
-            remote[d.id] = Object.assign({id:d.id}, d.data());
-          }
-        });
+        snap.forEach(function(d){ if(!isTombstoned(d.id)) remote[d.id] = Object.assign({id:d.id}, d.data()); });
 
-        // Merge with current local: remote wins unless local is newer
         const local = getProspects();
         const localMap = {};
         local.forEach(function(p){ if(p.id) localMap[p.id] = p; });
 
-        // Add/update from remote
         Object.values(remote).forEach(function(rp){
           const lp = localMap[rp.id];
-          if(!lp){
-            localMap[rp.id] = rp; // new remote prospect
-          } else {
+          if(!lp){ localMap[rp.id] = rp; }
+          else {
             const remoteTs = new Date(rp.updatedAt||0).getTime();
             const localTs  = new Date(lp.updatedAt||0).getTime();
-            if(remoteTs >= localTs) localMap[rp.id] = rp; // remote wins tie or newer
+            if(remoteTs >= localTs) localMap[rp.id] = rp;
           }
         });
 
-        // Remove any local prospect whose Firestore doc no longer exists in the snapshot.
-        // This is what makes deletions on one device propagate to all others in real time.
-        Object.keys(localMap).forEach(function(id){
-          if(!remote[id]){
-            delete localMap[id];
-          }
-        });
+        // Remove prospects deleted on other devices (absent from remote snapshot)
+        Object.keys(localMap).forEach(function(id){ if(!remote[id]) delete localMap[id]; });
 
         const merged = Object.values(localMap).sort(function(a,b){
           return new Date(b.updatedAt||0) - new Date(a.updatedAt||0);
@@ -4247,19 +4259,14 @@ function fbListen(session){
         saveProspectsLocal(merged);
         renderSavedProspects();
 
-        // Toast only if something actually changed
         const changed = merged.length !== prevCount || merged.some(function(mp){
           const lp = local.find(function(x){return x.id===mp.id;});
           return !lp || lp.updatedAt !== mp.updatedAt;
         });
         if(changed){
-          if(merged.length < prevCount){
-            showToast('☁ Prospect removed on another device');
-          } else if(merged.length > prevCount){
-            showToast('☁ New prospect synced from another device');
-          } else {
-            showToast('☁ Prospects updated from another device');
-          }
+          if(merged.length < prevCount) showToast('☁ Prospect removed on another device');
+          else if(merged.length > prevCount) showToast('☁ New prospect synced from another device');
+          else showToast('☁ Prospects updated from another device');
         }
       }, function(err){ console.warn('fbListen error:',err.message); });
   }catch(e){ console.warn('fbListen setup:',e); }
@@ -4375,10 +4382,51 @@ function renderSavedProspects(){
     const isApproved=p.approved||false;
     const meta=p.stage||((p.industry||'—')+' · '+(p.state||'—'));
     const statusDot=isApproved?'<span style="font-size:9px;font-weight:700;color:#16a34a;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);padding:1px 5px;border-radius:3px;margin-left:4px">ACTIVE</span>':'';
+
+    // ── Cadence progress for this prospect ──────────────────────────
+    let cadenceHtml = '';
+    try {
+      const statusKey = 'bp_ec_statuses_' + (p.company||'').replace(/\s+/g,'_');
+      const statuses = JSON.parse(localStorage.getItem(statusKey)||'{}');
+      const statusVals = Object.values(statuses);
+      const sentCount = statusVals.filter(function(s){
+        return s==='Sent'||s==='Meeting Booked'||s==='Replied'||s==='Opened';
+      }).length;
+      const totalCount = statusVals.length;
+      // Find last completed touch label
+      const cdtStartKey = 'cdt_start_'+(p.company||'').replace(/\s+/g,'_');
+      const cdtStart = localStorage.getItem(cdtStartKey);
+      if(sentCount > 0 || cdtStart){
+        // Find the last sent touch index
+        let lastSentIdx = -1;
+        statusVals.forEach(function(s, idx){ if(s==='Sent'||s==='Meeting Booked'||s==='Replied'||s==='Opened') lastSentIdx=idx; });
+        // Get touch label if possible
+        const touches = (typeof buildTouches === 'function') ? buildTouches(p) : [];
+        const lastTouch = touches[lastSentIdx];
+        const lastLabel = lastTouch ? 'Day '+lastTouch.day+' — '+lastTouch.label : (sentCount > 0 ? sentCount+' touch'+(sentCount!==1?'es':'') : '');
+        // Compute day in cadence
+        let dayLabel = '';
+        if(cdtStart){
+          const start = new Date(cdtStart); const today = new Date();
+          start.setHours(0,0,0,0); today.setHours(0,0,0,0);
+          const dayNum = Math.floor((today - start)/86400000)+1;
+          dayLabel = 'Day '+Math.min(dayNum,30)+'/30 · ';
+        }
+        const hasMeeting = statusVals.includes('Meeting Booked');
+        const color = hasMeeting ? '#16a34a' : sentCount > 0 ? '#2563eb' : 'var(--text-3)';
+        const icon = hasMeeting ? '🎯' : sentCount > 0 ? '✓' : '◦';
+        cadenceHtml = '<div style="font-size:10px;color:'+color+';margin-top:2px;font-weight:500">'+
+          icon+' '+dayLabel+(lastLabel||'Cadence started')+'</div>';
+      }
+    } catch(e){}
+    // ── End cadence progress ─────────────────────────────────────────
+
     return '<div class="pd-prospect-row'+(isActive?' active-row':'')+'" onclick="pdLoadProspect('+i+')">'+
       '<div class="pd-pr-icon">'+(isTS?'🏢':'🖥️')+'</div>'+
       '<div class="pd-pr-info"><div class="pd-pr-name">'+escHtml(p.company||'Unknown')+statusDot+'</div>'+
-      '<div class="pd-pr-meta">'+escHtml(p.contact||'—')+' · '+escHtml(meta)+'</div></div>'+
+      '<div class="pd-pr-meta">'+escHtml(p.contact||'—')+' · '+escHtml(meta)+'</div>'+
+      cadenceHtml+
+      '</div>'+
       '<span class="pd-pr-track '+track+'">'+trackLabel+'</span>'+
       '<button class="pd-pr-cadence-btn" style="background:var(--off-white);color:var(--text-2);border:1px solid var(--border);margin-right:2px" onclick="event.stopPropagation();ppShowProfile('+i+')" title="View full profile">👁</button>'+
       '<button class="pd-pr-cadence-btn" onclick="event.stopPropagation();pdAddToCadence('+i+')" title="Load into cadence">+ Cadence</button>'+
@@ -4526,6 +4574,75 @@ window.ppShowProfile = function(idx) {
           '<div class="pp-section-ttl">Rep Notes</div>',
           '<textarea class="pp-notes-area" id="pp-notes-inp" placeholder="Add notes, objections, renewal timing, follow-up context&hellip;">'+escHtml(p.notes||'')+'</textarea>',
         '</div>',
+
+        // ── Cadence Activity Log ─────────────────────────────────────
+        (function(){
+          try {
+            const statusKey = 'bp_ec_statuses_'+(p.company||'').replace(/\s+/g,'_');
+            const statuses = JSON.parse(localStorage.getItem(statusKey)||'{}');
+            const touches = (typeof buildTouches==='function') ? buildTouches(p) : [];
+            const cdtStartKey = 'cdt_start_'+(p.company||'').replace(/\s+/g,'_');
+            const cdtStart = localStorage.getItem(cdtStartKey);
+            if(!touches.length && !cdtStart) return '';
+
+            const dayNum = cdtStart ? (function(){
+              const s=new Date(cdtStart),t=new Date();
+              s.setHours(0,0,0,0);t.setHours(0,0,0,0);
+              return Math.min(Math.floor((t-s)/86400000)+1,30);
+            })() : null;
+
+            const startLabel = cdtStart
+              ? new Date(cdtStart).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+              : 'Not started';
+
+            const sentTouches = touches.filter(function(_,i){
+              const s=statuses[i]||'Pending';
+              return s==='Sent'||s==='Meeting Booked'||s==='Replied'||s==='Opened';
+            });
+            const pendingTouches = touches.filter(function(_,i){
+              const s=statuses[i]||'Pending';
+              return s==='Pending'||s==='Drafted';
+            });
+
+            const statusColorMap = {
+              'Sent':'#16a34a','Meeting Booked':'#15803d','Replied':'#16a34a',
+              'Opened':'#ca8a04','Drafted':'#2563eb','No Response':'#6b7280',
+              'Opted Out':'#dc2626','Pending':'#9ca3af'
+            };
+            const statusIconMap = {
+              'Sent':'✓','Meeting Booked':'🎯','Replied':'💬',
+              'Opened':'👁','Drafted':'📝','No Response':'—',
+              'Opted Out':'⛔','Pending':'◦'
+            };
+
+            let rows = touches.map(function(t,i){
+              const s = statuses[i]||'Pending';
+              const color = statusColorMap[s]||'#9ca3af';
+              const icon = statusIconMap[s]||'◦';
+              const isCompleted = s==='Sent'||s==='Meeting Booked'||s==='Replied'||s==='Opened';
+              return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">'+
+                '<div style="width:36px;text-align:center;font-weight:700;color:var(--text-3);font-size:11px;flex-shrink:0">Day '+t.day+'</div>'+
+                '<div style="flex:1;color:'+(isCompleted?'var(--text)':'var(--text-3)')+'">'+escHtml(t.label)+'</div>'+
+                '<div style="font-size:11px;font-weight:600;color:'+color+';white-space:nowrap">'+icon+' '+s+'</div>'+
+              '</div>';
+            }).join('');
+
+            const pct = touches.length ? Math.round((sentTouches.length/touches.length)*100) : 0;
+            const progressBar = '<div style="height:4px;background:var(--border);border-radius:2px;margin:8px 0 12px;overflow:hidden">'+
+              '<div style="height:100%;width:'+pct+'%;background:'+(pct===100?'#16a34a':pct>50?'var(--green)':'var(--gold)')+';border-radius:2px;transition:width .3s"></div></div>';
+
+            return [
+              '<div class="pp-section">',
+                '<div class="pp-section-ttl">30-Day Cadence Activity',
+                  (cdtStart ? '<span style="font-size:9px;color:var(--text-3);font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px">Started '+startLabel+(dayNum?' · Day '+dayNum+'/30':'')+' · '+sentTouches.length+'/'+touches.length+' touches complete</span>' : ''),
+                '</div>',
+                progressBar,
+                rows || '<div style="color:var(--text-3);font-size:11px">Cadence not yet started for this prospect.</div>',
+              '</div>'
+            ].join('');
+          } catch(e){ return ''; }
+        })(),
+        // ── End Cadence Activity Log ──────────────────────────────────
       '</div>',
       '<div class="pp-modal-ftr">',
         '<button class="pp-ftr-btn primary" onclick="ppSaveNotes('+idx+')">Save Notes</button>',
@@ -4557,31 +4674,20 @@ window.ppDeleteProspect = function(idx) {
   if(!confirm('Delete '+arr[idx].company+' from Prospect Profiles?')) return;
   const removed = arr.splice(idx, 1)[0];
   saveProspectsLocal(arr);
-
   if(_fbDb && removed){
     if(removed.id){
-      // 1. Tombstone the id locally so fbInitialSync never re-pushes it
       addTombstone(removed.id);
-      // 2. Hard-delete from Firestore so all other devices' listeners fire
       _fbDb.collection('prospects').doc(removed.id).delete()
         .catch(function(e){ console.warn('fbDelete:',e.message); });
     } else if(_fbSession && removed.company){
-      // Prospect was never assigned a Firestore id (created offline) —
-      // query by userEmail + company and delete any matching docs
       _fbDb.collection('prospects')
         .where('userEmail','==',_fbSession.email)
         .where('company','==',removed.company)
         .get()
-        .then(function(snap){
-          snap.forEach(function(doc){
-            addTombstone(doc.id);
-            doc.ref.delete();
-          });
-        })
+        .then(function(snap){ snap.forEach(function(doc){ addTombstone(doc.id); doc.ref.delete(); }); })
         .catch(function(e){ console.warn('fbDelete (no-id):',e.message); });
     }
   }
-
   renderSavedProspects();
   const ov = document.getElementById('pp-modal-overlay');
   if(ov) ov.remove();
