@@ -3946,128 +3946,6 @@ function notifCheckOverdue(){
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-//  CADENCE DAY TRIGGER — Session-aware per-prospect touch alerts
-//  Fires when the loaded prospect hits a touch day during the session.
-//  Runs every 60 seconds. Deduplicates per prospect + day within session.
-// ═══════════════════════════════════════════════════════════════════════
-
-const _cdtFiredThisSession = {}; // key: "company_dayNum" — prevents repeat fires
-
-function cdtCheckTodayTrigger(){
-  const p = window._hqProspect;
-  if(!p || !p.company) return;
-
-  // Get cadence day number for this prospect
-  const startISO = localStorage.getItem('cdt_start_' + p.company.replace(/\s+/g,'_'));
-  if(!startISO) return;
-  const start = new Date(startISO); const today = new Date();
-  start.setHours(0,0,0,0); today.setHours(0,0,0,0);
-  const todayNum = Math.floor((today - start) / 86400000) + 1;
-  if(todayNum < 1 || todayNum > 30) return;
-
-  // Load statuses
-  const statusKey = ecStatusKey(p.company);
-  let statuses = {};
-  try{ statuses = JSON.parse(localStorage.getItem(statusKey)||'{}'); }catch(e){}
-
-  // Build touches
-  const prev = window._hqProspect;
-  let touches = [];
-  try{ touches = buildTouches(p); }catch(e){ return; }
-
-  touches.forEach(function(touch, i){
-    if(touch.day !== todayNum) return; // only fire for TODAY's touch
-    const status = statuses[i] || window._ecStatuses[i] || 'Pending';
-    if(status === 'Sent' || status === 'Meeting Booked' || status === 'Replied') return; // already done
-
-    const sessionKey = p.company + '_day' + todayNum + '_' + i;
-    if(_cdtFiredThisSession[sessionKey]) return; // already fired this session
-    _cdtFiredThisSession[sessionKey] = true;
-
-    const touchLabel = 'Day ' + touch.day + ' — ' + touch.label;
-
-    // 1. In-app toast
-    showToast('📋 Due Today: ' + touchLabel + ' · ' + p.company);
-
-    // 2. In-app notification bell
-    notifAdd('alerts',
-      '📋 Touch Due Today: ' + touchLabel,
-      p.company + ' · ' + (p.contact || ''),
-      'DUE TODAY'
-    );
-
-    // 3. Mobile push notification
-    if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-      try{
-        new Notification('📋 Touch Due: ' + p.company, {
-          body: touchLabel,
-          icon: 'https://beyondpayroll.net/favicon.ico',
-          badge: 'https://beyondpayroll.net/favicon.ico',
-          tag: 'bp-due-' + p.company.replace(/\s+/g,'-') + '-day' + todayNum,
-          requireInteraction: false
-        });
-      }catch(e){}
-    }
-
-    // 4. Re-render timeline to ensure highlight is current
-    if(typeof cdtRender === 'function') cdtRender();
-  });
-}
-
-// Also check intel days for the loaded prospect
-function cdtCheckIntelTrigger(){
-  const p = window._hqProspect;
-  if(!p || !p.company) return;
-  const startISO = localStorage.getItem('cdt_start_' + p.company.replace(/\s+/g,'_'));
-  if(!startISO) return;
-  const start = new Date(startISO); const today = new Date();
-  start.setHours(0,0,0,0); today.setHours(0,0,0,0);
-  const todayNum = Math.floor((today - start) / 86400000) + 1;
-
-  CDT_INTEL_DAYS.forEach(function(intel){
-    if(intel.day !== todayNum) return;
-    const sessionKey = p.company + '_intel_day' + todayNum;
-    if(_cdtFiredThisSession[sessionKey]) return;
-    _cdtFiredThisSession[sessionKey] = true;
-
-    showToast('📊 Intel Day: ' + intel.label + ' — run before outreach');
-    notifAdd('intel',
-      '📊 Intel Refresh Due: ' + intel.label,
-      p.company + ' · Day ' + todayNum,
-      'INTEL'
-    );
-    if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-      try{
-        new Notification('📊 Intel Refresh: ' + p.company, {
-          body: intel.label + ' — run before sending Day ' + todayNum + ' outreach',
-          icon: 'https://beyondpayroll.net/favicon.ico',
-          tag: 'bp-intel-day' + todayNum,
-          requireInteraction: false
-        });
-      }catch(e){}
-    }
-  });
-}
-
-// Run check immediately when a prospect is loaded, and then every 60 seconds
-function cdtStartTriggerWatch(){
-  cdtCheckTodayTrigger();
-  cdtCheckIntelTrigger();
-}
-
-// Start interval on page load — checks every 60s
-window.addEventListener('load', function(){
-  cdtStartTriggerWatch(); // fire immediately on load
-  setInterval(function(){
-    cdtCheckTodayTrigger();
-    cdtCheckIntelTrigger();
-  }, 60000);
-});
-
-// Also re-fire check whenever a new prospect is loaded into cadence
-const _origPdLoadProspect = window.pdLoadProspect || null;
-
-// ═══════════════════════════════════════════════════════════════════════
 //  CADENCE DAY TRIGGER — Per-session, per-prospect touch & intel alerts
 //  Fires when today's calendar date matches a touch/intel day for the
 //  currently loaded prospect. Deduplicates within the session.
@@ -4162,8 +4040,6 @@ function cdtCheckTriggers(){
     }
   });
 
-  // Re-render timeline so highlight is always current
-  if(typeof cdtRender === 'function') setTimeout(cdtRender, 100);
 }
 
 // ── Hook: run on page ready + every 60 s ───────────────────────────────
