@@ -3186,6 +3186,10 @@ window.ecFireMailto=function(){
 
 window.ecMarkSent=function(){
   window._ecStatuses[window._ecActiveIdx]='Sent';
+  if(!window._ecSentAt) window._ecSentAt = {};
+  if(!window._ecSentAt[window._ecActiveIdx]){
+    window._ecSentAt[window._ecActiveIdx] = new Date().toISOString();
+  }
   if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
   window._ecNotes[window._ecActiveIdx]=document.getElementById('ec-notes').value;
   ecRenderAll();showToast('Touch logged as Sent');
@@ -3284,6 +3288,24 @@ function cdtRender(){
 
   // Auto-start if not started yet
   if(!cdtGetStart()) { cdtSetStart(new Date().toISOString().split('T')[0]); }
+
+  // Always reload persisted statuses + timestamps from localStorage before rendering.
+  // This fixes the bug where completed touches show as Pending after a page reload.
+  if(p.company){
+    try{
+      const stored = JSON.parse(localStorage.getItem(ecStatusKey(p.company))||'{}');
+      Object.keys(stored).forEach(function(k){
+        if(!window._ecStatuses[k] || window._ecStatuses[k]==='Pending') window._ecStatuses[k]=stored[k];
+      });
+    }catch(e){}
+    try{
+      if(!window._ecSentAt) window._ecSentAt={};
+      const storedAt = JSON.parse(localStorage.getItem(ecStatusKey(p.company)+'_sentAt')||'{}');
+      Object.keys(storedAt).forEach(function(k){
+        if(!window._ecSentAt[k]) window._ecSentAt[k]=storedAt[k];
+      });
+    }catch(e){}
+  }
 
   const touches = buildTouches(p);
   const todayNum = cdtTodayNum();
@@ -3421,6 +3443,12 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
       })[status]||'pending';
       const pillLabel = isOverdue && status==='Pending' ? 'OVERDUE' : status.toUpperCase();
 
+      const sentAtRaw = (window._ecSentAt||{})[idx];
+      const sentAtLabel = sentAtRaw
+        ? new Date(sentAtRaw).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+        : null;
+      const isSentStatus = status==='Sent'||status==='Meeting Booked'||status==='Replied'||status==='Opened';
+
       html += `<div class="${rowCls}" onclick="cdtJumpTo(${idx})">
         <div class="cdt-day-num">
           <div class="num">${day}</div>
@@ -3429,6 +3457,8 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
         <div class="cdt-day-mid">
           <div class="cdt-touch-label">${touch.label}</div>
           <div class="cdt-touch-sub">${touch.subject}</div>
+          ${isSentStatus && sentAtLabel ? `<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:3px">✓ Sent ${sentAtLabel}</div>` : ''}
+          ${isSentStatus && !sentAtLabel ? `<div style="font-size:10px;color:var(--green);font-weight:500;margin-top:3px">✓ Completed</div>` : ''}
         </div>
         <div class="cdt-day-right">
           ${isToday ? '<span class="cdt-today-badge">TODAY</span>' : ''}
@@ -3572,11 +3602,14 @@ function ecStatusKey(company){ return 'bp_ec_statuses_'+(company||'').replace(/\
 function ecSaveStatuses(company){
   if(!company) return;
   localStorage.setItem(ecStatusKey(company), JSON.stringify(window._ecStatuses||{}));
+  localStorage.setItem(ecStatusKey(company)+'_sentAt', JSON.stringify(window._ecSentAt||{}));
 }
 function ecLoadStatuses(company){
-  if(!company){ window._ecStatuses={}; return; }
+  if(!company){ window._ecStatuses={}; window._ecSentAt={}; return; }
   try{ window._ecStatuses=JSON.parse(localStorage.getItem(ecStatusKey(company))||'{}'); }
   catch{ window._ecStatuses={}; }
+  try{ window._ecSentAt=JSON.parse(localStorage.getItem(ecStatusKey(company)+'_sentAt')||'{}'); }
+  catch{ window._ecSentAt={}; }
 }
 
 function notifGetAll(){ try{ return JSON.parse(localStorage.getItem(NOTIF_KEY)||'[]'); }catch{ return []; } }
@@ -4615,14 +4648,24 @@ window.ppShowProfile = function(idx) {
               'Opted Out':'⛔','Pending':'◦'
             };
 
+            let sentAtMap = {};
+            try{ sentAtMap=JSON.parse(localStorage.getItem(ecStatusKey(p.company)+'_sentAt')||'{}'); }catch(e){}
+
             let rows = touches.map(function(t,i){
               const s = statuses[i]||'Pending';
               const color = statusColorMap[s]||'#9ca3af';
               const icon = statusIconMap[s]||'◦';
               const isCompleted = s==='Sent'||s==='Meeting Booked'||s==='Replied'||s==='Opened';
+              const sentAtRaw = sentAtMap[i];
+              const sentAtLabel = sentAtRaw
+                ? new Date(sentAtRaw).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})
+                : null;
               return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">'+
                 '<div style="width:36px;text-align:center;font-weight:700;color:var(--text-3);font-size:11px;flex-shrink:0">Day '+t.day+'</div>'+
-                '<div style="flex:1;color:'+(isCompleted?'var(--text)':'var(--text-3)')+'">'+escHtml(t.label)+'</div>'+
+                '<div style="flex:1;color:'+(isCompleted?'var(--text)':'var(--text-3)')+'">'+
+                  escHtml(t.label)+
+                  (sentAtLabel ? '<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:1px">Sent '+sentAtLabel+'</div>' : '')+
+                '</div>'+
                 '<div style="font-size:11px;font-weight:600;color:'+color+';white-space:nowrap">'+icon+' '+s+'</div>'+
               '</div>';
             }).join('');
