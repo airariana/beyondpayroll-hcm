@@ -773,6 +773,9 @@ function getHQHTML(session){
             <button class="cdt-vbtn active" id="cdt-vbtn-timeline" onclick="cdtSetView('timeline')">Timeline</button>
             <button class="cdt-vbtn" id="cdt-vbtn-grid" onclick="cdtSetView('grid')">Grid</button>
           </div>
+          <button onclick="openEmailEngine()" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;font-family:'Plus Jakarta Sans',sans-serif;">
+            <span style="font-size:13px;">⚡</span> Email Engine
+          </button>
           <button onclick="hqTab('cmd')" class="btn btn-outline">← Back</button>
         </div>
       </div>
