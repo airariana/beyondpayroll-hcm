@@ -3491,6 +3491,7 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
           ${isToday ? '<span class="cdt-today-badge">TODAY</span>' : ''}
           <span class="cdt-status-pill ${pillCls}">${pillLabel}</span>
           <button class="cdt-open-btn" onclick="event.stopPropagation();cdtJumpTo(${idx})" title="Open email composer">✏ Compose</button>
+          <button class="cdt-open-btn" style="background:#0d1535;border-color:#1a2460;color:#fff;font-weight:800" onclick="event.stopPropagation();if(typeof openEmailEngine==='function')openEmailEngine('Day ${day} — ${touch.label}')" title="Open AI Email Engine for this touch">⚡ Engine</button>
           <button class="cdt-open-btn" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="event.stopPropagation();cdtQuickMailto(${idx})" title="Open pre-filled in Outlook">📧 Outlook</button>
           <button class="cdt-open-btn" style="background:#f0fff4;border-color:#bbf7d0;color:#166534" onclick="event.stopPropagation();cdtDownloadTemplate(${idx})" title="Download .eml template">📎 .eml</button>
         </div>
