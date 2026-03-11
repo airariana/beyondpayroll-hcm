@@ -3375,7 +3375,7 @@ function cdtRender(){
   if(statRow) statRow.innerHTML = [
     sentCount ? `<div class="cdt-stat sent">✓ ${sentCount} Sent</div>` : '',
     (totalTouches-sentCount) ? `<div class="cdt-stat pending">${totalTouches-sentCount} Pending</div>` : '',
-    dueTodayCount ? `<div class="cdt-stat today">🔔 Due Today</div>` : '',
+    dueTodayCount ? `<div class="cdt-stat today" onclick="notifOpenDrawer('outreach')" style="cursor:pointer" title="View outreach schedule">🔔 Due Today</div>` : '',
     overdueCount ? `<div class="cdt-stat overdue">⚠ ${overdueCount} Overdue</div>` : '',
   ].join('');
 
@@ -3631,12 +3631,17 @@ window.cdtConfirmReschedule = function(){
   cdtSetStart(newStartISO);
 
   // Close modal and re-render
+  const rsIdx = window._cdtRsIdx;
+  const rsDayNum = window._cdtRsDayNum;
   cdtCloseReschedule();
   cdtRender();
+  // If the outreach drawer is open, refresh it so new dates show immediately
+  const drawer = document.getElementById('notif-drawer');
+  if(drawer && drawer.classList.contains('open') && _notifTab==='outreach') notifRenderList();
 
-  const touch = buildTouches(p)[window._cdtRsIdx];
+  const touch = buildTouches(p)[rsIdx];
   const dateLabel = chosenDate.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'});
-  showToast('📅 Day ' + window._cdtRsDayNum + ' rescheduled to ' + dateLabel);
+  showToast('📅 Day ' + rsDayNum + ' rescheduled to ' + dateLabel);
 };
 
 window.cdtResetAll = function(){
@@ -3740,20 +3745,27 @@ function notifUpdateBadge(){
 function notifRenderList(){
   const listEl = document.getElementById('notif-list');
   if(!listEl) return;
-  let arr = notifGetAll();
-  if(_notifTab !== 'all') {
-    const map = { outreach:'outreach', intel:'intel', alerts:'alerts', meeting:'meeting' };
-    if(_notifTab==='outreach') arr = arr.filter(n=>n.type==='outreach'||n.type==='meeting');
-    else if(_notifTab==='intel') arr = arr.filter(n=>n.type==='intel');
-    else if(_notifTab==='alerts') arr = arr.filter(n=>n.type==='alerts');
+
+  // ── Outreach tab: prospect-specific cadence schedule ─────────────────
+  if(_notifTab === 'outreach'){
+    notifRenderOutreachSchedule(listEl);
+    return;
   }
-  if(!arr.length){ listEl.innerHTML='<div class="notif-empty">🎯<br><br>No alerts here yet.<br><span style="font-size:11px">Activity will appear as you work the cadence.</span></div>'; return; }
+
+  // ── All other tabs: standard notification log ─────────────────────────
+  let arr = notifGetAll();
+  if(_notifTab === 'intel') arr = arr.filter(n=>n.type==='intel');
+  else if(_notifTab === 'alerts') arr = arr.filter(n=>n.type==='alerts'||n.type==='meeting');
+
+  if(!arr.length){
+    listEl.innerHTML='<div class="notif-empty">🎯<br><br>No alerts here yet.<br><span style="font-size:11px">Activity will appear as you work the cadence.</span></div>';
+    return;
+  }
   const typeColor = { outreach:'var(--blue)', intel:'var(--gold)', meeting:'var(--green)', alerts:'var(--red)' };
   const typeLabel = { outreach:'OUTREACH', intel:'INTEL REFRESH', meeting:'MEETING', alerts:'ALERT' };
   listEl.innerHTML = arr.map(n=>{
     const t = new Date(n.time);
     const timeStr = t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-    const unreadCls = n.read ? '' : ' unread-'+n.type;
     const borderCls = n.read ? 'notif-item' : 'notif-item '+(n.type==='outreach'?'unread':n.type==='intel'?'unread-intel':n.type==='meeting'?'unread-meeting':'unread-alert');
     return `<div class="${borderCls}" onclick="notifMarkRead('${n.id}');this.classList.remove('unread','unread-intel','unread-meeting','unread-alert')">
       <div class="notif-item-type" style="color:${typeColor[n.type]||'var(--text-3)'}">${typeLabel[n.type]||n.label||'ACTIVITY'}</div>
@@ -3764,8 +3776,122 @@ function notifRenderList(){
   }).join('');
 }
 
-window.notifOpenDrawer = function(){
+// ── Outreach tab: renders the full cadence schedule for the loaded prospect ──
+function notifRenderOutreachSchedule(listEl){
+  const p = window._hqProspect;
+
+  if(!p || !p.company){
+    listEl.innerHTML = '<div class="notif-empty">📋<br><br>No prospect loaded.<br><span style="font-size:11px">Load a prospect to see their outreach schedule.</span></div>';
+    return;
+  }
+
+  const startISO = localStorage.getItem('cdt_start_' + p.company.replace(/\s+/g,'_'));
+  if(!startISO){
+    listEl.innerHTML = '<div class="notif-empty">📋<br><br>Cadence not started for<br><strong>' + p.company + '</strong><br><span style="font-size:11px">Open the 30-Day Cadence tab to begin.</span></div>';
+    return;
+  }
+
+  const start = new Date(startISO);
+  start.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayNum = Math.floor((today - start) / 86400000) + 1;
+
+  // Load statuses + sentAt
+  let statuses = {}, sentAt = {};
+  try{ statuses = JSON.parse(localStorage.getItem(ecStatusKey(p.company))||'{}'); }catch(e){}
+  try{ sentAt = JSON.parse(localStorage.getItem(ecStatusKey(p.company)+'_sentAt')||'{}'); }catch(e){}
+
+  let touches = [];
+  try{ touches = buildTouches(p); }catch(e){}
+  if(!touches.length){ listEl.innerHTML = '<div class="notif-empty">No touches found.</div>'; return; }
+
+  // Helper: compute absolute date for a given day number
+  function touchDate(dayNum){
+    const d = new Date(start);
+    d.setDate(d.getDate() + (dayNum - 1));
+    return d;
+  }
+  function fmtDate(d){
+    return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  }
+
+  const statusColor = {
+    'Sent':'var(--green)','Meeting Booked':'#7c3aed','Replied':'var(--green)',
+    'Opened':'var(--blue)','Drafted':'var(--gold)','Opted Out':'var(--red)',
+    'No Response':'var(--text-3)','Pending':'var(--text-3)'
+  };
+  const statusIcon = {
+    'Sent':'✓','Meeting Booked':'🎯','Replied':'💬',
+    'Opened':'👁','Drafted':'📝','Opted Out':'⛔',
+    'No Response':'—','Pending':'○'
+  };
+
+  // Build prospect header
+  const completedCount = touches.filter((_,i) => {
+    const s = statuses[i]||window._ecStatuses[i]||'Pending';
+    return s==='Sent'||s==='Meeting Booked'||s==='Replied';
+  }).length;
+
+  let html = `<div style="padding:14px 14px 10px;border-bottom:1px solid var(--border);background:var(--off-white)">
+    <div style="font-size:13px;font-weight:700;color:var(--text)">${p.company}</div>
+    <div style="font-size:10px;color:var(--text-3);margin-top:2px">${p.contact||'No contact'} · ${p.track||'WFN'} · ${completedCount}/${touches.length} touches complete</div>
+    <div style="font-size:10px;color:var(--text-3);margin-top:1px">Cadence started ${fmtDate(start)} · Day ${Math.max(1,Math.min(todayNum,30))} of 30</div>
+  </div>`;
+
+  // Build touch rows
+  touches.forEach(function(touch, i){
+    const status = statuses[i] || window._ecStatuses[i] || 'Pending';
+    const tDate = touchDate(touch.day);
+    const isToday = touch.day === todayNum;
+    const isOverdue = touch.day < todayNum && status === 'Pending';
+    const isDone = status==='Sent'||status==='Meeting Booked'||status==='Replied';
+    const sentAtRaw = sentAt[i];
+    const sentAtLabel = sentAtRaw
+      ? new Date(sentAtRaw).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+      : null;
+
+    const rowBg = isToday ? '#fff9ed' : isDone ? '#f0fdf4' : 'var(--white)';
+    const rowBorder = isToday ? '2px solid var(--gold)' : isDone ? '1px solid #bbf7d0' : isOverdue ? '1px solid #fecaca' : '1px solid var(--border)';
+    const sColor = statusColor[status] || 'var(--text-3)';
+    const sIcon = statusIcon[status] || '○';
+
+    html += `<div style="padding:12px 14px;border-bottom:1px solid var(--border);background:${rowBg};border-left:${rowBorder}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="font-size:9px;font-weight:800;color:var(--text-3);font-family:var(--fm);background:var(--off-white);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">DAY ${touch.day}</span>
+            ${isToday ? '<span style="font-size:9px;font-weight:800;color:#c2410c;background:#fff7ed;padding:1px 6px;border-radius:3px;border:1px solid #fed7aa">TODAY</span>' : ''}
+            ${isOverdue ? '<span style="font-size:9px;font-weight:800;color:var(--red);background:#fff1f2;padding:1px 6px;border-radius:3px;border:1px solid #fecaca">OVERDUE</span>' : ''}
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px">${touch.label}</div>
+          <div style="font-size:10px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">${touch.subject}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+            <span style="font-size:10px;color:${sColor};font-weight:600">${sIcon} ${status}</span>
+            <span style="font-size:10px;color:var(--text-3)">·</span>
+            <span style="font-size:10px;color:${isOverdue?'var(--red)':isToday?'#c2410c':'var(--text-3)'}">${isDone && sentAtLabel ? '✓ Sent '+sentAtLabel : '📅 '+fmtDate(tDate)}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
+          ${!isDone ? `<button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:4px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>` : ''}
+          <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:4px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  listEl.innerHTML = html;
+}
+
+window.notifOpenDrawer = function(openTab){
   notifMarkAllRead();
+  // If called with a specific tab (e.g. 'outreach'), switch to it first
+  if(openTab && openTab !== _notifTab){
+    _notifTab = openTab;
+    ['all','outreach','intel','alerts'].forEach(t=>{
+      const btn = document.getElementById('ndtab-'+t);
+      if(btn) btn.classList.toggle('active', t===openTab);
+    });
+  }
   document.getElementById('notif-drawer').classList.add('open');
   document.getElementById('notif-backdrop').style.display='block';
   notifRenderList();
