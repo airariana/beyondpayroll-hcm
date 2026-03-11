@@ -642,6 +642,202 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .notif-empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px}
 .notif-actions{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
 
+/* ═══════════════════════════════════════
+   TOP BAR ICON BUTTONS (Profiles + Activity)
+═══════════════════════════════════════ */
+.tb-icon-btn{
+  display:flex;align-items:center;gap:6px;
+  background:var(--off-white);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:6px 12px;
+  cursor:pointer;transition:all .15s;
+  font-size:12px;font-weight:600;color:var(--text-2);
+  font-family:var(--fb);white-space:nowrap;
+}
+.tb-icon-btn:hover{border-color:var(--navy);color:var(--navy);background:#fff}
+.tb-icon-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tb-icon-btn .tb-badge{
+  background:var(--red);color:#fff;border-radius:10px;
+  font-size:9px;font-weight:800;padding:1px 5px;line-height:1.4;
+  font-family:var(--fb);
+}
+
+/* ═══════════════════════════════════════
+   PROFILES LEFT SIDEBAR
+═══════════════════════════════════════ */
+.profiles-sidebar{
+  position:fixed;top:58px;left:-300px;width:280px;
+  height:calc(100vh - 58px);
+  background:var(--white);border-right:1px solid var(--border);
+  box-shadow:4px 0 24px rgba(0,0,0,.08);
+  z-index:1500;transition:left .25s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.profiles-sidebar.open{left:0}
+.psb-hdr{
+  padding:14px 16px 12px;border-bottom:1px solid var(--border);
+  background:var(--navy);color:#fff;flex-shrink:0;
+}
+.psb-hdr-row{display:flex;align-items:center;justify-content:space-between}
+.psb-title{font-family:var(--fd);font-size:14px;font-weight:600}
+.psb-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.psb-close:hover{background:rgba(255,255,255,.25)}
+.psb-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;font-family:var(--fm)}
+.psb-search{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.psb-search input{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:11px;font-family:var(--fb);outline:none;background:var(--off-white);color:var(--text)}
+.psb-search input:focus{border-color:var(--navy);background:#fff}
+.psb-filters{display:flex;gap:5px;padding:8px 12px;flex-shrink:0;flex-wrap:wrap}
+.psb-filter{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text-3);font-family:var(--fb);transition:all .12s}
+.psb-filter.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.psb-list{flex:1;overflow-y:auto;padding:6px 0}
+.psb-item{
+  padding:10px 14px;cursor:pointer;transition:background .1s;
+  border-left:3px solid transparent;position:relative;
+}
+.psb-item:hover{background:var(--off-white)}
+.psb-item.active-prospect{background:var(--blue-bg);border-left-color:var(--blue)}
+.psb-item-co{font-size:12px;font-weight:700;color:var(--text);line-height:1.3}
+.psb-item-contact{font-size:11px;color:var(--text-3);margin-top:1px}
+.psb-item-meta{display:flex;gap:5px;margin-top:5px;align-items:center;flex-wrap:wrap}
+.psb-tag{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase;font-family:var(--fb)}
+.psb-tag.wfn{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.psb-tag.ts{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-border)}
+.psb-tag.today{background:#fff0ed;color:#c0411d;border:1px solid #fcc;font-weight:800}
+.psb-item-day{font-size:9px;color:var(--text-3);font-family:var(--fm)}
+.psb-empty{padding:32px 16px;text-align:center;color:var(--text-3);font-size:12px}
+.psb-ftr{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.psb-new-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:6px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb);transition:opacity .15s}
+.psb-new-btn:hover{opacity:.85}
+
+/* ═══════════════════════════════════════
+   ACTIVITY RIGHT DRAWER (All/Outreach/Intel/Alerts)
+═══════════════════════════════════════ */
+.activity-drawer{
+  position:fixed;top:58px;right:-380px;width:360px;
+  height:calc(100vh - 58px);
+  background:var(--white);border-left:1px solid var(--border);
+  box-shadow:-4px 0 24px rgba(0,0,0,.1);
+  z-index:1500;transition:right .25s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.activity-drawer.open{right:0}
+.act-drawer-hdr{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  background:var(--navy);color:#fff;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.act-drawer-title{font-family:var(--fd);font-size:14px;font-weight:600}
+.act-drawer-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center}
+.act-drawer-close:hover{background:rgba(255,255,255,.25)}
+.act-drawer-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--white)}
+.act-dtab{flex:1;padding:9px 4px;font-size:11px;font-weight:700;border:none;background:transparent;cursor:pointer;color:var(--text-3);font-family:var(--fb);border-bottom:2px solid transparent;transition:all .12s;white-space:nowrap}
+.act-dtab:hover{color:var(--navy)}
+.act-dtab.active{color:var(--navy);border-bottom-color:var(--navy)}
+.act-list{flex:1;overflow-y:auto;padding:10px}
+.act-item{
+  background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:border-color .1s;
+  position:relative;
+}
+.act-item:hover{border-color:var(--border-2)}
+.act-item.outreach{border-left:3px solid var(--blue)}
+.act-item.intel{border-left:3px solid var(--gold)}
+.act-item.alert{border-left:3px solid #c2410c}
+.act-item-type{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.act-item-type.outreach{color:var(--blue)}
+.act-item-type.intel{color:var(--gold)}
+.act-item-type.alert{color:#c2410c}
+.act-item-msg{font-size:12px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:2px}
+.act-item-sub{font-size:11px;color:var(--text-3)}
+.act-item-time{font-size:9px;color:var(--text-3);margin-top:4px;font-family:var(--fm)}
+.act-empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:12px}
+.act-drawer-ftr{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:6px}
+.act-ftr-btn{flex:1;padding:7px;font-size:11px;font-weight:600;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);transition:all .12s}
+.act-ftr-btn:hover{border-color:var(--navy);color:var(--navy)}
+
+/* ═══════════════════════════════════════
+   EMAIL GENERATOR ENGINE MODAL
+═══════════════════════════════════════ */
+.eg-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;
+  display:none;align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(3px);
+}
+.eg-overlay.open{display:flex}
+.eg-modal{
+  background:var(--white);border-radius:var(--radius-lg);
+  width:100%;max-width:860px;max-height:90vh;
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.25);
+  animation:fadeUp .2s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.eg-modal-hdr{
+  background:var(--navy);color:#fff;padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.eg-modal-title{font-family:var(--fd);font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px}
+.eg-modal-badge{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(184,146,10,.9);background:rgba(184,146,10,.12);border:1px solid rgba(184,146,10,.25);padding:3px 9px;border-radius:3px}
+.eg-modal-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.eg-modal-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.eg-modal-close:hover{background:rgba(255,255,255,.25)}
+.eg-body{display:grid;grid-template-columns:260px 1fr;flex:1;overflow:hidden;min-height:0}
+.eg-left{border-right:1px solid var(--border);padding:16px;overflow-y:auto;background:var(--off-white);display:flex;flex-direction:column;gap:14px}
+.eg-right{display:flex;flex-direction:column;overflow:hidden}
+.eg-section-lbl{font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;font-family:var(--fb)}
+.eg-field{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.eg-field label{font-size:10px;color:var(--text-3);font-weight:600}
+.eg-fi{background:var(--white);border:1.5px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-family:var(--fb);font-size:11px;outline:none;transition:border-color .15s;width:100%}
+.eg-fi:focus{border-color:var(--navy)}
+.eg-fi option{background:var(--white)}
+.eg-divider{height:1px;background:var(--border);margin:2px 0}
+/* Touch selector in engine modal */
+.eg-touch-list{display:flex;flex-direction:column;gap:4px}
+.eg-touch{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;transition:all .12s}
+.eg-touch:hover{border-color:rgba(13,21,53,.3)}
+.eg-touch.active{background:var(--navy);border-color:var(--navy)}
+.eg-touch-num{width:20px;height:20px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--text-3);flex-shrink:0;font-family:var(--fm)}
+.eg-touch.active .eg-touch-num{background:var(--gold);color:var(--navy)}
+.eg-touch-name{font-size:11px;font-weight:600;color:var(--text)}
+.eg-touch.active .eg-touch-name{color:#fff}
+.eg-touch-desc{font-size:9px;color:var(--text-3);margin-top:1px}
+.eg-touch.active .eg-touch-desc{color:rgba(255,255,255,.45)}
+/* AI panel inside engine */
+.eg-ai-panel{background:linear-gradient(135deg,var(--navy),#1a2460);border-radius:8px;padding:14px;margin-top:4px;border:1px solid rgba(184,146,10,.2)}
+.eg-ai-selects{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.eg-ai-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px}
+.eg-ai-select{width:100%;background:#1a1d22;border:1.5px solid rgba(255,255,255,.12);color:#e8e9ec;border-radius:6px;padding:6px 8px;font-size:11px;font-family:var(--fb);outline:none}
+.eg-ai-context{width:100%;background:#1a1d22;border:1.5px solid rgba(255,255,255,.12);color:#e8e9ec;border-radius:6px;padding:7px 9px;font-size:11px;font-family:var(--fb);resize:vertical;outline:none;min-height:50px;line-height:1.5;box-sizing:border-box;margin-bottom:10px}
+.eg-generate-btn{width:100%;background:linear-gradient(135deg,#b8920a,#d4a80c);color:var(--navy);border:none;border-radius:7px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--fb);display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s}
+.eg-generate-btn:disabled{opacity:.5;cursor:not-allowed}
+/* Output area */
+.eg-output-bar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--off-white)}
+.eg-output-label{font-size:11px;font-weight:700;color:var(--text-2)}
+.eg-output-actions{display:flex;gap:6px}
+.eg-act-btn{background:var(--white);border:1.5px solid var(--border);color:var(--text-2);padding:5px 10px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--fb);transition:all .12s}
+.eg-act-btn:hover{border-color:var(--navy);color:var(--navy)}
+.eg-act-btn.apply{background:rgba(22,101,52,.1);border-color:rgba(22,101,52,.3);color:var(--green)}
+.eg-act-btn.apply:hover{background:rgba(22,101,52,.2)}
+.eg-output-area{flex:1;overflow-y:auto;padding:20px}
+.eg-email-card{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);animation:fadeUp .3s ease}
+.eg-email-chrome{background:var(--navy);padding:9px 14px;display:flex;align-items:center;gap:6px}
+.eg-chrome-dot{width:9px;height:9px;border-radius:50%}
+.eg-email-meta{padding:12px 16px;border-bottom:1px solid var(--border);background:#fafaf8;display:flex;flex-direction:column;gap:5px}
+.eg-meta-row{display:flex;gap:5px;align-items:baseline}
+.eg-meta-key{font-family:var(--fm);font-size:9px;color:var(--text-3);width:48px;flex-shrink:0;text-transform:uppercase;letter-spacing:1px}
+.eg-meta-val{font-size:11px;color:var(--text);font-weight:500}
+.eg-subject{font-family:var(--fd);font-size:14px;font-weight:600;color:var(--navy);letter-spacing:-0.2px}
+.eg-body-area{padding:18px 16px;font-size:13px;line-height:1.8;color:#2a2a3e;white-space:pre-wrap;font-family:'Calibri',sans-serif}
+.eg-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--text-3);text-align:center;padding:40px}
+.eg-empty-icon{font-size:32px;opacity:.25}
+.eg-empty-title{font-size:15px;font-weight:700;color:var(--text);opacity:.2;font-family:var(--fd)}
+.eg-empty-sub{font-size:11px;max-width:240px;line-height:1.6;opacity:.55}
+/* Spinner */
+.eg-spin{width:13px;height:13px;border:2px solid rgba(13,21,53,.25);border-top-color:var(--navy);border-radius:50%;animation:spin .6s linear infinite;display:none}
+
+/* Sidebar backdrop */
+.sidebar-backdrop{position:fixed;inset:0;z-index:1400;background:rgba(0,0,0,.25);display:none}
+.sidebar-backdrop.open{display:block}
+
 /* Inline intel refresh panel */
 .cdt-intel-result{
   background:#fffbeb;border:1px solid rgba(184,146,10,.3);border-radius:var(--radius-sm);
@@ -1853,6 +2049,14 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
     <span class="tb-sub">Sales HQ</span>
 
     <div class="tb-right">
+      <!-- Profiles sidebar button -->
+      <button class="tb-icon-btn" id="tb-profiles-btn" onclick="toggleProfilesSidebar()" title="Prospect Profiles">
+        📁 Profiles <span id="tb-profiles-count" style="font-size:10px;color:var(--text-3);font-weight:500"></span>
+      </button>
+      <!-- Activity drawer button -->
+      <button class="tb-icon-btn" id="tb-activity-btn" onclick="toggleActivityDrawer()" title="Activity & Alerts">
+        🔔 Activity
+      </button>
       <!-- Firebase sync status -->
       <div class="fb-status offline" id="fb-status-badge" onclick="fbSyncNow()" title="Click to sync">
         <span id="fb-status-dot">●</span>
@@ -3125,6 +3329,10 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
           <button id="cdx-ai-btn" onclick="cdxGenerateEmail()" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#b8920a,#d4a80c);color:#0d1535;border:none;border-radius:7px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;font-family:'DM Sans',sans-serif;">
             <span style="font-size:14px;">✦</span> AI Personalize
           </button>
+          <!-- Email Generator Engine button -->
+          <button onclick="openEmailEngine()" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;font-family:'DM Sans',sans-serif;">
+            <span style="font-size:13px;">⚡</span> Email Engine
+          </button>
         </div>
 
         <!-- Touch Tabs -->
@@ -3300,6 +3508,236 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 
 
 <!-- ══ PROSPECT PROFILES DRAWER ══ -->
+<!-- ═══════════════════════════════════════════════════
+     PROFILES LEFT SIDEBAR
+═══════════════════════════════════════════════════ -->
+<div class="sidebar-backdrop" id="profiles-backdrop" onclick="closeProfilesSidebar()"></div>
+<div class="profiles-sidebar" id="profiles-sidebar">
+  <div class="psb-hdr">
+    <div class="psb-hdr-row">
+      <div class="psb-title">📁 Prospect Profiles</div>
+      <button class="psb-close" onclick="closeProfilesSidebar()">✕</button>
+    </div>
+    <div class="psb-sub" id="psb-sub">0 profiles loaded</div>
+  </div>
+  <div class="psb-search">
+    <input type="text" id="psb-search-inp" placeholder="Search company, contact, industry…" oninput="psbSearch(this.value)">
+  </div>
+  <div class="psb-filters">
+    <button class="psb-filter active" id="psbf-all" onclick="psbFilter('all')">All</button>
+    <button class="psb-filter" id="psbf-active" onclick="psbFilter('active')">🟢 Active</button>
+    <button class="psb-filter" id="psbf-today" onclick="psbFilter('today')">📅 Today</button>
+    <button class="psb-filter" id="psbf-wfn" onclick="psbFilter('wfn')">WFN</button>
+    <button class="psb-filter" id="psbf-ts" onclick="psbFilter('ts')">PEO</button>
+  </div>
+  <div class="psb-list" id="psb-list">
+    <div class="psb-empty">No prospects yet.<br>Click + New Prospect to get started.</div>
+  </div>
+  <div class="psb-ftr">
+    <button class="psb-new-btn" onclick="closeProfilesSidebar();openModal()">+ New Prospect</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     ACTIVITY & ALERTS RIGHT DRAWER
+═══════════════════════════════════════════════════ -->
+<div class="sidebar-backdrop" id="activity-backdrop" onclick="closeActivityDrawer()"></div>
+<div class="activity-drawer" id="activity-drawer">
+  <div class="act-drawer-hdr">
+    <div>
+      <div class="act-drawer-title">🔔 Activity & Alerts</div>
+    </div>
+    <button class="act-drawer-close" onclick="closeActivityDrawer()">✕</button>
+  </div>
+  <div class="act-drawer-tabs">
+    <button class="act-dtab active" id="actab-all" onclick="actTab('all')">All</button>
+    <button class="act-dtab" id="actab-outreach" onclick="actTab('outreach')">Outreach</button>
+    <button class="act-dtab" id="actab-intel" onclick="actTab('intel')">Intel</button>
+    <button class="act-dtab" id="actab-alerts" onclick="actTab('alerts')">Alerts</button>
+  </div>
+  <div class="act-list" id="act-list">
+    <div class="act-empty">No activity yet. Activity will appear as you work through your cadences.</div>
+  </div>
+  <div class="act-drawer-ftr">
+    <button class="act-ftr-btn" onclick="actMarkAllRead()">✓ Mark All Read</button>
+    <button class="act-ftr-btn" onclick="actClearAll()">Clear All</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     EMAIL GENERATOR ENGINE MODAL
+═══════════════════════════════════════════════════ -->
+<div class="eg-overlay" id="eg-overlay" onclick="egOverlayClick(event)">
+  <div class="eg-modal" id="eg-modal">
+    <div class="eg-modal-hdr">
+      <div>
+        <div class="eg-modal-title">
+          <span>⚡</span> Email Generator Engine
+          <span class="eg-modal-badge">AI POWERED</span>
+        </div>
+        <div class="eg-modal-sub" id="eg-modal-sub">Generating witty, personalized outreach for your cadence</div>
+      </div>
+      <button class="eg-modal-close" onclick="closeEmailEngine()">✕</button>
+    </div>
+    <div class="eg-body">
+      <!-- LEFT: controls -->
+      <div class="eg-left">
+        <!-- Prospect info (auto-filled from active prospect) -->
+        <div>
+          <div class="eg-section-lbl">Prospect</div>
+          <div class="eg-field">
+            <label>First Name</label>
+            <input class="eg-fi" id="eg-firstName" placeholder="e.g. Sarah">
+          </div>
+          <div class="eg-field">
+            <label>Company</label>
+            <input class="eg-fi" id="eg-company" placeholder="e.g. Meridian Group">
+          </div>
+          <div class="eg-field">
+            <label>Title / Role</label>
+            <input class="eg-fi" id="eg-title" placeholder="e.g. VP of HR, CFO">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div class="eg-field">
+              <label>Employees</label>
+              <input class="eg-fi" id="eg-numEE" type="number" placeholder="85">
+            </div>
+            <div class="eg-field">
+              <label>State</label>
+              <select class="eg-fi" id="eg-state">
+                <option>Maryland</option><option>Virginia</option><option>DC</option>
+                <option>Delaware</option><option>Pennsylvania</option><option>West Virginia</option>
+              </select>
+            </div>
+          </div>
+          <div class="eg-field">
+            <label>Industry</label>
+            <select class="eg-fi" id="eg-industry">
+              <option value="">Select…</option>
+              <option>Healthcare</option><option>Professional Services</option>
+              <option>Manufacturing</option><option>Construction</option>
+              <option>Technology</option><option>Nonprofit</option>
+              <option>Financial Services</option><option>Hospitality</option>
+              <option>Retail</option><option>Government Contractor</option><option>Real Estate</option>
+            </select>
+          </div>
+          <div class="eg-field">
+            <label>Track</label>
+            <select class="eg-fi" id="eg-track">
+              <option value="WFN">ADP WorkforceNow (HCM)</option>
+              <option value="TotalSource">ADP TotalSource (PEO)</option>
+              <option value="Both">Both WFN + TotalSource</option>
+            </select>
+          </div>
+          <div class="eg-field">
+            <label>Incumbent / Competitor</label>
+            <select class="eg-fi" id="eg-competitor">
+              <option value="">Unknown / Cold</option>
+              <option>Paycom</option><option>Paylocity</option><option>UKG</option>
+              <option>Dayforce</option><option>Workday</option><option>Paychex PEO</option>
+              <option>Justworks</option><option>Rippling</option><option>TriNet</option>
+              <option>Insperity</option><option>Manual/Spreadsheets</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="eg-divider"></div>
+
+        <!-- Cadence touch selector -->
+        <div>
+          <div class="eg-section-lbl">Cadence Touch</div>
+          <div class="eg-touch-list">
+            <div class="eg-touch active" onclick="egSelectTouch(this,'Day 1 — Research Brief')">
+              <div class="eg-touch-num">1</div>
+              <div><div class="eg-touch-name">Day 1 — Research Brief</div><div class="eg-touch-desc">Cold intro, credibility</div></div>
+            </div>
+            <div class="eg-touch" onclick="egSelectTouch(this,'Day 2 — Insight Hook')">
+              <div class="eg-touch-num">2</div>
+              <div><div class="eg-touch-name">Day 2 — Insight Hook</div><div class="eg-touch-desc">Lead with value gap</div></div>
+            </div>
+            <div class="eg-touch" onclick="egSelectTouch(this,'Day 8 — Cost Benchmark')">
+              <div class="eg-touch-num">3</div>
+              <div><div class="eg-touch-name">Day 8 — Cost Benchmark</div><div class="eg-touch-desc">Anchor with numbers</div></div>
+            </div>
+            <div class="eg-touch" onclick="egSelectTouch(this,'Day 15 — Compliance Trigger')">
+              <div class="eg-touch-num">4</div>
+              <div><div class="eg-touch-name">Day 15 — Compliance</div><div class="eg-touch-desc">Regulatory urgency</div></div>
+            </div>
+            <div class="eg-touch" onclick="egSelectTouch(this,'Day 22 — Breakup Email')">
+              <div class="eg-touch-num">5</div>
+              <div><div class="eg-touch-name">Day 22 — Breakup</div><div class="eg-touch-desc">Leave door open, FOMO</div></div>
+            </div>
+            <div class="eg-touch" onclick="egSelectTouch(this,'Day 30 — Community Invite')">
+              <div class="eg-touch-num">6</div>
+              <div><div class="eg-touch-name">Day 30 — Community</div><div class="eg-touch-desc">Value invite, no pitch</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="eg-divider"></div>
+
+        <!-- AI panel controls -->
+        <div class="eg-ai-panel">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;">
+            <span style="font-size:14px;">✦</span>
+            <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.9);">Engine Controls</span>
+          </div>
+          <div class="eg-ai-selects">
+            <div>
+              <div class="eg-ai-lbl">Tone</div>
+              <select class="eg-ai-select" id="eg-tone">
+                <option value="consultative">Consultative</option>
+                <option value="direct">Direct & Data-Led</option>
+                <option value="urgency">Create Urgency</option>
+                <option value="breakup">Pattern Interrupt</option>
+                <option value="followup">Warm Follow-Up</option>
+              </select>
+            </div>
+            <div>
+              <div class="eg-ai-lbl">Focus</div>
+              <select class="eg-ai-select" id="eg-focus">
+                <option value="benefits">Benefits Savings</option>
+                <option value="compliance">HR Compliance</option>
+                <option value="talent">Talent & Retention</option>
+                <option value="payroll">Payroll Accuracy</option>
+                <option value="competitive">vs Competitor</option>
+                <option value="roi">ROI / Cost Savings</option>
+              </select>
+            </div>
+          </div>
+          <div class="eg-ai-lbl">Context / Intel (optional)</div>
+          <textarea class="eg-ai-context" id="eg-context" placeholder="e.g. 12% renewal increase, frustrated with manual processes, Paylocity renewal in 90 days…"></textarea>
+          <button class="eg-generate-btn" id="eg-gen-btn" onclick="egGenerate()">
+            <span class="eg-spin" id="eg-spinner"></span>
+            <span id="eg-btn-lbl">⚡ Generate Email</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: output -->
+      <div class="eg-right">
+        <div class="eg-output-bar">
+          <div class="eg-output-label" id="eg-output-label">Generated Email</div>
+          <div class="eg-output-actions" id="eg-output-actions" style="display:none">
+            <button class="eg-act-btn" onclick="egCopyBody()">📋 Copy Body</button>
+            <button class="eg-act-btn" onclick="egCopyAll()">📎 Copy All</button>
+            <button class="eg-act-btn" onclick="egOpenMailto()">✉️ Open in Mail</button>
+            <button class="eg-act-btn apply" onclick="egApplyToComposer()">✓ Apply to Composer</button>
+            <button class="eg-act-btn" onclick="egGenerate()">🔄 Regenerate</button>
+          </div>
+        </div>
+        <div class="eg-output-area" id="eg-output-area">
+          <div class="eg-empty">
+            <div class="eg-empty-icon">⚡</div>
+            <div class="eg-empty-title">Email Engine Ready</div>
+            <div class="eg-empty-sub">Fill in the prospect details on the left and hit Generate. The engine writes sharp, personalized emails for every cadence touch.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="pp-drawer-backdrop" id="pp-drawer-backdrop" onclick="ppCloseDrawer()"></div>
 <div class="pp-drawer" id="pp-drawer">
   <div class="pp-drawer-hdr">
@@ -4383,6 +4821,447 @@ No preamble. No explanation. No alternatives. Just the email.`;
 })();
 </script>
 
-<script src="app.js?v=15" defer></script>
+<script>
+/* ════════════════════════════════════════════════════
+   PROFILES SIDEBAR
+════════════════════════════════════════════════════ */
+(function(){
+  var _filter = 'all', _search = '';
+
+  window.toggleProfilesSidebar = function(){
+    var sb = document.getElementById('profiles-sidebar');
+    if(sb.classList.contains('open')){ closeProfilesSidebar(); return; }
+    psbRender();
+    sb.classList.add('open');
+    document.getElementById('profiles-backdrop').classList.add('open');
+    document.getElementById('tb-profiles-btn').classList.add('active');
+  };
+
+  window.closeProfilesSidebar = function(){
+    document.getElementById('profiles-sidebar').classList.remove('open');
+    document.getElementById('profiles-backdrop').classList.remove('open');
+    document.getElementById('tb-profiles-btn').classList.remove('active');
+  };
+
+  window.psbFilter = function(f){
+    _filter = f;
+    document.querySelectorAll('.psb-filter').forEach(function(b){ b.classList.remove('active'); });
+    var el = document.getElementById('psbf-'+f);
+    if(el) el.classList.add('active');
+    psbRender();
+  };
+
+  window.psbSearch = function(v){ _search = (v||'').toLowerCase(); psbRender(); };
+
+  function getProspects(){
+    var src = window.prospects || window.PROSPECTS ||
+      (window.state && window.state.prospects) ||
+      (window.appState && window.appState.prospects) || {};
+    return Object.values(src);
+  }
+
+  function psbRender(){
+    var all = getProspects();
+    var today = new Date().toDateString();
+    // Update count badge
+    var countEl = document.getElementById('tb-profiles-count');
+    if(countEl) countEl.textContent = '('+all.length+')';
+    var subEl = document.getElementById('psb-sub');
+    if(subEl) subEl.textContent = all.length + ' profile'+(all.length===1?'':'s')+' loaded';
+
+    // Filter
+    var list = all.filter(function(p){
+      if(_filter==='active' && !p.approved && !p.active) return false;
+      if(_filter==='wfn' && !(p.track||'').toLowerCase().includes('wfn')) return false;
+      if(_filter==='ts' && !(p.track||'').toLowerCase().includes('ts') && !(p.track||'').toLowerCase().includes('total')) return false;
+      if(_filter==='today'){
+        var next = p.nextTouchDate || p.nextTouch || '';
+        if(next && new Date(next).toDateString() !== today) return false;
+      }
+      if(_search){
+        var blob = ((p.company||'')+(p.contact||p.contactName||'')+(p.industry||'')).toLowerCase();
+        if(!blob.includes(_search)) return false;
+      }
+      return true;
+    });
+
+    var container = document.getElementById('psb-list');
+    if(!container) return;
+    if(!list.length){ container.innerHTML='<div class="psb-empty">No profiles match.<br>Try a different filter.</div>'; return; }
+
+    var activeId = window._hqProspect && (window._hqProspect.id||window._hqProspect.company);
+    container.innerHTML = list.map(function(p){
+      var id = p.id||p.company;
+      var isActive = activeId && (id===activeId);
+      var track = (p.track||'WFN').toUpperCase();
+      var isTS = track.includes('TS')||track.includes('TOTAL');
+      var isToday = p.nextTouchDate && new Date(p.nextTouchDate).toDateString()===today;
+      return '<div class="psb-item'+(isActive?' active-prospect':'')+'" onclick="psbSelectProspect('+JSON.stringify(id)+')">'
+        +'<div class="psb-item-co">'+(p.company||'Unknown Company')+'</div>'
+        +'<div class="psb-item-contact">'+(p.contact||p.contactName||'—')+(p.title?' · '+p.title:'')+'</div>'
+        +'<div class="psb-item-meta">'
+        +'<span class="psb-tag '+(isTS?'ts':'wfn')+'">'+(isTS?'PEO':'WFN')+'</span>'
+        +(isToday?'<span class="psb-tag today">TODAY</span>':'')
+        +(p.industry?'<span class="psb-item-day">'+p.industry+'</span>':'')
+        +'</div>'
+        +'</div>';
+    }).join('');
+  }
+
+  window.psbSelectProspect = function(id){
+    // Try to load the prospect into the active cadence view
+    if(window.openCadenceForProspect) window.openCadenceForProspect(id);
+    else if(window.loadProspect) window.loadProspect(id);
+    else if(window.ppSelectProspect) window.ppSelectProspect(id);
+    closeProfilesSidebar();
+    if(typeof showToast==='function') showToast('Profile loaded ✓');
+  };
+
+  // Re-render count when prospects update
+  setInterval(function(){
+    var btn = document.getElementById('tb-profiles-count');
+    if(btn){
+      var all = getProspects();
+      btn.textContent = all.length ? '('+all.length+')' : '';
+    }
+  }, 3000);
+})();
+
+/* ════════════════════════════════════════════════════
+   ACTIVITY & ALERTS DRAWER
+════════════════════════════════════════════════════ */
+(function(){
+  var _tab = 'all';
+  var _activity = [];  // {type:'outreach'|'intel'|'alert', msg, sub, time, read}
+
+  window.toggleActivityDrawer = function(){
+    var d = document.getElementById('activity-drawer');
+    if(d.classList.contains('open')){ closeActivityDrawer(); return; }
+    actRender();
+    d.classList.add('open');
+    document.getElementById('activity-backdrop').classList.add('open');
+    document.getElementById('tb-activity-btn').classList.add('active');
+  };
+
+  window.closeActivityDrawer = function(){
+    document.getElementById('activity-drawer').classList.remove('open');
+    document.getElementById('activity-backdrop').classList.remove('open');
+    document.getElementById('tb-activity-btn').classList.remove('active');
+  };
+
+  window.actTab = function(t){
+    _tab = t;
+    document.querySelectorAll('.act-dtab').forEach(function(b){ b.classList.remove('active'); });
+    var el = document.getElementById('actab-'+t);
+    if(el) el.classList.add('active');
+    actRender();
+  };
+
+  window.actMarkAllRead = function(){
+    _activity.forEach(function(a){ a.read=true; });
+    actRender();
+    updateActivityBadge();
+  };
+
+  window.actClearAll = function(){
+    if(_tab==='all'){ _activity=[]; }
+    else { _activity = _activity.filter(function(a){ return a.type!==_tab; }); }
+    actRender();
+    updateActivityBadge();
+  };
+
+  function updateActivityBadge(){
+    var unread = _activity.filter(function(a){ return !a.read; }).length;
+    var btn = document.getElementById('tb-activity-btn');
+    if(!btn) return;
+    var existing = btn.querySelector('.tb-badge');
+    if(existing) existing.remove();
+    if(unread>0){
+      var span = document.createElement('span');
+      span.className='tb-badge';
+      span.textContent=unread;
+      btn.appendChild(span);
+    }
+  }
+
+  function actRender(){
+    var list = _tab==='all' ? _activity : _activity.filter(function(a){ return a.type===_tab; });
+    var el = document.getElementById('act-list');
+    if(!el) return;
+    if(!list.length){
+      var labels = {all:'No activity yet.', outreach:'No outreach activity yet.', intel:'No intel refreshes yet.', alerts:'No alerts yet.'};
+      el.innerHTML='<div class="act-empty">'+(labels[_tab]||'Nothing here yet.')+'</div>';
+      return;
+    }
+    el.innerHTML = list.map(function(a,i){
+      return '<div class="act-item '+a.type+(a.read?'':' unread')+'" onclick="actMarkRead('+i+')">'
+        +'<div class="act-item-type '+a.type+'">'+a.type.toUpperCase()+'</div>'
+        +'<div class="act-item-msg">'+a.msg+'</div>'
+        +'<div class="act-item-sub">'+a.sub+'</div>'
+        +'<div class="act-item-time">'+a.time+'</div>'
+        +'</div>';
+    }).join('');
+  }
+
+  window.actMarkRead = function(i){ if(_activity[i]) _activity[i].read=true; actRender(); updateActivityBadge(); };
+
+  // Public: add activity item
+  window.addActivity = function(type, msg, sub){
+    _activity.unshift({type:type, msg:msg, sub:sub||'', time:new Date().toLocaleTimeString(), read:false});
+    if(_activity.length>100) _activity.pop();
+    updateActivityBadge();
+    if(document.getElementById('activity-drawer').classList.contains('open')) actRender();
+  };
+
+  // Hook into existing toast to mirror activity
+  var origShowToast = window.showToast;
+  if(typeof origShowToast === 'function'){
+    window.showToast = function(msg, err){
+      origShowToast(msg, err);
+      if(msg && msg.includes('generated')) addActivity('outreach', msg, window._hqProspect && window._hqProspect.company ? window._hqProspect.company : '');
+      if(msg && msg.includes('Intel')) addActivity('intel', msg, '');
+    };
+  }
+})();
+
+/* ════════════════════════════════════════════════════
+   EMAIL GENERATOR ENGINE MODAL
+════════════════════════════════════════════════════ */
+(function(){
+  var _touch = 'Day 1 — Research Brief';
+  var _lastSubject = '', _lastBody = '';
+
+  window.openEmailEngine = function(touchOverride){
+    // Auto-fill from active prospect
+    var p = window._hqProspect || {};
+    var setVal = function(id, val){ var el=document.getElementById(id); if(el&&val) el.value=val; };
+    var firstName = (p.contact||p.contactName||'').split(' ')[0] || '';
+    setVal('eg-firstName', firstName);
+    setVal('eg-company', p.company||'');
+    setVal('eg-title', p.title||p.contactTitle||p.persona||'');
+    setVal('eg-numEE', p.numEE||p.employees||'');
+    setVal('eg-state', p.state||p.hqState||'Maryland');
+    setVal('eg-industry', p.industry||'');
+    setVal('eg-track', p.track||'WFN');
+    setVal('eg-competitor', p.competitor||p.incumbent||'');
+    // Set touch if passed
+    if(touchOverride){
+      _touch = touchOverride;
+      document.querySelectorAll('.eg-touch').forEach(function(t){
+        var name = t.querySelector('.eg-touch-name');
+        if(name && name.textContent.trim()===touchOverride.trim()){
+          document.querySelectorAll('.eg-touch').forEach(function(x){ x.classList.remove('active'); });
+          t.classList.add('active');
+        }
+      });
+    }
+    // Update sub
+    var sub = document.getElementById('eg-modal-sub');
+    if(sub && p.company) sub.textContent = 'Generating for ' + p.company + ' — ' + _touch;
+    document.getElementById('eg-overlay').classList.add('open');
+  };
+
+  window.closeEmailEngine = function(){
+    document.getElementById('eg-overlay').classList.remove('open');
+  };
+
+  window.egOverlayClick = function(e){
+    if(e.target === document.getElementById('eg-overlay')) closeEmailEngine();
+  };
+
+  window.egSelectTouch = function(el, touch){
+    document.querySelectorAll('.eg-touch').forEach(function(t){ t.classList.remove('active'); });
+    el.classList.add('active');
+    _touch = touch;
+    var sub = document.getElementById('eg-modal-sub');
+    var company = (document.getElementById('eg-company')||{}).value || '';
+    if(sub) sub.textContent = (company ? 'For '+company+' — ' : '') + touch;
+  };
+
+  window.egGenerate = async function(){
+    var btn = document.getElementById('eg-gen-btn');
+    var lbl = document.getElementById('eg-btn-lbl');
+    var spin = document.getElementById('eg-spinner');
+
+    var firstName  = (document.getElementById('eg-firstName')||{}).value||'there';
+    var companyName = (document.getElementById('eg-company')||{}).value||'[Company]';
+    var persona    = (document.getElementById('eg-title')||{}).value||'HR/Finance decision-maker';
+    var numEE      = (document.getElementById('eg-numEE')||{}).value||'';
+    var state      = (document.getElementById('eg-state')||{}).value||'Mid-Atlantic';
+    var industry   = (document.getElementById('eg-industry')||{}).value||'their industry';
+    var track      = (document.getElementById('eg-track')||{}).value||'WFN';
+    var competitor = (document.getElementById('eg-competitor')||{}).value||'';
+    var tone       = (document.getElementById('eg-tone')||{}).value||'consultative';
+    var focus      = (document.getElementById('eg-focus')||{}).value||'benefits';
+    var context    = (document.getElementById('eg-context')||{}).value||'';
+    var touchLabel = _touch;
+
+    if(btn) btn.disabled=true;
+    if(spin) spin.style.display='inline-block';
+    if(lbl) lbl.textContent='Generating…';
+    document.getElementById('eg-output-actions').style.display='none';
+
+    const COMP_INTEL = {
+      'Paycom':'Paycom is a single-database story that sells well until the prospect discovers one vendor means no flexibility, slow support SLAs, and a product that plateaus at mid-market scale.',
+      'Paylocity':'Paylocity has aggressive mid-market marketing and a clean UI but consistently underdelivers on implementation depth, post-sale support, and compliance complexity.',
+      'UKG':'UKG carries enormous complexity and enterprise pricing. Mid-market clients frequently feel like small fish — implementations drag and clients report being under-resourced post-go-live.',
+      'Dayforce':'Dayforce markets real-time processing aggressively but requires heavy IT involvement and has a steep learning curve. Expensive implementations, significant internal expertise required.',
+      'Workday':'Workday is built for enterprise and priced like it. Mid-market clients routinely overpay for features they never use while struggling with configuration complexity.',
+      'Paychex PEO':'Paychex PEO lacks the carrier scale, risk management depth, and benefits breadth that ADP TotalSource delivers. Compliance support and dedicated HR model do not match.',
+      'Justworks':'Justworks hits real ceilings past 100 employees — thinner HR support, fewer benefit carrier options, limited customization, built for startups not scaling companies.',
+      'Rippling':'Rippling is IT-forward and sells well to tech buyers but HR teams find it counterintuitive, and PEO capabilities are newer and less battle-tested than TotalSource.',
+      'TriNet':'TriNet is concentrated in tech and professional services. Outside those verticals or past ~500 employees the vertical model is limiting.',
+      'Insperity':'Insperity comes with a higher cost structure and a product suite that has not kept pace with modern HR tech expectations.',
+      'Manual/Spreadsheets':'They are running HR on spreadsheets. Compliance exposure — ACA tracking, I-9 management, multi-state payroll — creates real legal and financial risk.'
+    };
+    const compCtx = competitor && COMP_INTEL[competitor]
+      ? 'COMPETITOR ('+competitor+'): '+COMP_INTEL[competitor]+' Weave this in subtly — let contrast speak for itself.'
+      : 'No known incumbent — cold outreach.';
+
+    const productCtx = track==='TotalSource'
+      ? 'ADP TotalSource PEO: co-employment, Fortune 500 benefits, workers comp, dedicated HR Business Partner. Largest PEO in US.'
+      : track==='Both'
+      ? 'ADP WorkforceNow (HCM) AND TotalSource (PEO): full platform plus co-employment benefits and HR support.'
+      : 'ADP WorkforceNow: unified payroll, HR, benefits, talent, compliance. 1 in 6 US workers. Best 50-999 employees.';
+
+    const tones = {
+      consultative:'Trusted advisor who has done genuine homework. Credibility through specificity.',
+      direct:'Executive-direct. No setup, no pleasantries. Lead with data. Brevity is respect.',
+      urgency:'Factual urgency — a real window. Let timing persuade, not language.',
+      breakup:'Pattern interrupt. Opening line must be genuinely unexpected — disarming, not gimmicky.',
+      followup:'Warm but purposeful. Continuation of a real relationship, not a follow-up sequence.'
+    };
+    const focuses = {
+      benefits:'Benefits cost. What they overpay vs TotalSource pooled carrier savings for '+numEE+'-person '+industry+' in '+state+'.',
+      compliance:'Compliance risk. Specific regulatory exposure for '+industry+' in '+state+'. Heads-up framing, not pitch.',
+      talent:'Talent & retention. ADP HR infrastructure as competitive hiring advantage in '+industry+'.',
+      payroll:'Payroll accuracy. Error rates, manual reconciliation, multi-state complexity.',
+      competitive:'Competitive displacement. '+competitor+' move creating a decision window for '+companyName+'.',
+      roi:'ROI. One specific number — benchmark, savings range, or cost-per-employee gap for '+companyName+'.'
+    };
+
+    const dm=touchLabel.toLowerCase();
+    let touchSOP='';
+    if(dm.includes('day 1')||dm.includes('research')){
+      touchSOP='Day 1 Research Brief: Establish credibility by showing you know their world. One natural sentence weaving company/size/state/industry. ONE competitor angle. Subject: personal, intriguing, max 8 words. Ask: one low-friction question. Body: 3-4 sentences max. Make them curious not convinced.';
+    } else if(dm.includes('day 2')||dm.includes('insight')){
+      touchSOP='Day 2 Insight Hook: Lead with financial or operational gap. Frame ADP features as discovery for '+companyName+'. Subject references cost or value. CTA: offer full breakdown. Under 5 sentences. Flowing prose only.';
+    } else if(dm.includes('benchmark')||dm.includes('day 8')){
+      touchSOP='Day 8 Cost Benchmark: Lead with the benchmark number or gap. ONE specific figure tailored to '+numEE+'-person '+industry+' in '+state+'. CTA: share full report, soft ask. 4 sentences max.';
+    } else if(dm.includes('compliance')||dm.includes('day 15')){
+      touchSOP='Day 15 Compliance: Open with the regulation — name it. Connect gap to ONE ADP feature. Heads-up framing, not pitch. Subject references compliance or state. 4 sentences max.';
+    } else if(dm.includes('breakup')||dm.includes('day 22')){
+      touchSOP='Day 22 Breakup: Genuine, slightly self-aware. Reference ONE concrete thing from earlier — competitor, compliance, or benchmark. Breakup framing light not dramatic. Low-pressure door-opener at end. 5 sentences max. Quiet FOMO not desperation.';
+    } else if(dm.includes('community')||dm.includes('day 30')){
+      touchSOP='Day 30 Community Invite: This is an invitation not a sales email. Lead with what they receive — HCM Scorecard already built for '+companyName+'. Briefing feels peer-level not vendor webinar. 4 sentences. CTA: reply to RSVP only.';
+    } else {
+      touchSOP='Mid-cadence touch: Lead with most relevant insight. One idea per email. Knowledgeable colleague tone. 3-5 sentences. One low-friction ask.';
+    }
+
+    const RULES='RULES (non-negotiable): No markdown, no bullets, no asterisks, flowing prose only. One insight per email. First name only in greeting. Never start "I hope", "checking in", "following up", "touching base". Never start sentence with I — restructure. No exclamation points. No emojis. Sign off: — AJ / ADP / beyondpayroll.net (three separate lines). Subject max 8 words, human, specific, scroll-stopping.';
+
+    const EXCELLENCE='EXCELLENCE: Subject must stop a fast-scanning inbox reader. Opening line must land immediately. Every sentence adds info, creates curiosity, or moves to ask — cut everything else. Wit that earns its place. CTA should be easiest possible yes.';
+
+    const prompt = `You are an elite B2B sales email writer for ADP Mid-Atlantic. Write for AJ, District Manager, specializing in ADP WorkforceNow and TotalSource PEO.
+
+${touchSOP}
+
+PROSPECT:
+- First Name: ${firstName}
+- Company: ${companyName}
+- Title: ${persona}
+- Employees: ${numEE||'unknown'}
+- Industry: ${industry}
+- State: ${state}
+- Track: ${track}
+- Product: ${productCtx}
+
+${compCtx}
+
+TONE: ${tones[tone]||tones.consultative}
+FOCUS: ${focuses[focus]||focuses.benefits}
+ADDITIONAL CONTEXT: ${context||'None.'}
+
+${RULES}
+${EXCELLENCE}
+
+OUTPUT FORMAT — exactly this, nothing else:
+Subject: [subject line]
+
+Hi ${firstName},
+
+[body]
+
+— AJ
+ADP
+beyondpayroll.net`;
+
+    try {
+      var resp = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:650,
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      var data = await resp.json();
+      var text = data?.content?.[0]?.text||'';
+      if(text){
+        egRenderOutput(text, firstName, companyName, persona, touchLabel);
+        document.getElementById('eg-output-actions').style.display='flex';
+        if(window.addActivity) addActivity('outreach','Email generated for '+companyName,touchLabel);
+      } else {
+        document.getElementById('eg-output-area').innerHTML='<div class="eg-empty"><div class="eg-empty-icon">⚠️</div><div class="eg-empty-sub">AI returned no content. Try again.</div></div>';
+      }
+    } catch(e){
+      document.getElementById('eg-output-area').innerHTML='<div class="eg-empty"><div class="eg-empty-icon">⚠️</div><div class="eg-empty-sub">Connection error. Check API access.</div></div>';
+    } finally {
+      if(btn) btn.disabled=false;
+      if(spin) spin.style.display='none';
+      if(lbl) lbl.textContent='⚡ Generate Email';
+    }
+  };
+
+  function egRenderOutput(text, firstName, company, persona, touch){
+    var subMatch = text.match(/Subject:\s*(.+)/);
+    _lastSubject = subMatch ? subMatch[1].trim() : '';
+    _lastBody = text.replace(/Subject:\s*.+\n?/,'').trim();
+
+    var label = document.getElementById('eg-output-label');
+    if(label) label.textContent = touch + ' — ' + company;
+
+    document.getElementById('eg-output-area').innerHTML =
+      '<div class="eg-email-card">'
+      +'<div class="eg-email-chrome">'
+      +'<div class="eg-chrome-dot" style="background:#ff5f57"></div>'
+      +'<div class="eg-chrome-dot" style="background:#febc2e;margin-left:4px"></div>'
+      +'<div class="eg-chrome-dot" style="background:#28c840;margin-left:4px"></div>'
+      +'<span style="font-size:10px;color:rgba(255,255,255,.4);margin-left:auto;font-family:var(--fm)">New Message — Compose</span>'
+      +'</div>'
+      +'<div class="eg-email-meta">'
+      +'<div class="eg-meta-row"><span class="eg-meta-key">From</span><span class="eg-meta-val">AJ — District Manager, ADP Mid-Atlantic</span></div>'
+      +'<div class="eg-meta-row"><span class="eg-meta-key">To</span><span class="eg-meta-val">'+firstName+(persona?' ('+persona+')':'')+' — '+company+'</span></div>'
+      +'<div class="eg-meta-row" style="margin-top:4px"><span class="eg-meta-key">Subject</span><span class="eg-subject">'+(_lastSubject||'—')+'</span></div>'
+      +'</div>'
+      +'<div class="eg-body-area">'+_lastBody+'</div>'
+      +'</div>';
+  }
+
+  window.egCopyBody = function(){ if(_lastBody){ navigator.clipboard.writeText(_lastBody); if(typeof showToast==='function') showToast('✓ Body copied'); } };
+  window.egCopyAll = function(){ if(_lastSubject||_lastBody){ navigator.clipboard.writeText('Subject: '+_lastSubject+'\n\n'+_lastBody); if(typeof showToast==='function') showToast('✓ Full email copied'); } };
+  window.egOpenMailto = function(){ if(_lastSubject||_lastBody) window.open('mailto:?subject='+encodeURIComponent(_lastSubject)+'&body='+encodeURIComponent(_lastBody)); };
+  window.egApplyToComposer = function(){
+    // Apply subject and body to the existing Outlook composer in the ts-panel
+    var subEl = document.getElementById('emailSubject');
+    var bodyEl = document.getElementById('emailBody');
+    if(subEl) subEl.textContent = _lastSubject;
+    if(bodyEl){ bodyEl.innerText = _lastBody; if(window.cdxUpdateBodyStats) cdxUpdateBodyStats(); }
+    closeEmailEngine();
+    if(typeof showToast==='function') showToast('✓ Email applied to composer');
+  };
+})();
+</script>
 </body>
 </html>
