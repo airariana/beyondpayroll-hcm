@@ -1354,7 +1354,8 @@ window.hqTab=function(tab){
   const analysisView=document.getElementById('hq-analysis-view');
   if(analysisView)analysisView.style.display=tab==='analysis'?'block':'none';
   document.querySelectorAll('.hq-tab').forEach(t=>t.classList.remove('active'));
-  const el=document.getElementById('htab-'+tab);if(el)el.classList.add('active');
+  const el=document.getElementById('htab-'+tab);
+  if(el){ el.classList.add('active'); el.classList.remove('locked'); el.style.opacity='1'; el.style.cursor='pointer'; }
   if(tab==='composer')ecRenderAll();
   if(tab==='agent')saInit();
   if(tab==='analysis')atInit();
