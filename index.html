@@ -3476,10 +3476,17 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
             <label>Incumbent / Competitor</label>
             <select class="eg-fi" id="eg-competitor">
               <option value="">Unknown / Cold</option>
-              <option>Paycom</option><option>Paylocity</option><option>UKG</option>
-              <option>Dayforce</option><option>Workday</option><option>Paychex PEO</option>
-              <option>Justworks</option><option>Rippling</option><option>TriNet</option>
-              <option>Insperity</option><option>Manual/Spreadsheets</option>
+              <optgroup label="── Competitors ──────────">
+                <option>Paycom</option><option>Paylocity</option><option>UKG</option>
+                <option>Dayforce</option><option>Workday</option><option>Paychex PEO</option>
+                <option>Justworks</option><option>Rippling</option><option>TriNet</option>
+                <option>Insperity</option><option>Manual/Spreadsheets</option>
+              </optgroup>
+              <optgroup label="── Existing ADP Client ──">
+                <option value="ADP RUN">ADP RUN → Upgrade</option>
+                <option value="ADP Workforce Now (Upgrade)">ADP WFN → Add TotalSource</option>
+                <option value="ADP TotalSource (Expand)">ADP TotalSource → Expand</option>
+              </optgroup>
             </select>
           </div>
         </div>
@@ -4672,236 +4679,411 @@ No preamble. No explanation. No alternatives. Just the email.`;
   var _touch = 'Day 1 — Research Brief';
   var _lastSubject = '', _lastBody = '';
 
-  window.openEmailEngine = function(touchOverride){
-    // Auto-fill from active prospect
+  /* ── Collect ALL available data from app.js globals ── */
+  function egCollectProspectData() {
     var p = window._hqProspect || {};
-    var setVal = function(id, val){ var el=document.getElementById(id); if(el&&val) el.value=val; };
-    var firstName = (p.contact||p.contactName||'').split(' ')[0] || '';
-    setVal('eg-firstName', firstName);
-    setVal('eg-company', p.company||'');
-    setVal('eg-title', p.title||p.contactTitle||p.persona||'');
-    setVal('eg-numEE', p.numEE||p.employees||'');
-    setVal('eg-state', p.state||p.hqState||'Maryland');
-    setVal('eg-industry', p.industry||'');
-    setVal('eg-track', p.track||'WFN');
-    setVal('eg-competitor', p.competitor||p.incumbent||'');
-    // Set touch if passed
-    if(touchOverride){
+
+    // ── Core firmographics ──────────────────────────────────
+    var firstName   = (p.contact || p.contactName || '').split(' ')[0] || '';
+    var companyName = p.company || '';
+    var persona     = p.persona || p.title || p.contactTitle || '';
+    var numEE       = p.headcount || p.numEE || p.employees || '';
+    var state       = p.state || p.hqState || '';
+    var industry    = p.industry || '';
+    var track       = p.track || 'WFN';
+    var email       = p.email || '';
+    var phone       = p.phone || '';
+    var linkedin    = p.linkedin || '';
+    var clientType  = p.clientType || '';   // 'existing' or 'new'
+    var adpProducts = p.adpProducts ? Array.from(p.adpProducts).join(', ') : '';
+
+    // Competitor: from prospect OR SRE live state
+    var competitor  = p.competitor || p.incumbent || '';
+    // Try to pull live from current SRE dropdown if app.js exposes it
+    try {
+      var sreComp = document.querySelector('#sre-competitor')?.value || 
+                    document.querySelector('[data-sre-competitor]')?.textContent || '';
+      if (sreComp && !competitor) competitor = sreComp;
+    } catch(e) {}
+
+    // ── Pain points ─────────────────────────────────────────
+    // Live SRE checkboxes first, fallback to saved on prospect
+    var painPoints = [];
+    var painMap = {
+      'sre-401k': '401k admin errors', 'sre-wc': "workers' comp issues",
+      'sre-aca': 'ACA compliance burden', 'sre-benefits': 'benefits admin errors',
+      'sre-tax': 'multi-state tax complexity', 'sre-platform': 'payroll platform instability',
+      'sre-gl': 'GL reconciliation issues', 'sre-support': 'poor HR/payroll support',
+      'sre-i9': 'I-9/onboarding compliance gaps', 'sre-multi': 'multi-entity payroll complexity',
+      'sre-manual': 'excessive manual HR/payroll processes'
+    };
+    Object.entries(painMap).forEach(function(kv) {
+      var el = document.getElementById(kv[0]);
+      if (el && el.checked) painPoints.push(kv[1]);
+    });
+    if (!painPoints.length && p.painPoints && p.painPoints.length) {
+      painPoints = p.painPoints;
+    }
+
+    // ── Gong / call transcript ───────────────────────────────
+    var transcript = '';
+    var taEl = document.getElementById('sre-transcript');
+    if (taEl && taEl.value.trim()) {
+      transcript = taEl.value.trim().slice(0, 800); // cap so prompt stays tight
+    } else if (p.transcript) {
+      transcript = String(p.transcript).slice(0, 800);
+    }
+
+    // ── AI-discovered fields (from dropped docs/files) ───────
+    var aiFields = p.aiFields || {};
+    var aiInsights = p.aiInsights || [];
+    var aiSources = p.aiSources || [];
+    var aiNotes = p.notes || window._mfProfileSummary || '';
+
+    // Build a flat enrichment string from AI fields + insights
+    var enrichmentLines = [];
+    Object.entries(aiFields).forEach(function(kv) {
+      if (kv[1] && String(kv[1]).trim()) enrichmentLines.push(kv[0] + ': ' + kv[1]);
+    });
+    aiInsights.forEach(function(ins) {
+      if (ins.label && ins.value) enrichmentLines.push(ins.label + ': ' + ins.value);
+    });
+
+    // ── SRE analysis result ──────────────────────────────────
+    var sreRec = '', sreConf = '', sreWfn = '', srePeo = '';
+    var analysis = window._sreAnalysis || null;
+    if (analysis) {
+      sreRec  = analysis.rec  || '';
+      sreConf = analysis.conf ? analysis.conf + '%' : '';
+      sreWfn  = analysis.wfn  ? 'WFN Score: ' + analysis.wfn : '';
+      srePeo  = analysis.peo  ? 'PEO Score: ' + analysis.peo : '';
+    }
+    // Also pull from saved prospect
+    if (!sreRec && p.sreRecommendation) sreRec  = p.sreRecommendation;
+    if (!sreConf && p.sreConfidence)    sreConf = p.sreConfidence;
+
+    // ── Cadence Intel Refresh results ────────────────────────
+    // Pull the most recent intel result for this prospect across all days
+    var intelSummary = '';
+    try {
+      var intelStore = JSON.parse(localStorage.getItem('bp_intel_results') || '{}');
+      var co = companyName.replace(/\s+/g, '_');
+      var intelDays = [1, 8, 15, 22]; // intel pull days
+      var latestIntel = null;
+      intelDays.forEach(function(d) {
+        var k = co + '_day' + d;
+        if (intelStore[k] && intelStore[k].result) {
+          if (!latestIntel || intelStore[k].ts > latestIntel.ts) latestIntel = intelStore[k];
+        }
+      });
+      if (latestIntel) intelSummary = String(latestIntel.result).slice(0, 600);
+    } catch(e) {}
+
+    // ── Market intel results (from Analysis Tools) ───────────
+    var marketIntelSummary = '';
+    try {
+      // Check live DOM for rendered market intel text
+      var miaBody = document.getElementById('wfn-mia-body') || document.getElementById('ts-mia-body');
+      if (miaBody && miaBody.innerText && miaBody.innerText.length > 50) {
+        marketIntelSummary = miaBody.innerText.slice(0, 600);
+      }
+    } catch(e) {}
+
+    return {
+      firstName, companyName, persona, numEE, state, industry, track,
+      email, phone, linkedin, clientType, adpProducts,
+      competitor, painPoints, transcript,
+      aiFields, aiInsights, aiSources, aiNotes,
+      enrichmentLines, sreRec, sreConf, sreWfn, srePeo,
+      intelSummary, marketIntelSummary
+    };
+  }
+
+  window.openEmailEngine = function(touchOverride) {
+    var d = egCollectProspectData();
+    var p = window._hqProspect || {};
+
+    var setVal = function(id, val) {
+      var el = document.getElementById(id);
+      if (el && val !== undefined && val !== null && String(val).trim()) el.value = String(val).trim();
+    };
+
+    setVal('eg-firstName', d.firstName);
+    setVal('eg-company',   d.companyName);
+    setVal('eg-title',     d.persona);
+    setVal('eg-numEE',     d.numEE);
+    setVal('eg-industry',  d.industry);
+    setVal('eg-track',     d.track);
+    setVal('eg-competitor', d.competitor);
+
+    // State: try to match select option
+    if (d.state) {
+      var stSel = document.getElementById('eg-state');
+      if (stSel) {
+        var matched = Array.from(stSel.options).find(function(o) {
+          return o.value.toLowerCase() === d.state.toLowerCase() ||
+                 o.text.toLowerCase().includes(d.state.toLowerCase());
+        });
+        if (matched) stSel.value = matched.value;
+      }
+    }
+
+    // Pre-fill context textarea with all intel
+    var ctxLines = [];
+    if (d.painPoints.length) ctxLines.push('Pain points: ' + d.painPoints.join(', '));
+    if (d.clientType === 'existing') ctxLines.push('Existing ADP client on: ' + (d.adpProducts || 'unknown product'));
+    if (d.sreRec) ctxLines.push('SRE recommends: ' + d.sreRec + (d.sreConf ? ' (' + d.sreConf + ' confidence)' : ''));
+    if (d.enrichmentLines.length) ctxLines.push('From uploaded docs: ' + d.enrichmentLines.slice(0,6).join(' | '));
+    if (d.aiSources.length) ctxLines.push('Sources: ' + d.aiSources.join(', '));
+    if (d.intelSummary) ctxLines.push('Latest intel refresh: ' + d.intelSummary.slice(0,200));
+    if (d.marketIntelSummary) ctxLines.push('Market analysis: ' + d.marketIntelSummary.slice(0,200));
+    if (d.transcript) ctxLines.push('Call transcript excerpt: ' + d.transcript.slice(0,200));
+    if (d.aiNotes) ctxLines.push('Notes: ' + d.aiNotes.slice(0,150));
+
+    var ctxEl = document.getElementById('eg-context');
+    if (ctxEl && ctxLines.length) ctxEl.value = ctxLines.join('\n');
+
+    // Touch override
+    if (touchOverride) {
       _touch = touchOverride;
-      document.querySelectorAll('.eg-touch').forEach(function(t){
+      document.querySelectorAll('.eg-touch').forEach(function(t) {
         var name = t.querySelector('.eg-touch-name');
-        if(name && name.textContent.trim()===touchOverride.trim()){
-          document.querySelectorAll('.eg-touch').forEach(function(x){ x.classList.remove('active'); });
+        if (name && name.textContent.trim() === touchOverride.trim()) {
+          document.querySelectorAll('.eg-touch').forEach(function(x) { x.classList.remove('active'); });
           t.classList.add('active');
         }
       });
     }
-    // Update sub
+
+    // Update data-richness indicator in subtitle
+    var dataPoints = [d.companyName, d.painPoints.length, d.transcript, d.enrichmentLines.length, d.intelSummary, d.marketIntelSummary].filter(Boolean).length;
+    var richness = dataPoints >= 4 ? '🟢 Rich data loaded' : dataPoints >= 2 ? '🟡 Partial data' : '🔴 Basic data only';
     var sub = document.getElementById('eg-modal-sub');
-    if(sub && p.company) sub.textContent = 'Generating for ' + p.company + ' — ' + _touch;
+    if (sub) sub.textContent = (d.companyName ? d.companyName + ' — ' : '') + _touch + ' · ' + richness;
+
     document.getElementById('eg-overlay').classList.add('open');
   };
 
-  window.closeEmailEngine = function(){
+  window.closeEmailEngine = function() {
     document.getElementById('eg-overlay').classList.remove('open');
   };
 
-  window.egOverlayClick = function(e){
-    if(e.target === document.getElementById('eg-overlay')) closeEmailEngine();
+  window.egOverlayClick = function(e) {
+    if (e.target === document.getElementById('eg-overlay')) closeEmailEngine();
   };
 
-  window.egSelectTouch = function(el, touch){
-    document.querySelectorAll('.eg-touch').forEach(function(t){ t.classList.remove('active'); });
+  window.egSelectTouch = function(el, touch) {
+    document.querySelectorAll('.eg-touch').forEach(function(t) { t.classList.remove('active'); });
     el.classList.add('active');
     _touch = touch;
     var sub = document.getElementById('eg-modal-sub');
-    var company = (document.getElementById('eg-company')||{}).value || '';
-    if(sub) sub.textContent = (company ? 'For '+company+' — ' : '') + touch;
+    var company = (document.getElementById('eg-company') || {}).value || '';
+    if (sub) sub.textContent = (company ? 'For ' + company + ' — ' : '') + touch;
   };
 
-  window.egGenerate = async function(){
-    var btn = document.getElementById('eg-gen-btn');
-    var lbl = document.getElementById('eg-btn-lbl');
+  window.egGenerate = async function() {
+    var btn  = document.getElementById('eg-gen-btn');
+    var lbl  = document.getElementById('eg-btn-lbl');
     var spin = document.getElementById('eg-spinner');
 
-    var firstName  = (document.getElementById('eg-firstName')||{}).value||'there';
-    var companyName = (document.getElementById('eg-company')||{}).value||'[Company]';
-    var persona    = (document.getElementById('eg-title')||{}).value||'HR/Finance decision-maker';
-    var numEE      = (document.getElementById('eg-numEE')||{}).value||'';
-    var state      = (document.getElementById('eg-state')||{}).value||'Mid-Atlantic';
-    var industry   = (document.getElementById('eg-industry')||{}).value||'their industry';
-    var track      = (document.getElementById('eg-track')||{}).value||'WFN';
-    var competitor = (document.getElementById('eg-competitor')||{}).value||'';
-    var tone       = (document.getElementById('eg-tone')||{}).value||'consultative';
-    var focus      = (document.getElementById('eg-focus')||{}).value||'benefits';
-    var context    = (document.getElementById('eg-context')||{}).value||'';
-    var touchLabel = _touch;
+    // Read form (user may have edited)
+    var firstName   = (document.getElementById('eg-firstName')  || {}).value || 'there';
+    var companyName = (document.getElementById('eg-company')    || {}).value || '[Company]';
+    var persona     = (document.getElementById('eg-title')      || {}).value || 'HR/Finance decision-maker';
+    var numEE       = (document.getElementById('eg-numEE')      || {}).value || '';
+    var state       = (document.getElementById('eg-state')      || {}).value || 'Mid-Atlantic';
+    var industry    = (document.getElementById('eg-industry')   || {}).value || 'their industry';
+    var track       = (document.getElementById('eg-track')      || {}).value || 'WFN';
+    var competitor  = (document.getElementById('eg-competitor') || {}).value || '';
+    var tone        = (document.getElementById('eg-tone')       || {}).value || 'consultative';
+    var focus       = (document.getElementById('eg-focus')      || {}).value || 'benefits';
+    var context     = (document.getElementById('eg-context')    || {}).value || '';
+    var touchLabel  = _touch;
 
-    if(btn) btn.disabled=true;
-    if(spin) spin.style.display='inline-block';
-    if(lbl) lbl.textContent='Generating…';
-    document.getElementById('eg-output-actions').style.display='none';
+    if (btn)  btn.disabled = true;
+    if (spin) spin.style.display = 'inline-block';
+    if (lbl)  lbl.textContent = 'Generating…';
+    document.getElementById('eg-output-actions').style.display = 'none';
 
+    // ── Competitor/incumbent intel ────────────────────────────
     const COMP_INTEL = {
-      'Paycom':'Paycom is a single-database story that sells well until the prospect discovers one vendor means no flexibility, slow support SLAs, and a product that plateaus at mid-market scale.',
-      'Paylocity':'Paylocity has aggressive mid-market marketing and a clean UI but consistently underdelivers on implementation depth, post-sale support, and compliance complexity.',
-      'UKG':'UKG carries enormous complexity and enterprise pricing. Mid-market clients frequently feel like small fish — implementations drag and clients report being under-resourced post-go-live.',
-      'Dayforce':'Dayforce markets real-time processing aggressively but requires heavy IT involvement and has a steep learning curve. Expensive implementations, significant internal expertise required.',
-      'Workday':'Workday is built for enterprise and priced like it. Mid-market clients routinely overpay for features they never use while struggling with configuration complexity.',
-      'Paychex PEO':'Paychex PEO lacks the carrier scale, risk management depth, and benefits breadth that ADP TotalSource delivers. Compliance support and dedicated HR model do not match.',
-      'Justworks':'Justworks hits real ceilings past 100 employees — thinner HR support, fewer benefit carrier options, limited customization, built for startups not scaling companies.',
-      'Rippling':'Rippling is IT-forward and sells well to tech buyers but HR teams find it counterintuitive, and PEO capabilities are newer and less battle-tested than TotalSource.',
-      'TriNet':'TriNet is concentrated in tech and professional services. Outside those verticals or past ~500 employees the vertical model is limiting.',
-      'Insperity':'Insperity comes with a higher cost structure and a product suite that has not kept pace with modern HR tech expectations.',
-      'Manual/Spreadsheets':'They are running HR on spreadsheets. Compliance exposure — ACA tracking, I-9 management, multi-state payroll — creates real legal and financial risk.'
-    };
-    const compCtx = competitor && COMP_INTEL[competitor]
-      ? 'COMPETITOR ('+competitor+'): '+COMP_INTEL[competitor]+' Weave this in subtly — let contrast speak for itself.'
-      : 'No known incumbent — cold outreach.';
-
-    const productCtx = track==='TotalSource'
-      ? 'ADP TotalSource PEO: co-employment, Fortune 500 benefits, workers comp, dedicated HR Business Partner. Largest PEO in US.'
-      : track==='Both'
-      ? 'ADP WorkforceNow (HCM) AND TotalSource (PEO): full platform plus co-employment benefits and HR support.'
-      : 'ADP WorkforceNow: unified payroll, HR, benefits, talent, compliance. 1 in 6 US workers. Best 50-999 employees.';
-
-    const tones = {
-      consultative:'Trusted advisor who has done genuine homework. Credibility through specificity.',
-      direct:'Executive-direct. No setup, no pleasantries. Lead with data. Brevity is respect.',
-      urgency:'Factual urgency — a real window. Let timing persuade, not language.',
-      breakup:'Pattern interrupt. Opening line must be genuinely unexpected — disarming, not gimmicky.',
-      followup:'Warm but purposeful. Continuation of a real relationship, not a follow-up sequence.'
-    };
-    const focuses = {
-      benefits:'Benefits cost. What they overpay vs TotalSource pooled carrier savings for '+numEE+'-person '+industry+' in '+state+'.',
-      compliance:'Compliance risk. Specific regulatory exposure for '+industry+' in '+state+'. Heads-up framing, not pitch.',
-      talent:'Talent & retention. ADP HR infrastructure as competitive hiring advantage in '+industry+'.',
-      payroll:'Payroll accuracy. Error rates, manual reconciliation, multi-state complexity.',
-      competitive:'Competitive displacement. '+competitor+' move creating a decision window for '+companyName+'.',
-      roi:'ROI. One specific number — benchmark, savings range, or cost-per-employee gap for '+companyName+'.'
+      'Paycom':      'Paycom is a single-database story that sells well until the prospect discovers one vendor means no flexibility, slow support SLAs, and a product that plateaus at mid-market scale.',
+      'Paylocity':   'Paylocity has aggressive mid-market marketing and a clean UI but consistently underdelivers on implementation depth, post-sale support, and compliance complexity.',
+      'UKG':         'UKG carries enormous complexity and enterprise pricing. Mid-market clients frequently feel like small fish — implementations drag and clients report being under-resourced post-go-live.',
+      'Dayforce':    'Dayforce markets real-time processing aggressively but requires heavy IT involvement and a steep learning curve. Expensive implementations, significant internal expertise required.',
+      'Workday':     'Workday is built for enterprise and priced like it. Mid-market clients routinely overpay for features they never use while struggling with configuration complexity.',
+      'Paychex PEO': 'Paychex PEO lacks the carrier scale, risk management depth, and benefits breadth that ADP TotalSource delivers. Compliance support and dedicated HR model do not match.',
+      'Justworks':   'Justworks hits real ceilings past 100 employees — thinner HR support, fewer benefit carrier options, limited customization, built for startups not scaling companies.',
+      'Rippling':    'Rippling is IT-forward and sells well to tech buyers but HR teams find it counterintuitive, and PEO capabilities are newer and less battle-tested than TotalSource.',
+      'TriNet':      'TriNet is concentrated in tech and professional services. Outside those verticals or past ~500 employees the vertical model is limiting.',
+      'Insperity':   'Insperity comes with a higher cost structure and a product suite that has not kept pace with modern HR tech expectations.',
+      'Manual/Spreadsheets': 'They are running HR on spreadsheets. Compliance exposure — ACA tracking, I-9 management, multi-state payroll — creates real legal and financial risk.',
+      // ── Existing ADP clients ────────────────────────────────
+      'ADP RUN':     'Existing ADP RUN client. They already trust ADP brand. Upgrade angle: RUN is built for <50 EEs — they have likely outgrown it. WFN/TotalSource gives them the enterprise depth, dedicated support tier, and compliance infrastructure RUN cannot match at their size.',
+      'ADP Workforce Now (Upgrade)': 'Existing WFN client being evaluated for TotalSource PEO co-employment. They know ADP. Sell the co-employment layer: Fortune 500 benefits at their headcount, workers comp management, dedicated HR Business Partner, shared liability. This is an upgrade, not a switch.',
+      'ADP TotalSource (Expand)': 'Existing TotalSource client — evaluate expansion, new entity, or additional HR services. Retention and expansion play. Reinforce the value they are already getting and identify what they are not yet using.',
     };
 
-    const dm=touchLabel.toLowerCase();
-    let touchSOP='';
-    if(dm.includes('day 1')||dm.includes('research')){
-      touchSOP='Day 1 Research Brief: Establish credibility by showing you know their world. One natural sentence weaving company/size/state/industry. ONE competitor angle. Subject: personal, intriguing, max 8 words. Ask: one low-friction question. Body: 3-4 sentences max. Make them curious not convinced.';
-    } else if(dm.includes('day 2')||dm.includes('insight')){
-      touchSOP='Day 2 Insight Hook: Lead with financial or operational gap. Frame ADP features as discovery for '+companyName+'. Subject references cost or value. CTA: offer full breakdown. Under 5 sentences. Flowing prose only.';
-    } else if(dm.includes('benchmark')||dm.includes('day 8')){
-      touchSOP='Day 8 Cost Benchmark: Lead with the benchmark number or gap. ONE specific figure tailored to '+numEE+'-person '+industry+' in '+state+'. CTA: share full report, soft ask. 4 sentences max.';
-    } else if(dm.includes('compliance')||dm.includes('day 15')){
-      touchSOP='Day 15 Compliance: Open with the regulation — name it. Connect gap to ONE ADP feature. Heads-up framing, not pitch. Subject references compliance or state. 4 sentences max.';
-    } else if(dm.includes('breakup')||dm.includes('day 22')){
-      touchSOP='Day 22 Breakup: Genuine, slightly self-aware. Reference ONE concrete thing from earlier — competitor, compliance, or benchmark. Breakup framing light not dramatic. Low-pressure door-opener at end. 5 sentences max. Quiet FOMO not desperation.';
-    } else if(dm.includes('community')||dm.includes('day 30')){
-      touchSOP='Day 30 Community Invite: This is an invitation not a sales email. Lead with what they receive — HCM Scorecard already built for '+companyName+'. Briefing feels peer-level not vendor webinar. 4 sentences. CTA: reply to RSVP only.';
+    var isExistingADP = competitor.startsWith('ADP');
+    var compCtx;
+    if (isExistingADP) {
+      compCtx = 'EXISTING ADP CLIENT — ' + competitor + ': ' + (COMP_INTEL[competitor] || 'They are already in the ADP ecosystem. Frame this as a natural evolution, not a competitive displacement. Emphasize depth, not replacement.');
+    } else if (competitor && COMP_INTEL[competitor]) {
+      compCtx = 'INCUMBENT (' + competitor + '): ' + COMP_INTEL[competitor] + ' Weave this in subtly — let contrast speak for itself, never name the competitor directly in the email.';
+    } else if (competitor) {
+      compCtx = 'INCUMBENT: ' + competitor + '. Reference the category of pain their current vendor creates without naming them. Let ADP\'s strengths imply the gap.';
     } else {
-      touchSOP='Mid-cadence touch: Lead with most relevant insight. One idea per email. Knowledgeable colleague tone. 3-5 sentences. One low-friction ask.';
+      compCtx = 'No known incumbent — cold outreach. Focus on what they are likely experiencing based on industry and size.';
     }
 
-    const RULES='RULES (non-negotiable): No markdown, no bullets, no asterisks, flowing prose only. One insight per email. First name only in greeting. Never start "I hope", "checking in", "following up", "touching base". Never start sentence with I — restructure. No exclamation points. No emojis. Sign off: — AJ / ADP / beyondpayroll.net (three separate lines). Subject max 8 words, human, specific, scroll-stopping.';
+    const productCtx = track === 'TotalSource'
+      ? 'ADP TotalSource PEO: co-employment, Fortune 500 benefits at SMB scale, workers comp, dedicated HR Business Partner. Largest PEO in the US.'
+      : track === 'Both'
+      ? 'ADP WorkforceNow (HCM) AND TotalSource (PEO): full platform plus co-employment benefits, workers comp, and dedicated HR support.'
+      : 'ADP WorkforceNow: unified payroll, HR, benefits, talent, time & attendance, compliance. 1 in 6 US workers. Best fit 50–999 employees.';
 
-    const EXCELLENCE='EXCELLENCE: Subject must stop a fast-scanning inbox reader. Opening line must land immediately. Every sentence adds info, creates curiosity, or moves to ask — cut everything else. Wit that earns its place. CTA should be easiest possible yes.';
+    const tones = {
+      consultative: 'Trusted advisor who has done genuine homework. Credibility through specificity. Never sound like a vendor.',
+      direct:       'Executive-direct. No setup, no pleasantries. Lead with data. Brevity is respect.',
+      urgency:      'Factual urgency — a real window, a regulation, a cost event. Let timing persuade, not language.',
+      breakup:      'Pattern interrupt. Opening line must be genuinely unexpected — disarming, not gimmicky.',
+      followup:     'Warm but purposeful. Continuation of a real relationship, not a follow-up sequence.'
+    };
+    const focuses = {
+      benefits:    'Benefits cost. What they overpay vs TotalSource pooled carrier savings for ' + numEE + '-person ' + industry + ' in ' + state + '.',
+      compliance:  'Compliance risk. Specific regulatory exposure for ' + industry + ' in ' + state + '. Heads-up framing, not pitch.',
+      talent:      'Talent & retention. ADP HR infrastructure as a competitive hiring and retention advantage in ' + industry + '.',
+      payroll:     'Payroll accuracy. Error rates, manual reconciliation, multi-state complexity at their scale.',
+      competitive: isExistingADP ? 'Upgrade value. What they gain from moving to the next ADP tier — specific to their current product gap.' : 'Competitive displacement. The window that ' + competitor + ' is creating for ' + companyName + '.',
+      roi:         'ROI. One specific number — benchmark, savings range, or cost-per-employee gap for ' + companyName + '.'
+    };
+
+    // ── Touch SOP ────────────────────────────────────────────
+    var dm = touchLabel.toLowerCase();
+    var touchSOP;
+    if (dm.includes('day 1') || dm.includes('research')) {
+      touchSOP = 'Day 1 Research Brief: Show you did genuine homework. One natural sentence weaving company/size/state/industry/any intel. ONE angle from what you know. Subject: personal, intriguing, max 8 words. One low-friction question. Body: 3-4 sentences max. Make them curious not convinced.';
+    } else if (dm.includes('day 2') || dm.includes('insight')) {
+      touchSOP = 'Day 2 Insight Hook: Lead with a specific financial or operational gap. Frame ADP features as a discovery for ' + companyName + '. Subject references cost or value gap. CTA: offer full breakdown. Under 5 sentences. Flowing prose only.';
+    } else if (dm.includes('benchmark') || dm.includes('day 8')) {
+      touchSOP = 'Day 8 Cost Benchmark: Lead with the benchmark number or gap. ONE specific figure tailored to ' + numEE + '-person ' + industry + ' in ' + state + '. If intel data is provided, use it. CTA: share full report, soft ask. 4 sentences max.';
+    } else if (dm.includes('compliance') || dm.includes('day 15')) {
+      touchSOP = 'Day 15 Compliance: Open with the specific regulation — name it. Connect the gap to ONE ADP feature. Heads-up framing, not pitch. Subject references compliance or state. If intel data is available, anchor on a real finding. 4 sentences max.';
+    } else if (dm.includes('breakup') || dm.includes('day 22')) {
+      touchSOP = 'Day 22 Breakup: Genuine, slightly self-aware. Reference ONE concrete thing from the cadence — a pain point, compliance angle, or benchmark. Light breakup framing, not dramatic. Low-pressure door-opener at end. 5 sentences max. Quiet FOMO, not desperation.';
+    } else if (dm.includes('community') || dm.includes('day 30')) {
+      touchSOP = 'Day 30 Community Invite: This is an invitation, not a sales email. Lead with what they receive — the HCM Scorecard already built for ' + companyName + '. Briefing feels peer-level, not vendor webinar. 4 sentences. CTA: reply to RSVP only.';
+    } else {
+      touchSOP = 'Mid-cadence touch: Lead with the most relevant insight from available data. One idea per email. Knowledgeable colleague tone. 3-5 sentences. One low-friction ask.';
+    }
+
+    // ── Build enriched data context block ────────────────────
+    var dataBlock = '';
+    if (context && context.trim()) {
+      dataBlock = '\n\nINTELLIGENCE & CONTEXT (use what is relevant, discard what is not):\n' + context.trim();
+    }
+
+    const RULES = 'RULES (non-negotiable): No markdown, no bullets, no asterisks anywhere. Flowing prose only. One insight per email. Use first name only in greeting. Never open with "I hope", "checking in", "following up", "touching base", "just wanted to", "reaching out". Never start ANY sentence with the word "I" — restructure. No exclamation points. No emojis. Sign off exactly as: — AJ / ADP / beyondpayroll.net (three separate lines, each on its own line). Subject max 8 words, human, specific, scroll-stopping — no "Quick question" or "Touching base".';
+
+    const EXCELLENCE = 'EXCELLENCE STANDARD: Subject line must stop a fast-scanning inbox. Opening line must land without setup. Every sentence must either add information, create curiosity, or advance toward the ask — cut everything else. Wit that earns its place. CTA is the easiest possible yes. If intel data was provided, let one specific fact do the heavy lifting.';
 
     const prompt = `You are an elite B2B sales email writer for ADP Mid-Atlantic. Write for AJ, District Manager, specializing in ADP WorkforceNow and TotalSource PEO.
 
 ${touchSOP}
 
-PROSPECT:
+PROSPECT PROFILE:
 - First Name: ${firstName}
 - Company: ${companyName}
-- Title: ${persona}
-- Employees: ${numEE||'unknown'}
+- Title / Persona: ${persona || 'HR or Finance decision-maker'}
+- Employees: ${numEE || 'unknown'}
 - Industry: ${industry}
 - State: ${state}
-- Track: ${track}
-- Product: ${productCtx}
+- ADP Product Track: ${track}
+- Product Context: ${productCtx}
 
 ${compCtx}
 
-TONE: ${tones[tone]||tones.consultative}
-FOCUS: ${focuses[focus]||focuses.benefits}
-ADDITIONAL CONTEXT: ${context||'None.'}
+TONE: ${tones[tone] || tones.consultative}
+PRIMARY FOCUS: ${focuses[focus] || focuses.roi}
+${dataBlock}
 
 ${RULES}
 ${EXCELLENCE}
 
-OUTPUT FORMAT — exactly this, nothing else:
+OUTPUT FORMAT — respond with exactly this structure, nothing before or after:
 Subject: [subject line]
 
 Hi ${firstName},
 
-[body]
+[email body — prose only, no bullets, no markdown]
 
 — AJ
 ADP
 beyondpayroll.net`;
 
     try {
-      var resp = await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',
-          max_tokens:650,
-          messages:[{role:'user',content:prompt}]
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 700,
+          messages: [{ role: 'user', content: prompt }]
         })
       });
       var data = await resp.json();
-      var text = data?.content?.[0]?.text||'';
-      if(text){
+      var text = data?.content?.[0]?.text || '';
+      if (text) {
         egRenderOutput(text, firstName, companyName, persona, touchLabel);
-        document.getElementById('eg-output-actions').style.display='flex';
-        // Log to app.js native activity system
-        if(typeof notifAdd==='function') notifAdd('outreach', '⚡ Email Engine: ' + touchLabel, companyName + ' · AI draft ready', 'ENGINE');
+        document.getElementById('eg-output-actions').style.display = 'flex';
+        if (typeof notifAdd === 'function') notifAdd('outreach', '⚡ Email Engine: ' + touchLabel, companyName + ' · AI draft ready', 'ENGINE');
       } else {
-        document.getElementById('eg-output-area').innerHTML='<div class="eg-empty"><div class="eg-empty-icon">⚠️</div><div class="eg-empty-sub">AI returned no content. Try again.</div></div>';
+        document.getElementById('eg-output-area').innerHTML = '<div class="eg-empty"><div class="eg-empty-icon">⚠️</div><div class="eg-empty-sub">AI returned no content. Try again.</div></div>';
       }
-    } catch(e){
-      document.getElementById('eg-output-area').innerHTML='<div class="eg-empty"><div class="eg-empty-icon">⚠️</div><div class="eg-empty-sub">Connection error. Check API access.</div></div>';
+    } catch(e) {
+      document.getElementById('eg-output-area').innerHTML = '<div class="eg-empty"><div class="eg-empty-icon">⚠️</div><div class="eg-empty-sub">Connection error: ' + e.message + '</div></div>';
     } finally {
-      if(btn) btn.disabled=false;
-      if(spin) spin.style.display='none';
-      if(lbl) lbl.textContent='⚡ Generate Email';
+      if (btn)  btn.disabled = false;
+      if (spin) spin.style.display = 'none';
+      if (lbl)  lbl.textContent = '⚡ Generate Email';
     }
   };
 
-  function egRenderOutput(text, firstName, company, persona, touch){
+  function egRenderOutput(text, firstName, company, persona, touch) {
     var subMatch = text.match(/Subject:\s*(.+)/);
     _lastSubject = subMatch ? subMatch[1].trim() : '';
-    _lastBody = text.replace(/Subject:\s*.+\n?/,'').trim();
+    _lastBody = text.replace(/Subject:\s*.+\n?/, '').trim();
 
     var label = document.getElementById('eg-output-label');
-    if(label) label.textContent = touch + ' — ' + company;
+    if (label) label.textContent = touch + ' — ' + company;
 
     document.getElementById('eg-output-area').innerHTML =
       '<div class="eg-email-card">'
-      +'<div class="eg-email-chrome">'
-      +'<div class="eg-chrome-dot" style="background:#ff5f57"></div>'
-      +'<div class="eg-chrome-dot" style="background:#febc2e;margin-left:4px"></div>'
-      +'<div class="eg-chrome-dot" style="background:#28c840;margin-left:4px"></div>'
-      +'<span style="font-size:10px;color:rgba(255,255,255,.4);margin-left:auto;font-family:var(--fm)">New Message — Compose</span>'
-      +'</div>'
-      +'<div class="eg-email-meta">'
-      +'<div class="eg-meta-row"><span class="eg-meta-key">From</span><span class="eg-meta-val">AJ — District Manager, ADP Mid-Atlantic</span></div>'
-      +'<div class="eg-meta-row"><span class="eg-meta-key">To</span><span class="eg-meta-val">'+firstName+(persona?' ('+persona+')':'')+' — '+company+'</span></div>'
-      +'<div class="eg-meta-row" style="margin-top:4px"><span class="eg-meta-key">Subject</span><span class="eg-subject">'+(_lastSubject||'—')+'</span></div>'
-      +'</div>'
-      +'<div class="eg-body-area">'+_lastBody+'</div>'
-      +'</div>';
+      + '<div class="eg-email-chrome">'
+      + '<div class="eg-chrome-dot" style="background:#ff5f57"></div>'
+      + '<div class="eg-chrome-dot" style="background:#febc2e;margin-left:4px"></div>'
+      + '<div class="eg-chrome-dot" style="background:#28c840;margin-left:4px"></div>'
+      + '<span style="font-size:10px;color:rgba(255,255,255,.4);margin-left:auto;font-family:var(--fm)">New Message — Compose</span>'
+      + '</div>'
+      + '<div class="eg-email-meta">'
+      + '<div class="eg-meta-row"><span class="eg-meta-key">From</span><span class="eg-meta-val">AJ — District Manager, ADP Mid-Atlantic</span></div>'
+      + '<div class="eg-meta-row"><span class="eg-meta-key">To</span><span class="eg-meta-val">' + firstName + (persona ? ' (' + persona + ')' : '') + ' — ' + company + '</span></div>'
+      + '<div class="eg-meta-row" style="margin-top:4px"><span class="eg-meta-key">Subject</span><span class="eg-subject">' + (_lastSubject || '—') + '</span></div>'
+      + '</div>'
+      + '<div class="eg-body-area">' + _lastBody + '</div>'
+      + '</div>';
   }
 
-  window.egCopyBody = function(){ if(_lastBody){ navigator.clipboard.writeText(_lastBody); if(typeof showToast==='function') showToast('✓ Body copied'); } };
-  window.egCopyAll = function(){ if(_lastSubject||_lastBody){ navigator.clipboard.writeText('Subject: '+_lastSubject+'\n\n'+_lastBody); if(typeof showToast==='function') showToast('✓ Full email copied'); } };
-  window.egOpenMailto = function(){ if(_lastSubject||_lastBody) window.open('mailto:?subject='+encodeURIComponent(_lastSubject)+'&body='+encodeURIComponent(_lastBody)); };
-  window.egApplyToComposer = function(){
-    // Apply subject and body to the existing Outlook composer in the ts-panel
-    var subEl = document.getElementById('emailSubject');
+  window.egCopyBody    = function() { if (_lastBody) { navigator.clipboard.writeText(_lastBody); if (typeof showToast === 'function') showToast('✓ Body copied'); } };
+  window.egCopyAll     = function() { if (_lastSubject || _lastBody) { navigator.clipboard.writeText('Subject: ' + _lastSubject + '\n\n' + _lastBody); if (typeof showToast === 'function') showToast('✓ Full email copied'); } };
+  window.egOpenMailto  = function() { if (_lastSubject || _lastBody) window.open('mailto:?subject=' + encodeURIComponent(_lastSubject) + '&body=' + encodeURIComponent(_lastBody)); };
+  window.egApplyToComposer = function() {
+    var subEl  = document.getElementById('emailSubject');
     var bodyEl = document.getElementById('emailBody');
-    if(subEl) subEl.textContent = _lastSubject;
-    if(bodyEl){ bodyEl.innerText = _lastBody; if(window.cdxUpdateBodyStats) cdxUpdateBodyStats(); }
+    if (subEl)  subEl.textContent = _lastSubject;
+    if (bodyEl) { bodyEl.innerText = _lastBody; if (window.cdxUpdateBodyStats) cdxUpdateBodyStats(); }
     closeEmailEngine();
-    if(typeof showToast==='function') showToast('✓ Email applied to composer');
+    if (typeof showToast === 'function') showToast('✓ Email applied to composer');
   };
 })();
 </script>
