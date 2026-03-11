@@ -279,6 +279,22 @@ function getHQHTML(session){
   <!-- Drawer backdrop -->
   <div id="notif-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:2999" onclick="notifCloseDrawer()"></div>
 
+  <!-- Reschedule modal — global, above drawer (z-index:4000) -->
+  <div id="cdt-reschedule-modal" style="display:none;position:fixed;inset:0;z-index:4000;align-items:center;justify-content:center;padding:20px">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px)" onclick="cdtCloseReschedule()"></div>
+    <div style="position:relative;background:var(--white);border-radius:14px;padding:28px 24px 22px;width:100%;max-width:360px;box-shadow:0 24px 64px rgba(0,0,0,.22)">
+      <div style="font-family:var(--fd);font-size:17px;font-weight:700;color:var(--text);margin-bottom:3px" id="cdt-rs-title">Reschedule Touch</div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:20px;line-height:1.4" id="cdt-rs-sub">Choose a new date for this touch</div>
+      <label style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-3);display:block;margin-bottom:7px">New Send Date</label>
+      <input type="date" id="cdt-rs-date" style="width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:7px;font-size:15px;font-family:var(--fb);color:var(--text);background:var(--white);box-sizing:border-box;margin-bottom:12px">
+      <div style="font-size:10px;color:var(--text-3);margin-bottom:22px;line-height:1.6;background:var(--off-white);padding:10px 12px;border-radius:6px;border:1px solid var(--border)" id="cdt-rs-impact">All other touches will shift automatically to maintain spacing.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="cdtCloseReschedule()" style="flex:1;padding:11px;border-radius:7px;border:1px solid var(--border);background:var(--white);color:var(--text-3);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb)">Cancel</button>
+        <button onclick="cdtConfirmReschedule()" style="flex:2;padding:11px;border-radius:7px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">📅 Reschedule Touch</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Welcome strip -->
   <div class="welcome-strip">
     <div class="ws-av" id="hq-wb-av">—</div>
@@ -780,22 +796,6 @@ function getHQHTML(session){
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
           <button onclick="cdtResetAll()" style="font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;border:1px solid var(--border);background:var(--white);color:var(--text-3);cursor:pointer;font-family:var(--fb)">↺ Reset All</button>
           <button onclick="ecExportCSV()" style="font-size:10px;font-weight:700;padding:6px 12px;border-radius:4px;border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);cursor:pointer;font-family:var(--fb)">⬇ Export CSV</button>
-        </div>
-      </div>
-
-      <!-- Reschedule modal (hidden by default) -->
-      <div id="cdt-reschedule-modal" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center">
-        <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)" onclick="cdtCloseReschedule()"></div>
-        <div style="position:relative;background:var(--white);border-radius:12px;padding:28px 28px 24px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.18);z-index:1">
-          <div style="font-family:var(--fd);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px" id="cdt-rs-title">Reschedule Touch</div>
-          <div style="font-size:11px;color:var(--text-3);margin-bottom:20px" id="cdt-rs-sub">Choose a new date for this touch</div>
-          <label style="font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-3);display:block;margin-bottom:6px">New Send Date</label>
-          <input type="date" id="cdt-rs-date" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:14px;font-family:var(--fb);color:var(--text);background:var(--white);box-sizing:border-box;margin-bottom:16px">
-          <div style="font-size:10px;color:var(--text-3);margin-bottom:20px;line-height:1.5" id="cdt-rs-impact">Changing this touch will shift the cadence start date so all other touches adjust proportionally.</div>
-          <div style="display:flex;gap:8px">
-            <button onclick="cdtCloseReschedule()" style="flex:1;padding:10px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--text-3);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb)">Cancel</button>
-            <button onclick="cdtConfirmReschedule()" style="flex:2;padding:10px;border-radius:6px;border:none;background:var(--navy);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb)">Reschedule Touch</button>
-          </div>
         </div>
       </div>
 
