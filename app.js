@@ -646,6 +646,89 @@ function getHQHTML(session){
               </div>
             </div>
 
+            <!-- PEO QUICK PROFILE — shown only when TotalSource track is selected -->
+            <div id="sre-peo-profile" style="display:none;margin-top:12px;padding:14px;background:rgba(220,53,69,.04);border:1px solid rgba(220,53,69,.18);border-radius:8px;animation:fadeIn .2s ease">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div>
+                  <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1.5px">&#129309; TotalSource PEO Profile</div>
+                  <div style="font-size:10px;color:var(--text-3);margin-top:2px">Key underwriting inputs — flows into email engine &amp; cadence</div>
+                </div>
+                <button onclick="srePeoSave()" style="padding:5px 12px;background:var(--red);color:#fff;border:none;border-radius:5px;font-size:10px;font-weight:700;font-family:var(--fb);cursor:pointer;letter-spacing:.4px">Save &#10003;</button>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+
+                <!-- LEFT COL -->
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">Eligible Employees</div>
+                    <input id="srep-eligible-ee" type="number" min="1" placeholder="e.g. 7" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">Avg Gross Wages (per EE / year)</div>
+                    <input id="srep-avg-wages" type="text" placeholder="$ e.g. 80,800" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">Number of Locations</div>
+                    <select id="srep-locations" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                      <option value="">— Select —</option>
+                      <option value="1">1 location</option>
+                      <option value="2-3">2–3 locations</option>
+                      <option value="4-9">4–9 locations</option>
+                      <option value="10+">10+ locations</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">ASI Score <span style="font-weight:400;font-style:italic">(Age/Sex/Industry — blank if unknown)</span></div>
+                    <input id="srep-asi" type="text" placeholder="e.g. 1.08  (1.0 = neutral)" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                  </div>
+                </div>
+
+                <!-- RIGHT COL -->
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">Current Carrier</div>
+                    <select id="srep-carrier" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                      <option value="">— Select Carrier —</option>
+                      <option value="carefirst">CareFirst (BCBS DC/MD/VA)</option>
+                      <option value="uhc">UnitedHealthcare</option>
+                      <option value="bcbs">Blue Cross Blue Shield</option>
+                      <option value="aetna">Aetna</option>
+                      <option value="cigna">Cigna</option>
+                      <option value="humana">Humana</option>
+                      <option value="kaiser">Kaiser Permanente</option>
+                      <option value="other">Other / Unknown</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">Avg Monthly Premium <span style="font-weight:400;font-style:italic">(blended)</span></div>
+                    <input id="srep-monthly-premium" type="text" placeholder="$ e.g. 1,100" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">Employer Contribution %</div>
+                    <input id="srep-contrib-pct" type="number" min="0" max="100" placeholder="e.g. 75" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text-3);margin-bottom:3px;font-weight:600">Renewal Increase %</div>
+                    <input id="srep-renewal-increase" type="number" min="0" placeholder="e.g. 6.8" onchange="srePeoSave()" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--fb);background:var(--white);color:var(--text-1);box-sizing:border-box">
+                  </div>
+                </div>
+
+              </div><!-- /grid -->
+
+              <!-- Benefits participation slider -->
+              <div style="margin-top:10px">
+                <div style="font-size:10px;color:var(--text-3);margin-bottom:5px;font-weight:600">Benefits Participation Rate — <strong id="srep-brate-lbl" style="color:var(--red)">60%</strong></div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:10px;color:var(--text-3)">0%</span>
+                  <input type="range" id="srep-brate" min="0" max="100" value="60" oninput="document.getElementById('srep-brate-lbl').textContent=this.value+'%'" onchange="srePeoSave()" style="flex:1;accent-color:var(--red)">
+                  <span style="font-size:10px;color:var(--text-3)">100%</span>
+                </div>
+              </div>
+
+              <div id="srep-saved-indicator" style="font-size:10px;color:var(--green);margin-top:8px;min-height:14px;font-style:italic"></div>
+            </div>
+
             <!-- Cadence Tone -->
             <div style="margin-bottom:12px">
               <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Cadence Tone</div>
@@ -947,7 +1030,6 @@ function getHQHTML(session){
       <div class="ec-si"><div class="ec-sl">Company</div><div class="ec-sv co" id="ecs-co">—</div></div>
       <div class="ec-si"><div class="ec-sl">Contact</div><div class="ec-sv" id="ecs-contact">—</div></div>
       <div class="ec-si"><div class="ec-sl">Email</div><div class="ec-sv" id="ecs-email" style="font-size:10px">—</div></div>
-      <div class="ec-si"><div class="ec-sl">Track</div><div class="ec-sv" id="ecs-track">—</div></div>
       <div class="ec-si"><div class="ec-sl">Profile</div><div class="ec-sv" id="ecs-profile" style="font-size:10px">—</div></div>
     </div>
 
@@ -2191,6 +2273,10 @@ function sreRefresh(){
     const mcaPanel=document.getElementById('sre-mca-panel');
     if(mcaPanel) mcaPanel.style.display='block';
   }
+  // Restore PEO profile fields if TS track
+  if(p.track==='TS' && p.peoProfile){
+    setTimeout(function(){ if(typeof window.sreRestorePeoProfile==='function') window.sreRestorePeoProfile(p); }, 80);
+  }
 }
 
 // ── Headcount confidence band ────────────────────────────────────
@@ -2478,6 +2564,9 @@ window.sreSelectTrack = function(track) {
     } catch(e) {}
   }
   showToast('Track set: ' + (track === 'WFN' ? 'ADP WorkforceNow' : 'ADP TotalSource'));
+  // Show/hide PEO Quick Profile panel
+  const peoPanel = document.getElementById('sre-peo-profile');
+  if (peoPanel) peoPanel.style.display = track === 'TS' ? 'block' : 'none';
 };
 
 window.sreToneChanged = function(tone) {
@@ -2503,6 +2592,65 @@ window.sreToneChanged = function(tone) {
       if (idx >= 0) { arr[idx].cadenceTone = tone; saveProspectsLocal(arr); }
       localStorage.setItem('activeProspect', JSON.stringify(window._hqProspect));
     } catch(e) {}
+  }
+};
+
+// ── PEO Quick Profile: save fields to active prospect ────────────────
+window.srePeoSave = function() {
+  const gNum = function(id) {
+    const el = document.getElementById(id); if (!el) return null;
+    const v = parseFloat(el.value.replace(/[^0-9.]/g, '')); return isNaN(v) ? null : v;
+  };
+  const gStr = function(id) {
+    const el = document.getElementById(id); return el ? el.value.trim() : '';
+  };
+
+  const peo = {
+    eligibleEE:      gNum('srep-eligible-ee'),
+    avgWages:        gNum('srep-avg-wages'),
+    locations:       gStr('srep-locations'),
+    asi:             gNum('srep-asi'),
+    carrier:         gStr('srep-carrier'),
+    monthlyPremium:  gNum('srep-monthly-premium'),
+    contribPct:      gNum('srep-contrib-pct'),
+    renewalIncrease: gNum('srep-renewal-increase'),
+    participationRate: parseInt(document.getElementById('srep-brate') ? document.getElementById('srep-brate').value : '60', 10),
+  };
+
+  if (window._hqProspect) {
+    window._hqProspect.peoProfile = peo;
+    try {
+      const arr = getProspects();
+      const idx = arr.findIndex(function(x){ return x.company === window._hqProspect.company; });
+      if (idx >= 0) { arr[idx].peoProfile = peo; saveProspectsLocal(arr); }
+      localStorage.setItem('activeProspect', JSON.stringify(window._hqProspect));
+    } catch(e) {}
+    // Re-trigger email engine with fresh PEO data
+    if (typeof window.bpEngineTrigger === 'function') setTimeout(window.bpEngineTrigger, 600);
+  }
+
+  const ind = document.getElementById('srep-saved-indicator');
+  if (ind) { ind.textContent = '✓ PEO profile saved — flows into email engine'; setTimeout(function(){ ind.textContent=''; }, 2500); }
+};
+
+// ── Restore PEO profile fields when prospect is loaded ───────────────
+window.sreRestorePeoProfile = function(p) {
+  if (!p || !p.peoProfile) return;
+  const d = p.peoProfile;
+  const setVal = function(id, v) { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  setVal('srep-eligible-ee',      d.eligibleEE);
+  setVal('srep-avg-wages',        d.avgWages ? '$' + d.avgWages.toLocaleString('en-US') : '');
+  setVal('srep-locations',        d.locations);
+  setVal('srep-asi',              d.asi);
+  setVal('srep-carrier',          d.carrier);
+  setVal('srep-monthly-premium',  d.monthlyPremium ? '$' + d.monthlyPremium.toLocaleString('en-US') : '');
+  setVal('srep-contrib-pct',      d.contribPct);
+  setVal('srep-renewal-increase', d.renewalIncrease);
+  if (d.participationRate != null) {
+    const sl = document.getElementById('srep-brate');
+    const lb = document.getElementById('srep-brate-lbl');
+    if (sl) sl.value = d.participationRate;
+    if (lb) lb.textContent = d.participationRate + '%';
   }
 };
 
@@ -3326,6 +3474,33 @@ function bpEngineBuildContext(p, touch, atResults) {
   if (p.renewalDate)  ctx += `  Contract Renewal: ${p.renewalDate}\n`;
   if (p.adpProducts && p.adpProducts.length) ctx += `  Current ADP Products: ${p.adpProducts.join(', ')}\n`;
   if (p.clientType)   ctx += `  Client Type: ${p.clientType === 'existing' ? 'Existing ADP Client' : 'New Prospect'}\n`;
+
+  // PEO underwriting profile — only present on TotalSource track
+  if (p.track === 'TS' && p.peoProfile) {
+    const peo = p.peoProfile;
+    ctx += `\nTOTALSOURCE PEO UNDERWRITING PROFILE:\n`;
+    if (peo.eligibleEE)      ctx += `  Eligible Employees: ${peo.eligibleEE}\n`;
+    if (peo.avgWages)        ctx += `  Avg Gross Wages/EE/Year: $${peo.avgWages.toLocaleString('en-US')}\n`;
+    if (peo.eligibleEE && peo.avgWages) ctx += `  Est. Annual Total Wages: $${(peo.eligibleEE * peo.avgWages).toLocaleString('en-US')}\n`;
+    if (peo.participationRate != null)  ctx += `  Benefits Participation Rate: ${peo.participationRate}%\n`;
+    if (peo.carrier)         ctx += `  Current Carrier: ${peo.carrier}\n`;
+    if (peo.monthlyPremium)  ctx += `  Avg Monthly Premium (blended): $${peo.monthlyPremium.toLocaleString('en-US')}\n`;
+    if (peo.contribPct)      ctx += `  Employer Contribution: ${peo.contribPct}%\n`;
+    if (peo.renewalIncrease) ctx += `  Renewal Increase Offered: ${peo.renewalIncrease}%\n`;
+    if (peo.locations)       ctx += `  Number of Locations: ${peo.locations}\n`;
+    if (peo.asi)             ctx += `  ASI Score: ${peo.asi} (${peo.asi > 1.05 ? 'above neutral — higher risk pool' : peo.asi < 0.95 ? 'below neutral — favorable risk' : 'near neutral'})\n`;
+    // Derived PEO talking points
+    if (peo.renewalIncrease && peo.renewalIncrease > 5) {
+      ctx += `  ⚑ Renewal pressure: carrier increased rates ${peo.renewalIncrease}% — strong TotalSource displacement angle\n`;
+    }
+    if (peo.eligibleEE && peo.eligibleEE >= 10 && peo.eligibleEE <= 500) {
+      ctx += `  ⚑ Group size ${peo.eligibleEE} EEs is in TotalSource's PEO sweet spot (10–500)\n`;
+    }
+    if (peo.monthlyPremium && peo.eligibleEE) {
+      const annualSpend = peo.monthlyPremium * 12 * peo.eligibleEE;
+      ctx += `  ⚑ Est. current annual benefits spend: $${annualSpend.toLocaleString('en-US')} — use this in cost comparison\n`;
+    }
+  }
   if (ext.timeline)   ctx += `  Decision Timeline: ${ext.timeline}\n`;
   if (ext.budget)     ctx += `  Budget Status: ${ext.budget}\n`;
   if (ext.stage)      ctx += `  Buying Stage: ${ext.stage}\n`;
@@ -3957,8 +4132,6 @@ function ecRenderAll(){
   document.getElementById('ecs-co').textContent=p.company;
   document.getElementById('ecs-contact').textContent=p.contact||'—';
   document.getElementById('ecs-email').textContent=p.email||'—';
-  document.getElementById('ecs-track').textContent=p.track==='WFN'?'Track A':'Track B';
-  document.getElementById('ecs-track').style.color=p.track==='WFN'?'var(--blue)':'var(--red)';
   document.getElementById('ecs-profile').textContent=`${p.industry||'—'} · ${p.state||'—'} · ${p.headcount||'—'} EEs`;
   const tabsEl=document.getElementById('ec-tabs');
   if(!tabsEl)return;
