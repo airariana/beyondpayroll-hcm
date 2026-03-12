@@ -845,106 +845,13 @@ function getHQHTML(session){
       </div>
     </div>
 
-    <div class="tool-grid">
-      <div class="tool-card wfn">
-        <div class="tc-badge">STEP 01A · WFN ANALYZER</div>
-        <div class="tc-icon">🖥️</div>
-        <div class="tc-title">WorkforceNow Analyzer</div>
-        <div class="tc-desc">Identifies upgrade candidates from ADP Classic/RUN, detects competitive displacement opportunities, and calculates switching ROI for mid-market prospects.</div>
-        <div class="tc-pills">
-          <span class="tc-pill">WFN Fit Score</span><span class="tc-pill">Revenue Opportunity</span><span class="tc-pill">Urgency Level</span><span class="tc-pill">Outreach Draft</span>
+    <div class="tool-grid" style="grid-template-columns:1fr">
+      <div class="tool-card" style="border-color:var(--border);max-width:520px;margin:0 auto">
+        <div class="tc-note" style="margin-bottom:12px">
+          <span>⚡</span><span>Analysis data and competitive intel are captured in the Smart Routing Engine above. Click <strong>Mark as Run</strong> to approve and unlock the 30-Day Cadence.</span>
         </div>
-
-        <!-- DATA PULL -->
-        <div class="tc-data-pull" id="wfn-data-pull">
-          <div class="tc-dp-hdr">
-            <span>📋 Prospect Data</span>
-            <button class="tc-dp-btn pull" onclick="pullProspectToTool('wfn')">↓ Pull from Prospect</button>
-          </div>
-          <div class="tc-dp-grid" id="wfn-dp-fields">
-            <div class="tc-dp-field"><div class="tc-dp-label">Company</div><div class="tc-dp-val empty" id="wfn-dp-company">No prospect loaded</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">Industry</div><div class="tc-dp-val empty" id="wfn-dp-industry">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">Headcount</div><div class="tc-dp-val empty" id="wfn-dp-headcount">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">State</div><div class="tc-dp-val empty" id="wfn-dp-state">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">Current ADP</div><div class="tc-dp-val empty" id="wfn-dp-adp">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">Persona</div><div class="tc-dp-val empty" id="wfn-dp-persona">—</div></div>
-          </div>
-          <div class="tc-dp-actions">
-            <button class="tc-dp-btn analyze" onclick="runMarketIntel('wfn')">🔍 Run Market &amp; Competitive Analysis</button>
-            <a href="workforce-now-analyzer-v2_1.html" target="_blank" class="tc-dp-btn outline">Launch Full Tool →</a>
-          </div>
-        </div>
-
-        <!-- INLINE MARKET INTEL PANEL -->
-        <div class="mia-panel" id="wfn-mia">
-          <div class="mia-hdr">
-            <div>
-              <div class="mia-hdr-title">📊 WFN Market &amp; Competitive Intelligence</div>
-              <div style="font-size:10px;opacity:.5;margin-top:2px" id="wfn-mia-prospect-lbl">—</div>
-            </div>
-            <span class="mia-hdr-badge wfn">WorkforceNow</span>
-          </div>
-          <div class="mia-body" id="wfn-mia-body">
-            <div class="mia-loading"><div class="mia-spinner"></div>Analyzing prospect data and pulling competitive intelligence…</div>
-          </div>
-        </div>
-
-        <div class="tc-note" style="margin-top:10px">
-          <span>⚡</span><span>Click <strong>Mark as Run</strong> to approve and unlock the 30-Day Cadence.</span>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          <button class="btn btn-outline" onclick="hqMarkDone(1,'WFN Analyzer');hqApprove()">✓ Mark as Run</button>
-        </div>
-      </div>
-
-      <div class="tool-card ts">
-        <div class="tc-badge">STEP 01B · TOTALSOURCE PEO</div>
-        <div class="tc-icon">🏢</div>
-        <div class="tc-title">TotalSource PEO Eligibility Tool</div>
-        <div class="tc-desc">Runs PEO eligibility scoring, underwriting risk profiling, benefits benchmarking, and discount range estimation for ADP TotalSource prospects.</div>
-        <div class="tc-pills">
-          <span class="tc-pill">PEO Fit Score</span><span class="tc-pill">Discount Range</span><span class="tc-pill">UW Risk Profile</span><span class="tc-pill">Benefits Benchmark</span>
-        </div>
-
-        <!-- DATA PULL -->
-        <div class="tc-data-pull" id="ts-data-pull">
-          <div class="tc-dp-hdr">
-            <span>📋 Prospect Data</span>
-            <button class="tc-dp-btn pull" onclick="pullProspectToTool('ts')">↓ Pull from Prospect</button>
-          </div>
-          <div class="tc-dp-grid" id="ts-dp-fields">
-            <div class="tc-dp-field"><div class="tc-dp-label">Company</div><div class="tc-dp-val empty" id="ts-dp-company">No prospect loaded</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">Industry</div><div class="tc-dp-val empty" id="ts-dp-industry">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">Headcount</div><div class="tc-dp-val empty" id="ts-dp-headcount">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">State</div><div class="tc-dp-val empty" id="ts-dp-state">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">WC/Benefits</div><div class="tc-dp-val empty" id="ts-dp-pains">—</div></div>
-            <div class="tc-dp-field"><div class="tc-dp-label">Persona</div><div class="tc-dp-val empty" id="ts-dp-persona">—</div></div>
-          </div>
-          <div class="tc-dp-actions">
-            <button class="tc-dp-btn analyze" onclick="runMarketIntel('ts')">🔍 Run Market &amp; Competitive Analysis</button>
-            <button class="tc-dp-btn outline" onclick="openTsPanel()">Launch Full Tool →</button>
-          </div>
-        </div>
-
-        <!-- INLINE MARKET INTEL PANEL -->
-        <div class="mia-panel" id="ts-mia">
-          <div class="mia-hdr">
-            <div>
-              <div class="mia-hdr-title">📊 TotalSource Market &amp; Competitive Intelligence</div>
-              <div style="font-size:10px;opacity:.5;margin-top:2px" id="ts-mia-prospect-lbl">—</div>
-            </div>
-            <span class="mia-hdr-badge ts">TotalSource PEO</span>
-          </div>
-          <div class="mia-body" id="ts-mia-body">
-            <div class="mia-loading"><div class="mia-spinner"></div>Analyzing prospect data and pulling competitive intelligence…</div>
-          </div>
-        </div>
-
-        <div class="tc-note" style="margin-top:10px">
-          <span>⚡</span><span>Click <strong>Mark as Run</strong> to approve and unlock the 30-Day Cadence.</span>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          <button class="btn btn-outline" onclick="hqMarkDone(1,'TotalSource Tool');hqApprove()">✓ Mark as Run</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" style="background:var(--green);border-color:var(--green);color:#fff" onclick="hqMarkDone(1,'Analysis');hqApprove()">✓ Mark as Run &amp; Approve</button>
         </div>
       </div>
     </div>
