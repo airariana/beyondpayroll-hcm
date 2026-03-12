@@ -603,33 +603,94 @@ function getHQHTML(session){
           <div id="sre-transcript-status" style="font-size:10px;color:var(--text-3);margin-top:4px;min-height:14px"></div>
         </div>
 
-        <!-- ══ SAVE BUTTON ══ -->
+        <!-- SAVE BUTTON -->
         <div class="sre-run-wrap">
           <button class="sre-run-btn" onclick="sreSave()">
-            <span>💾</span><span>Save Prospect Intelligence</span><span>→</span>
+            <span>&#128190;</span><span>Save Prospect Intelligence</span><span>&#8594;</span>
           </button>
-          <div class="sre-run-sub">Captures all fields, pain points, competitor data, and extended profile into the active prospect</div>
+          <div class="sre-run-sub">Captures all fields, pain points, competitor data, and extended profile — auto-syncs to the Profiles drawer</div>
         </div>
 
-        <!-- ══ INTEL SUMMARY ══ -->
+        <!-- INTEL SUMMARY + TRACK SELECTOR -->
         <div class="sre-results" id="sre-results">
           <div class="sre-rec-hero">
             <div>
               <div class="sre-rec-lbl">Intelligence Status</div>
               <div class="sre-rec-val">
-                <div class="sre-rec-icon">📋</div>
-                <span id="sre-rec-val">—</span>
+                <div class="sre-rec-icon">&#128203;</div>
+                <span id="sre-rec-val">&#8212;</span>
               </div>
               <div style="font-size:11px;opacity:.5;margin-top:6px" id="sre-client-type-label"></div>
             </div>
             <div style="text-align:right">
               <div class="sre-rec-lbl">Data Points</div>
-              <div class="sre-conf-num" id="sre-conf">—</div>
+              <div class="sre-conf-num" id="sre-conf">&#8212;</div>
             </div>
           </div>
           <div id="sre-summary-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"></div>
-          <div class="sre-actions" style="margin-top:14px">
-            <button class="sre-action-btn primary" id="sre-proceed-btn" onclick="sreProceed()"><span>Continue to Analysis Tools</span><span>→</span></button>
+
+          <!-- TRACK SELECTOR -->
+          <div style="margin-top:20px;padding:16px;background:rgba(26,36,96,.05);border:1px solid rgba(26,36,96,.14);border-radius:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">&#127919; Select Product Track</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <div id="sre-track-wfn" onclick="sreSelectTrack('WFN')" style="padding:14px 12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;text-align:center;background:var(--white)">
+                <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px">&#128421;&#65039; ADP WorkforceNow</div>
+                <div style="font-size:10px;color:var(--text-3)">HCM platform &middot; mid-market &middot; technology-led</div>
+              </div>
+              <div id="sre-track-ts" onclick="sreSelectTrack('TS')" style="padding:14px 12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s;text-align:center;background:var(--white)">
+                <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:3px">&#129309; ADP TotalSource</div>
+                <div style="font-size:10px;color:var(--text-3)">PEO &middot; co-employment &middot; HR outsourcing</div>
+              </div>
+            </div>
+
+            <!-- Cadence Tone -->
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Cadence Tone</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <label id="sre-tone-aggressive" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;color:var(--text-2);transition:all .15s">
+                  <input type="radio" name="sre-cadence-tone" value="Aggressive" onchange="sreToneChanged('Aggressive')" style="margin:0"> &#9889; Aggressive
+                </label>
+                <label id="sre-tone-consultative" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;color:var(--text-2);transition:all .15s">
+                  <input type="radio" name="sre-cadence-tone" value="Consultative" onchange="sreToneChanged('Consultative')" style="margin:0"> &#129309; Consultative
+                </label>
+                <label id="sre-tone-nurture" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;color:var(--text-2);transition:all .15s">
+                  <input type="radio" name="sre-cadence-tone" value="Nurture" onchange="sreToneChanged('Nurture')" style="margin:0"> &#127807; Nurture
+                </label>
+              </div>
+              <div id="sre-tone-hint" style="font-size:10px;color:var(--text-3);margin-top:6px;min-height:14px;font-style:italic"></div>
+            </div>
+
+            <div id="sre-track-status" style="font-size:11px;color:var(--text-3);margin-bottom:10px;min-height:16px;font-weight:600"></div>
+
+            <!-- MARKET AND COMPETITIVE ANALYSIS -->
+            <div style="border-top:1px solid var(--border);padding-top:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div>
+                  <div style="font-size:11px;font-weight:700;color:var(--text-2)">&#128269; Market &amp; Competitive Analysis</div>
+                  <div style="font-size:10px;color:var(--text-3);margin-top:2px">AI analysis tuned to the selected product track &mdash; informs all downstream messaging</div>
+                </div>
+                <button onclick="sreRunMCA()" id="sre-mca-btn" style="flex-shrink:0;padding:8px 14px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;font-family:var(--fb);cursor:pointer;letter-spacing:.4px;white-space:nowrap">Run Analysis &#8594;</button>
+              </div>
+              <div id="sre-mca-panel" style="display:none">
+                <div class="mia-panel show" id="sre-mca-inner">
+                  <div class="mia-hdr">
+                    <div>
+                      <div class="mia-hdr-title">&#129302; AI Market &amp; Competitive Intelligence</div>
+                      <div style="font-size:10px;opacity:.5;margin-top:2px" id="sre-mca-lbl">&#8212;</div>
+                    </div>
+                    <span class="mia-hdr-badge wfn" id="sre-mca-badge">&#8212;</span>
+                  </div>
+                  <div class="mia-body" id="sre-mca-body">
+                    <div style="padding:16px;color:var(--text-3);font-size:13px;font-style:italic">Select a track and click Run Analysis to generate intelligence.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confirm track -->
+            <div style="margin-top:14px">
+              <button class="sre-action-btn primary" id="sre-proceed-btn" onclick="sreProceed()" style="width:100%"><span>&#10003; Confirm Track &amp; Continue to Analysis Tools</span><span>&#8594;</span></button>
+            </div>
           </div>
         </div>
 
@@ -2201,6 +2262,25 @@ function sreRefresh(){
       if(id){const el=document.getElementById(id);if(el)el.checked=true;}
     });
   }
+  // Restore track selector and tone if previously saved
+  if(p.track&&(p.track==='WFN'||p.track==='TS')){
+    _sreSelectedTrack=p.track;
+    selectedRole=p.track;
+    setTimeout(function(){ sreSelectTrack(p.track); },50);
+  }
+  if(p.cadenceTone){
+    _sreCadenceTone=p.cadenceTone;
+    setTimeout(function(){
+      sreToneChanged(p.cadenceTone);
+      const radios=document.querySelectorAll('[name="sre-cadence-tone"]');
+      radios.forEach(function(r){ if(r.value===p.cadenceTone) r.checked=true; });
+    },60);
+  }
+  // Restore MCA panel if result exists
+  if(p.mcaResult){
+    const mcaPanel=document.getElementById('sre-mca-panel');
+    if(mcaPanel) mcaPanel.style.display='block';
+  }
 }
 
 // ── Headcount confidence band ────────────────────────────────────
@@ -2339,8 +2419,13 @@ function sreSave(){
   _sreAnalysis={dp,pains,competitor:ext.competitor,ext};
   sreShowSummary({dp,pains,competitor:ext.competitor,ext,band,clientType:_sreClientType});
   hqAdvancePipeline(0);
-  showToast('✓ Prospect intelligence saved — '+dp+' data points captured');
+  // Auto-sync profiles drawer and header count
+  if(typeof renderSavedProspects==='function') renderSavedProspects();
+  showToast('✓ Intelligence saved & profile updated — '+dp+' data points captured');
   if(typeof fbSaveProspect==='function') fbSaveProspect(p);
+  // Restore track/tone selectors if already set
+  if(_sreSelectedTrack) sreSelectTrack(_sreSelectedTrack);
+  if(_sreCadenceTone) sreToneChanged(_sreCadenceTone);
 }
 
 function sreShowSummary(r){
@@ -2371,10 +2456,26 @@ function sreShowSummary(r){
 }
 
 function sreProceed(){
-  // Just scroll to the tool cards — rep makes their own choice
+  if(!_sreSelectedTrack){ showToast('Select ADP WorkforceNow or TotalSource above first',true); return; }
+  const trackName = _sreSelectedTrack==='WFN' ? 'ADP WorkforceNow' : 'ADP TotalSource';
+  const toneName  = _sreCadenceTone ? ' · '+_sreCadenceTone+' cadence' : '';
+  // Persist track to active prospect
+  if(window._hqProspect){
+    window._hqProspect.track = _sreSelectedTrack;
+    window._hqProspect.cadenceTone = _sreCadenceTone;
+    try{
+      const arr=getProspects();
+      const idx=arr.findIndex(function(x){return x.company===window._hqProspect.company;});
+      if(idx>=0){arr[idx].track=_sreSelectedTrack;arr[idx].cadenceTone=_sreCadenceTone;saveProspectsLocal(arr);}
+      localStorage.setItem('activeProspect',JSON.stringify(window._hqProspect));
+    }catch(e){}
+    if(typeof renderSavedProspects==='function') renderSavedProspects();
+    if(typeof fbSaveProspect==='function') fbSaveProspect(window._hqProspect);
+  }
+  // Scroll to analysis tools
   const toolGrid=document.querySelector('.tool-grid');
   if(toolGrid) toolGrid.scrollIntoView({behavior:'smooth',block:'start'});
-  showToast('Select your analysis tool below ↓');
+  showToast('Track confirmed: '+trackName+toneName+' — select analysis tool below');
 }
 
 // Legacy stubs — kept so existing callers don't throw
@@ -2416,14 +2517,200 @@ function sreCalcFit(data){
   return{rec,conf,peo,wfn,peoF,wfnF};
 }
 
-// Legacy sreRun — redirects to new sreSave for backward compat
-function sreRun(){ sreSave(); }
+// ── Track selector ───────────────────────────────────────────────
+let _sreSelectedTrack = '';
+let _sreCadenceTone   = '';
 
-// Legacy sreShowResults — no-op, sreShowSummary replaces it
-function sreShowResults(r){}
+const TONE_HINTS = {
+  Aggressive:   'Short, direct, urgency-driven. Assumes pain is real. High-frequency touches. Best when contract renewal is close or pain is confirmed.',
+  Consultative: 'Value-first, educational. Builds case over time. Best for mid-funnel prospects who are evaluating options.',
+  Nurture:      'Low-pressure, relationship-building. Long-play cadence. Best for early-stage prospects with no confirmed timeline.'
+};
 
-// Legacy sreOverride — no-op (no track routing)
-function sreOverride(){}
+const TRACK_TONE_DEFAULTS = {
+  WFN: { hint: 'WorkforceNow messaging focuses on technology ROI, platform stability, and compliance automation.' },
+  TS:  { hint: 'TotalSource messaging focuses on HR outsourcing, benefits savings, workers\' comp relief, and co-employment value.' }
+};
+
+window.sreSelectTrack = function(track) {
+  _sreSelectedTrack = track;
+  selectedRole = track;
+  const wfnEl = document.getElementById('sre-track-wfn');
+  const tsEl  = document.getElementById('sre-track-ts');
+  const statusEl = document.getElementById('sre-track-status');
+  if (wfnEl) {
+    wfnEl.style.borderColor  = track === 'WFN' ? 'var(--navy)' : 'var(--border)';
+    wfnEl.style.background   = track === 'WFN' ? 'rgba(26,36,96,.07)' : 'var(--white)';
+    wfnEl.style.boxShadow    = track === 'WFN' ? '0 0 0 3px rgba(26,36,96,.12)' : 'none';
+  }
+  if (tsEl) {
+    tsEl.style.borderColor   = track === 'TS' ? 'var(--red)' : 'var(--border)';
+    tsEl.style.background    = track === 'TS' ? 'rgba(220,53,69,.05)' : 'var(--white)';
+    tsEl.style.boxShadow     = track === 'TS' ? '0 0 0 3px rgba(220,53,69,.1)' : 'none';
+  }
+  if (statusEl) {
+    const hint = TRACK_TONE_DEFAULTS[track];
+    statusEl.textContent = hint ? hint.hint : '';
+    statusEl.style.color = track === 'WFN' ? 'var(--navy)' : 'var(--red)';
+  }
+  // Also update the legacy selectTrack so downstream code stays in sync
+  if (typeof selectTrack === 'function') selectTrack(track);
+  // Persist to active prospect immediately
+  if (window._hqProspect) {
+    window._hqProspect.track = track;
+    try {
+      const arr = getProspects();
+      const idx = arr.findIndex(function(x){ return x.company === window._hqProspect.company; });
+      if (idx >= 0) { arr[idx].track = track; saveProspectsLocal(arr); }
+      localStorage.setItem('activeProspect', JSON.stringify(window._hqProspect));
+    } catch(e) {}
+  }
+  showToast('Track set: ' + (track === 'WFN' ? 'ADP WorkforceNow' : 'ADP TotalSource'));
+};
+
+window.sreToneChanged = function(tone) {
+  _sreCadenceTone = tone;
+  const hintEl = document.getElementById('sre-tone-hint');
+  if (hintEl) hintEl.textContent = TONE_HINTS[tone] || '';
+  // Highlight selected tone label
+  ['Aggressive','Consultative','Nurture'].forEach(function(t) {
+    const el = document.getElementById('sre-tone-' + t.toLowerCase());
+    if (el) {
+      const active = t === tone;
+      el.style.borderColor  = active ? 'var(--navy)' : 'var(--border)';
+      el.style.background   = active ? 'rgba(26,36,96,.07)' : '';
+      el.style.color        = active ? 'var(--navy)' : 'var(--text-2)';
+    }
+  });
+  // Persist to active prospect
+  if (window._hqProspect) {
+    window._hqProspect.cadenceTone = tone;
+    try {
+      const arr = getProspects();
+      const idx = arr.findIndex(function(x){ return x.company === window._hqProspect.company; });
+      if (idx >= 0) { arr[idx].cadenceTone = tone; saveProspectsLocal(arr); }
+      localStorage.setItem('activeProspect', JSON.stringify(window._hqProspect));
+    } catch(e) {}
+  }
+};
+
+// ── Inline Market & Competitive Analysis from SRE ────────────────
+window.sreRunMCA = function() {
+  const p = window._hqProspect;
+  if (!p) { showToast('Save a prospect first', true); return; }
+  if (!_sreSelectedTrack) { showToast('Select a product track above first', true); return; }
+
+  const panel = document.getElementById('sre-mca-panel');
+  const body  = document.getElementById('sre-mca-body');
+  const lbl   = document.getElementById('sre-mca-lbl');
+  const badge = document.getElementById('sre-mca-badge');
+  const btn   = document.getElementById('sre-mca-btn');
+  if (!panel || !body) return;
+
+  panel.style.display = 'block';
+  const isWFN = _sreSelectedTrack === 'WFN';
+  if (badge) { badge.textContent = isWFN ? 'WorkforceNow' : 'TotalSource PEO'; badge.className = 'mia-hdr-badge ' + (isWFN ? 'wfn' : 'ts'); }
+  if (lbl) lbl.textContent = p.company + ' · ' + (p.industry||'?') + ' · ' + (p.headcount||'?') + ' EEs · ' + (_sreCadenceTone||'No tone set');
+  if (btn) { btn.textContent = '&#8635; Regenerate'; btn.disabled = true; }
+  body.innerHTML = '<div class="mia-loading"><div class="mia-spinner"></div>Generating ' + (isWFN ? 'WorkforceNow' : 'TotalSource PEO') + ' competitive analysis for ' + p.company + '...</div>';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  const ext = p.extProfile || {};
+  const pains = (p.painPoints || []).join(', ') || 'Not specified';
+  const competitor = p.competitor || 'Unknown';
+  const tone = _sreCadenceTone || 'Consultative';
+  const track = isWFN ? 'ADP WorkforceNow' : 'ADP TotalSource PEO';
+
+  const prompt = 'You are a senior ADP competitive intelligence director. Generate a targeted market and competitive analysis for an ADP sales rep.\n\nPRODUCT TRACK: ' + track + '\nCADENCE TONE: ' + tone + '\n\nPROSPECT:\n- Company: ' + p.company + '\n- Industry: ' + (p.industry||'Unknown') + '\n- Headcount: ' + (p.headcount||'Unknown') + (p.headcountRange ? ' (range: '+p.headcountRange+')' : '') + '\n- State: ' + (p.state||'Unknown') + '\n- Client Type: ' + (p.clientType||'New Prospect') + '\n- ADP Products: ' + ((p.adpProducts||[]).join(', ')||'None') + '\n- Incumbent: ' + competitor + (p.renewalDate ? ' (renewal: '+p.renewalDate+')' : '') + '\n- Pain Points: ' + pains + '\n- Decision Timeline: ' + (ext.timeline||'Unknown') + '\n- Buying Stage: ' + (ext.stage||'Unknown') + '\n- Other Vendors: ' + (ext.otherVendors||'Unknown') + '\n- Budget: ' + (ext.budget||'Unknown') + '\n- Growth Plans: ' + (ext.growth||'Unknown') + '\n\nGenerate analysis in this EXACT JSON format (no markdown, no code blocks):\n{\n  "executive_summary": "3-sentence sharp assessment referencing specific pain points and the selected product track",\n  "track_fit": {\n    "why_this_track": ["3-4 specific reasons why ' + track + ' is right for this prospect"],\n    "key_differentiators": ["3-4 ADP differentiators vs ' + competitor + ' for this profile"]\n  },\n  "competitive_intel": [\n    {"competitor": "' + competitor + '", "threat_level": "High/Medium/Low", "counter": "Specific 1-sentence counter-position"},\n    {"competitor": "Second most likely competitor", "threat_level": "High/Medium/Low", "counter": "Specific counter"}\n  ],\n  "tone_strategy": {\n    "tone": "' + tone + '",\n    "opening_hook": "1-sentence opening hook for Day 1 email based on their pain points and track",\n    "primary_message": "The core value message for this track for this specific prospect",\n    "objection_prep": ["Top 2-3 objections this prospect will likely raise with rebuttals"]\n  },\n  "talk_track": "A 3-4 sentence discovery talk track for the first call, tuned to ' + tone + ' tone and ' + track + '"\n}';
+
+  bpGeminiFetch({messages:[{role:'user', content: prompt}]})
+    .then(function(res){ return res.json(); })
+    .then(function(data) {
+      const raw = bpGeminiText(data);
+      if (btn) { btn.innerHTML = '&#8635; Regenerate'; btn.disabled = false; }
+      try {
+        const clean = (raw||'').replace(/```json|```/g,'').trim();
+        const d = JSON.parse(clean);
+
+        let html = '';
+        // Executive summary
+        html += '<div class="mia-insight"><div class="mia-insight-lbl">Executive Summary</div>';
+        html += '<div class="mia-insight-val">' + escHtml(d.executive_summary||'') + '</div></div>';
+
+        // Track fit
+        if (d.track_fit) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Why ' + track + ' For This Prospect</div><ul style="margin:6px 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
+          (d.track_fit.why_this_track||[]).forEach(function(f){ html += '<li>' + escHtml(f) + '</li>'; });
+          html += '</ul></div>';
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Key Differentiators vs ' + escHtml(competitor) + '</div><ul style="margin:6px 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
+          (d.track_fit.key_differentiators||[]).forEach(function(f){ html += '<li>' + escHtml(f) + '</li>'; });
+          html += '</ul></div>';
+        }
+
+        // Competitive intel
+        if (d.competitive_intel && d.competitive_intel.length) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Competitive Threats</div>';
+          d.competitive_intel.forEach(function(c) {
+            const color = c.threat_level==='High' ? 'var(--red)' : c.threat_level==='Medium' ? 'var(--gold)' : 'var(--green)';
+            html += '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start">';
+            html += '<div style="min-width:90px;font-size:11px;font-weight:700;color:var(--text-2)">' + escHtml(c.competitor||'') + '</div>';
+            html += '<div style="font-size:10px;padding:2px 7px;border-radius:3px;background:rgba(0,0,0,.05);color:'+color+';font-weight:700;white-space:nowrap">' + escHtml(c.threat_level||'') + '</div>';
+            html += '<div style="font-size:12px;color:var(--text-2);flex:1">' + escHtml(c.counter||'') + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+
+        // Tone strategy
+        if (d.tone_strategy) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">' + escHtml(tone) + ' Tone Strategy</div>';
+          html += '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Opening Hook</div>';
+          html += '<div style="font-size:12px;color:var(--text);font-style:italic;padding:8px 10px;background:var(--off-white);border-radius:6px;border-left:3px solid var(--navy)">' + escHtml(d.tone_strategy.opening_hook||'') + '</div></div>';
+          html += '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Primary Message</div>';
+          html += '<div style="font-size:12px;color:var(--text-2)">' + escHtml(d.tone_strategy.primary_message||'') + '</div></div>';
+          if (d.tone_strategy.objection_prep && d.tone_strategy.objection_prep.length) {
+            html += '<div><div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Objection Prep</div><ul style="margin:0 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
+            d.tone_strategy.objection_prep.forEach(function(o){ html += '<li>' + escHtml(o) + '</li>'; });
+            html += '</ul></div>';
+          }
+          html += '</div>';
+        }
+
+        // Talk track
+        if (d.talk_track) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Discovery Talk Track</div>';
+          html += '<div style="font-size:12px;color:var(--text);line-height:1.7;padding:10px 12px;background:var(--off-white);border-radius:6px;border-left:3px solid var(--gold)">' + escHtml(d.talk_track) + '</div></div>';
+        }
+
+        // Action buttons
+        html += '<div class="mia-acts">';
+        html += '<button class="mia-act-btn primary" onclick="sreProceed()">&#10003; Confirm Track &amp; Continue &#8594;</button>';
+        html += '<button class="mia-act-btn outline" onclick="sreRunMCA()">&#8635; Regenerate</button>';
+        html += '</div>';
+
+        body.innerHTML = html;
+
+        // Persist MCA result to prospect
+        if (window._hqProspect) {
+          window._hqProspect.mcaResult = d;
+          window._hqProspect.mcaTrack  = _sreSelectedTrack;
+          window._hqProspect.mcaTone   = _sreCadenceTone;
+          try {
+            const arr = getProspects();
+            const idx = arr.findIndex(function(x){ return x.company === window._hqProspect.company; });
+            if (idx >= 0) { arr[idx].mcaResult = d; arr[idx].mcaTrack = _sreSelectedTrack; arr[idx].mcaTone = _sreCadenceTone; saveProspectsLocal(arr); }
+            localStorage.setItem('activeProspect', JSON.stringify(window._hqProspect));
+          } catch(e) {}
+        }
+      } catch(e) {
+        body.innerHTML = '<div class="mia-error"><div class="mia-err-icon">&#9888;&#65039;</div><div>Could not parse AI response. <button onclick="sreRunMCA()">Retry</button></div></div>';
+      }
+    })
+    .catch(function(err) {
+      if (btn) { btn.innerHTML = '&#8635; Regenerate'; btn.disabled = false; }
+      body.innerHTML = '<div class="mia-error"><div class="mia-err-icon">&#9888;&#65039;</div><div>Analysis failed: ' + escHtml(String(err)) + '. <button onclick="sreRunMCA()">Retry</button></div></div>';
+    });
+};
 
 // Auto-refresh SRE on prospect storage events
 document.addEventListener('DOMContentLoaded',sreRefresh);
@@ -5373,15 +5660,41 @@ window.ppShowProfile = function(idx) {
           '</div>',
         '</div>',
         '<div class="pp-section">',
-          '<div class="pp-section-ttl">Smart Routing Engine Results</div>',
+          '<div class="pp-section-ttl">Sales Intelligence</div>',
           '<div class="pp-grid">',
-            '<div class="pp-field"><div class="pp-field-lbl">Recommendation</div><div class="pp-field-val '+(isTS?'red':'blue')+'">'+escHtml(p.sreRecommendation||'&#8212;')+'</div></div>',
-            '<div class="pp-field"><div class="pp-field-lbl">Confidence</div><div class="pp-field-val">'+(p.sreConfidence ? p.sreConfidence+'%' : '&#8212;')+'</div></div>',
-            '<div class="pp-field"><div class="pp-field-lbl">WFN Score</div><div class="pp-field-val blue">'+(p.sreWfnScore||'&#8212;')+'</div></div>',
-            '<div class="pp-field"><div class="pp-field-lbl">PEO Score</div><div class="pp-field-val red">'+(p.srePeoScore||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Product Track</div><div class="pp-field-val '+(isTS?'red':'blue')+'">'+(isTS?'TotalSource PEO':'WorkforceNow')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Cadence Tone</div><div class="pp-field-val">'+escHtml(p.cadenceTone||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Incumbent</div><div class="pp-field-val">'+escHtml(p.competitor||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Renewal Date</div><div class="pp-field-val">'+escHtml(p.renewalDate||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Headcount Band</div><div class="pp-field-val">'+escHtml(p.headcountBand ? p.headcountBand+' ('+p.headcountRange+' EEs)' : '&#8212;')+'</div></div>',
             '<div class="pp-field"><div class="pp-field-lbl">Current ADP Products</div><div class="pp-field-val">'+((p.adpProducts||[]).join(', ')||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Data Points</div><div class="pp-field-val">'+(p.sreDataPoints ? p.sreDataPoints+' captured' : '&#8212;')+'</div></div>',
             '<div class="pp-field"><div class="pp-field-lbl">LinkedIn</div><div class="pp-field-val">'+linkedinLink+'</div></div>',
           '</div>',
+          // Extended profile fields
+          (function(){
+            var ext = p.extProfile || {};
+            var extFields = [
+              ['Timeline', ext.timeline], ['Budget', ext.budget], ['Buying Stage', ext.stage],
+              ['Champion', ext.champion], ['Economic Buyer', ext.economicBuyer],
+              ['Other Vendors', ext.otherVendors], ['States of Operation', ext.states],
+              ['Growth Plans', ext.growth], ['DOL/IRS Notices', ext.notices],
+              ['Discovery Notes', ext.notes]
+            ].filter(function(f){ return f[1] && String(f[1]).trim(); });
+            if (!extFields.length) return '';
+            return '<div class="pp-grid" style="margin-top:8px">'
+              + extFields.map(function(f){
+                  return '<div class="pp-field"><div class="pp-field-lbl">'+escHtml(f[0])+'</div><div class="pp-field-val">'+escHtml(String(f[1]))+'</div></div>';
+                }).join('')
+              + '</div>';
+          })(),
+          // MCA executive summary if available
+          (p.mcaResult && p.mcaResult.executive_summary ? (
+            '<div style="margin-top:10px;padding:10px 12px;background:rgba(26,36,96,.05);border-left:3px solid var(--navy);border-radius:0 6px 6px 0">'
+            + '<div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">AI Competitive Summary · '+(p.mcaTrack==='WFN'?'WorkforceNow':'TotalSource')+(p.mcaTone?' · '+p.mcaTone:'')+'</div>'
+            + '<div style="font-size:12px;color:var(--text-2);line-height:1.6">'+escHtml(p.mcaResult.executive_summary)+'</div>'
+            + '</div>'
+          ) : ''),
         '</div>',
         '<div class="pp-section">',
           '<div class="pp-section-ttl">Confirmed Pain Points</div>',
@@ -9185,7 +9498,13 @@ function atCollectSreContext() {
     sreWfnScore: analysis ? (analysis.wfn || '') : '',
     srePeoScore: analysis ? (analysis.peo || '') : '',
     srePrimaryFactors: analysis ? (analysis.wfnF || analysis.peoF || []) : [],
-    sreRan: !!(analysis || p.sreSavedAt)
+    sreRan: !!(analysis || p.sreSavedAt),
+    // Track, tone, and MCA intelligence
+    track: window._sreSelectedTrack || p.track || '',
+    cadenceTone: window._sreCadenceTone || p.cadenceTone || '',
+    mcaResult: p.mcaResult || null,
+    mcaTrack: p.mcaTrack || '',
+    mcaTone: p.mcaTone || ''
   };
 }
 
@@ -9464,6 +9783,16 @@ function atCallClaude(tool, data) {
     if (ext.notices && ext.notices !== '') sreBlock += '  DOL/IRS Notices: ' + ext.notices + '\n';
     if (ext.otherVendors) sreBlock += '  Other Vendors Evaluated: ' + ext.otherVendors + '\n';
     if (ext.extNotes) sreBlock += '  Discovery Notes: ' + ext.extNotes + '\n';
+    // Track, tone, and MCA intelligence
+    if (data.track) sreBlock += '  Product Track: ' + (data.track === 'WFN' ? 'ADP WorkforceNow' : 'ADP TotalSource PEO') + '\n';
+    if (data.cadenceTone) sreBlock += '  Cadence Tone: ' + data.cadenceTone + '\n';
+    if (data.mcaResult) {
+      var mca = data.mcaResult;
+      if (mca.executive_summary) sreBlock += '  AI Competitive Assessment: ' + mca.executive_summary + '\n';
+      if (mca.tone_strategy && mca.tone_strategy.primary_message) sreBlock += '  Core Value Message: ' + mca.tone_strategy.primary_message + '\n';
+      if (mca.tone_strategy && mca.tone_strategy.opening_hook) sreBlock += '  Opening Hook: ' + mca.tone_strategy.opening_hook + '\n';
+      if (mca.talk_track) sreBlock += '  Talk Track: ' + mca.talk_track + '\n';
+    }
   } else {
     sreBlock += '\nPROSPECT INTELLIGENCE: Not yet collected — infer from firmographic data.\n';
   }
