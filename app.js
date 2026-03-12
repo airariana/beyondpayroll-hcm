@@ -184,6 +184,9 @@ function enterHQ(session){
       window.pullProspectToTool('wfn');
       window.pullProspectToTool('ts');
     }
+    // ── Background Email Engine: start on login ──
+    if(typeof window.bpEngineInit==='function') window.bpEngineInit(session);
+    if(typeof window.bpEngineInjectBadge==='function') setTimeout(window.bpEngineInjectBadge, 600);
   }, 400);
   // Close dropdown on outside click
   document.addEventListener('click',function(e){
@@ -2383,6 +2386,8 @@ function sreProceed(){
   const toolGrid=document.querySelector('.tool-grid');
   if(toolGrid) toolGrid.scrollIntoView({behavior:'smooth',block:'start'});
   showToast('Track confirmed: '+trackName+toneName+' — select analysis tool below');
+  // ── Background Email Engine: begin pre-generating emails on track confirm ──
+  if(typeof window.bpEngineTrigger==='function') setTimeout(window.bpEngineTrigger, 800);
 }
 
 // Legacy stubs — kept so existing callers don't throw
@@ -3250,6 +3255,374 @@ window.hqApprove=function(){
     window._hqProspect.approved=true;
   }
   showToast('Cadence approved — 30-Day Cadence unlocked ⚡');
+  // ── Background Email Engine: fire immediately on approval ──
+  if(typeof window.bpEngineTrigger==='function') window.bpEngineTrigger();
+};
+
+// ── COMPOSER ──
+// ═══════════════════════════════════════════════════════════════════════
+//  BACKGROUND EMAIL ENGINE  (bpEmailEngine)
+//
+//  Starts at login. Watches for a prospect + confirmed track toggle.
+//  When both are present it silently generates all 5 cadence emails using:
+//    1. Full SRE profile data  (pain points, competitor, renewal, transcript…)
+//    2. Analysis tool results  (_atResults) if already run — injected live
+//    3. MCA competitive intel  (p.mcaResult) if run
+//  Emails are written into touch._proseBody before the rep ever opens the
+//  cadence composer. If analysis runs AFTER the engine already fired it
+//  re-generates the relevant touches with the richer data automatically.
+//
+//  Engine state lives on window._bpEngine — never on any prospect object.
+// ═══════════════════════════════════════════════════════════════════════
+
+window._bpEngine = {
+  active:      false,   // running this session?
+  prospectKey: null,    // company key of last generated set
+  trackKey:    null,    // 'WFN' | 'TS' of last generated set
+  toneKey:     null,    // tone of last generated set
+  atSnapshot:  null,    // JSON snapshot of _atResults at generation time
+  status:      'idle',  // 'idle' | 'running' | 'ready' | 'error'
+  queue:       [],      // touch indices still pending
+  generated:   {},      // { touchIndex: true } for completed touches
+  errors:      {},      // { touchIndex: errorMsg }
+  _watchTimer: null,
+  _retryTimer: null,
+};
+
+// ── Status badge helper ───────────────────────────────────────────────
+function bpEngineSetStatus(status, detail) {
+  window._bpEngine.status = status;
+  const el = document.getElementById('bp-engine-badge');
+  if (!el) return;
+  const MAP = {
+    idle:    { icon: '◌', text: 'Email engine idle',     cls: '' },
+    running: { icon: '⟳', text: detail || 'Generating emails…', cls: 'running' },
+    ready:   { icon: '✓', text: detail || 'Emails ready',       cls: 'ready'   },
+    error:   { icon: '!', text: detail || 'Engine error',        cls: 'error'   },
+  };
+  const s = MAP[status] || MAP.idle;
+  el.innerHTML = `<span class="bee-icon">${s.icon}</span><span class="bee-txt">${s.text}</span>`;
+  el.className = 'bp-engine-badge ' + s.cls;
+}
+
+// ── Build rich context string for one touch ───────────────────────────
+function bpEngineBuildContext(p, touch, atResults) {
+  const co  = p.company    || '[Company]';
+  const nm  = (p.contact   || '').split(' ')[0] || '[Name]';
+  const ind = p.industry   || '[Industry]';
+  const st  = p.state      || '[State]';
+  const hc  = p.headcount  || '[X]';
+  const ext = p.extProfile || {};
+
+  let ctx = `PROSPECT PROFILE:\n`;
+  ctx += `  Company: ${co}\n`;
+  ctx += `  First Name: ${nm}\n`;
+  ctx += `  Industry: ${ind}\n`;
+  ctx += `  State: ${st}\n`;
+  ctx += `  Headcount: ${hc} employees (${p.headcountBand || 'mid-market'})\n`;
+  ctx += `  Product Track: ${p.track === 'WFN' ? 'ADP WorkforceNow (HCM)' : 'ADP TotalSource (PEO)'}\n`;
+  if (p.cadenceTone)  ctx += `  Cadence Tone: ${p.cadenceTone}\n`;
+  if (p.competitor)   ctx += `  Incumbent / Competitor: ${p.competitor}\n`;
+  if (p.renewalDate)  ctx += `  Contract Renewal: ${p.renewalDate}\n`;
+  if (p.adpProducts && p.adpProducts.length) ctx += `  Current ADP Products: ${p.adpProducts.join(', ')}\n`;
+  if (p.clientType)   ctx += `  Client Type: ${p.clientType === 'existing' ? 'Existing ADP Client' : 'New Prospect'}\n`;
+  if (ext.timeline)   ctx += `  Decision Timeline: ${ext.timeline}\n`;
+  if (ext.budget)     ctx += `  Budget Status: ${ext.budget}\n`;
+  if (ext.stage)      ctx += `  Buying Stage: ${ext.stage}\n`;
+  if (ext.champion)   ctx += `  Champion: ${ext.champion}\n`;
+  if (ext.econBuyer)  ctx += `  Economic Buyer: ${ext.econBuyer}\n`;
+  if (ext.statesOps)  ctx += `  States of Operation: ${ext.statesOps}\n`;
+  if (ext.growth)     ctx += `  Growth Plans: ${ext.growth}\n`;
+  if (ext.notices && ext.notices !== '') ctx += `  DOL/IRS Notices: ${ext.notices}\n`;
+  if (ext.otherVendors) ctx += `  Other Vendors Evaluated: ${ext.otherVendors}\n`;
+  if (ext.extNotes)   ctx += `  Discovery Notes: ${ext.extNotes}\n`;
+
+  if (p.painPoints && p.painPoints.length) {
+    ctx += `\nCONFIRMED PAIN POINTS (rep-verified from discovery / Gong):\n`;
+    p.painPoints.forEach(function(pp){ ctx += `  • ${pp}\n`; });
+  }
+
+  if (p.transcript && p.transcript.length > 20) {
+    ctx += `\nGONG TRANSCRIPT EXTRACT (use for exact language, tone, objections):\n"""\n`;
+    ctx += p.transcript.substring(0, 1800) + (p.transcript.length > 1800 ? '\n[...truncated]' : '') + '\n"""\n';
+  }
+
+  if (p.mcaResult) {
+    const mca = p.mcaResult;
+    ctx += `\nAI MARKET & COMPETITIVE ANALYSIS:\n`;
+    if (mca.executive_summary)                       ctx += `  Summary: ${mca.executive_summary}\n`;
+    if (mca.tone_strategy && mca.tone_strategy.opening_hook)    ctx += `  Opening Hook: ${mca.tone_strategy.opening_hook}\n`;
+    if (mca.tone_strategy && mca.tone_strategy.primary_message) ctx += `  Primary Message: ${mca.tone_strategy.primary_message}\n`;
+    if (mca.talk_track)                              ctx += `  Talk Track: ${mca.talk_track}\n`;
+    if (mca.competitive_intel && mca.competitive_intel.length) {
+      ctx += `  Competitive Intel:\n`;
+      mca.competitive_intel.slice(0,3).forEach(function(c){
+        ctx += `    - ${c.competitor}: ${c.counter || ''}\n`;
+      });
+    }
+    if (mca.tone_strategy && mca.tone_strategy.objection_prep && mca.tone_strategy.objection_prep.length) {
+      ctx += `  Objection Prep:\n`;
+      mca.tone_strategy.objection_prep.slice(0,2).forEach(function(o){ ctx += `    • ${o}\n`; });
+    }
+  }
+
+  // Inject live analysis tool results if available
+  if (atResults) {
+    const wfnR = atResults.wfn || atResults.full;
+    const tsR  = atResults.ts  || atResults.full;
+    const useR = (p.track === 'WFN') ? wfnR : tsR;
+    if (useR && typeof useR === 'object') {
+      ctx += `\nANALYSIS TOOL OUTPUT (use specific numbers and findings):\n`;
+      if (useR.executive_summary) ctx += `  Key Finding: ${useR.executive_summary}\n`;
+      if (useR.wfn_analysis) {
+        const w = useR.wfn_analysis;
+        if (w.headline)       ctx += `  WFN Value Prop: ${w.headline}\n`;
+        if (w.roi_estimate)   ctx += `  ROI Estimate: ${w.roi_estimate}\n`;
+        if (w.payback_months) ctx += `  Payback: ${w.payback_months} months\n`;
+        if (w.key_modules && w.key_modules.length) ctx += `  Key Modules: ${w.key_modules.join(', ')}\n`;
+        if (w.displacement_playbook) ctx += `  Displacement Play: ${w.displacement_playbook}\n`;
+      }
+      if (useR.ts_analysis) {
+        const t = useR.ts_analysis;
+        if (t.headline)               ctx += `  TotalSource Value Prop: ${t.headline}\n`;
+        if (t.pepm_range)             ctx += `  PEPM Range: ${t.pepm_range}\n`;
+        if (t.annual_savings_estimate) ctx += `  Est. Annual Savings: ${t.annual_savings_estimate}\n`;
+      }
+      if (useR.competitive_positioning) ctx += `  Competitive Position: ${useR.competitive_positioning}\n`;
+    }
+    const mktR = atResults.market || (atResults.full && atResults.full.market_intel);
+    if (mktR && typeof mktR === 'object') {
+      if (mktR.market_headline) ctx += `  Market Headline: ${mktR.market_headline}\n`;
+      if (mktR.recent_news)     ctx += `  Recent News: ${mktR.recent_news}\n`;
+      if (mktR.talking_point)   ctx += `  Talking Point: ${mktR.talking_point}\n`;
+    }
+  }
+
+  ctx += `\nCADENCE TOUCH: Day ${touch.day} — ${touch.label}\n`;
+  const toneInstructions = {
+    Aggressive:    'Be assertive and urgency-forward. Reference cost, competitive risk, or missed opportunity. Push for a specific time commitment.',
+    Consultative:  'Lead with insight and data. Position yourself as a trusted advisor first. Ask questions before asserting solutions.',
+    Nurture:       'Low pressure. Add value with one concrete piece of data or insight. Keep the door open without pushing.',
+  };
+  const toneHint = toneInstructions[p.cadenceTone] || toneInstructions.Consultative;
+  ctx += `TONE INSTRUCTION: ${toneHint}\n`;
+
+  return ctx;
+}
+
+// ── System prompt per touch (elastic — adapts to track + tone) ────────
+function bpEngineGetPrompt(touch, track, tone) {
+  const trackLabel = track === 'WFN' ? 'ADP WorkforceNow (HCM)' : 'ADP TotalSource (PEO)';
+  const toneGuide = {
+    Aggressive:   'You write like a sharp, confident sales rep who knows the numbers and is not afraid to create urgency.',
+    Consultative: 'You write like a trusted HCM advisor — data-forward, curious, peer-level. Never salesy.',
+    Nurture:      'You write like a patient, thoughtful rep adding value over time. No pressure, just signal.',
+  };
+  const style = toneGuide[tone] || toneGuide.Consultative;
+
+  return `You are an elite B2B sales email writer specializing in ${trackLabel}.
+${style}
+
+UNIVERSAL RULES — apply without exception:
+- Output ONLY the email body. No subject line. No labels. No preamble. No explanation.
+- Never render markdown. No asterisks, no bullet points, no bold formatting.
+- One core insight per email — pick the sharpest data point and build around it.
+- 3–5 sentences maximum in the body. Every sentence must earn its place.
+- Use first name only in the greeting. Never leave placeholder brackets in output.
+- Tone: knowledgeable peer passing along a useful heads-up. Never a pitch.
+- Never write: "I hope this finds you well", "Just following up", "I wanted to reach out", "Worth a quick conversation?", "circle back", "touch base", "leverage", "synergy".
+- End with ONE specific low-friction ask — a day, a time, a yes/no question. Never open-ended.
+- The email must read as if written by a human who genuinely knows this company. Never generic.
+- Use specific numbers, percentages, and named competitors from the context — this is what makes it real.
+- Sign-off line (include exactly, on its own line after a blank line):
+—
+[Your Name]
+ADP | BeyondPayroll HCM Specialist
+[Your Direct Line]
+[Calendar Link]
+beyondpayroll.net
+
+TOUCH CONTEXT — Day ${touch.day} (${touch.label}):
+${bpEngineTouchInstruction(touch.day, track)}`;
+}
+
+function bpEngineTouchInstruction(day, track) {
+  const isWFN = track === 'WFN';
+  const instructions = {
+    2:  isWFN
+      ? 'First real outreach. Hook them on a specific insight about their ADP setup — unused modules, benchmark gap, or competitive movement. No generic opener. The first sentence should feel like you did your homework specifically on them.'
+      : 'First real outreach. Challenge their current PEO math at their headcount. Most CFOs are surprised by the PEPM delta at this stage. Make them curious enough to run the numbers.',
+    8:  isWFN
+      ? 'Mid-cadence. Lead with a specific cost benchmark, compliance update, or ROI number relevant to their state and industry. Reference analysis data if available. One data point, specific and credible.'
+      : 'Mid-cadence. Show the actual cost comparison math — PEPM vs. standalone HCM at their headcount. Use the analysis output if available. Make it feel like you built this specifically for them.',
+    15: isWFN
+      ? 'Compliance or market-intelligence angle. Reference a real state-level update, a module gap, or a competitive move in their industry. Keep it useful, not alarmist.'
+      : 'Case study angle. Reference how a comparable company at similar headcount restructured away from PEO and what it meant for their bottom line. Use any analysis data available.',
+    22: 'Respectful breakup. Acknowledge you have reached out several times. Summarize the one most compelling thing you surfaced. Leave the door open without begging. Warm and direct.',
+    30: 'Community/scorecard close. Reference the scorecard or briefing. Frame it as a resource they can keep regardless of next steps. Soft invitation, no pressure.'
+  };
+  return instructions[day] || 'Continue building the relationship with a relevant data point or insight.';
+}
+
+// ── Core: generate one touch asynchronously ───────────────────────────
+async function bpEngineGenTouch(touch, p, atResults) {
+  const systemPrompt = bpEngineGetPrompt(touch, p.track, p.cadenceTone);
+  const rawContext   = bpEngineBuildContext(p, touch, atResults);
+  const userMsg      = `Here is the full prospect and intel data. Write a single natural, human email body following your instructions exactly.\n\nDATA:\n${rawContext}`;
+
+  try {
+    const resp = await bpGeminiFetch({ messages: [{ role: 'user', content: systemPrompt + '\n\n' + userMsg }] });
+    const data = await resp.json();
+    const result = bpGeminiText(data).trim();
+    if (!result || result.length < 30) throw new Error('Empty response');
+    return result;
+  } catch(e) {
+    console.warn('[EmailEngine] Touch Day', touch.day, 'failed:', e.message);
+    throw e;
+  }
+}
+
+// ── Main engine runner ────────────────────────────────────────────────
+async function bpEngineRun(p, forceRegenAll) {
+  const eng = window._bpEngine;
+  if (eng.status === 'running') return; // don't double-run
+  if (!p || !p.track) return;           // need track selected
+
+  // Check if we need to re-run (different prospect, track, tone, or new analysis data)
+  const atSnap    = JSON.stringify(window._atResults || {});
+  const sameBase  = eng.prospectKey === p.company && eng.trackKey === p.track && eng.toneKey === (p.cadenceTone || '');
+  const sameAt    = eng.atSnapshot === atSnap;
+  if (sameBase && sameAt && !forceRegenAll && eng.status === 'ready') return;
+
+  eng.active      = true;
+  eng.prospectKey = p.company;
+  eng.trackKey    = p.track;
+  eng.toneKey     = p.cadenceTone || '';
+  eng.atSnapshot  = atSnap;
+  eng.generated   = {};
+  eng.errors      = {};
+
+  const touches = buildTouches(p); // get current base templates
+  const atResults = (window._atResults && Object.keys(window._atResults).length) ? window._atResults : null;
+
+  bpEngineSetStatus('running', `Generating ${touches.length} emails for ${p.company}…`);
+
+  let completedCount = 0;
+  const totalCount = touches.length;
+
+  // Run all touches concurrently (parallel API calls)
+  const promises = touches.map(async function(touch, idx) {
+    try {
+      const body = await bpEngineGenTouch(touch, p, atResults);
+      touch._proseBody = body;
+      eng.generated[idx] = true;
+      completedCount++;
+      bpEngineSetStatus('running', `Writing emails… ${completedCount}/${totalCount} done`);
+    } catch(e) {
+      eng.errors[idx] = e.message;
+      completedCount++;
+    }
+  });
+
+  await Promise.allSettled(promises);
+
+  const successCount = Object.keys(eng.generated).length;
+  const errorCount   = Object.keys(eng.errors).length;
+
+  if (successCount === 0) {
+    bpEngineSetStatus('error', 'Email generation failed — using templates');
+    return;
+  }
+
+  bpEngineSetStatus('ready', `${successCount} emails ready for ${p.company}`);
+
+  // Re-render composer if it's currently open
+  if (typeof ecRenderAll === 'function' && window._hqProspect && window._hqProspect.company === p.company) {
+    try { ecRenderAll(); } catch(e) {}
+  }
+
+  if (errorCount > 0) {
+    console.warn(`[EmailEngine] ${errorCount} touch(es) fell back to base templates.`);
+  }
+}
+
+// ── Watch loop: monitors for conditions to trigger/re-trigger engine ──
+function bpEngineStartWatcher() {
+  const eng = window._bpEngine;
+  if (eng._watchTimer) return; // already watching
+
+  eng._watchTimer = setInterval(function() {
+    const p = window._hqProspect;
+    if (!p || !p.track) return; // need track selection
+
+    const atSnap   = JSON.stringify(window._atResults || {});
+    const sameBase = eng.prospectKey === p.company && eng.trackKey === p.track && eng.toneKey === (p.cadenceTone || '');
+    const sameAt   = eng.atSnapshot === atSnap;
+
+    // Re-run if: new prospect, track changed, tone changed, or fresh analysis came in
+    if (!sameBase || !sameAt) {
+      bpEngineRun(p, false);
+    }
+  }, 8000); // check every 8 seconds
+}
+
+// ── Public API ────────────────────────────────────────────────────────
+
+// Called from enterHQ — starts the engine for this session
+window.bpEngineInit = function(session) {
+  const eng = window._bpEngine;
+  eng.active = true;
+  bpEngineSetStatus('idle');
+  bpEngineStartWatcher();
+  // If a prospect is already loaded (returning session), run immediately
+  setTimeout(function() {
+    const p = window._hqProspect;
+    if (p && p.track) bpEngineRun(p, false);
+  }, 1200);
+};
+
+// Called from hqApprove — triggers immediate full generation with whatever data is available
+window.bpEngineTrigger = function() {
+  const p = window._hqProspect;
+  if (!p || !p.track) return;
+  bpEngineRun(p, false);
+};
+
+// Called when analysis tools complete a run — re-generates with fresh intel
+window.bpEngineRefreshWithAnalysis = function() {
+  const p = window._hqProspect;
+  if (!p || !p.track) return;
+  // Small delay to let _atResults settle
+  setTimeout(function() {
+    bpEngineRun(p, true);
+  }, 500);
+};
+
+// Status badge injection — called once after HQ DOM is built
+window.bpEngineInjectBadge = function() {
+  if (document.getElementById('bp-engine-badge')) return;
+  const badge = document.createElement('div');
+  badge.id = 'bp-engine-badge';
+  badge.className = 'bp-engine-badge';
+  badge.title = 'Background Email Engine — generating AI-personalized cadence emails';
+  badge.innerHTML = '<span class="bee-icon">◌</span><span class="bee-txt">Email engine idle</span>';
+  // Inject into top nav bar
+  const nav = document.querySelector('.hq-topbar') || document.querySelector('.hq-nav') || document.body;
+  nav.appendChild(badge);
+  // Add styles if not already present
+  if (!document.getElementById('bp-engine-styles')) {
+    const st = document.createElement('style');
+    st.id = 'bp-engine-styles';
+    st.textContent = `
+      .bp-engine-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:.3px;border:1px solid var(--border);color:var(--text-2);background:var(--bg-2);cursor:default;transition:all .3s;white-space:nowrap;position:fixed;bottom:14px;right:14px;z-index:9900;}
+      .bp-engine-badge.running{border-color:var(--gold-border,#b89910);color:var(--gold,#c9a227);background:var(--gold-bg,rgba(201,162,39,.08));}
+      .bp-engine-badge.running .bee-icon{display:inline-block;animation:bee-spin 1s linear infinite;}
+      .bp-engine-badge.ready{border-color:var(--green-border);color:var(--green);background:var(--green-bg);}
+      .bp-engine-badge.error{border-color:var(--err-border,#c53030);color:var(--err,#c53030);background:rgba(197,48,48,.06);}
+      @keyframes bee-spin{to{transform:rotate(360deg);}}
+    `;
+    document.head.appendChild(st);
+  }
 };
 
 // ── COMPOSER ──
@@ -9596,6 +9969,8 @@ window.atRunAnalysis = function() {
     atUpdateStatusBar();
     document.getElementById('at-chip-analysis').innerHTML = '<span class="at-dot green pulse"></span> Analysis Complete';
     showToast('✓ Analysis complete for ' + _atData.company);
+    // ── Background Email Engine: re-generate with fresh analysis intel ──
+    if(typeof window.bpEngineRefreshWithAnalysis==='function') window.bpEngineRefreshWithAnalysis();
     // Scroll to results
     setTimeout(function() {
       var el = document.getElementById('at-results');
