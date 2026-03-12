@@ -329,10 +329,10 @@ function getHQHTML(session){
 
     <!-- ══ SMART ROUTING ENGINE ══ -->
     <div class="sh">
-      <span class="sh-step">STEP 00 · PRE-ANALYSIS</span>
+      <span class="sh-step">STEP 00 · DATA COLLECTION</span>
       <div>
         <div class="sh-ttl">Smart Routing Engine</div>
-        <div class="sh-sub">AI-powered silo logic — identifies New Prospect vs. Existing ADP Client and routes to optimal product</div>
+        <div class="sh-sub">Collect all prospect intelligence — multi-file intake, form builder, pain points, and competitor data</div>
       </div>
     </div>
 
@@ -340,8 +340,8 @@ function getHQHTML(session){
       <div class="sre-header">
         <div class="sre-logo">ADP</div>
         <div class="sre-htxt">
-          <div class="sre-htitle">Smart Product Routing Engine</div>
-          <div class="sre-hsub">Intelligent analysis grounded in real ADP underwriting outcomes and sales fit criteria</div>
+          <div class="sre-htitle">Prospect Intelligence Collector</div>
+          <div class="sre-hsub">Build a complete prospect profile from files, URLs, forms, and Gong transcripts</div>
         </div>
         <div class="sre-status" id="sre-status">
           <span class="sre-dot"></span><span>Waiting...</span>
@@ -390,97 +390,246 @@ function getHQHTML(session){
           <div class="sre-field"><div class="sre-field-lbl">Persona</div><div class="sre-field-val empty" id="sre-persona">—</div></div>
           <div class="sre-field"><div class="sre-field-lbl">Industry</div><div class="sre-field-val empty" id="sre-industry">—</div></div>
           <div class="sre-field"><div class="sre-field-lbl">State</div><div class="sre-field-val empty" id="sre-state">—</div></div>
-          <div class="sre-field"><div class="sre-field-lbl">Headcount</div><div class="sre-field-val empty" id="sre-headcount">—</div></div>
+          <div class="sre-field">
+            <div class="sre-field-lbl">Headcount</div>
+            <div class="sre-field-val empty" id="sre-headcount">—</div>
+            <div id="sre-hc-band" style="font-size:10px;color:var(--text-3);margin-top:2px;display:none"></div>
+          </div>
         </div>
 
-        <!-- PAIN POINTS -->
+        <!-- ══ COMPETITOR PRE-FILL ══ -->
+        <div style="margin-bottom:14px;padding:12px 14px;background:rgba(220,53,69,.06);border:1px solid rgba(220,53,69,.18);border-radius:8px">
+          <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">⚔️ Incumbent / Competitor</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">Primary Incumbent</label>
+              <select id="sre-competitor" onchange="sreCompetitorChanged()" style="width:100%;padding:8px 10px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text)">
+                <option value="">— Unknown —</option>
+                <option value="paycom">Paycom</option>
+                <option value="paylocity">Paylocity</option>
+                <option value="ukg">UKG (Kronos/Ultimate)</option>
+                <option value="dayforce">Dayforce (Ceridian)</option>
+                <option value="workday">Workday</option>
+                <option value="paychex">Paychex / Paychex PEO</option>
+                <option value="justworks">Justworks</option>
+                <option value="rippling">Rippling</option>
+                <option value="trinet">TriNet</option>
+                <option value="insperity">Insperity</option>
+                <option value="bamboo">BambooHR</option>
+                <option value="isolved">isolved</option>
+                <option value="other">Other</option>
+                <option value="none">No incumbent — manual/spreadsheet</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">Contract Renewal</label>
+              <input type="date" id="sre-renewal-date" style="width:100%;padding:8px 10px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);box-sizing:border-box">
+            </div>
+          </div>
+          <div id="sre-comp-insight" style="display:none;padding:8px 10px;background:rgba(220,53,69,.08);border-radius:6px;font-size:11px;color:var(--text-2);line-height:1.5"></div>
+        </div>
+
+        <!-- ══ PAIN POINTS ══ -->
         <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">Client Pain Points — Select All That Apply</div>
         <div class="sre-pain-section peo">
-          <div class="sre-pain-hd"><span>🔴</span><span>PEO-Specific</span><span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0"> — Operational / Admin Burden</span></div>
+          <div class="sre-pain-hd"><span>🔴</span><span>PEO / HR Outsourcing</span><span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0"> — Operational &amp; Admin Burden</span></div>
           <div class="sre-pain-grid">
             <label class="sre-cb"><input type="checkbox" id="sre-401k"><span>401K admin errors</span></label>
             <label class="sre-cb"><input type="checkbox" id="sre-wc"><span>Workers Comp issues</span></label>
             <label class="sre-cb"><input type="checkbox" id="sre-aca"><span>ACA compliance problems</span></label>
             <label class="sre-cb"><input type="checkbox" id="sre-benefits"><span>Benefits payment errors</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-benefits-cost"><span>Benefits cost too high</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-hr-bandwidth"><span>HR team overwhelmed</span></label>
           </div>
         </div>
         <div class="sre-pain-section wfn">
-          <div class="sre-pain-hd"><span>🔵</span><span>WFN-Specific</span><span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0"> — Platform / System / Technology</span></div>
+          <div class="sre-pain-hd"><span>🔵</span><span>HCM Platform</span><span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0"> — Technology &amp; System</span></div>
           <div class="sre-pain-grid">
             <label class="sre-cb"><input type="checkbox" id="sre-tax"><span>Multi-state tax issues</span></label>
-            <label class="sre-cb"><input type="checkbox" id="sre-platform"><span>Platform failures</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-platform"><span>Platform failures / downtime</span></label>
             <label class="sre-cb"><input type="checkbox" id="sre-gl"><span>GL integration errors</span></label>
-            <label class="sre-cb"><input type="checkbox" id="sre-support"><span>Poor support/communication</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-support"><span>Poor support / service</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-reporting"><span>Weak reporting / analytics</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-mobile"><span>No mobile / self-service</span></label>
           </div>
         </div>
         <div class="sre-pain-section gen">
-          <div class="sre-pain-hd"><span>⚪</span><span>General</span><span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0"> — Both Products Address</span></div>
+          <div class="sre-pain-hd"><span>⚪</span><span>General</span><span style="opacity:.5;font-weight:400;text-transform:none;letter-spacing:0"> — Cross-Product</span></div>
           <div class="sre-pain-grid three">
-            <label class="sre-cb"><input type="checkbox" id="sre-i9"><span>I-9 errors</span></label>
-            <label class="sre-cb"><input type="checkbox" id="sre-multi"><span>Multi-entity</span></label>
-            <label class="sre-cb"><input type="checkbox" id="sre-manual"><span>Manual processes</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-i9"><span>I-9 / E-Verify errors</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-multi"><span>Multi-entity complexity</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-manual"><span>Manual / spreadsheet processes</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-onboarding"><span>Slow / manual onboarding</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-turnover"><span>High turnover / retention issues</span></label>
+            <label class="sre-cb"><input type="checkbox" id="sre-compliance"><span>General compliance risk</span></label>
           </div>
         </div>
 
-        <!-- GONG TRANSCRIPT INPUT -->
+        <!-- ══ EXTENDED FORM BUILDER ══ -->
+        <div style="margin-top:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px">📋 Extended Prospect Profile</div>
+            <button onclick="sreToggleForm()" id="sre-form-toggle" style="font-size:10px;padding:4px 10px;background:transparent;color:var(--text-3);border:1px solid var(--border);border-radius:4px;cursor:pointer;font-family:var(--fb);font-weight:600">▼ Show Fields</button>
+          </div>
+          <div id="sre-ext-form" style="display:none">
+
+            <!-- SALES INTELLIGENCE -->
+            <div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:6px 10px;background:rgba(26,36,96,.07);border-radius:4px">Sales Intelligence</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Annual Revenue (est.)</label>
+                <input class="fi" id="sre-revenue" placeholder="e.g. $5M–$20M" style="margin-bottom:0">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Years with Incumbent</label>
+                <input class="fi" id="sre-tenure" placeholder="e.g. 3 years" style="margin-bottom:0">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">States of Operation</label>
+                <input class="fi" id="sre-states-ops" placeholder="e.g. VA, MD, DC, TX" style="margin-bottom:0">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Payroll Frequency</label>
+                <select class="fi" id="sre-pay-freq" style="margin-bottom:0">
+                  <option value="">— Select —</option>
+                  <option>Weekly</option><option>Bi-weekly</option><option>Semi-monthly</option><option>Monthly</option><option>Mixed</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Hourly vs. Salaried Mix</label>
+                <input class="fi" id="sre-ee-mix" placeholder="e.g. 60% hourly, 40% salary" style="margin-bottom:0">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Union Employees</label>
+                <select class="fi" id="sre-union" style="margin-bottom:0">
+                  <option value="">— Select —</option>
+                  <option>No</option><option>Yes — partial</option><option>Yes — fully unionized</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- BUYING CONTEXT -->
+            <div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:6px 10px;background:rgba(26,36,96,.07);border-radius:4px">Buying Context</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Decision Timeline</label>
+                <select class="fi" id="sre-timeline" style="margin-bottom:0">
+                  <option value="">— Select —</option>
+                  <option>Immediate (30 days)</option><option>Short-term (60–90 days)</option>
+                  <option>Mid-term (3–6 months)</option><option>Long-term (6–12 months)</option><option>Exploratory — no timeline</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Budget Status</label>
+                <select class="fi" id="sre-budget" style="margin-bottom:0">
+                  <option value="">— Select —</option>
+                  <option>Approved</option><option>Pending approval</option>
+                  <option>In evaluation</option><option>No budget — building case</option><option>Unknown</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Buying Stage</label>
+                <select class="fi" id="sre-stage" style="margin-bottom:0">
+                  <option value="">— Select —</option>
+                  <option>Awareness — just learning</option><option>Consideration — evaluating options</option>
+                  <option>Decision — shortlisted vendors</option><option>Negotiation — down to 2</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Other Vendors in Play</label>
+                <input class="fi" id="sre-other-vendors" placeholder="e.g. Paycom, Rippling" style="margin-bottom:0">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Champion / Internal Sponsor</label>
+                <input class="fi" id="sre-champion" placeholder="Name and title" style="margin-bottom:0">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Economic Buyer</label>
+                <input class="fi" id="sre-econ-buyer" placeholder="Name and title" style="margin-bottom:0">
+              </div>
+            </div>
+
+            <!-- COMPLIANCE & RISK -->
+            <div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding:6px 10px;background:rgba(26,36,96,.07);border-radius:4px">Compliance &amp; Risk Signals</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Recent DOL / IRS Notices</label>
+                <select class="fi" id="sre-notices" style="margin-bottom:0">
+                  <option value="">— Unknown —</option>
+                  <option>Yes — active issue</option><option>Yes — resolved</option><option>No</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">ACA Filing Status</label>
+                <select class="fi" id="sre-aca-status" style="margin-bottom:0">
+                  <option value="">— Unknown —</option>
+                  <option>Fully compliant</option><option>Late / missed filings</option>
+                  <option>Unsure of obligations</option><option>Under 50 FTE — not applicable</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">EPLI / Employment Practices</label>
+                <select class="fi" id="sre-epli" style="margin-bottom:0">
+                  <option value="">— Unknown —</option>
+                  <option>Has EPLI coverage</option><option>No EPLI — exposed</option><option>Recent claim / lawsuit</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Growth Plans</label>
+                <select class="fi" id="sre-growth" style="margin-bottom:0">
+                  <option value="">— Unknown —</option>
+                  <option>Stable headcount</option><option>Hiring aggressively</option>
+                  <option>Expanding to new states</option><option>M&amp;A activity</option><option>Downsizing</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- OPEN NOTES -->
+            <div style="margin-bottom:10px">
+              <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:3px">Discovery Notes / Additional Context</label>
+              <textarea id="sre-ext-notes" placeholder="Anything from the call, email, or research that doesn't fit a field above — objections heard, referral source, internal politics, key dates..." style="width:100%;min-height:70px;padding:9px 11px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);resize:vertical;line-height:1.5;box-sizing:border-box"></textarea>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══ GONG TRANSCRIPT ══ -->
         <div style="margin-bottom:14px">
           <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
             <span>🎙 Gong Transcript — Paste or Auto-Fill from Scan</span>
             <button onclick="sreAnalyzeTranscript()" style="font-size:10px;padding:4px 10px;background:var(--red);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:var(--fb);font-weight:600">Analyze →</button>
           </div>
-          <textarea id="sre-transcript" placeholder="Paste Gong call transcript here — pain points, objections, and ADP product mentions will auto-map to checkboxes above..." style="width:100%;min-height:90px;padding:10px 12px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);resize:vertical;line-height:1.5;box-sizing:border-box" oninput="sreTranscriptChanged()"></textarea>
+          <textarea id="sre-transcript" placeholder="Paste Gong call transcript here — pain points, objections, competitor mentions, and ADP product mentions will auto-map above..." style="width:100%;min-height:90px;padding:10px 12px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);resize:vertical;line-height:1.5;box-sizing:border-box" oninput="sreTranscriptChanged()"></textarea>
           <div id="sre-transcript-status" style="font-size:10px;color:var(--text-3);margin-top:4px;min-height:14px"></div>
         </div>
 
-        <!-- RUN BUTTON -->
+        <!-- ══ SAVE BUTTON ══ -->
         <div class="sre-run-wrap">
-          <button class="sre-run-btn" onclick="sreRun()">
-            <span>🎯</span><span>Run Smart Routing Analysis</span><span>→</span>
+          <button class="sre-run-btn" onclick="sreSave()">
+            <span>💾</span><span>Save Prospect Intelligence</span><span>→</span>
           </button>
-          <div class="sre-run-sub">Analyzes 15+ factors including client type, size, industry, pain points, and compliance needs</div>
+          <div class="sre-run-sub">Captures all fields, pain points, competitor data, and extended profile into the active prospect</div>
         </div>
 
-        <!-- RESULTS -->
+        <!-- ══ INTEL SUMMARY ══ -->
         <div class="sre-results" id="sre-results">
           <div class="sre-rec-hero">
             <div>
-              <div class="sre-rec-lbl">Recommended Product</div>
+              <div class="sre-rec-lbl">Intelligence Status</div>
               <div class="sre-rec-val">
-                <div class="sre-rec-icon">🏆</div>
+                <div class="sre-rec-icon">📋</div>
                 <span id="sre-rec-val">—</span>
               </div>
               <div style="font-size:11px;opacity:.5;margin-top:6px" id="sre-client-type-label"></div>
             </div>
             <div style="text-align:right">
-              <div class="sre-rec-lbl">Confidence</div>
+              <div class="sre-rec-lbl">Data Points</div>
               <div class="sre-conf-num" id="sre-conf">—</div>
             </div>
           </div>
-          <div class="sre-scores-grid">
-            <div class="sre-score-card">
-              <div class="sre-score-lbl">TotalSource PEO Score</div>
-              <div class="sre-score-bar-bg"><div class="sre-score-bar peo" id="sre-peo-bar" style="width:0%"></div></div>
-              <div class="sre-score-num" id="sre-peo-score">—</div>
-            </div>
-            <div class="sre-score-card">
-              <div class="sre-score-lbl">Workforce Now Score</div>
-              <div class="sre-score-bar-bg"><div class="sre-score-bar wfn" id="sre-wfn-bar" style="width:0%"></div></div>
-              <div class="sre-score-num" id="sre-wfn-score">—</div>
-            </div>
-          </div>
-          <div class="sre-factors-grid">
-            <div class="sre-factor-card">
-              <div class="sre-factor-hd"><span>✅</span><span>Why This Recommendation</span></div>
-              <ul class="sre-factor-list" id="sre-primary-factors"><li>Loading...</li></ul>
-            </div>
-            <div class="sre-factor-card">
-              <div class="sre-factor-hd"><span>💡</span><span>Alternative Consideration</span></div>
-              <ul class="sre-factor-list" id="sre-alt-factors"><li>Loading...</li></ul>
-            </div>
-          </div>
-          <div class="sre-actions">
-            <button class="sre-action-btn primary" id="sre-proceed-btn" onclick="sreProceed()"><span>Continue to Recommended Tool</span><span>→</span></button>
-            <button class="sre-action-btn secondary" id="sre-override-btn" onclick="sreOverride()"><span>Override Recommendation</span></button>
+          <div id="sre-summary-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px"></div>
+          <div class="sre-actions" style="margin-top:14px">
+            <button class="sre-action-btn primary" id="sre-proceed-btn" onclick="sreProceed()"><span>Continue to Analysis Tools</span><span>→</span></button>
           </div>
         </div>
 
@@ -553,7 +702,7 @@ function getHQHTML(session){
 
     <div class="tool-grid">
       <div class="tool-card wfn">
-        <div class="tc-badge">STEP 01A · TRACK A</div>
+        <div class="tc-badge">STEP 01A · WFN ANALYZER</div>
         <div class="tc-icon">🖥️</div>
         <div class="tc-title">WorkforceNow Analyzer</div>
         <div class="tc-desc">Identifies upgrade candidates from ADP Classic/RUN, detects competitive displacement opportunities, and calculates switching ROI for mid-market prospects.</div>
@@ -604,7 +753,7 @@ function getHQHTML(session){
       </div>
 
       <div class="tool-card ts">
-        <div class="tc-badge">STEP 01B · TRACK B</div>
+        <div class="tc-badge">STEP 01B · TOTALSOURCE PEO</div>
         <div class="tc-icon">🏢</div>
         <div class="tc-title">TotalSource PEO Eligibility Tool</div>
         <div class="tc-desc">Runs PEO eligibility scoring, underwriting risk profiling, benefits benchmarking, and discount range estimation for ADP TotalSource prospects.</div>
@@ -1499,13 +1648,20 @@ let GONG_PAIN_MAP={
   'sre-wc':    ['workers comp','workers\' comp','work comp','workcomp','injury claim','mod rate','experience mod','NCCI','loss run','work-related injury'],
   'sre-aca':   ['ACA','affordable care act','1094','1095','minimum essential','employer mandate','shared responsibility','aca compliance','aca filing'],
   'sre-benefits':['benefits error','benefit deduction','cobra','open enrollment problem','carrier issue','benefits administration','benefit billing','wrong deduction','enrollment error'],
+  'sre-benefits-cost':['benefits too expensive','benefits cost','premiums too high','unaffordable benefits','can\'t afford benefits','benefits pricing'],
+  'sre-hr-bandwidth':['hr is overwhelmed','short staffed','no hr','one person hr','hr department','overworked','too much admin','bandwidth issue'],
   'sre-tax':   ['multi-state','multistate','state tax','nexus','state withholding','tax filing error','tax notice','SIT','state income tax','tax penalty','garnishment','levy'],
   'sre-platform':['system down','outage','login issue','portal broken','platform issue','ADP down','slow system','locked out','access issue','can\'t log in','glitch','bug','error message','system error'],
   'sre-gl':    ['general ledger','GL','journal entry','mapping error','accounting integration','QuickBooks','Sage','NetSuite','ERP','ledger code','chart of accounts','cost center','GL code'],
   'sre-support':['no response','can\'t reach','support ticket','customer service','account manager','rep','unresponsive','escalation','no one calls back','ignored','slow response','service issue'],
+  'sre-reporting':['no reporting','bad reports','can\'t pull data','data export','analytics','dashboards','visibility','reporting gaps','custom reports'],
+  'sre-mobile':['no app','mobile app','self service','employee portal','employee app','self-service portal','no mobile access'],
   'sre-i9':    ['I-9','i9','e-verify','work authorization','everify','immigration','onboarding compliance','new hire paperwork','i-9 audit'],
   'sre-multi': ['multiple entities','multi-entity','subsidiaries','holding company','multiple EINs','multiple companies','parent company','several companies','umbrella'],
-  'sre-manual':['manual','spreadsheet','excel','paper','manual process','by hand','rekeying','double entry','no automation','time-consuming','inefficient']
+  'sre-manual':['manual','spreadsheet','excel','paper','manual process','by hand','rekeying','double entry','no automation','time-consuming','inefficient'],
+  'sre-onboarding':['onboarding','new hire','new employee','paperwork','day one','first day','slow to start','onboard'],
+  'sre-turnover':['turnover','attrition','employees leaving','retention','losing people','high turnover','hard to keep'],
+  'sre-compliance':['compliance','audit','liability','risk','penalty','fine','regulation','HR compliance','employment law']
 };
 
 // Load keywords from gong-keywords.json and merge into GONG_PAIN_MAP
@@ -1982,21 +2138,246 @@ function sreRefresh(){
   if(!p){
     status.innerHTML='<span class="sre-dot"></span><span>No Prospect</span>';
     status.classList.remove('loaded');
-    fields.forEach(([id])=>{const el=document.getElementById(id);el.textContent='—';el.classList.add('empty');});
+    fields.forEach(([id])=>{const el=document.getElementById(id);if(el){el.textContent='—';el.classList.add('empty');}});
     return;
   }
   fields.forEach(([id,key])=>{
     const el=document.getElementById(id);
+    if(!el)return;
     const val=p[key];
-    if(val&&val.trim()){el.textContent=val;el.classList.remove('empty');}
+    if(val&&String(val).trim()){el.textContent=val;el.classList.remove('empty');}
     else{el.textContent='—';el.classList.add('empty');}
   });
+  // Headcount confidence band
+  const hcBand=document.getElementById('sre-hc-band');
+  if(hcBand){
+    const hc=parseInt(p.headcount)||0;
+    const band=sreHeadcountBand(hc);
+    if(band){
+      hcBand.textContent='Range: '+band.low+'–'+band.high+' EEs · '+band.tier;
+      hcBand.style.display='block';
+    } else {
+      hcBand.style.display='none';
+    }
+  }
   status.innerHTML='<span class="sre-dot"></span><span>Loaded</span>';
   status.classList.add('loaded');
   // Also auto-select existing if prospect has ADP track
   if(p.track==='WFN'||p.track==='TS') sreSilo('existing');
+  // Restore competitor if previously saved
+  const compEl=document.getElementById('sre-competitor');
+  if(compEl&&p.competitor){compEl.value=p.competitor;sreCompetitorChanged();}
+  const rdEl=document.getElementById('sre-renewal-date');
+  if(rdEl&&p.renewalDate) rdEl.value=p.renewalDate;
+  // Restore extended profile fields if present
+  if(p.extProfile){
+    const ext=p.extProfile;
+    const setV=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+    setV('sre-revenue',ext.revenue);setV('sre-tenure',ext.tenure);
+    setV('sre-states-ops',ext.statesOps);setV('sre-pay-freq',ext.payFreq);
+    setV('sre-ee-mix',ext.eeMix);setV('sre-union',ext.union);
+    setV('sre-timeline',ext.timeline);setV('sre-budget',ext.budget);
+    setV('sre-stage',ext.stage);setV('sre-other-vendors',ext.otherVendors);
+    setV('sre-champion',ext.champion);setV('sre-econ-buyer',ext.econBuyer);
+    setV('sre-notices',ext.notices);setV('sre-aca-status',ext.acaStatus);
+    setV('sre-epli',ext.epli);setV('sre-growth',ext.growth);
+    setV('sre-ext-notes',ext.extNotes);
+  }
+  // Restore pain checkboxes
+  if(p.painPoints&&Array.isArray(p.painPoints)){
+    const REVERSE={
+      '401K admin errors':'sre-401k','Workers Comp issues':'sre-wc',
+      'ACA compliance problems':'sre-aca','Benefits payment errors':'sre-benefits',
+      'Benefits cost too high':'sre-benefits-cost','HR team overwhelmed':'sre-hr-bandwidth',
+      'Multi-state tax issues':'sre-tax','Platform failures':'sre-platform',
+      'GL integration errors':'sre-gl','Poor support/communication':'sre-support',
+      'Weak reporting/analytics':'sre-reporting','No mobile/self-service':'sre-mobile',
+      'I-9 / E-Verify errors':'sre-i9','Multi-entity complexity':'sre-multi',
+      'Manual/spreadsheet processes':'sre-manual','Slow/manual onboarding':'sre-onboarding',
+      'High turnover/retention':'sre-turnover','General compliance risk':'sre-compliance'
+    };
+    p.painPoints.forEach(label=>{
+      const id=REVERSE[label];
+      if(id){const el=document.getElementById(id);if(el)el.checked=true;}
+    });
+  }
 }
 
+// ── Headcount confidence band ────────────────────────────────────
+function sreHeadcountBand(hc){
+  if(!hc||hc<=0) return null;
+  const low=Math.max(1,Math.round(hc*0.85));
+  const high=Math.round(hc*1.15);
+  let tier='';
+  if(hc<10) tier='micro-employer';
+  else if(hc<50) tier='small business';
+  else if(hc<150) tier='lower mid-market';
+  else if(hc<500) tier='mid-market';
+  else if(hc<1000) tier='upper mid-market';
+  else tier='enterprise';
+  return {low,high,tier};
+}
+
+// ── Competitor insight snippets ──────────────────────────────────
+const COMP_INSIGHTS={
+  paycom:'Paycom reps lead with single-database pitch. Counter: ADP scale, compliance depth, and dedicated service model.',
+  paylocity:'Paylocity targets mid-market with modern UI. Counter: ADP integrations, compliance automation, and implementation support.',
+  ukg:'UKG leads with workforce management. Counter: ADP breadth, PEO option, and stronger payroll accuracy track record.',
+  dayforce:'Dayforce/Ceridian pitches real-time pay. Counter: ADP reliability, breadth of HCM suite, and TotalSource co-employment.',
+  workday:'Workday is HRIS-first, payroll is secondary. Counter: ADP is the payroll leader — Workday often needs ADP as an underlying engine.',
+  paychex:'Paychex is ADP\'s closest head-to-head. Counter: WFN technology depth, TotalSource underwriting scale, and dedicated DM support.',
+  justworks:'Justworks targets small employers. Counter: ADP TotalSource has broader carrier network and scales further.',
+  rippling:'Rippling leads with IT+HR pitch. Counter: ADP compliance depth, tax filing, and enterprise-grade WFN vs. Rippling\'s thin payroll.',
+  trinet:'TriNet is a PEO competitor. Counter: TotalSource superior workers\' comp rates, benefits buying power, and ADP technology stack.',
+  insperity:'Insperity targets professional services. Counter: TotalSource pricing, ADP technology backbone, and broader geographic coverage.',
+  bamboo:'BambooHR is HRIS only — no payroll. Counter: ADP full suite with native payroll, compliance, and benefits.',
+  isolved:'isolved targets SMB. Counter: ADP scale, compliance infrastructure, and mid-market WFN capabilities.',
+  other:'Document incumbent details in notes. Focus discovery on pain points with current provider.',
+  none:'No incumbent — prospect is on manual/spreadsheet processes. Focus on ROI of automation and time savings.'
+};
+
+function sreCompetitorChanged(){
+  const val=document.getElementById('sre-competitor').value;
+  const ins=document.getElementById('sre-comp-insight');
+  if(val && COMP_INSIGHTS[val]){
+    ins.textContent=COMP_INSIGHTS[val];
+    ins.style.display='block';
+  } else {
+    ins.style.display='none';
+  }
+}
+
+function sreToggleForm(){
+  const form=document.getElementById('sre-ext-form');
+  const btn=document.getElementById('sre-form-toggle');
+  const open=form.style.display==='none';
+  form.style.display=open?'block':'none';
+  btn.textContent=open?'▲ Hide Fields':'▼ Show Fields';
+}
+
+// ── Collect all extended form fields ────────────────────────────
+function sreCollectExtended(){
+  const g=id=>{ const el=document.getElementById(id); return el?el.value.trim():''; };
+  return{
+    revenue:g('sre-revenue'), tenure:g('sre-tenure'),
+    statesOps:g('sre-states-ops'), payFreq:g('sre-pay-freq'),
+    eeMix:g('sre-ee-mix'), union:g('sre-union'),
+    timeline:g('sre-timeline'), budget:g('sre-budget'),
+    stage:g('sre-stage'), otherVendors:g('sre-other-vendors'),
+    champion:g('sre-champion'), econBuyer:g('sre-econ-buyer'),
+    notices:g('sre-notices'), acaStatus:g('sre-aca-status'),
+    epli:g('sre-epli'), growth:g('sre-growth'),
+    extNotes:g('sre-ext-notes'),
+    competitor:g('sre-competitor'),
+    renewalDate:g('sre-renewal-date')
+  };
+}
+
+// ── Collect all pain checkboxes (including new ones) ─────────────
+function sreCollectPains(){
+  const ids=['sre-401k','sre-wc','sre-aca','sre-benefits','sre-benefits-cost','sre-hr-bandwidth',
+    'sre-tax','sre-platform','sre-gl','sre-support','sre-reporting','sre-mobile',
+    'sre-i9','sre-multi','sre-manual','sre-onboarding','sre-turnover','sre-compliance'];
+  const LABELS={
+    'sre-401k':'401K admin errors','sre-wc':'Workers Comp issues','sre-aca':'ACA compliance problems',
+    'sre-benefits':'Benefits payment errors','sre-benefits-cost':'Benefits cost too high',
+    'sre-hr-bandwidth':'HR team overwhelmed','sre-tax':'Multi-state tax issues',
+    'sre-platform':'Platform failures','sre-gl':'GL integration errors',
+    'sre-support':'Poor support/communication','sre-reporting':'Weak reporting/analytics',
+    'sre-mobile':'No mobile/self-service','sre-i9':'I-9 / E-Verify errors',
+    'sre-multi':'Multi-entity complexity','sre-manual':'Manual/spreadsheet processes',
+    'sre-onboarding':'Slow/manual onboarding','sre-turnover':'High turnover/retention',
+    'sre-compliance':'General compliance risk'
+  };
+  return ids.filter(id=>{const el=document.getElementById(id);return el&&el.checked;})
+            .map(id=>LABELS[id]);
+}
+
+// ── Main save function (replaces sreRun) ─────────────────────────
+function sreSave(){
+  const p=window._hqProspect;
+  if(!p){showToast('Select a prospect first — click + New Prospect',true);return;}
+  if(!_sreClientType){showToast('Select client type above (New Prospect or Existing ADP)',true);return;}
+  const pains=sreCollectPains();
+  const ext=sreCollectExtended();
+  const hc=parseInt(p.headcount)||0;
+  const band=sreHeadcountBand(hc);
+  // Build data point count
+  let dp=0;
+  if(_sreClientType) dp++;
+  if(p.company) dp++;
+  if(p.industry) dp++;
+  if(hc) dp++;
+  if(pains.length) dp+=pains.length;
+  if(ext.competitor) dp++;
+  if(ext.renewalDate) dp++;
+  Object.values(ext).forEach(v=>{if(v&&v.length>0) dp++;});
+  const transcript=document.getElementById('sre-transcript');
+  if(transcript&&transcript.value.trim().length>20) dp+=3;
+  // Persist all data onto the prospect object
+  Object.assign(p,{
+    clientType:_sreClientType,
+    adpProducts:Array.from(_sreAdpProducts),
+    painPoints:pains,
+    competitor:ext.competitor,
+    renewalDate:ext.renewalDate,
+    extProfile:ext,
+    headcountBand:band?band.tier:'',
+    headcountRange:band?band.low+'-'+band.high:'',
+    transcript:transcript?transcript.value.trim():'',
+    sreDataPoints:dp,
+    sreSavedAt:new Date().toISOString()
+  });
+  // Save to localStorage
+  try{
+    const stored=JSON.parse(localStorage.getItem('bp_prospects')||'[]');
+    const idx=stored.findIndex(x=>x.email===p.email&&x.company===p.company);
+    if(idx>=0) stored[idx]=p; else stored.push(p);
+    localStorage.setItem('bp_prospects',JSON.stringify(stored));
+    localStorage.setItem('activeProspect',JSON.stringify(p));
+  }catch(e){}
+  _sreAnalysis={dp,pains,competitor:ext.competitor,ext};
+  sreShowSummary({dp,pains,competitor:ext.competitor,ext,band,clientType:_sreClientType});
+  hqAdvancePipeline(0);
+  showToast('✓ Prospect intelligence saved — '+dp+' data points captured');
+  if(typeof fbSaveProspect==='function') fbSaveProspect(p);
+}
+
+function sreShowSummary(r){
+  document.getElementById('sre-rec-val').textContent='Profile Complete';
+  document.getElementById('sre-conf').textContent=r.dp+' pts';
+  document.getElementById('sre-client-type-label').textContent=r.clientType==='existing'?'Existing ADP Client':'New Prospect — Net New';
+  // Build summary cards
+  const grid=document.getElementById('sre-summary-grid');
+  const cards=[];
+  if(r.pains.length){
+    cards.push('<div style="padding:8px 10px;background:rgba(220,53,69,.07);border:1px solid rgba(220,53,69,.18);border-radius:6px"><div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Pain Points ('+r.pains.length+')</div><div style="font-size:11px;color:var(--text-2);line-height:1.6">'+r.pains.join(' · ')+'</div></div>');
+  }
+  if(r.competitor){
+    const label=document.getElementById('sre-competitor');
+    const txt=label?label.options[label.selectedIndex].text:r.competitor;
+    cards.push('<div style="padding:8px 10px;background:rgba(26,36,96,.07);border:1px solid rgba(26,36,96,.18);border-radius:6px"><div style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Incumbent</div><div style="font-size:11px;color:var(--text-2)">'+txt+'</div></div>');
+  }
+  if(r.band){
+    cards.push('<div style="padding:8px 10px;background:rgba(40,167,69,.07);border:1px solid rgba(40,167,69,.18);border-radius:6px"><div style="font-size:10px;font-weight:700;color:#28a745;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Headcount Band</div><div style="font-size:11px;color:var(--text-2)">'+r.band.low+'–'+r.band.high+' EEs · <em>'+r.band.tier+'</em></div></div>');
+  }
+  if(r.ext&&r.ext.timeline){
+    cards.push('<div style="padding:8px 10px;background:rgba(184,146,10,.08);border:1px solid rgba(184,146,10,.2);border-radius:6px"><div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Timeline</div><div style="font-size:11px;color:var(--text-2)">'+r.ext.timeline+'</div></div>');
+  }
+  grid.innerHTML=cards.join('');
+  const res=document.getElementById('sre-results');
+  res.classList.add('show');
+  res.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function sreProceed(){
+  // Just scroll to the tool cards — rep makes their own choice
+  const toolGrid=document.querySelector('.tool-grid');
+  if(toolGrid) toolGrid.scrollIntoView({behavior:'smooth',block:'start'});
+  showToast('Select your analysis tool below ↓');
+}
+
+// Legacy stubs — kept so existing callers don't throw
 function sreCalcFit(data){
   let peo=0, wfn=0, peoF=[], wfnF=[];
   const hc=data.headcount, ind=data.industry.toLowerCase(), pp=data.pain, ct=data.clientType, adp=data.adpProducts;
@@ -2035,82 +2416,14 @@ function sreCalcFit(data){
   return{rec,conf,peo,wfn,peoF,wfnF};
 }
 
-function sreRun(){
-  const p=window._hqProspect;
-  if(!p){showToast('Select a prospect first — click + New Prospect',true);return;}
-  if(!_sreClientType){showToast('Select client type above (New Prospect or Existing ADP)',true);return;}
-  const result=sreCalcFit({
-    headcount:parseInt(p.headcount)||0,
-    industry:p.industry||'',
-    industryRaw:p.industry||'Unknown',
-    clientType:_sreClientType,
-    adpProducts:_sreAdpProducts,
-    pain:{
-      k401:document.getElementById('sre-401k').checked,
-      wc:document.getElementById('sre-wc').checked,
-      aca:document.getElementById('sre-aca').checked,
-      benefits:document.getElementById('sre-benefits').checked,
-      tax:document.getElementById('sre-tax').checked,
-      platform:document.getElementById('sre-platform').checked,
-      gl:document.getElementById('sre-gl').checked,
-      support:document.getElementById('sre-support').checked,
-      i9:document.getElementById('sre-i9').checked,
-      multi:document.getElementById('sre-multi').checked,
-      manual:document.getElementById('sre-manual').checked
-    }
-  });
-  _sreAnalysis=result;
-  sreShowResults(result);
-  // Advance pipeline
-  hqAdvancePipeline(0);
-  showToast('Smart Routing complete — '+result.rec+' recommended');
-}
+// Legacy sreRun — redirects to new sreSave for backward compat
+function sreRun(){ sreSave(); }
 
-function sreShowResults(r){
-  document.getElementById('sre-rec-val').textContent=r.rec;
-  document.getElementById('sre-conf').textContent=r.conf+'%';
-  document.getElementById('sre-peo-score').textContent=r.peo;
-  document.getElementById('sre-wfn-score').textContent=r.wfn;
-  document.getElementById('sre-client-type-label').textContent=_sreClientType==='existing'?'Existing ADP Client':'New Prospect — Net New';
-  setTimeout(()=>{
-    document.getElementById('sre-peo-bar').style.width=r.peo+'%';
-    document.getElementById('sre-wfn-bar').style.width=r.wfn+'%';
-  },100);
-  const primF=r.rec==='TotalSource PEO'?r.peoF:r.wfnF;
-  const altF=r.rec==='TotalSource PEO'?r.wfnF:r.peoF;
-  document.getElementById('sre-primary-factors').innerHTML=primF.length?primF.map(f=>`<li>${f}</li>`).join(''):'<li style="opacity:.5;font-style:italic">No specific factors detected</li>';
-  document.getElementById('sre-alt-factors').innerHTML=altF.length?altF.map(f=>`<li>${f}</li>`).join(''):'<li style="opacity:.5;font-style:italic">No specific factors detected</li>';
-  const altProd=r.rec==='TotalSource PEO'?'Workforce Now':'TotalSource PEO';
-  document.getElementById('sre-override-btn').innerHTML=`<span>Override: Use ${altProd}</span>`;
-  const res=document.getElementById('sre-results');
-  res.classList.add('show');
-  res.scrollIntoView({behavior:'smooth',block:'nearest'});
-  // Auto-select track
-  if(r.rec==='Workforce Now'){selectTrack('WFN');window.selectedRole='WFN';}
-  else{selectTrack('TS');window.selectedRole='TS';}
-}
+// Legacy sreShowResults — no-op, sreShowSummary replaces it
+function sreShowResults(r){}
 
-function sreProceed(){
-  if(!_sreAnalysis)return;
-  if(_sreAnalysis.rec==='Workforce Now'){
-    window.open('workforce-now-analyzer-v2_1.html','_blank');
-    hqMarkDone(1,'Smart Routing → WFN');
-    hqOpenScore('WFN');
-  } else {
-    openTsPanel();
-    hqMarkDone(1,'Smart Routing → PEO');
-    hqOpenScore('TS');
-  }
-}
-
-function sreOverride(){
-  if(!_sreAnalysis)return;
-  const alt=_sreAnalysis.rec==='TotalSource PEO'?'Workforce Now':'TotalSource PEO';
-  if(confirm(`Override routing and use ${alt} instead?`)){
-    if(alt==='Workforce Now'){window.open('workforce-now-analyzer-v2_1.html','_blank');hqMarkDone(1,'Override → WFN');hqOpenScore('WFN');}
-    else{openTsPanel();hqMarkDone(1,'Override → PEO');hqOpenScore('TS');}
-  }
-}
+// Legacy sreOverride — no-op (no track routing)
+function sreOverride(){}
 
 // Auto-refresh SRE on prospect storage events
 document.addEventListener('DOMContentLoaded',sreRefresh);
@@ -2694,7 +3007,7 @@ window.hqMarkDone=function(step,label){
 
 window.hqOpenScore=function(track){
   const panel=document.getElementById('hq-sap');panel.classList.add('open');
-  document.getElementById('sap-badge').textContent=track==='WFN'?'TRACK A — WorkforceNow':'TRACK B — TotalSource';
+  document.getElementById('sap-badge').textContent=track==='WFN'?'WorkforceNow Analysis':'TotalSource PEO Analysis';
   const row=document.getElementById('sc-row');
   if(!row)return;
   if(track==='WFN'){
@@ -8845,16 +9158,8 @@ window.atPullFromProspect = function() {
 
 // ── Helper: collect full SRE state into a structured object ──────
 function atCollectSreContext() {
-  var PAIN_IDS = ['sre-401k','sre-wc','sre-aca','sre-benefits','sre-tax','sre-platform','sre-gl','sre-support','sre-i9','sre-multi','sre-manual'];
-  var PAIN_LABELS = {
-    'sre-401k':'401K admin errors','sre-wc':'Workers Comp issues','sre-aca':'ACA compliance problems',
-    'sre-benefits':'Benefits payment errors','sre-tax':'Multi-state tax issues','sre-platform':'Platform failures',
-    'sre-gl':'GL integration errors','sre-support':'Poor support/communication','sre-i9':'I-9 / E-Verify errors',
-    'sre-multi':'Multi-entity complexity','sre-manual':'Manual / spreadsheet processes'
-  };
-  var checkedPains = PAIN_IDS.filter(function(id) {
-    var el = document.getElementById(id); return el && el.checked;
-  }).map(function(id){ return PAIN_LABELS[id]; });
+  // Use sreCollectPains if available (new path), else fall back to manual read
+  var checkedPains = (typeof sreCollectPains === 'function') ? sreCollectPains() : [];
 
   var transcriptEl = document.getElementById('sre-transcript');
   var transcript = transcriptEl ? transcriptEl.value.trim() : '';
@@ -8862,18 +9167,25 @@ function atCollectSreContext() {
   var adpProds = Array.from(window._sreAdpProducts || []);
   var clientType = window._sreClientType || '';
   var analysis = window._sreAnalysis || null;
+  var p = window._hqProspect || {};
 
   return {
-    painPoints: checkedPains,
-    transcript: transcript,
-    adpProducts: adpProds,
-    clientType: clientType,
-    sreRecommendation: analysis ? analysis.rec : '',
-    sreConfidence: analysis ? analysis.pct || analysis.conf : '',
-    sreWfnScore: analysis ? analysis.wfn : '',
-    srePeoScore: analysis ? analysis.peo : '',
+    painPoints: checkedPains.length ? checkedPains : (p.painPoints || []),
+    transcript: transcript || p.transcript || '',
+    adpProducts: adpProds.length ? adpProds : (p.adpProducts || []),
+    clientType: clientType || p.clientType || '',
+    competitor: p.competitor || '',
+    renewalDate: p.renewalDate || '',
+    headcountBand: p.headcountBand || '',
+    headcountRange: p.headcountRange || '',
+    extProfile: p.extProfile || {},
+    sreDataPoints: p.sreDataPoints || 0,
+    sreRecommendation: analysis ? (analysis.rec || '') : '',
+    sreConfidence: analysis ? (analysis.pct || analysis.conf || '') : '',
+    sreWfnScore: analysis ? (analysis.wfn || '') : '',
+    srePeoScore: analysis ? (analysis.peo || '') : '',
     srePrimaryFactors: analysis ? (analysis.wfnF || analysis.peoF || []) : [],
-    sreRan: !!analysis
+    sreRan: !!(analysis || p.sreSavedAt)
   };
 }
 
@@ -8889,9 +9201,14 @@ window.atConfirmData = function() {
     email: p.email || '', persona: p.persona || '', phone: p.phone || '',
     linkedin: p.linkedin || '', platform: p.platform || '', notes: p.notes || '',
     track: p.track || '',
-    // ── SRE routing result ──
+    // ── SRE context ──
     clientType: sre.clientType || (p.track === 'TS' ? 'existing' : 'new'),
     adpProducts: sre.adpProducts,
+    competitor: sre.competitor,
+    renewalDate: sre.renewalDate,
+    headcountBand: sre.headcountBand,
+    headcountRange: sre.headcountRange,
+    extProfile: sre.extProfile,
     sreRecommendation: sre.sreRecommendation,
     sreConfidence: sre.sreConfidence,
     sreWfnScore: sre.sreWfnScore,
@@ -9130,16 +9447,25 @@ function atCallClaude(tool, data) {
   // ── Build enriched context block from SRE data ──
   var sreBlock = '';
   if (data.sreRan) {
-    sreBlock += '\nSMART ROUTING ENGINE RESULTS:\n';
-    sreBlock += '  Recommendation: ' + (data.sreRecommendation || '—') + '\n';
-    sreBlock += '  Confidence: ' + (data.sreConfidence || '—') + '%\n';
-    sreBlock += '  WFN Fit Score: ' + (data.sreWfnScore || '—') + '/100\n';
-    sreBlock += '  PEO Fit Score: ' + (data.srePeoScore || '—') + '/100\n';
-    if (data.srePrimaryFactors && data.srePrimaryFactors.length) {
-      sreBlock += '  Key Routing Factors: ' + data.srePrimaryFactors.join('; ') + '\n';
-    }
+    sreBlock += '\nPROSPECT INTELLIGENCE SUMMARY:\n';
+    if (data.clientType) sreBlock += '  Client Type: ' + (data.clientType === 'existing' ? 'Existing ADP Client' : 'New Prospect') + '\n';
+    if (data.adpProducts && data.adpProducts.length) sreBlock += '  ADP Products: ' + data.adpProducts.join(', ').toUpperCase() + '\n';
+    if (data.competitor) sreBlock += '  Incumbent: ' + data.competitor + '\n';
+    if (data.renewalDate) sreBlock += '  Contract Renewal: ' + data.renewalDate + '\n';
+    if (data.headcountRange) sreBlock += '  Headcount Range: ' + data.headcountRange + ' EEs (' + (data.headcountBand||'') + ')\n';
+    var ext = data.extProfile || {};
+    if (ext.timeline) sreBlock += '  Decision Timeline: ' + ext.timeline + '\n';
+    if (ext.budget) sreBlock += '  Budget Status: ' + ext.budget + '\n';
+    if (ext.stage) sreBlock += '  Buying Stage: ' + ext.stage + '\n';
+    if (ext.champion) sreBlock += '  Champion: ' + ext.champion + '\n';
+    if (ext.econBuyer) sreBlock += '  Economic Buyer: ' + ext.econBuyer + '\n';
+    if (ext.statesOps) sreBlock += '  States of Operation: ' + ext.statesOps + '\n';
+    if (ext.growth) sreBlock += '  Growth Plans: ' + ext.growth + '\n';
+    if (ext.notices && ext.notices !== '') sreBlock += '  DOL/IRS Notices: ' + ext.notices + '\n';
+    if (ext.otherVendors) sreBlock += '  Other Vendors Evaluated: ' + ext.otherVendors + '\n';
+    if (ext.extNotes) sreBlock += '  Discovery Notes: ' + ext.extNotes + '\n';
   } else {
-    sreBlock += '\nSMART ROUTING ENGINE: Not yet run — infer recommendation from firmographic data.\n';
+    sreBlock += '\nPROSPECT INTELLIGENCE: Not yet collected — infer from firmographic data.\n';
   }
 
   var painBlock = '';
