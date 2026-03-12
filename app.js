@@ -307,7 +307,7 @@ function getHQHTML(session){
   <!-- Nav -->
   <div class="hq-nav">
     <button class="hq-tab active" id="htab-cmd" onclick="hqTab('cmd')">🏠 Command Center <span class="tab-badge">HQ</span></button>
-    <button class="hq-tab" id="htab-composer" onclick="hqTab('composer')" title="Complete Score Approval (Step 4) to unlock">📅 30-Day Cadence <span class="tab-badge">STEP 5</span></button>
+    <button class="hq-tab" id="htab-composer" onclick="hqTab('composer')">📅 30-Day Cadence <span class="tab-badge">STEP 3</span></button>
     <button class="hq-tab" id="htab-agent" onclick="hqTab('agent')">🤖 Sales Agent <span class="tab-badge" style="background:rgba(34,197,94,.15);color:#16a34a">LIVE</span></button>
     <button class="hq-tab" id="htab-analysis" onclick="hqTab('analysis')">📊 Analysis Tools <span class="tab-badge" style="background:rgba(184,146,10,.15);color:var(--gold)">NEW</span></button>
   </div>
@@ -743,18 +743,16 @@ function getHQHTML(session){
       <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn2">📊</div><div class="psl" id="psl2">Fit Scoring</div></div>
       <div class="pa"></div>
-      <div class="ps-node"><div class="psn" id="psn3">✅</div><div class="psl" id="psl3">Score Approval</div></div>
       <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn4">🚀</div><div class="psl" id="psl4">Cadence Launch</div></div>
       <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn5">✉️</div><div class="psl" id="psl5">30-Day Cadence</div></div>
       <div class="pa"></div>
-      <div class="ps-node"><div class="psn" id="psn6">🔄</div><div class="psl" id="psl6">Intel Refreshes</div></div>
     </div>
     <hr class="sdiv">
 
     <div class="sh">
-      <span class="sh-step">STEP 01–02</span>
+      <span class="sh-step">STEP 01</span>
       <div>
         <div class="sh-ttl">Analysis Tools — Run First</div>
         <div class="sh-sub">Select the tool matching your prospect's current ADP product</div>
@@ -806,10 +804,10 @@ function getHQHTML(session){
         </div>
 
         <div class="tc-note" style="margin-top:10px">
-          <span>⚡</span><span><strong>Scores auto-populate</strong> into Score Approval panel when you click Mark as Run. Review and adjust if needed.</span>
+          <span>⚡</span><span>Click <strong>Mark as Run</strong> to approve and unlock the 30-Day Cadence.</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          <button class="btn btn-outline" onclick="hqMarkDone(1,'WFN Analyzer');hqOpenScore('WFN')">✓ Mark as Run</button>
+          <button class="btn btn-outline" onclick="hqMarkDone(1,'WFN Analyzer');hqApprove()">✓ Mark as Run</button>
         </div>
       </div>
 
@@ -857,105 +855,14 @@ function getHQHTML(session){
         </div>
 
         <div class="tc-note" style="margin-top:10px">
-          <span>⚡</span><span><strong>Scores auto-populate</strong> into Score Approval panel when you click Mark as Run. Review and adjust if needed.</span>
+          <span>⚡</span><span>Click <strong>Mark as Run</strong> to approve and unlock the 30-Day Cadence.</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          <button class="btn btn-outline" onclick="hqMarkDone(1,'TotalSource Tool');hqOpenScore('TS')">✓ Mark as Run</button>
+          <button class="btn btn-outline" onclick="hqMarkDone(1,'TotalSource Tool');hqApprove()">✓ Mark as Run</button>
         </div>
       </div>
     </div>
 
-    <!-- SCORE PANEL -->
-    <div class="sap" id="hq-sap">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px">
-        <div class="sap-title">Score Review & Cadence Approval</div>
-        <span class="sap-badge" id="sap-badge">TRACK A — WFN</span>
-      </div>
-      <div class="sap-sub">Enter scores from your analysis tool, then approve to unlock the 30-Day Cadence.</div>
-      <div class="sc-row" id="sc-row"></div>
-      <div class="rr-box" id="rr">
-        <span style="font-size:22px">🎯</span>
-        <div><div class="rr-lbl">Routing Recommendation</div><div class="rr-desc" id="rr-desc">Enter scores above to see recommendation.</div></div>
-      </div>
-      <div class="tone-box">
-        <div class="tone-label">Cadence Tone</div>
-        <div class="tone-opts">
-          <label><input type="radio" name="hq-tone" value="aggressive" style="accent-color:var(--red)"> Aggressive — High fit (70+)</label>
-          <label><input type="radio" name="hq-tone" value="consultative" checked style="accent-color:var(--gold)"> Consultative — Mid (40–69)</label>
-          <label><input type="radio" name="hq-tone" value="nurture" style="accent-color:var(--text-3)"> Nurture — Low (&lt;40)</label>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="approve-btn" onclick="hqApprove()">✓ Approve & Unlock 30-Day Cadence</button>
-        <button class="revise-btn" onclick="document.getElementById('hq-sap').classList.remove('open')">← Revise</button>
-      </div>
-    </div>
-
-    <!-- INTEL -->
-    <hr class="sdiv">
-    <div class="sh">
-      <span class="sh-step">STEP 03</span>
-      <div>
-        <div class="sh-ttl">Intel Refreshes</div>
-        <div class="sh-sub">Four scheduled intel pulls keep messaging current</div>
-      </div>
-    </div>
-
-    <div class="intel-timeline">
-      <div class="intel-tl-title">Scheduled Intel Pull Days</div>
-      <div class="intel-tl-sub">Each refresh re-arms your messaging with live competitive data before key cadence moments.</div>
-      <div class="rt-days">
-        <div class="rt-day">
-          <div class="rt-day-num">01</div><div class="rt-day-lbl">DAY</div>
-          <div class="rt-day-title">Research Brief</div>
-          <div class="rt-day-desc">Full intel before outreach. Company profile, compliance, renewal window.</div>
-          <div class="rt-chips"><span class="chip c-b">WFN</span><span class="chip c-r">TS Tool</span></div>
-        </div>
-        <div class="rt-day">
-          <div class="rt-day-num">08</div><div class="rt-day-lbl">DAY</div>
-          <div class="rt-day-title">Mid-Cadence Refresh</div>
-          <div class="rt-day-desc">Refresh competitor landscape before education week.</div>
-          <div class="rt-chips"><span class="chip c-g">Intel Report</span><span class="chip c-gr">BLS Data</span></div>
-        </div>
-        <div class="rt-day">
-          <div class="rt-day-num">15</div><div class="rt-day-lbl">DAY</div>
-          <div class="rt-day-title">Competitive Intel Pull</div>
-          <div class="rt-day-desc">Run before urgency week. Surface competitor positioning opportunities.</div>
-          <div class="rt-chips"><span class="chip c-g">Competitor</span><span class="chip c-r">Social</span></div>
-        </div>
-        <div class="rt-day">
-          <div class="rt-day-num">22</div><div class="rt-day-lbl">DAY</div>
-          <div class="rt-day-title">Final Push Intel</div>
-          <div class="rt-day-desc">Last refresh before close week. Confirm renewal window timing.</div>
-          <div class="rt-chips"><span class="chip c-g">Market</span><span class="chip c-b">Scorecard</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tool-grid" style="grid-template-columns:1fr">
-      <div class="tool-card intel" style="border-color:var(--gold)">
-        <div class="tc-badge">STEP 03 · DAYS 8, 15, 22</div>
-        <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
-          <div style="flex:1;min-width:220px">
-            <div class="tc-icon">📊</div>
-            <div class="tc-title">Market Intelligence &amp; Social Research Agents</div>
-            <div class="tc-desc">Both agents are now built into the Analysis Tools tab — run your weekly competitor intelligence report (all 10 competitors, urgent alerts, WoW delta, summary email) and your social listening scan (G2/Capterra/LinkedIn/Reddit, qualified prospect packages with LinkedIn DM + email) directly from there.</div>
-            <div class="tc-pills">
-              <span class="tc-pill">Competitor Intel</span>
-              <span class="tc-pill">Urgent Alerts</span>
-              <span class="tc-pill">WoW Delta</span>
-              <span class="tc-pill">Social Listening</span>
-              <span class="tc-pill">Prospect Packages</span>
-              <span class="tc-pill">LinkedIn DM + Email</span>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;padding-top:4px">
-            <button class="btn btn-gold" onclick="hqTab('analysis')">Open Analysis Tools →</button>
-            <button class="btn btn-outline" onclick="hqMarkDone(5,'Intel + Social Run')">✓ Mark Run</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- FOOTER -->
     <div class="hq-footer">
@@ -1556,7 +1463,7 @@ function initHQ(session){
 }
 
 window.hqTab=function(tab){
-  if(tab==='composer'&&!window._hqApproved){showToast('Complete Score Approval to unlock the 30-Day Cadence',true);return}
+  // Cadence tab always accessible
   document.getElementById('hq-cmd').style.display=tab==='cmd'?'block':'none';
   document.getElementById('hq-composer-view').style.display=tab==='composer'?'block':'none';
   const agentView=document.getElementById('hq-agent-view');
@@ -2977,7 +2884,7 @@ function renderMarketIntel(body, d, tool, p) {
     +   '<div class="mia-talk-track"><ul class="mia-talk-list">' + ttHtml + '</ul></div>'
     + '</div>'
     + '<div class="mia-actions">'
-    +   '<button class="mia-act-btn primary" onclick="hqOpenScore(\'' + (isWFN ? 'WFN' : 'TS') + '\')">→ Enter Scores &amp; Approve</button>'
+    +   '<button class="mia-act-btn primary" onclick="hqApprove()">→ Approve &amp; Launch Cadence</button>'
     +   '<button class="mia-act-btn gold" onclick="navigator.clipboard.writeText(document.getElementById(\'' + tool + '-mia-body\').innerText);showToast(\'Full analysis copied\')">⎘ Copy Analysis</button>'
     +   '<button class="mia-act-btn outline" onclick="runMarketIntel(\'' + tool + '\')">↻ Regenerate</button>'
     + '</div>';
@@ -3170,7 +3077,7 @@ function renderCompetitiveIntel(body, d, p, rec, isWFN) {
     + '</div>'
     // Actions
     + '<div class="mia-actions">'
-    +   '<button class="mia-act-btn primary" onclick="hqOpenScore(\'' + (isWFN ? 'WFN' : 'TS') + '\')">→ Score &amp; Approve</button>'
+    +   '<button class="mia-act-btn primary" onclick="hqApprove()">→ Approve &amp; Launch Cadence</button>'
     +   '<button class="mia-act-btn gold" onclick="hqTab(\'composer\')">📅 Open 30-Day Cadence</button>'
     +   '<button class="mia-act-btn outline" onclick="navigator.clipboard.writeText(document.getElementById(\'ci-body\').innerText);showToast(\'Full report copied\')">⎘ Copy Full Report</button>'
     +   '<button class="mia-act-btn outline" onclick="runCompetitiveIntel()">↻ Regenerate</button>'
@@ -3292,48 +3199,7 @@ window.hqMarkDone=function(step,label){
   hqAdvancePipeline(step+1);showToast(label+' — marked complete');
 };
 
-window.hqOpenScore=function(track){
-  const panel=document.getElementById('hq-sap');panel.classList.add('open');
-  document.getElementById('sap-badge').textContent=track==='WFN'?'WorkforceNow Analysis':'TotalSource PEO Analysis';
-  const row=document.getElementById('sc-row');
-  if(!row)return;
-  if(track==='WFN'){
-    row.innerHTML=hqScoreBox('WFN Fit Score','sc-fit','/100','Fit profile score','#1e40af')+
-      hqScoreBox('Revenue Opportunity','sc-opp','/100','Revenue opportunity','#b8920a')+
-      hqScoreBox('Urgency Level','sc-urg','/100','Switch trigger urgency','#c0271d');
-  }else{
-    row.innerHTML=hqScoreBox('PEO Fit Score','sc-fit','/100','TotalSource eligibility','#166534')+
-      hqScoreBox('Discount Range','sc-disc','% est.','Estimated premium discount','#b8920a')+
-      hqScoreBox('UW Risk','sc-risk','/10','Underwriting risk score','#c2410c');
-  }
-  // ── Feature 3: Auto-populate from SRE analysis ──
-  if(window._sreAnalysis){
-    const a=window._sreAnalysis;
-    const fitEl=document.getElementById('sc-fit');
-    if(fitEl){
-      fitEl.value=track==='WFN'?(a.wfn||''):(a.peo||'');
-    }
-    // Auto-populate opportunity from SRE confidence as proxy
-    const oppEl=document.getElementById('sc-opp');
-    if(oppEl&&a.conf) oppEl.value=a.conf;
-  }
-  // If atData has fit scores from the analyzer, use those
-  if(window._atResults){
-    const res=window._atResults['wfn']||window._atResults['ts']||window._atResults['full'];
-    if(res&&res.fit_scores){
-      const fs=res.fit_scores;
-      const fitEl=document.getElementById('sc-fit');
-      const oppEl=document.getElementById('sc-opp');
-      const urgEl=document.getElementById('sc-urg')||document.getElementById('sc-disc');
-      if(fitEl&&!fitEl.value) fitEl.value=track==='WFN'?(fs.wfn||''):(fs.ts||'');
-      if(oppEl&&!oppEl.value) oppEl.value=fs.market_opportunity||'';
-    }
-  }
-  row.querySelectorAll('.score-inp').forEach(inp=>inp.addEventListener('input',hqUpdateRec));
-  // Trigger rec update if values were auto-filled
-  hqUpdateRec();
-  panel.scrollIntoView({behavior:'smooth',block:'start'});hqAdvancePipeline(2);
-};
+window.hqOpenScore=function(track){ hqApprove(); };
 
 function hqScoreBox(label,id,unit,desc,color){
   return `<div class="sc-box"><div class="sc-lbl">${label}</div>
@@ -3355,7 +3221,6 @@ function hqUpdateRec(){
 
 window.hqApprove=function(){
   window._hqApproved=true;hqAdvancePipeline(4);
-  document.getElementById('hq-sap').classList.remove('open');
   // Tab is always visible; approval just enables the content
   const btn=document.getElementById('hq-composer-btn');
   if(btn){btn.style.opacity='1';btn.style.cursor='pointer';btn.style.background='var(--green-bg)';btn.style.color='var(--green)';btn.style.borderColor='var(--green-border)'}
