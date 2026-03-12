@@ -773,9 +773,6 @@ function getHQHTML(session){
             <button class="cdt-vbtn active" id="cdt-vbtn-timeline" onclick="cdtSetView('timeline')">Timeline</button>
             <button class="cdt-vbtn" id="cdt-vbtn-grid" onclick="cdtSetView('grid')">Grid</button>
           </div>
-          <button onclick="openEmailEngine()" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;font-family:'Plus Jakarta Sans',sans-serif;">
-            <span style="font-size:13px;">⚡</span> Email Engine
-          </button>
           <button onclick="hqTab('cmd')" class="btn btn-outline">← Back</button>
         </div>
       </div>
@@ -3491,7 +3488,6 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
           ${isToday ? '<span class="cdt-today-badge">TODAY</span>' : ''}
           <span class="cdt-status-pill ${pillCls}">${pillLabel}</span>
           <button class="cdt-open-btn" onclick="event.stopPropagation();cdtJumpTo(${idx})" title="Open email composer">✏ Compose</button>
-          <button class="cdt-open-btn" style="background:#0d1535;border-color:#1a2460;color:#fff;font-weight:800" onclick="event.stopPropagation();if(typeof openEmailEngine==='function')openEmailEngine('Day ${day} — ${touch.label}')" title="Open AI Email Engine for this touch">⚡ Engine</button>
           <button class="cdt-open-btn" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="event.stopPropagation();cdtQuickMailto(${idx})" title="Open pre-filled in Outlook">📧 Outlook</button>
           <button class="cdt-open-btn" style="background:#f0fff4;border-color:#bbf7d0;color:#166534" onclick="event.stopPropagation();cdtDownloadTemplate(${idx})" title="Download .eml template">📎 .eml</button>
         </div>
@@ -3879,6 +3875,7 @@ function notifRenderOutreachTab(listEl){
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
           ${!isDone ? `<button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>` : ''}
           <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
+          <button onclick="notifCloseDrawer();if(typeof openEmailEngine==='function')openEmailEngine('Day ${touch.day} — ${touch.label}')" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:4px"><span style="font-size:11px">⚡</span> Email Engine</button>
         </div>
       </div>
     </div>`;
@@ -3912,6 +3909,7 @@ function notifRenderAlertsTab(listEl){
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
             <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
+            <button onclick="notifCloseDrawer();if(typeof openEmailEngine==='function')openEmailEngine('Day ${touch.day} — ${touch.label}')" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
           </div>
         </div>`;
       });
@@ -3927,6 +3925,7 @@ function notifRenderAlertsTab(listEl){
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
             <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:var(--red);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
+            <button onclick="notifCloseDrawer();if(typeof openEmailEngine==='function')openEmailEngine('Day ${touch.day} — ${touch.label}')" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
           </div>
         </div>`;
       });
