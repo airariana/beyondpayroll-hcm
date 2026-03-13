@@ -1065,24 +1065,7 @@ function getHQHTML(session){
           <div class="ec-crow"><div class="ec-cprev" id="prev-subj"></div><button class="ec-cbtn" id="cpbtn-subj" style="background:var(--off-white);color:var(--text);border-color:var(--border)" onclick="ecCopy('subj')">⎘ Copy Subject</button></div>
           <div class="ec-crow"><div class="ec-cprev" id="prev-body"></div><button class="ec-cbtn" id="cpbtn-body" style="background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)" onclick="ecCopy('body')">⎘ Copy Body</button></div>
           <button class="ec-mkbtn" id="ec-mkbtn" onclick="ecMarkSent()">🚀 Mark as Sent & Log in Cadence</button>
-          <!-- Outlook Template Download -->
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <div style="font-size:9px;color:var(--text-3);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:6px">Outlook Template</div>
-            <button class="ec-tmpl-btn" onclick="ecDownloadTemplate()">
-              <div class="ec-tmpl-ico">📎</div>
-              <div class="ec-tmpl-info">
-                <div class="ec-tmpl-title">Download .eml Template</div>
-                <div class="ec-tmpl-sub">Opens in Outlook as a pre-filled draft · subject + body ready</div>
-              </div>
-            </button>
-            <button class="ec-tmpl-btn" onclick="ecCopyTemplate()" style="background:#f0fff4;border-color:#bbf7d0;color:#166534;margin-top:4px">
-              <div class="ec-tmpl-ico" style="font-size:16px">⎘</div>
-              <div class="ec-tmpl-info">
-                <div class="ec-tmpl-title" style="color:#166534">Copy Full Template Text</div>
-                <div class="ec-tmpl-sub" style="color:#16a34a">Subject + Body formatted for paste into any email client</div>
-              </div>
-            </button>
-          </div>
+
       </div>
 
       <div>
@@ -4717,7 +4700,7 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
         </div>
         <div id="cdt-intel-result-${day}" style="padding:0 10px 8px 62px">${intelResult ? cdtRenderIntelResult(intelResult) : ''}</div>
         <div class="cdt-intel-actions" style="padding:0 10px 10px 62px">
-          <button class="cdt-ia-btn email" onclick="cdtIntelEmail(${day})" title="Draft email with this intel">✉ Email</button>
+          <button class="cdt-ia-btn email" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="cdtIntelEmail(${day})" title="Open pre-filled in Outlook">📧 Outlook</button>
           <button class="cdt-ia-btn social" onclick="cdtIntelLinkedIn(${day})" title="Copy as LinkedIn post">💼 LinkedIn Post</button>
           <button class="cdt-ia-btn sms" onclick="cdtIntelSms(${day})" title="Send SMS to prospect">📱 SMS</button>
         </div>
@@ -4734,7 +4717,7 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
         </div>
         <div id="cdt-intel-result-${day}" style="padding:0 10px 8px 62px">${intelResult ? cdtRenderIntelResult(intelResult) : ''}</div>
         <div class="cdt-intel-actions" style="padding:0 10px 10px 62px">
-          <button class="cdt-ia-btn email" onclick="cdtIntelEmail(${day})" title="Draft email with this intel">✉ Email</button>
+          <button class="cdt-ia-btn email" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="cdtIntelEmail(${day})" title="Open pre-filled in Outlook">📧 Outlook</button>
           <button class="cdt-ia-btn social" onclick="cdtIntelLinkedIn(${day})" title="Copy as LinkedIn post">💼 LinkedIn Post</button>
           <button class="cdt-ia-btn sms" onclick="cdtIntelSms(${day})" title="Send SMS to prospect">📱 SMS</button>
         </div>
@@ -4781,9 +4764,8 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
         <div class="cdt-day-right">
           ${isToday ? '<span class="cdt-today-badge">TODAY</span>' : ''}
           <span class="cdt-status-pill ${pillCls}">${pillLabel}</span>
-          <button class="cdt-open-btn" onclick="event.stopPropagation();cdtJumpTo(${idx})" title="Open email composer">✏ Compose</button>
           <button class="cdt-open-btn" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="event.stopPropagation();cdtQuickMailto(${idx})" title="Open pre-filled in Outlook">📧 Outlook</button>
-          <button class="cdt-open-btn" style="background:#f0fff4;border-color:#bbf7d0;color:#166534" onclick="event.stopPropagation();cdtDownloadTemplate(${idx})" title="Download .eml template">📎 .eml</button>
+          ${status !== 'Pending' ? `<button class="cdt-open-btn" style="background:#fff8f0;border-color:#fed7aa;color:#9a3412" onclick="event.stopPropagation();cdtResetTouch(${idx})" title="Reset this touch to Pending">↺ Reset</button>` : ''}
         </div>
       </div>`;
     }
@@ -4829,6 +4811,7 @@ function cdtRenderGrid(touches, touchDays, intelDays, todayNum){
       ${isToday ? '<div style="font-size:9px;font-weight:700;color:#c2410c;margin-bottom:4px">TODAY</div>' : ''}
       ${intelDays.has(touch.day) ? '<div style="font-size:8px;color:var(--gold);font-weight:700;margin-bottom:3px">📊 INTEL DAY</div>' : ''}
       <div class="cdt-gc-status" style="background:${pillBg};color:${pillColor}">${pillLabel}</div>
+      ${status !== 'Pending' ? `<button style="margin-top:6px;width:100%;padding:3px 0;font-size:9px;font-weight:700;border:1px solid #fed7aa;background:#fff8f0;color:#9a3412;border-radius:3px;cursor:pointer;font-family:var(--fb)" onclick="event.stopPropagation();cdtResetTouch(${idx})" title="Reset to Pending">↺ Reset</button>` : ''}
     </div>`;
   });
   gr.innerHTML = html;
@@ -4949,6 +4932,21 @@ window.cdtResetAll = function(){
   cdtSetStart(new Date().toISOString().split('T')[0]);
   ecRenderAll();
   showToast('Cadence reset — starting from today');
+};
+
+window.cdtResetTouch = function(idx){
+  const p = window._hqProspect;
+  const touches = p ? buildTouches(p) : [];
+  const touch = touches[idx];
+  const label = touch ? 'Day ' + touch.day + ' — ' + touch.label : 'this touch';
+  if(!confirm('Reset ' + label + ' back to Pending?')) return;
+  if(window._ecStatuses)  delete window._ecStatuses[idx];
+  if(window._ecNotes)     delete window._ecNotes[idx];
+  if(window._ecLaunched)  delete window._ecLaunched[idx];
+  if(window._ecSentAt)    delete window._ecSentAt[idx];
+  if(p) ecSaveStatuses(p.company);
+  ecRenderAll();
+  showToast(label + ' reset to Pending');
 };
 
 // Hook into ecRenderAll to also refresh tracker
@@ -5168,8 +5166,7 @@ function notifRenderOutreachTab(listEl){
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
           ${!isDone ? `<button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>` : ''}
-          <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
-          <button onclick="notifCloseDrawer();hqTab('composer');setTimeout(function(){ecSwitch(${i});setTimeout(function(){var el=document.querySelector('.cdt-composer-divider');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);},80)" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:4px"><span style="font-size:11px">⚡</span> Email Engine</button>
+          <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">📧 Outlook</button>
         </div>
       </div>
     </div>`;
@@ -5202,8 +5199,7 @@ function notifRenderAlertsTab(listEl){
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
-            <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
-            <button onclick="notifCloseDrawer();hqTab('composer');setTimeout(function(){ecSwitch(${i});setTimeout(function(){var el=document.querySelector('.cdt-composer-divider');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);},80)" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
+            <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">📧 Outlook</button>
           </div>
         </div>`;
       });
@@ -5218,8 +5214,7 @@ function notifRenderAlertsTab(listEl){
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
-            <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:var(--red);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
-            <button onclick="notifCloseDrawer();hqTab('composer');setTimeout(function(){ecSwitch(${i});setTimeout(function(){var el=document.querySelector('.cdt-composer-divider');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);},80)" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
+            <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">📧 Outlook</button>
           </div>
         </div>`;
       });
@@ -5782,14 +5777,14 @@ window.cdtQuickMailto = function(idx){
   const touches = buildTouches(p);
   const touch = touches[idx]; if(!touch) return;
   const toEmail = p.email || '';
-  const sigOn = document.getElementById('ec-sig')?.checked !== false;
-  const sig = sigOn ? '\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net' : '';
-  const body = touch.body.replace(/\n\n—[\s\S]*$/, '') + sig;
   if(!toEmail){ showToast('No email on file — open composer to add recipient',true); cdtJumpTo(idx); return; }
+  const cleanBody = touch.body.replace(/\n\n—[\s\S]*$/, '');
+  const sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
+  const body = cleanBody + sig;
   const uri = 'mailto:'+encodeURIComponent(toEmail)+'?subject='+encodeURIComponent(touch.subject)+'&body='+encodeURIComponent(body);
   const a = document.createElement('a'); a.href=uri; a.style.display='none';
   document.body.appendChild(a); a.click(); setTimeout(()=>document.body.removeChild(a),500);
-  showToast('Opened Outlook — Day '+touch.day+' · '+touch.label);
+  showToast('📧 Outlook ready — Day '+touch.day+' · '+touch.label);
   notifAdd('outreach','📧 Outlook Opened: Day '+touch.day+' — '+touch.label, p.company+' · '+p.contact,'OUTREACH');
 };
 
@@ -6580,39 +6575,53 @@ window.cdtIntelEmail = async function(day) {
   const p = window._hqProspect; if(!p) return;
   const result = cdtGetIntelResult(day);
   const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
-  const nm = (p.contact||'').split(' ')[0]||p.company;
 
+  // Find matching cadence touch to reuse its pre-built subject + body if available
+  const touches = window._ecTouches || [];
+  const matchTouch = touches.find(function(t){ return t.day === day; });
+
+  // Use cadence touch subject if available, otherwise fall back to intel subject map
   const subjectMap = {
     1: 'Quick thought on '+p.company+'\'s HR setup',
     8: 'Something came across my desk re: '+p.company,
     15: 'A competitor move worth flagging for '+p.company,
     22: 'Last thing I wanted to flag for '+p.company
   };
-  const subject = subjectMap[day] || ('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' \u2014 '+p.company);
+  const subject = (matchTouch && matchTouch.subject) || subjectMap[day] || ('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' \u2014 '+p.company);
 
+  // If the touch already has a prose body from the engine, use it directly
+  if (matchTouch && matchTouch._proseBody) {
+    const toEmail = p.email || '';
+    if (!toEmail) { showToast('No email on file for this prospect', true); return; }
+    const uri = 'mailto:'+encodeURIComponent(toEmail)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(matchTouch._proseBody);
+    window.location.href = uri;
+    showToast('\u2713 Opening Outlook \u2014 Day '+day+' intel email ready');
+    return;
+  }
+
+  // Otherwise build full enriched context using the same pipeline as the cadence engine
   const dayKeyMap = {1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel'};
   const touchKey = p.track==='WFN' ? (dayKeyMap[day]||'wfn_day8_intel') : 'wfn_day8_intel';
 
-  const rawContext = [
-    'Company: '+p.company,
-    'Contact: '+nm,
-    'Industry: '+(p.industry||'\u2014'),
-    'Headcount: '+(p.headcount||'\u2014')+' employees',
-    'State: '+(p.state||'\u2014'),
-    'Track: '+(p.track==='WFN'?'ADP WorkforceNow':'ADP TotalSource'),
-    'Cadence Day: '+day+' of 30',
-    '',
-    'INTEL AGENT OUTPUT:',
-    (result?result.result:'No intel available \u2014 use prospect profile only.')
-  ].join('\n');
+  // Use bpEngineBuildContext to pull ALL data: firmographic, pain points, transcript,
+  // MCA competitive intel, analysis tool results, PEO profile, cadence tone
+  const fakeTouch = matchTouch || { day: day, label: intelDay ? intelDay.label : 'Intel Touch' };
+  let rawContext = bpEngineBuildContext(p, fakeTouch, window._atResults || null);
+
+  // Append live intel agent output on top of the engine context
+  if (result && result.result) {
+    rawContext += '\n\nLIVE INTEL AGENT OUTPUT (use the most specific finding from this):\n' + result.result;
+  }
 
   showToast('Formatting email\u2026');
   const proseBody = await bpProseFormat(touchKey, rawContext);
-  const sig = '\n\n\u2014\n[Your Name]\nADP | beyondpayroll.net';
+  const sig = '\n\n\u2014\nAJ\nADP\nbeyondpayroll.net';
   const bodyText = proseBody + sig;
 
-  window.location.href = 'mailto:'+encodeURIComponent(p.email||'')+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyText);
-  showToast('\u2713 Prose email ready \u2014 opening Outlook');
+  const toEmail = p.email || '';
+  const uri = 'mailto:'+encodeURIComponent(toEmail)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(bodyText);
+  window.location.href = uri;
+  showToast('\u2713 Outlook ready \u2014 Day '+day+' intel email pre-filled');
 };
 
 // ── cdtIntelLinkedIn: prose-formatted LinkedIn post from intel agent output ──

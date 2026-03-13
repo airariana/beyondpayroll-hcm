@@ -3569,10 +3569,7 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
         <div class="eg-output-bar">
           <div class="eg-output-label" id="eg-output-label">Generated Email</div>
           <div class="eg-output-actions" id="eg-output-actions" style="display:none">
-            <button class="eg-act-btn" onclick="egCopyBody()">📋 Copy Body</button>
-            <button class="eg-act-btn" onclick="egCopyAll()">📎 Copy All</button>
-            <button class="eg-act-btn" onclick="egOpenMailto()">✉️ Open in Mail</button>
-            <button class="eg-act-btn apply" onclick="egApplyToComposer()">✓ Apply to Composer</button>
+            <button class="eg-act-btn apply" onclick="egOpenMailto()" style="background:#1e40af;color:#fff;border-color:#1e40af">📧 Open in Outlook</button>
             <button class="eg-act-btn" onclick="egGenerate()">🔄 Regenerate</button>
           </div>
         </div>
@@ -5061,7 +5058,17 @@ beyondpayroll.net`;
 
   window.egCopyBody    = function() { if (_lastBody) { navigator.clipboard.writeText(_lastBody); if (typeof showToast === 'function') showToast('✓ Body copied'); } };
   window.egCopyAll     = function() { if (_lastSubject || _lastBody) { navigator.clipboard.writeText('Subject: ' + _lastSubject + '\n\n' + _lastBody); if (typeof showToast === 'function') showToast('✓ Full email copied'); } };
-  window.egOpenMailto  = function() { if (_lastSubject || _lastBody) window.open('mailto:?subject=' + encodeURIComponent(_lastSubject) + '&body=' + encodeURIComponent(_lastBody)); };
+  window.egOpenMailto  = function() {
+    if (!_lastSubject && !_lastBody) return;
+    var p = window._hqProspect || {};
+    var toEmail = (document.getElementById('eg-to') && document.getElementById('eg-to').value) || p.email || '';
+    var sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
+    var body = _lastBody.replace(/\n\n—[\s\S]*$/, '') + sig;
+    var uri = 'mailto:' + encodeURIComponent(toEmail) + '?subject=' + encodeURIComponent(_lastSubject) + '&body=' + encodeURIComponent(body);
+    var a = document.createElement('a'); a.href = uri; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); }, 500);
+    if (typeof showToast === 'function') showToast('📧 Opening Outlook — email pre-filled');
+  };
   window.egApplyToComposer = function() {
     var subEl  = document.getElementById('emailSubject');
     var bodyEl = document.getElementById('emailBody');
