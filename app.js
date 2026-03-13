@@ -897,9 +897,6 @@ function getHQHTML(session){
       <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn1">🔍</div><div class="psl" id="psl1">Research</div></div>
       <div class="pa"></div>
-      <div class="ps-node"><div class="psn" id="psn2">📊</div><div class="psl" id="psl2">Fit Scoring</div></div>
-      <div class="pa"></div>
-      <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn4">🚀</div><div class="psl" id="psl4">Cadence Launch</div></div>
       <div class="pa"></div>
       <div class="ps-node" id="psn-engine-wrap" style="position:relative">
@@ -915,7 +912,6 @@ function getHQHTML(session){
       </div>
       <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn5">✉️</div><div class="psl" id="psl5">30-Day Cadence</div></div>
-      <div class="pa"></div>
     </div>
     <hr class="sdiv">
 
