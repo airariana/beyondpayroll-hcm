@@ -1060,38 +1060,12 @@ function getHQHTML(session){
             <strong style="color:var(--gold);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
             If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
           </div>
-          <div class="ec-or"><div class="ec-or-line"></div><span class="ec-or-txt">or copy individually</span><div class="ec-or-line"></div></div>
-          <div class="ec-crow"><div class="ec-cprev" id="prev-to"></div><button class="ec-cbtn" id="cpbtn-to" style="background:var(--off-white);color:var(--text);border-color:var(--border)" onclick="ecCopy('to')">⎘ Copy To</button></div>
-          <div class="ec-crow"><div class="ec-cprev" id="prev-subj"></div><button class="ec-cbtn" id="cpbtn-subj" style="background:var(--off-white);color:var(--text);border-color:var(--border)" onclick="ecCopy('subj')">⎘ Copy Subject</button></div>
-          <div class="ec-crow"><div class="ec-cprev" id="prev-body"></div><button class="ec-cbtn" id="cpbtn-body" style="background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border)" onclick="ecCopy('body')">⎘ Copy Body</button></div>
           <button class="ec-mkbtn" id="ec-mkbtn" onclick="ecMarkSent()">🚀 Mark as Sent & Log in Cadence</button>
+          <!-- hidden elements kept for JS compatibility -->
+          <div style="display:none"><div id="prev-to"></div><div id="prev-subj"></div><div id="prev-body"></div><select id="ec-ssel" onchange="ecSetSt(this.value)"><option>Pending</option><option>Drafted</option><option>Sent</option><option>Opened</option><option>Replied</option><option>Meeting Booked</option><option>No Response</option><option>Opted Out</option></select><textarea id="ec-notes"></textarea><div id="ec-tokens"></div><div id="ec-chklist"></div><button id="cpbtn-to"></button><button id="cpbtn-subj"></button><button id="cpbtn-body"></button></div>
 
       </div>
 
-      <div>
-        <div class="ec-card"><div class="ec-ch">🏷 Personalization Tokens</div><div class="ec-cb"><div style="font-size:10px;color:var(--text-3);margin-bottom:7px">Tap to copy value</div><div id="ec-tokens"></div></div></div>
-        <div class="ec-card"><div class="ec-ch">✅ Pre-Send Checklist</div><div class="ec-cb" id="ec-chklist"></div></div>
-        <div class="ec-card">
-          <div class="ec-ch">📊 Touch Status</div>
-          <div class="ec-cb">
-            <select class="ec-ssel" id="ec-ssel" onchange="ecSetSt(this.value)">
-              <option>Pending</option><option>Drafted</option><option>Sent</option><option>Opened</option><option>Replied</option><option>Meeting Booked</option><option>No Response</option><option>Opted Out</option>
-            </select>
-            <div style="font-size:9px;color:var(--text-3);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:5px">Notes</div>
-            <textarea class="ec-nt" id="ec-notes" placeholder="Log response, next steps…"></textarea>
-            <button onclick="ecExportCSV()" style="width:100%;margin-top:8px;padding:8px;background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fb)">⬇ Export CSV</button>
-          </div>
-        </div>
-        <div class="ec-card">
-          <div class="ec-ch">🎯 Tone Guide</div>
-          <div class="ec-cb" style="display:flex;flex-direction:column;gap:8px">
-            <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Direct</strong> — Clear ask every email. Never leave without a CTA.</div></div>
-            <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Data-led</strong> — Anchor every point to a specific number.</div></div>
-            <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:var(--green-v);flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Consultative</strong> — Bring insight, not a pitch.</div></div>
-            <div style="display:flex;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:4px"></div><div style="font-size:11px;color:var(--text-3)"><strong style="color:var(--text)">Avoid</strong> — Generic templates or 'checking in'.</div></div>
-          </div>
-        </div>
-      </div>
     </div>
   </div><!-- /composer-view -->
 
@@ -4765,7 +4739,7 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
           ${isToday ? '<span class="cdt-today-badge">TODAY</span>' : ''}
           <span class="cdt-status-pill ${pillCls}">${pillLabel}</span>
           <button class="cdt-open-btn" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="event.stopPropagation();cdtQuickMailto(${idx})" title="Open pre-filled in Outlook">📧 Outlook</button>
-          ${status !== 'Pending' ? `<button class="cdt-open-btn" style="background:#fff8f0;border-color:#fed7aa;color:#9a3412" onclick="event.stopPropagation();cdtResetTouch(${idx})" title="Reset this touch to Pending">↺ Reset</button>` : ''}
+          <button class="cdt-open-btn" style="background:#fff8f0;border-color:#fed7aa;color:#9a3412" onclick="event.stopPropagation();cdtResetTouch(${idx})" title="Reset this touch to Pending">↺ Reset</button>
         </div>
       </div>`;
     }
@@ -4811,7 +4785,7 @@ function cdtRenderGrid(touches, touchDays, intelDays, todayNum){
       ${isToday ? '<div style="font-size:9px;font-weight:700;color:#c2410c;margin-bottom:4px">TODAY</div>' : ''}
       ${intelDays.has(touch.day) ? '<div style="font-size:8px;color:var(--gold);font-weight:700;margin-bottom:3px">📊 INTEL DAY</div>' : ''}
       <div class="cdt-gc-status" style="background:${pillBg};color:${pillColor}">${pillLabel}</div>
-      ${status !== 'Pending' ? `<button style="margin-top:6px;width:100%;padding:3px 0;font-size:9px;font-weight:700;border:1px solid #fed7aa;background:#fff8f0;color:#9a3412;border-radius:3px;cursor:pointer;font-family:var(--fb)" onclick="event.stopPropagation();cdtResetTouch(${idx})" title="Reset to Pending">↺ Reset</button>` : ''}
+      <button style="margin-top:6px;width:100%;padding:3px 0;font-size:9px;font-weight:700;border:1px solid #fed7aa;background:#fff8f0;color:#9a3412;border-radius:3px;cursor:pointer;font-family:var(--fb)" onclick="event.stopPropagation();cdtResetTouch(${idx})" title="Reset to Pending">↺ Reset</button>
     </div>`;
   });
   gr.innerHTML = html;
