@@ -408,21 +408,59 @@ function getHQHTML(session){
               <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">Primary Incumbent</label>
               <select id="sre-competitor" onchange="sreCompetitorChanged()" style="width:100%;padding:8px 10px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text)">
                 <option value="">— Unknown —</option>
-                <option value="paycom">Paycom</option>
-                <option value="paylocity">Paylocity</option>
-                <option value="ukg">UKG (Kronos/Ultimate)</option>
-                <option value="dayforce">Dayforce (Ceridian)</option>
-                <option value="workday">Workday</option>
-                <option value="paychex">Paychex / Paychex PEO</option>
-                <option value="justworks">Justworks</option>
-                <option value="rippling">Rippling</option>
-                <option value="trinet">TriNet</option>
-                <option value="insperity">Insperity</option>
-                <option value="bamboo">BambooHR</option>
-                <option value="isolved">isolved</option>
-                <option value="other">Other</option>
-                <option value="none">No incumbent — manual/spreadsheet</option>
+                <optgroup label="── Existing ADP Client ──">
+                  <option value="adp_run">ADP RUN (small biz payroll)</option>
+                  <option value="adp_workforce_now">ADP Workforce Now (WFN)</option>
+                  <option value="adp_totalsource">ADP TotalSource (PEO)</option>
+                  <option value="adp_vantage">ADP Vantage HCM</option>
+                  <option value="adp_enterprise">ADP Enterprise / GlobalView</option>
+                  <option value="adp_ez_labor">ADP ezLaborManager</option>
+                  <option value="adp_time">ADP Time &amp; Attendance (standalone)</option>
+                  <option value="adp_401k">ADP 401(k) / Retirement only</option>
+                  <option value="adp_other">ADP — Other / Unknown product</option>
+                </optgroup>
+                <optgroup label="── Competitor Incumbent ──">
+                  <option value="paycom">Paycom</option>
+                  <option value="paylocity">Paylocity</option>
+                  <option value="ukg">UKG (Kronos/Ultimate)</option>
+                  <option value="dayforce">Dayforce (Ceridian)</option>
+                  <option value="workday">Workday</option>
+                  <option value="paychex">Paychex / Paychex PEO</option>
+                  <option value="justworks">Justworks</option>
+                  <option value="rippling">Rippling</option>
+                  <option value="trinet">TriNet</option>
+                  <option value="insperity">Insperity</option>
+                  <option value="bamboo">BambooHR</option>
+                  <option value="isolved">isolved</option>
+                  <option value="other">Other</option>
+                  <option value="none">No incumbent — manual/spreadsheet</option>
+                </optgroup>
               </select>
+              <div id="sre-adp-upsell-row" style="display:none;margin-top:6px;padding:8px 10px;background:rgba(0,112,243,.07);border:1px solid rgba(0,112,243,.2);border-radius:6px">
+                <div style="font-size:10px;font-weight:700;color:#0070f3;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">🔄 ADP Upsell / Cross-Sell Context</div>
+                <label style="font-size:11px;color:var(--text-2);display:block;margin-bottom:3px">What are they missing / upgrading to?</label>
+                <select id="sre-adp-upsell-goal" style="width:100%;padding:6px 8px;font-size:11px;font-family:var(--fb);border:1px solid rgba(0,112,243,.3);border-radius:5px;background:var(--off-white);color:var(--text)">
+                  <option value="">— Select upgrade goal —</option>
+                  <optgroup label="WFN Upgrades">
+                    <option value="run_to_wfn">RUN → WFN (growth / complexity)</option>
+                    <option value="wfn_add_ts">WFN → Add TotalSource PEO</option>
+                    <option value="wfn_add_talent">WFN → Add Talent / Learning module</option>
+                    <option value="wfn_add_time">WFN → Add Time &amp; Scheduling</option>
+                    <option value="wfn_add_benefits">WFN → Add Benefits Administration</option>
+                    <option value="wfn_to_vantage">WFN → Vantage HCM (enterprise scale)</option>
+                  </optgroup>
+                  <optgroup label="TotalSource / PEO">
+                    <option value="run_to_ts">RUN → TotalSource PEO</option>
+                    <option value="ts_add_wfn">TotalSource → Carve out to WFN</option>
+                    <option value="ts_renew_expand">TotalSource renewal + headcount expansion</option>
+                  </optgroup>
+                  <optgroup label="Other">
+                    <option value="consolidate">Consolidate multiple ADP products</option>
+                    <option value="global_expand">Add global / multi-country payroll</option>
+                    <option value="other_upsell">Other upsell objective</option>
+                  </optgroup>
+                </select>
+              </div>
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">Contract Renewal</label>
@@ -764,7 +802,10 @@ function getHQHTML(session){
                       <div class="mia-hdr-title">&#129302; AI Market &amp; Competitive Intelligence</div>
                       <div style="font-size:10px;opacity:.5;margin-top:2px" id="sre-mca-lbl">&#8212;</div>
                     </div>
-                    <span class="mia-hdr-badge wfn" id="sre-mca-badge">&#8212;</span>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+                      <span class="mia-hdr-badge wfn" id="sre-mca-badge">&#8212;</span>
+                      <span id="sre-mca-news-ts" style="display:none;font-size:9px;font-weight:600;color:#22c55e;letter-spacing:.5px;text-transform:uppercase">&#9679; Live News Fetched</span>
+                    </div>
                   </div>
                   <div class="mia-body" id="sre-mca-body">
                     <div style="padding:16px;color:var(--text-3);font-size:13px;font-style:italic">Select a track and click Run Analysis to generate intelligence.</div>
@@ -831,6 +872,18 @@ function getHQHTML(session){
       <div class="pa"></div>
       <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn4">🚀</div><div class="psl" id="psl4">Cadence Launch</div></div>
+      <div class="pa"></div>
+      <div class="ps-node" id="psn-engine-wrap" style="position:relative">
+        <div class="psn" id="psn-engine" title="Background Email Engine">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
+            <rect x="1" y="4" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.6" fill="none"/>
+            <path d="M1 7l10 7 10-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle id="eng-dot" cx="17" cy="5" r="3.5" fill="#22c55e" style="transition:fill .4s"/>
+          </svg>
+        </div>
+        <div class="psl" id="psl-engine">Email Engine</div>
+        <div id="eng-ring" style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:52px;height:52px;border-radius:50%;border:2px solid #22c55e;opacity:0;pointer-events:none;transition:opacity .4s"></div>
+      </div>
       <div class="pa"></div>
       <div class="ps-node"><div class="psn" id="psn5">✉️</div><div class="psl" id="psl5">30-Day Cadence</div></div>
       <div class="pa"></div>
@@ -2129,6 +2182,9 @@ function sreRefresh(){
   if(compEl&&p.competitor){compEl.value=p.competitor;sreCompetitorChanged();}
   const rdEl=document.getElementById('sre-renewal-date');
   if(rdEl&&p.renewalDate) rdEl.value=p.renewalDate;
+  // Restore ADP upsell goal if present
+  const upsellEl=document.getElementById('sre-adp-upsell-goal');
+  if(upsellEl&&p.extProfile&&p.extProfile.adpUpsellGoal) upsellEl.value=p.extProfile.adpUpsellGoal;
   // Restore extended profile fields if present
   if(p.extProfile){
     const ext=p.extProfile;
@@ -2203,6 +2259,17 @@ function sreHeadcountBand(hc){
 
 // ── Competitor insight snippets ──────────────────────────────────
 const COMP_INSIGHTS={
+  // Existing ADP clients
+  adp_run:'ADP RUN client — upsell opportunity. RUN has payroll only; WFN adds HR, benefits, time, and compliance. Key trigger: 20+ employees or growing complexity.',
+  adp_workforce_now:'Already on WFN — focus on module expansion (Talent, Learning, Time, Benefits Admin) or PEO conversion via TotalSource if 10–500 EEs.',
+  adp_totalsource:'Existing TotalSource PEO client — renewal or expansion play. Protect from Insperity/TriNet. Leverage benefits benchmarking and WC rate advantage.',
+  adp_vantage:'ADP Vantage client — large enterprise. Focus on enterprise services, analytics, and global payroll expansion.',
+  adp_enterprise:'ADP Enterprise / GlobalView — multinational payroll client. Cross-sell WFN for domestic mid-market subsidiaries or HR consolidation.',
+  adp_ez_labor:'ezLaborManager is legacy time product. Upsell path: WFN Time & Scheduling — modern UI, mobile, manager self-service.',
+  adp_time:'Standalone ADP Time client — strong upsell to full WFN suite. Pain is usually disconnected payroll and manual data entry between systems.',
+  adp_401k:'ADP 401(k) client only — expand into payroll + HR. Integrated retirement + payroll = compliance simplicity and single vendor.',
+  adp_other:'Existing ADP client — identify which product(s) and pain points before positioning upsell or cross-sell.',
+  // Competitor incumbents
   paycom:'Paycom reps lead with single-database pitch. Counter: ADP scale, compliance depth, and dedicated service model.',
   paylocity:'Paylocity targets mid-market with modern UI. Counter: ADP integrations, compliance automation, and implementation support.',
   ukg:'UKG leads with workforce management. Counter: ADP breadth, PEO option, and stronger payroll accuracy track record.',
@@ -2219,15 +2286,24 @@ const COMP_INSIGHTS={
   none:'No incumbent — prospect is on manual/spreadsheet processes. Focus on ROI of automation and time savings.'
 };
 
+const ADP_PRODUCTS=new Set(['adp_run','adp_workforce_now','adp_totalsource','adp_vantage','adp_enterprise','adp_ez_labor','adp_time','adp_401k','adp_other']);
+
 function sreCompetitorChanged(){
   const val=document.getElementById('sre-competitor').value;
   const ins=document.getElementById('sre-comp-insight');
+  const upsellRow=document.getElementById('sre-adp-upsell-row');
+  const isAdp=ADP_PRODUCTS.has(val);
   if(val && COMP_INSIGHTS[val]){
-    ins.textContent=COMP_INSIGHTS[val];
+    const badge=isAdp?'<span style="display:inline-block;margin-bottom:3px;font-size:10px;font-weight:700;color:#0070f3;text-transform:uppercase;letter-spacing:1px">🔵 Existing ADP Client</span><br>':'';
+    ins.innerHTML=badge+COMP_INSIGHTS[val];
     ins.style.display='block';
+    ins.style.background=isAdp?'rgba(0,112,243,.08)':'';
+    ins.style.border=isAdp?'1px solid rgba(0,112,243,.2)':'';
+    ins.style.color=isAdp?'#1e40af':'var(--text-2)';
   } else {
     ins.style.display='none';
   }
+  if(upsellRow) upsellRow.style.display=isAdp?'block':'none';
 }
 
 function sreToggleForm(){
@@ -2252,7 +2328,8 @@ function sreCollectExtended(){
     epli:g('sre-epli'), growth:g('sre-growth'),
     extNotes:g('sre-ext-notes'),
     competitor:g('sre-competitor'),
-    renewalDate:g('sre-renewal-date')
+    renewalDate:g('sre-renewal-date'),
+    adpUpsellGoal:g('sre-adp-upsell-goal')
   };
 }
 
@@ -2562,7 +2639,7 @@ window.sreRestorePeoProfile = function(p) {
 };
 
 // ── Inline Market & Competitive Analysis from SRE ────────────────
-window.sreRunMCA = function() {
+window.sreRunMCA = async function() {
   const p = window._hqProspect;
   if (!p) { showToast('Save a prospect first', true); return; }
   if (!_sreSelectedTrack) { showToast('Select a product track above first', true); return; }
@@ -2588,7 +2665,50 @@ window.sreRunMCA = function() {
   const tone = _sreCadenceTone || 'Consultative';
   const track = isWFN ? 'ADP WorkforceNow' : 'ADP TotalSource PEO';
 
-  const prompt = 'You are a senior ADP competitive intelligence director. Generate a targeted market and competitive analysis for an ADP sales rep.\n\nPRODUCT TRACK: ' + track + '\nCADENCE TONE: ' + tone + '\n\nPROSPECT:\n- Company: ' + p.company + '\n- Industry: ' + (p.industry||'Unknown') + '\n- Headcount: ' + (p.headcount||'Unknown') + (p.headcountRange ? ' (range: '+p.headcountRange+')' : '') + '\n- State: ' + (p.state||'Unknown') + '\n- Client Type: ' + (p.clientType||'New Prospect') + '\n- ADP Products: ' + ((p.adpProducts||[]).join(', ')||'None') + '\n- Incumbent: ' + competitor + (p.renewalDate ? ' (renewal: '+p.renewalDate+')' : '') + '\n- Pain Points: ' + pains + '\n- Decision Timeline: ' + (ext.timeline||'Unknown') + '\n- Buying Stage: ' + (ext.stage||'Unknown') + '\n- Other Vendors: ' + (ext.otherVendors||'Unknown') + '\n- Budget: ' + (ext.budget||'Unknown') + '\n- Growth Plans: ' + (ext.growth||'Unknown') + '\n\nGenerate analysis in this EXACT JSON format (no markdown, no code blocks):\n{\n  "executive_summary": "3-sentence sharp assessment referencing specific pain points and the selected product track",\n  "track_fit": {\n    "why_this_track": ["3-4 specific reasons why ' + track + ' is right for this prospect"],\n    "key_differentiators": ["3-4 ADP differentiators vs ' + competitor + ' for this profile"]\n  },\n  "competitive_intel": [\n    {"competitor": "' + competitor + '", "threat_level": "High/Medium/Low", "counter": "Specific 1-sentence counter-position"},\n    {"competitor": "Second most likely competitor", "threat_level": "High/Medium/Low", "counter": "Specific counter"}\n  ],\n  "tone_strategy": {\n    "tone": "' + tone + '",\n    "opening_hook": "1-sentence opening hook for Day 1 email based on their pain points and track",\n    "primary_message": "The core value message for this track for this specific prospect",\n    "objection_prep": ["Top 2-3 objections this prospect will likely raise with rebuttals"]\n  },\n  "talk_track": "A 3-4 sentence discovery talk track for the first call, tuned to ' + tone + ' tone and ' + track + '"\n}';
+  // ── Live news pre-fetch via Google News RSS ───────────────────────
+  // Fires before the AI prompt so the model gets real, dated headlines
+  const today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const rssProxies = [
+    url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    url => `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(url)}`
+  ];
+  async function fetchRssHeadlines(query) {
+    const feed = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+    for (const proxy of rssProxies) {
+      try {
+        const r = await fetch(proxy(feed), {signal: AbortSignal.timeout(5000)});
+        if (!r.ok) continue;
+        const j = await r.json();
+        const xml = j.contents || j.body || '';
+        const items = [...xml.matchAll(/<title><!\[CDATA\[(.+?)\]\]><\/title>/g)].slice(1,6).map(m=>m[1]);
+        if (items.length) return items;
+      } catch(e) { /* try next proxy */ }
+    }
+    return [];
+  }
+
+  // Build 2 queries: competitor news + industry HR news
+  const compName = competitor.replace(/adp_\w+/,'ADP').replace(/_/g,' ');
+  body.innerHTML = '<div class="mia-loading"><div class="mia-spinner"></div>Fetching live news for ' + compName + '…</div>';
+  let liveNewsBlock = '';
+  try {
+    const [compNews, industryNews] = await Promise.all([
+      fetchRssHeadlines(compName + ' payroll HR software 2025'),
+      fetchRssHeadlines((p.industry||'HR payroll') + ' compliance workforce ' + new Date().getFullYear())
+    ]);
+    if (compNews.length || industryNews.length) {
+      liveNewsBlock = '\n\nLIVE NEWS CONTEXT (as of ' + today + ') — incorporate specific headlines in your analysis where relevant:\n';
+      if (compNews.length) liveNewsBlock += 'Competitor Headlines: ' + compNews.join(' | ') + '\n';
+      if (industryNews.length) liveNewsBlock += 'Industry Headlines: ' + industryNews.join(' | ') + '\n';
+      const newsBadge = document.getElementById('sre-mca-news-ts');
+      if (newsBadge) { newsBadge.textContent = '\u25cf Live news: ' + new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}); newsBadge.style.display = 'block'; }
+    }
+  } catch(e) { /* proceed without live news */ }
+
+  body.innerHTML = '<div class="mia-loading"><div class="mia-spinner"></div>Generating ' + (isWFN ? 'WorkforceNow' : 'TotalSource PEO') + ' competitive analysis for ' + p.company + '...</div>';
+
+  const prompt = 'You are a senior ADP competitive intelligence director. Generate a targeted market and competitive analysis for an ADP sales rep.\n\nPRODUCT TRACK: ' + track + '\nCADENCE TONE: ' + tone + '\n\nPROSPECT:\n- Company: ' + p.company + '\n- Industry: ' + (p.industry||'Unknown') + '\n- Headcount: ' + (p.headcount||'Unknown') + (p.headcountRange ? ' (range: '+p.headcountRange+')' : '') + '\n- State: ' + (p.state||'Unknown') + '\n- Client Type: ' + (p.clientType||'New Prospect') + '\n- ADP Products: ' + ((p.adpProducts||[]).join(', ')||'None') + '\n- Incumbent: ' + competitor + (p.renewalDate ? ' (renewal: '+p.renewalDate+')' : '') + '\n- Pain Points: ' + pains + '\n- Decision Timeline: ' + (ext.timeline||'Unknown') + '\n- Buying Stage: ' + (ext.stage||'Unknown') + '\n- Other Vendors: ' + (ext.otherVendors||'Unknown') + '\n- Budget: ' + (ext.budget||'Unknown') + '\n- Growth Plans: ' + (ext.growth||'Unknown') + '\n\nGenerate analysis in this EXACT JSON format (no markdown, no code blocks):\n{\n  "executive_summary": "3-sentence sharp assessment referencing specific pain points and the selected product track",\n  "track_fit": {\n    "why_this_track": ["3-4 specific reasons why ' + track + ' is right for this prospect"],\n    "key_differentiators": ["3-4 ADP differentiators vs ' + competitor + ' for this profile"]\n  },\n  "competitive_intel": [\n    {"competitor": "' + competitor + '", "threat_level": "High/Medium/Low", "counter": "Specific 1-sentence counter-position"},\n    {"competitor": "Second most likely competitor", "threat_level": "High/Medium/Low", "counter": "Specific counter"}\n  ],\n  "tone_strategy": {\n    "tone": "' + tone + '",\n    "opening_hook": "1-sentence opening hook for Day 1 email based on their pain points and track",\n    "primary_message": "The core value message for this track for this specific prospect",\n    "objection_prep": ["Top 2-3 objections this prospect will likely raise with rebuttals"]\n  },\n  "talk_track": "A 3-4 sentence discovery talk track for the first call, tuned to ' + tone + ' tone and ' + track + '"\n}' + liveNewsBlock;
 
   bpGeminiFetch({messages:[{role:'user', content: prompt}]})
     .then(function(res){ return res.json(); })
@@ -2602,15 +2722,15 @@ window.sreRunMCA = function() {
         let html = '';
         // Executive summary
         html += '<div class="mia-insight"><div class="mia-insight-lbl">Executive Summary</div>';
-        html += '<div class="mia-insight-val">' + escHtml(d.executive_summary||'') + '</div></div>';
+        html += '<div class="mia-insight-val">' + mdHtml(d.executive_summary||'') + '</div></div>';
 
         // Track fit
         if (d.track_fit) {
           html += '<div class="mia-insight"><div class="mia-insight-lbl">Why ' + track + ' For This Prospect</div><ul style="margin:6px 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
-          (d.track_fit.why_this_track||[]).forEach(function(f){ html += '<li>' + escHtml(f) + '</li>'; });
+          (d.track_fit.why_this_track||[]).forEach(function(f){ html += '<li>' + mdHtml(f) + '</li>'; });
           html += '</ul></div>';
           html += '<div class="mia-insight"><div class="mia-insight-lbl">Key Differentiators vs ' + escHtml(competitor) + '</div><ul style="margin:6px 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
-          (d.track_fit.key_differentiators||[]).forEach(function(f){ html += '<li>' + escHtml(f) + '</li>'; });
+          (d.track_fit.key_differentiators||[]).forEach(function(f){ html += '<li>' + mdHtml(f) + '</li>'; });
           html += '</ul></div>';
         }
 
@@ -2622,7 +2742,7 @@ window.sreRunMCA = function() {
             html += '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start">';
             html += '<div style="min-width:90px;font-size:11px;font-weight:700;color:var(--text-2)">' + escHtml(c.competitor||'') + '</div>';
             html += '<div style="font-size:10px;padding:2px 7px;border-radius:3px;background:rgba(0,0,0,.05);color:'+color+';font-weight:700;white-space:nowrap">' + escHtml(c.threat_level||'') + '</div>';
-            html += '<div style="font-size:12px;color:var(--text-2);flex:1">' + escHtml(c.counter||'') + '</div>';
+            html += '<div style="font-size:12px;color:var(--text-2);flex:1">' + mdHtml(c.counter||'') + '</div>';
             html += '</div>';
           });
           html += '</div>';
@@ -2637,7 +2757,7 @@ window.sreRunMCA = function() {
           html += '<div style="font-size:12px;color:var(--text-2)">' + escHtml(d.tone_strategy.primary_message||'') + '</div></div>';
           if (d.tone_strategy.objection_prep && d.tone_strategy.objection_prep.length) {
             html += '<div><div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Objection Prep</div><ul style="margin:0 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
-            d.tone_strategy.objection_prep.forEach(function(o){ html += '<li>' + escHtml(o) + '</li>'; });
+            d.tone_strategy.objection_prep.forEach(function(o){ html += '<li>' + mdHtml(o) + '</li>'; });
             html += '</ul></div>';
           }
           html += '</div>';
@@ -3358,6 +3478,52 @@ function bpEngineSetStatus(status, detail) {
   const s = MAP[status] || MAP.idle;
   el.innerHTML = `<span class="bee-icon">${s.icon}</span><span class="bee-txt">${s.text}</span>`;
   el.className = 'bp-engine-badge ' + s.cls;
+
+  // ── Animate the pipeline node ──
+  const dot  = document.getElementById('eng-dot');
+  const ring = document.getElementById('eng-ring');
+  const node = document.getElementById('psn-engine');
+  const lbl  = document.getElementById('psl-engine');
+  if (!dot || !ring || !node) return;
+
+  // Remove all animation styles first
+  node.style.animation = '';
+  ring.style.opacity   = '0';
+  ring.style.animation = '';
+
+  if (status === 'running') {
+    dot.setAttribute('fill', '#f59e0b');      // amber while generating
+    ring.style.borderColor = '#f59e0b';
+    ring.style.opacity = '1';
+    ring.style.animation = 'eng-pulse 1.4s ease-out infinite';
+    node.style.animation = 'eng-spin-dot 1.4s linear infinite';
+    if (lbl) { lbl.textContent = 'Writing…'; lbl.style.color = '#b45309'; }
+  } else if (status === 'ready') {
+    dot.setAttribute('fill', '#22c55e');      // green when done
+    ring.style.borderColor = '#22c55e';
+    ring.style.opacity = '1';
+    ring.style.animation = 'eng-pulse-once .6s ease-out forwards';
+    node.classList.add('done');
+    if (lbl) { lbl.textContent = 'Emails Ready'; lbl.style.color = '#15803d'; }
+  } else if (status === 'error') {
+    dot.setAttribute('fill', '#ef4444');
+    if (lbl) { lbl.textContent = 'Engine Error'; lbl.style.color = '#b91c1c'; }
+  } else {
+    dot.setAttribute('fill', '#94a3b8');      // gray when idle
+    if (lbl) { lbl.textContent = 'Email Engine'; lbl.style.color = ''; }
+  }
+
+  // Inject keyframes once
+  if (!document.getElementById('eng-keyframes')) {
+    const st = document.createElement('style');
+    st.id = 'eng-keyframes';
+    st.textContent = `
+      @keyframes eng-pulse { 0%{transform:translateX(-50%) scale(1);opacity:.9} 100%{transform:translateX(-50%) scale(1.7);opacity:0} }
+      @keyframes eng-pulse-once { 0%{transform:translateX(-50%) scale(1);opacity:.9} 100%{transform:translateX(-50%) scale(1.9);opacity:0} }
+      @keyframes eng-spin-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
+    `;
+    document.head.appendChild(st);
+  }
 }
 
 // ── Build rich context string for one touch ───────────────────────────
@@ -3379,6 +3545,7 @@ function bpEngineBuildContext(p, touch, atResults) {
   if (p.cadenceTone)  ctx += `  Cadence Tone: ${p.cadenceTone}\n`;
   if (p.competitor)   ctx += `  Incumbent / Competitor: ${p.competitor}\n`;
   if (p.renewalDate)  ctx += `  Contract Renewal: ${p.renewalDate}\n`;
+  if (p.extProfile && p.extProfile.adpUpsellGoal) ctx += `  ADP Upsell Goal: ${p.extProfile.adpUpsellGoal}\n  *** EXISTING ADP CLIENT — frame emails as upgrade/expansion, not displacement. Emphasize ROI and ADP ecosystem continuity. ***\n`;
   if (p.adpProducts && p.adpProducts.length) ctx += `  Current ADP Products: ${p.adpProducts.join(', ')}\n`;
   if (p.clientType)   ctx += `  Client Type: ${p.clientType === 'existing' ? 'Existing ADP Client' : 'New Prospect'}\n`;
 
@@ -5876,6 +6043,13 @@ function renderSavedProspects(){
 }
 
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Lightweight markdown → HTML (bold, italic, inline code only — safe, no block elements)
+function mdHtml(s){
+  return escHtml(String(s))
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px;font-size:.92em">$1</code>');
+}
 
 function pdLoadProspect(idx){
   const arr=getProspects();
