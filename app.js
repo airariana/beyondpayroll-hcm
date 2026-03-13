@@ -166,7 +166,7 @@ function enterHQ(session){
   document.getElementById('pd-avatar-lg').textContent=initials;
   document.getElementById('pd-username').textContent=session.first+' '+session.last;
   document.getElementById('pd-useremail').textContent=session.email||'';
-  document.getElementById('pd-userrole').textContent=session.role==='WFN'?'Track A — WorkforceNow':'Track B — TotalSource';
+  document.getElementById('pd-userrole').textContent=session.role==='WFN'?'ADP WorkforceNow':'ADP TotalSource PEO';
   if(!window._hqLoaded){window._hqLoaded=true;buildHQ(session);}
   // Show admin panel button only for admin account
   if(typeof adminCheckAndShowBtn==='function') adminCheckAndShowBtn(session);
@@ -1500,7 +1500,7 @@ function initHQ(session){
   const ini=(session.first[0]+session.last[0]).toUpperCase();
   const a=document.getElementById('hq-wb-av');if(a)a.textContent=ini;
   const n=document.getElementById('hq-wb-name');if(n)n.textContent='Welcome back, '+session.first;
-  const de=document.getElementById('hq-wb-detail');if(de)de.textContent=session.role==='WFN'?'Track A · ADP WorkforceNow Specialist':'Track B · ADP TotalSource Specialist';
+  const de=document.getElementById('hq-wb-detail');if(de)de.textContent=session.role==='WFN'?'ADP WorkforceNow Specialist':'ADP TotalSource Specialist';
   window._hqProspect=null;window._hqPipelineStep=0;window._hqApproved=false;
   window._ecActiveIdx=0;
   if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
@@ -3352,7 +3352,7 @@ function hqRenderBanner(){
   document.getElementById('hq-pe').style.display='none';
   const pf=document.getElementById('hq-pf');if(!pf)return;pf.style.display='grid';
   const tc=p.track==='WFN'?'wfn':'ts';
-  const tl=p.track==='WFN'?'Track A — WorkforceNow':'Track B — TotalSource';
+  const tl=p.track==='WFN'?'WorkforceNow':'TotalSource PEO';
   pf.innerHTML=`
     <div class="psf-item"><div class="psf-lbl">Company</div><div class="psf-val co">${p.company}</div></div>
     <div class="psf-item"><div class="psf-lbl">Contact</div><div class="psf-val">${p.contact||'—'}</div></div>
@@ -4456,7 +4456,7 @@ function cdtRender(){
   const progSub = document.getElementById('cdt-prog-sub');
   const statRow = document.getElementById('cdt-stat-row');
   const hdrSub = document.getElementById('cdt-header-sub');
-  if(progTitle) progTitle.textContent = p.company + ' — ' + (p.track==='WFN'?'Track A: WorkforceNow':'Track B: TotalSource');
+  if(progTitle) progTitle.textContent = p.company + ' — ' + (p.track==='WFN'?'WorkforceNow':'TotalSource PEO');
   const startLabel = cdtGetStart() ? new Date(cdtGetStart()).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—';
   if(progSub) progSub.textContent = `Started ${startLabel} · Day ${todayNum||'—'} of 30 · ${sentCount}/${totalTouches} touches complete`;
   if(hdrSub) hdrSub.textContent = `Day ${todayNum||'—'} of 30 · Visual timeline · tap any day to open the email composer`;
@@ -4960,7 +4960,7 @@ function notifRenderOutreachTab(listEl){
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
           ${!isDone ? `<button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>` : ''}
           <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
-          <button onclick="notifCloseDrawer();if(typeof openEmailEngine==='function')openEmailEngine('Day ${touch.day} — ${touch.label}')" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:4px"><span style="font-size:11px">⚡</span> Email Engine</button>
+          <button onclick="notifCloseDrawer();hqTab('composer');setTimeout(function(){ecSwitch(${i});setTimeout(function(){var el=document.querySelector('.cdt-composer-divider');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);},80)" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:4px"><span style="font-size:11px">⚡</span> Email Engine</button>
         </div>
       </div>
     </div>`;
@@ -4994,7 +4994,7 @@ function notifRenderAlertsTab(listEl){
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
             <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:var(--navy);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
-            <button onclick="notifCloseDrawer();if(typeof openEmailEngine==='function')openEmailEngine('Day ${touch.day} — ${touch.label}')" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
+            <button onclick="notifCloseDrawer();hqTab('composer');setTimeout(function(){ecSwitch(${i});setTimeout(function(){var el=document.querySelector('.cdt-composer-divider');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);},80)" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
           </div>
         </div>`;
       });
@@ -5010,7 +5010,7 @@ function notifRenderAlertsTab(listEl){
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
             <button onclick="notifCloseDrawer();ecSwitch(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:var(--red);color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">✏ Compose</button>
-            <button onclick="notifCloseDrawer();if(typeof openEmailEngine==='function')openEmailEngine('Day ${touch.day} — ${touch.label}')" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
+            <button onclick="notifCloseDrawer();hqTab('composer');setTimeout(function(){ecSwitch(${i});setTimeout(function(){var el=document.querySelector('.cdt-composer-divider');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},120);},80)" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:linear-gradient(135deg,#0d1535,#1a2460);color:#fff;cursor:pointer;font-family:var('--fb');white-space:nowrap;display:inline-flex;align-items:center;gap:3px"><span style="font-size:10px">⚡</span> Engine</button>
           </div>
         </div>`;
       });
