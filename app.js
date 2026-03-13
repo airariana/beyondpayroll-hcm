@@ -644,6 +644,35 @@ function getHQHTML(session){
           <div id="sre-transcript-status" style="font-size:10px;color:var(--text-3);margin-top:4px;min-height:14px"></div>
         </div>
 
+        <!-- ══ IMAGE INTEL EXTRACTOR ══ -->
+        <div style="margin-bottom:14px" id="sre-img-section">
+          <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+            <span>📸 Screenshot Intel — Upload to Extract Signals</span>
+            <span style="font-size:9px;font-weight:600;color:#0070f3;background:rgba(0,112,243,.1);padding:2px 8px;border-radius:10px;letter-spacing:.3px">AI Vision</span>
+          </div>
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:8px;line-height:1.5">Upload screenshots from LinkedIn, Gong, email threads, or any source. AI extracts <strong>pain signals, objections, competitor mentions, and buying intent</strong> — <em>firmographic fields (name, company, headcount) are never overwritten.</em></div>
+          <div id="sre-img-dropzone" onclick="document.getElementById('sre-img-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--navy)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="sreImgDrop(event)"
+            style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color .15s;background:var(--off-white)">
+            <div style="font-size:22px;margin-bottom:6px">🖼️</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-2)">Click to upload or drag &amp; drop</div>
+            <div style="font-size:10px;color:var(--text-3);margin-top:3px">PNG · JPG · WEBP · up to 5 images</div>
+            <input type="file" id="sre-img-input" accept="image/*" multiple style="display:none" onchange="sreImgFilesSelected(this.files)">
+          </div>
+          <div id="sre-img-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+            <button id="sre-img-analyze-btn" onclick="sreImgAnalyze()" style="display:none;padding:7px 14px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:700;font-family:var(--fb);cursor:pointer;letter-spacing:.3px">🔍 Extract Intel from Images →</button>
+            <div id="sre-img-status" style="font-size:10px;color:var(--text-3);min-height:14px"></div>
+          </div>
+          <div id="sre-img-results" style="display:none;margin-top:10px;padding:12px;background:rgba(0,112,243,.05);border:1px solid rgba(0,112,243,.18);border-radius:8px">
+            <div style="font-size:10px;font-weight:700;color:#0070f3;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📊 Extracted Signals</div>
+            <div id="sre-img-results-body" style="font-size:12px;color:var(--text-2);line-height:1.6"></div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="sreImgApplySignals()" style="padding:6px 12px;background:#0070f3;color:#fff;border:none;border-radius:5px;font-size:11px;font-weight:700;font-family:var(--fb);cursor:pointer">✓ Apply Signals to Profile</button>
+              <button onclick="document.getElementById('sre-img-results').style.display='none';sreImgClear()" style="padding:6px 12px;background:var(--off-white);border:1px solid var(--border);color:var(--text-2);border-radius:5px;font-size:11px;font-weight:600;font-family:var(--fb);cursor:pointer">✕ Discard</button>
+            </div>
+          </div>
+        </div>
+
         <!-- SAVE BUTTON -->
         <div class="sre-run-wrap">
           <button class="sre-run-btn" onclick="sreSave()">
@@ -3303,6 +3332,190 @@ window.saveAndRouteSRE=function(){
     if(sre) sre.scrollIntoView({behavior:'smooth',block:'start'});
     showToast('🎯 Routed to Smart Product Engine — '+company);
   },120);
+};
+
+// ══════════════════════════════════════════════════════════════════
+// IMAGE INTEL EXTRACTOR — Vision AI extracts signals from screenshots
+// Never overwrites firmographic fields: company, contact, headcount,
+// state, industry, persona, email, adpProducts, clientType
+// ══════════════════════════════════════════════════════════════════
+window._sreImgFiles  = []; // {file, base64, mediaType}
+window._sreImgSignals = null; // last parsed extraction result
+
+window.sreImgFilesSelected = function(fileList) {
+  const files = Array.from(fileList).slice(0, 5);
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const b64 = e.target.result.split(',')[1];
+      const mediaType = file.type;
+      window._sreImgFiles.push({ file, base64: b64, mediaType, name: file.name });
+      sreImgRenderThumbs();
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+window.sreImgDrop = function(e) {
+  e.preventDefault();
+  document.getElementById('sre-img-dropzone').style.borderColor = 'var(--border)';
+  if (e.dataTransfer && e.dataTransfer.files) sreImgFilesSelected(e.dataTransfer.files);
+};
+
+window.sreImgRenderThumbs = function() {
+  const container = document.getElementById('sre-img-thumbs');
+  const btn = document.getElementById('sre-img-analyze-btn');
+  if (!container) return;
+  if (!window._sreImgFiles.length) { container.innerHTML = ''; if (btn) btn.style.display = 'none'; return; }
+  container.innerHTML = window._sreImgFiles.map((f, i) => `
+    <div style="position:relative;display:inline-block">
+      <img src="data:${f.mediaType};base64,${f.base64}" style="width:72px;height:56px;object-fit:cover;border-radius:5px;border:1px solid var(--border)">
+      <button onclick="window._sreImgFiles.splice(${i},1);sreImgRenderThumbs()" style="position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;border:none;background:#ef4444;color:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+      <div style="font-size:8px;color:var(--text-3);max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${f.name}</div>
+    </div>`).join('');
+  if (btn) btn.style.display = 'inline-block';
+};
+
+window.sreImgClear = function() {
+  window._sreImgFiles = [];
+  window._sreImgSignals = null;
+  sreImgRenderThumbs();
+  const st = document.getElementById('sre-img-status');
+  if (st) st.textContent = '';
+};
+
+window.sreImgAnalyze = async function() {
+  if (!window._sreImgFiles.length) { showToast('Upload at least one image first', true); return; }
+  const btn = document.getElementById('sre-img-analyze-btn');
+  const status = document.getElementById('sre-img-status');
+  const results = document.getElementById('sre-img-results');
+  const resultsBody = document.getElementById('sre-img-results-body');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Analyzing…'; }
+  if (status) status.textContent = 'AI Vision scanning images…';
+  if (results) results.style.display = 'none';
+
+  // Build content array: text prompt + all images
+  const imageContent = window._sreImgFiles.map(f => ({
+    type: 'image',
+    source: { type: 'base64', media_type: f.mediaType, data: f.base64 }
+  }));
+
+  const textPrompt = {
+    type: 'text',
+    text: `You are an ADP sales intelligence AI. Analyze these screenshots and extract ONLY sales signals. 
+DO NOT extract or return any of these firmographic fields: company name, contact name, person's name, employee count, headcount, company size, state, location, industry, email address, phone number, ADP product currently used.
+
+Extract and return ONLY the following in this exact JSON format (no markdown):
+{
+  "pain_points": ["array of specific pain point IDs from this list that are evidenced: payroll_errors, tax_filing, benefits_payment, aca_compliance, workers_comp, multi_entity, platform_failures, manual_spreadsheet, slow_onboarding, high_turnover, compliance_risk, i9_everify, data_security, reporting_analytics, integration_issues, implementation_support, cost_transparency, change_mgmt"],
+  "competitor_mentions": ["any competitor names visible: Paycom, Paylocity, UKG, Dayforce, Workday, Paychex, Justworks, Rippling, TriNet, Insperity, BambooHR, isolved"],
+  "objections": ["array of objection strings extracted verbatim or summarized from the screenshots"],
+  "buying_signals": ["positive signals: budget approved, timeline mentioned, evaluation started, demo requested, etc."],
+  "key_quotes": ["1-3 verbatim quotes that reveal pain, intent, or objection — under 20 words each"],
+  "additional_context": "1-2 sentence summary of any other relevant sales intelligence from the screenshots"
+}`
+  };
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: [...imageContent, textPrompt] }]
+      })
+    });
+    const data = await response.json();
+    const raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    window._sreImgSignals = parsed;
+
+    // Render results preview
+    let html = '';
+    if (parsed.pain_points && parsed.pain_points.length)
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.8px">Pain Points (${parsed.pain_points.length})</span><br><span>${parsed.pain_points.join(' · ')}</span></div>`;
+    if (parsed.competitor_mentions && parsed.competitor_mentions.length)
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.8px">Competitors Mentioned</span><br><span>${parsed.competitor_mentions.join(', ')}</span></div>`;
+    if (parsed.buying_signals && parsed.buying_signals.length)
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.8px">Buying Signals</span><br><ul style="margin:4px 0 0 16px;padding:0">${parsed.buying_signals.map(s=>`<li>${s}</li>`).join('')}</ul></div>`;
+    if (parsed.objections && parsed.objections.length)
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.8px">Objections</span><br><ul style="margin:4px 0 0 16px;padding:0">${parsed.objections.map(o=>`<li>${o}</li>`).join('')}</ul></div>`;
+    if (parsed.key_quotes && parsed.key_quotes.length)
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px">Key Quotes</span><br>${parsed.key_quotes.map(q=>`<div style="border-left:3px solid var(--navy);padding-left:8px;margin-top:4px;font-style:italic;color:var(--text)">"${q}"</div>`).join('')}</div>`;
+    if (parsed.additional_context)
+      html += `<div style="margin-top:6px;padding:8px;background:var(--off-white);border-radius:5px;font-size:11px;color:var(--text-2)">${parsed.additional_context}</div>`;
+    if (!html) html = '<div style="color:var(--text-3);font-style:italic">No actionable sales signals detected in these images.</div>';
+
+    if (resultsBody) resultsBody.innerHTML = html;
+    if (results) results.style.display = 'block';
+    if (status) status.textContent = '✓ Signals extracted — review and apply below';
+    if (status) status.style.color = '#15803d';
+  } catch(err) {
+    if (status) { status.textContent = '⚠ Could not parse image — try a clearer screenshot'; status.style.color = 'var(--red)'; }
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '🔍 Extract Intel from Images →'; }
+};
+
+// Apply extracted signals to the SRE form WITHOUT touching firmographic fields
+window.sreImgApplySignals = function() {
+  const s = window._sreImgSignals;
+  if (!s) { showToast('No signals to apply', true); return; }
+
+  // 1. Check matching pain point checkboxes
+  if (s.pain_points && s.pain_points.length) {
+    s.pain_points.forEach(ppId => {
+      const cb = document.getElementById('pp-' + ppId);
+      if (cb) cb.checked = true;
+    });
+  }
+
+  // 2. Set competitor dropdown only if currently empty/unknown
+  if (s.competitor_mentions && s.competitor_mentions.length) {
+    const compEl = document.getElementById('sre-competitor');
+    if (compEl && (!compEl.value || compEl.value === '')) {
+      // Match to known values
+      const compMap = {
+        'paycom':'paycom','paylocity':'paylocity','ukg':'ukg','kronos':'ukg','ultimate':'ukg',
+        'dayforce':'dayforce','ceridian':'dayforce','workday':'workday','paychex':'paychex',
+        'justworks':'justworks','rippling':'rippling','trinet':'trinet','insperity':'insperity',
+        'bamboohr':'bamboo','bamboo':'bamboo','isolved':'isolved'
+      };
+      const found = s.competitor_mentions.find(c => compMap[c.toLowerCase()]);
+      if (found) { compEl.value = compMap[found.toLowerCase()]; sreCompetitorChanged(); }
+    }
+  }
+
+  // 3. Append objections + key quotes to the Gong transcript box (additive, never replace)
+  if ((s.objections && s.objections.length) || (s.key_quotes && s.key_quotes.length)) {
+    const ta = document.getElementById('sre-transcript');
+    if (ta) {
+      const existing = ta.value.trim();
+      const appendParts = [];
+      if (s.key_quotes && s.key_quotes.length) appendParts.push('[Image Quotes]\n' + s.key_quotes.map(q=>`"${q}"`).join('\n'));
+      if (s.objections && s.objections.length) appendParts.push('[Image Objections]\n' + s.objections.join('\n'));
+      if (appendParts.length) ta.value = (existing ? existing + '\n\n' : '') + appendParts.join('\n\n');
+    }
+  }
+
+  // 4. Add buying signals + context to extended notes (additive)
+  if (s.buying_signals && s.buying_signals.length || s.additional_context) {
+    const notesEl = document.getElementById('sre-ext-notes');
+    if (notesEl) {
+      const existing = notesEl.value.trim();
+      const appendParts = [];
+      if (s.buying_signals && s.buying_signals.length) appendParts.push('[Image Buying Signals] ' + s.buying_signals.join(' | '));
+      if (s.additional_context) appendParts.push('[Image Context] ' + s.additional_context);
+      notesEl.value = (existing ? existing + '\n' : '') + appendParts.join('\n');
+    }
+  }
+
+  showToast('✓ Signals applied — firmographic fields unchanged');
+  document.getElementById('sre-img-results').style.display = 'none';
+  window._sreImgSignals = null;
 };
 
 // Analyze pasted transcript text and map to SRE checkboxes
