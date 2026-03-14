@@ -1219,11 +1219,34 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
   .modal-box{padding:20px 16px;margin:12px}
   .track-grid{grid-template-columns:1fr !important}
 
-  /* ── SRE body: force all inline 2-col grids to single col ── */
-  .sre-body [style*="grid-template-columns:1fr 1fr"],
-  .sre-body [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important}
+  /* ── Top bar: hide fb-status Live badge and profile text ── */
+  .fb-status{display:none !important}
+  .pb-info{display:none !important}
+  .pb-caret{display:none !important}
+  .profile-btn{padding:3px;border-radius:50%;gap:0;background:transparent;border-color:transparent}
+
+  /* ── SRE: collapse all inline multi-col grids ── */
+  .sre-body [style*="grid-template-columns"]{grid-template-columns:1fr !important}
+  /* Pain grids: keep 2 cols */
+  .sre-pain-grid,
+  .sre-pain-grid.three{grid-template-columns:repeat(2,1fr) !important}
+  /* ADP opts: 2 cols */
   .sre-adp-opts{grid-template-columns:repeat(2,1fr) !important}
+  /* Prospect overview: 2 cols */
   .sre-prospect-grid{grid-template-columns:1fr 1fr !important}
+
+  /* ── Analysis tools + MIA: collapse all inline grids ── */
+  .at-view [style*="grid-template-columns"],
+  .mia-body [style*="grid-template-columns"],
+  .at-results-body [style*="grid-template-columns"]{grid-template-columns:1fr !important}
+  .at-view{padding:14px 12px 60px}
+
+  /* ── TS / WFN panel inner grids ── */
+  #ts-panel [style*="grid-template-columns"],
+  #wfn-panel [style*="grid-template-columns"]{grid-template-columns:1fr 1fr !important}
+
+  /* ── Prospect profile drawer cards ── */
+  .pp-field-grid,[class*="pp-grid"]{grid-template-columns:1fr !important}
 
   /* ── EC composer ── */
   .ec-body-txt{min-height:120px}
