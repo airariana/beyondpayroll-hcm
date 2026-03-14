@@ -1248,6 +1248,18 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
   /* ── Prospect profile drawer cards ── */
   .pp-field-grid,[class*="pp-grid"]{grid-template-columns:1fr !important}
 
+  /* ── Date inputs: prevent iOS Safari from expanding them ── */
+  input[type="date"]{
+    -webkit-appearance:none;
+    appearance:none;
+    height:36px;
+    min-height:36px;
+    max-height:36px;
+    display:block;
+    width:100%;
+    box-sizing:border-box;
+  }
+
   /* ── EC composer ── */
   .ec-body-txt{min-height:120px}
   .ec-ol-bar{gap:3px}

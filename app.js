@@ -464,7 +464,7 @@ function getHQHTML(session){
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--text-2);display:block;margin-bottom:4px">Contract Renewal</label>
-              <input type="date" id="sre-renewal-date" style="width:100%;padding:8px 10px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);box-sizing:border-box">
+              <input type="date" id="sre-renewal-date" style="width:100%;padding:8px 10px;font-size:12px;font-family:var(--fb);border:1px solid var(--border);border-radius:6px;background:var(--off-white);color:var(--text);box-sizing:border-box;height:36px;-webkit-appearance:none;appearance:none;display:block">
             </div>
           </div>
           <div id="sre-comp-insight" style="display:none;padding:8px 10px;background:rgba(220,53,69,.08);border-radius:6px;font-size:11px;color:var(--text-2);line-height:1.5"></div>
