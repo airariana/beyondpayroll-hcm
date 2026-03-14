@@ -2533,6 +2533,8 @@ window.tbInitAutoSave = function() {
     if (isToggle && window._hqProspect) window.tbMarkUnsaved();
   });
 };
+
+function sreShowSummary(r){
   document.getElementById('sre-rec-val').textContent='Profile Complete';
   document.getElementById('sre-conf').textContent=r.dp+' pts';
   document.getElementById('sre-client-type-label').textContent=r.clientType==='existing'?'Existing ADP Client':'New Prospect — Net New';
