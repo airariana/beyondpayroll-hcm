@@ -378,6 +378,9 @@ function getHQHTML(session){
             <div class="sre-adp-opt" id="sre-adp-wfn" onclick="sreAdpToggle('wfn',this)">Workforce Now</div>
             <div class="sre-adp-opt" id="sre-adp-ts" onclick="sreAdpToggle('ts',this)">TotalSource</div>
             <div class="sre-adp-opt" id="sre-adp-etime" onclick="sreAdpToggle('etime',this)">eTime / TLM</div>
+            <div class="sre-adp-opt" id="sre-adp-benefits" onclick="sreAdpToggle('benefits',this)">Health &amp; Benefits</div>
+            <div class="sre-adp-opt" id="sre-adp-wc" onclick="sreAdpToggle('wc',this)">Workers' Comp</div>
+            <div class="sre-adp-opt" id="sre-adp-401k" onclick="sreAdpToggle('401k',this)">401K / Retirement</div>
             <div class="sre-adp-opt" id="sre-adp-other" onclick="sreAdpToggle('other',this)">Other ADP</div>
           </div>
         </div>
@@ -417,6 +420,8 @@ function getHQHTML(session){
                   <option value="adp_ez_labor">ADP ezLaborManager</option>
                   <option value="adp_time">ADP Time &amp; Attendance (standalone)</option>
                   <option value="adp_401k">ADP 401(k) / Retirement only</option>
+                  <option value="adp_benefits">ADP Health &amp; Benefits (standalone)</option>
+                  <option value="adp_wc">ADP Workers' Comp (standalone)</option>
                   <option value="adp_other">ADP — Other / Unknown product</option>
                 </optgroup>
                 <optgroup label="── Competitor Incumbent ──">
@@ -1696,6 +1701,9 @@ function gongDetectClientType(text){
   if(/\bworkforce now\b|\bwfn\b/.test(t)) adpProducts.push('wfn');
   if(/\btotalsource\b|\bpeo\b|\bco.?employ/.test(t)) adpProducts.push('ts');
   if(/\betime\b|\btlm\b|\btime and labor\b/.test(t)) adpProducts.push('etime');
+  if(/\badp.*benefits\b|\bhealth.*benefits\b|\bbenefits admin\b|\bbenefits administration\b/.test(t)) adpProducts.push('benefits');
+  if(/\bworkers.?comp\b|\bwc.*adp\b|\badp.*wc\b|\bworkers.*compensation.*adp\b/.test(t)) adpProducts.push('wc');
+  if(/\b401k\b|\b401\(k\)\b|\bretirement.*adp\b|\badp.*retirement\b|\badp.*401\b/.test(t)) adpProducts.push('401k');
   const isExisting=adpProducts.length>0||/currently (using|on|with) adp|existing adp|adp client|already (use|using|have) adp/.test(t);
   return{clientType:isExisting?'existing':'new', adpProducts};
 }
@@ -1839,7 +1847,7 @@ INSTRUCTIONS:
 - core: always populate these 6 fields if data exists. These are the minimum required fields. For linkedin: if an explicit LinkedIn URL is found, use it exactly. If not found but you have a contact name and company name, construct a best-guess LinkedIn profile URL in the format linkedin.com/in/firstname-lastname (lowercase, hyphenated). Always populate this field with your best inference — never leave it blank if you have a name.
 - fields: this is open-ended. Include ANY field that would be useful for a sales rep preparing for a discovery call. Standard ones: Industry, State, Headcount, Website, HQ Address. But also add any that appear in the files: Current Vendor, Contract End Date, Decision Timeline, Key Stakeholders, Annual Revenue, Number of Locations, ERP/HRIS System, Benefits Broker, Recent News, Competitive Risk, Objections Raised, Budget Mentioned, etc. Only include fields where you actually found data. Each field needs: label (clear human-readable name), value (the data), group (one of: firmographic | contact_info | sales_intel | competitive | financial | timeline).
 - insights: list of key intelligence points a sales rep must know — pain points confirmed, signals spotted, risks, opportunities. Each needs label and value.
-- sre: pain_points must only use these exact IDs where evidence exists: sre-401k, sre-wc, sre-aca, sre-benefits, sre-tax, sre-platform, sre-gl, sre-support, sre-i9, sre-multi, sre-manual. adp_products only if currently in use.
+- sre: pain_points must only use these exact IDs where evidence exists: sre-401k, sre-wc, sre-aca, sre-benefits, sre-tax, sre-platform, sre-gl, sre-support, sre-i9, sre-multi, sre-manual. adp_products only if currently in use. Valid adp_product values: run, classic, wfn, ts, etime, benefits, wc, 401k, other.
 - summary: 3-4 sentence executive brief for the sales rep — who this prospect is, what they need, why they are a strong ADP opportunity, and recommended first move.
 - Use "" or [] for anything not found. Do not guess or hallucinate values.`;
 
@@ -2178,6 +2186,19 @@ function sreRefresh(){
   // Restore competitor if previously saved
   const compEl=document.getElementById('sre-competitor');
   if(compEl&&p.competitor){compEl.value=p.competitor;sreCompetitorChanged();}
+  // Restore ADP product buttons
+  if(p.adpProducts&&p.adpProducts.length){
+    _sreAdpProducts=new Set();
+    // First clear all active states
+    document.querySelectorAll('.sre-adp-opt').forEach(function(el){ el.classList.remove('active'); });
+    // Re-activate saved products
+    p.adpProducts.forEach(function(key){
+      const el=document.getElementById('sre-adp-'+key.toLowerCase());
+      if(el){ _sreAdpProducts.add(key.toLowerCase()); el.classList.add('active'); }
+    });
+    // If any products selected, switch to existing client silo
+    if(_sreAdpProducts.size>0) sreSilo('existing');
+  }
   const rdEl=document.getElementById('sre-renewal-date');
   if(rdEl&&p.renewalDate) rdEl.value=p.renewalDate;
   // Restore ADP upsell goal if present
@@ -2266,6 +2287,8 @@ const COMP_INSIGHTS={
   adp_ez_labor:'ezLaborManager is legacy time product. Upsell path: WFN Time & Scheduling — modern UI, mobile, manager self-service.',
   adp_time:'Standalone ADP Time client — strong upsell to full WFN suite. Pain is usually disconnected payroll and manual data entry between systems.',
   adp_401k:'ADP 401(k) client only — expand into payroll + HR. Integrated retirement + payroll = compliance simplicity and single vendor.',
+  adp_benefits:'ADP Health & Benefits standalone client — strong upsell to full WFN or TotalSource. Consolidating benefits admin with payroll eliminates reconciliation errors and reduces carrier billing issues.',
+  adp_wc:'ADP Workers\' Comp standalone client — upsell to TotalSource PEO for pay-as-you-go WC or full WFN for integrated WC + payroll. Eliminates year-end audit surprises and improves cash flow.',
   adp_other:'Existing ADP client — identify which product(s) and pain points before positioning upsell or cross-sell.',
   // Competitor incumbents
   paycom:'Paycom reps lead with single-database pitch. Counter: ADP scale, compliance depth, and dedicated service model.',
@@ -2284,7 +2307,20 @@ const COMP_INSIGHTS={
   none:'No incumbent — prospect is on manual/spreadsheet processes. Focus on ROI of automation and time savings.'
 };
 
-const ADP_PRODUCTS=new Set(['adp_run','adp_workforce_now','adp_totalsource','adp_vantage','adp_enterprise','adp_ez_labor','adp_time','adp_401k','adp_other']);
+const ADP_PRODUCTS=new Set(['adp_run','adp_workforce_now','adp_totalsource','adp_vantage','adp_enterprise','adp_ez_labor','adp_time','adp_401k','adp_benefits','adp_wc','adp_other']);
+
+// Human-readable labels for ADP product keys
+const ADP_PRODUCT_LABELS={
+  run:'ADP RUN', classic:'ADP Classic', wfn:'WorkforceNow', ts:'TotalSource',
+  etime:'eTime/TLM', benefits:'Health & Benefits', wc:"Workers' Comp",
+  '401k':'401K/Retirement', other:'Other ADP',
+  adp_run:'ADP RUN', adp_workforce_now:'WorkforceNow', adp_totalsource:'TotalSource',
+  adp_vantage:'ADP Vantage', adp_enterprise:'ADP Enterprise',
+  adp_ez_labor:'ezLaborManager', adp_time:'ADP Time',
+  adp_401k:'401K/Retirement', adp_benefits:'Health & Benefits',
+  adp_wc:"Workers' Comp", adp_other:'Other ADP'
+};
+function adpLabel(key){ return ADP_PRODUCT_LABELS[key] || key.toUpperCase().replace(/_/g,' '); }
 
 function sreCompetitorChanged(){
   const val=document.getElementById('sre-competitor').value;
@@ -2706,7 +2742,7 @@ window.sreRunMCA = async function() {
 
   body.innerHTML = '<div class="mia-loading"><div class="mia-spinner"></div>Generating ' + (isWFN ? 'WorkforceNow' : 'TotalSource PEO') + ' competitive analysis for ' + p.company + '...</div>';
 
-  const prompt = 'You are a senior ADP competitive intelligence director. Generate a targeted market and competitive analysis for an ADP sales rep.\n\nPRODUCT TRACK: ' + track + '\nCADENCE TONE: ' + tone + '\n\nPROSPECT:\n- Company: ' + p.company + '\n- Industry: ' + (p.industry||'Unknown') + '\n- Headcount: ' + (p.headcount||'Unknown') + (p.headcountRange ? ' (range: '+p.headcountRange+')' : '') + '\n- State: ' + (p.state||'Unknown') + '\n- Client Type: ' + (p.clientType||'New Prospect') + '\n- ADP Products: ' + ((p.adpProducts||[]).join(', ')||'None') + '\n- Incumbent: ' + competitor + (p.renewalDate ? ' (renewal: '+p.renewalDate+')' : '') + '\n- Pain Points: ' + pains + '\n- Decision Timeline: ' + (ext.timeline||'Unknown') + '\n- Buying Stage: ' + (ext.stage||'Unknown') + '\n- Other Vendors: ' + (ext.otherVendors||'Unknown') + '\n- Budget: ' + (ext.budget||'Unknown') + '\n- Growth Plans: ' + (ext.growth||'Unknown') + '\n\nGenerate analysis in this EXACT JSON format (no markdown, no code blocks):\n{\n  "executive_summary": "3-sentence sharp assessment referencing specific pain points and the selected product track",\n  "track_fit": {\n    "why_this_track": ["3-4 specific reasons why ' + track + ' is right for this prospect"],\n    "key_differentiators": ["3-4 ADP differentiators vs ' + competitor + ' for this profile"]\n  },\n  "competitive_intel": [\n    {"competitor": "' + competitor + '", "threat_level": "High/Medium/Low", "counter": "Specific 1-sentence counter-position"},\n    {"competitor": "Second most likely competitor", "threat_level": "High/Medium/Low", "counter": "Specific counter"}\n  ],\n  "tone_strategy": {\n    "tone": "' + tone + '",\n    "opening_hook": "1-sentence opening hook for Day 1 email based on their pain points and track",\n    "primary_message": "The core value message for this track for this specific prospect",\n    "objection_prep": ["Top 2-3 objections this prospect will likely raise with rebuttals"]\n  },\n  "talk_track": "A 3-4 sentence discovery talk track for the first call, tuned to ' + tone + ' tone and ' + track + '"\n}' + liveNewsBlock;
+  const prompt = 'You are a senior ADP competitive intelligence director. Generate a targeted market and competitive analysis for an ADP sales rep.\n\nPRODUCT TRACK: ' + track + '\nCADENCE TONE: ' + tone + '\n\nPROSPECT:\n- Company: ' + p.company + '\n- Industry: ' + (p.industry||'Unknown') + '\n- Headcount: ' + (p.headcount||'Unknown') + (p.headcountRange ? ' (range: '+p.headcountRange+')' : '') + '\n- State: ' + (p.state||'Unknown') + '\n- Client Type: ' + (p.clientType||'New Prospect') + '\n- ADP Products: ' + ((p.adpProducts||[]).map(function(x){return adpLabel(x);}).join(', ')||'None') + '\n- Incumbent: ' + competitor + (p.renewalDate ? ' (renewal: '+p.renewalDate+')' : '') + '\n- Pain Points: ' + pains + '\n- Decision Timeline: ' + (ext.timeline||'Unknown') + '\n- Buying Stage: ' + (ext.stage||'Unknown') + '\n- Other Vendors: ' + (ext.otherVendors||'Unknown') + '\n- Budget: ' + (ext.budget||'Unknown') + '\n- Growth Plans: ' + (ext.growth||'Unknown') + '\n\nGenerate analysis in this EXACT JSON format (no markdown, no code blocks):\n{\n  "executive_summary": "3-sentence sharp assessment referencing specific pain points and the selected product track",\n  "track_fit": {\n    "why_this_track": ["3-4 specific reasons why ' + track + ' is right for this prospect"],\n    "key_differentiators": ["3-4 ADP differentiators vs ' + competitor + ' for this profile"]\n  },\n  "competitive_intel": [\n    {"competitor": "' + competitor + '", "threat_level": "High/Medium/Low", "counter": "Specific 1-sentence counter-position"},\n    {"competitor": "Second most likely competitor", "threat_level": "High/Medium/Low", "counter": "Specific counter"}\n  ],\n  "tone_strategy": {\n    "tone": "' + tone + '",\n    "opening_hook": "1-sentence opening hook for Day 1 email based on their pain points and track",\n    "primary_message": "The core value message for this track for this specific prospect",\n    "objection_prep": ["Top 2-3 objections this prospect will likely raise with rebuttals"]\n  },\n  "talk_track": "A 3-4 sentence discovery talk track for the first call, tuned to ' + tone + ' tone and ' + track + '"\n}' + liveNewsBlock;
 
   bpGeminiFetch({messages:[{role:'user', content: prompt}]})
     .then(function(res){ return res.json(); })
@@ -2979,7 +3015,7 @@ PROSPECT DATA:
 - Headcount: ${p.headcount || 'Unknown'} employees
 - State: ${p.state || 'Not specified'}
 - Decision Maker: ${p.persona || 'Not specified'}
-- Client Type: ${clientType === 'existing' ? 'Existing ADP client — ' + (adpProducts.join(', ') || 'unknown product') : 'Net-new prospect / non-ADP'}
+- Client Type: ${clientType === 'existing' ? 'Existing ADP client — ' + (adpProducts.map(function(x){return adpLabel(x);}).join(', ') || 'unknown product') : 'Net-new prospect / non-ADP'}
 - Pain Points Identified: ${pains.length ? pains.join(', ') : 'None specifically identified yet'}
 
 Generate a competitive intelligence report in this EXACT JSON format (respond with JSON only, no markdown):
@@ -3111,7 +3147,7 @@ PROSPECT PROFILE:
 - Headcount: ${p.headcount || 'Unknown'} employees
 - State: ${p.state || 'Not specified'}
 - Decision Maker: ${p.persona || 'Not specified'}
-- Client Type: ${_sreClientType === 'existing' ? 'Existing ADP client (' + adpProducts.join(', ') + ')' : 'Non-ADP / net-new prospect'}
+- Client Type: ${_sreClientType === 'existing' ? 'Existing ADP client (' + adpProducts.map(function(x){return adpLabel(x);}).join(', ') + ')' : 'Non-ADP / net-new prospect'}
 - Identified Pain Points: ${pains.length ? pains.join(', ') : 'Not specified'}
 - Cadence Track: ${isWFN ? 'WorkforceNow mid-market' : 'TotalSource PEO'}
 
@@ -3511,7 +3547,7 @@ window.sreAnalyzeTranscript=function(){
     });
     statusEl.innerHTML='<span style="color:var(--red);font-weight:700">✓ Mapped:</span> '
       +(pains.length?painLabels.join(' · '):'No pain points detected — try adding more transcript text')
-      +(detected.adpProducts.length?' &nbsp;|&nbsp; <span style="color:var(--blue);font-weight:600">ADP: '+detected.adpProducts.join(', ').toUpperCase()+'</span>':'');
+      +(detected.adpProducts.length?' &nbsp;|&nbsp; <span style="color:var(--blue);font-weight:600">ADP: '+detected.adpProducts.map(function(x){return adpLabel(x);}).join(', ')+'</span>':'');
   }
   showToast('✓ Transcript analyzed — '+pains.length+' pain point'+(pains.length!==1?'s':'')+' mapped');
 };
@@ -3728,7 +3764,18 @@ function bpEngineBuildContext(p, touch, atResults) {
   if (p.competitor)   ctx += `  Incumbent / Competitor: ${p.competitor}\n`;
   if (p.renewalDate)  ctx += `  Contract Renewal: ${p.renewalDate}\n`;
   if (p.extProfile && p.extProfile.adpUpsellGoal) ctx += `  ADP Upsell Goal: ${p.extProfile.adpUpsellGoal}\n  *** EXISTING ADP CLIENT — frame emails as upgrade/expansion, not displacement. Emphasize ROI and ADP ecosystem continuity. ***\n`;
-  if (p.adpProducts && p.adpProducts.length) ctx += `  Current ADP Products: ${p.adpProducts.join(', ')}\n`;
+  if (p.adpProducts && p.adpProducts.length) {
+    ctx += `  Current ADP Products: ${p.adpProducts.map(function(x){return adpLabel(x);}).join(', ')}\n`;
+    const _prods = p.adpProducts;
+    if (_prods.includes('benefits') || _prods.includes('adp_benefits'))
+      ctx += `  \u29D1 Benefits upsell: Already trusts ADP for benefits. Bridge to WFN/TotalSource — show how integrated payroll+benefits eliminates carrier reconciliation errors and saves HR hours monthly.\n`;
+    if (_prods.includes('wc') || _prods.includes('adp_wc'))
+      ctx += `  \u29D1 Workers' Comp upsell: Uses ADP WC — ideal for TotalSource pay-as-you-go WC or WFN integration. Angle: eliminate year-end audit surprises and free up cash flow.\n`;
+    if (_prods.includes('401k') || _prods.includes('adp_401k'))
+      ctx += `  \u29D1 401K upsell: Uses ADP retirement. Pitch integrated payroll+401K for automatic deferral sync, reduced compliance risk, and single-vendor simplicity.\n`;
+    if (p.clientType === 'existing')
+      ctx += `  *** EXISTING ADP CLIENT — frame all outreach as upgrade/expansion. Never use displacement language. Lead with ecosystem ROI and consolidation benefits. ***\n`;
+  }
   if (p.clientType)   ctx += `  Client Type: ${p.clientType === 'existing' ? 'Existing ADP Client' : 'New Prospect'}\n`;
 
   // PEO underwriting profile — only present on TotalSource track
@@ -6365,7 +6412,7 @@ window.ppShowProfile = function(idx) {
             '<div class="pp-field"><div class="pp-field-lbl">Incumbent</div><div class="pp-field-val">'+escHtml(p.competitor||'&#8212;')+'</div></div>',
             '<div class="pp-field"><div class="pp-field-lbl">Renewal Date</div><div class="pp-field-val">'+escHtml(p.renewalDate||'&#8212;')+'</div></div>',
             '<div class="pp-field"><div class="pp-field-lbl">Headcount Band</div><div class="pp-field-val">'+escHtml(p.headcountBand ? p.headcountBand+' ('+p.headcountRange+' EEs)' : '&#8212;')+'</div></div>',
-            '<div class="pp-field"><div class="pp-field-lbl">Current ADP Products</div><div class="pp-field-val">'+((p.adpProducts||[]).join(', ')||'&#8212;')+'</div></div>',
+            '<div class="pp-field"><div class="pp-field-lbl">Current ADP Products</div><div class="pp-field-val">'+((p.adpProducts||[]).map(function(x){return adpLabel(x);}).join(', ')||'&#8212;')+'</div></div>',
             '<div class="pp-field"><div class="pp-field-lbl">Data Points</div><div class="pp-field-val">'+(p.sreDataPoints ? p.sreDataPoints+' captured' : '&#8212;')+'</div></div>',
             '<div class="pp-field"><div class="pp-field-lbl">LinkedIn</div><div class="pp-field-val">'+linkedinLink+'</div></div>',
           '</div>',
@@ -10169,7 +10216,7 @@ window.atPullFromProspect = function() {
   if (loadedEl) loadedEl.style.display = 'block';
 
   var sre = atCollectSreContext();
-  var adpStr = sre.adpProducts.length ? sre.adpProducts.map(function(x){return x.toUpperCase();}).join(', ') : '—';
+  var adpStr = sre.adpProducts.length ? sre.adpProducts.map(function(x){return adpLabel(x);}).join(', ') : '—';
   var painStr = sre.painPoints.length ? sre.painPoints.join(', ') : '—';
   var transcriptStr = sre.transcript.length > 20
     ? sre.transcript.substring(0, 80).trim() + (sre.transcript.length > 80 ? '…' : '')
@@ -10504,7 +10551,7 @@ function atCallClaude(tool, data) {
   if (data.sreRan) {
     sreBlock += '\nPROSPECT INTELLIGENCE SUMMARY:\n';
     if (data.clientType) sreBlock += '  Client Type: ' + (data.clientType === 'existing' ? 'Existing ADP Client' : 'New Prospect') + '\n';
-    if (data.adpProducts && data.adpProducts.length) sreBlock += '  ADP Products: ' + data.adpProducts.join(', ').toUpperCase() + '\n';
+    if (data.adpProducts && data.adpProducts.length) sreBlock += '  ADP Products: ' + data.adpProducts.map(function(x){return adpLabel(x);}).join(', ') + '\n';
     if (data.competitor) sreBlock += '  Incumbent: ' + data.competitor + '\n';
     if (data.renewalDate) sreBlock += '  Contract Renewal: ' + data.renewalDate + '\n';
     if (data.headcountRange) sreBlock += '  Headcount Range: ' + data.headcountRange + ' EEs (' + (data.headcountBand||'') + ')\n';
@@ -10541,7 +10588,7 @@ function atCallClaude(tool, data) {
 
   var adpBlock = '';
   if (data.adpProducts && data.adpProducts.length) {
-    adpBlock = '\nCURRENT ADP PRODUCTS IN USE: ' + data.adpProducts.map(function(x){return x.toUpperCase();}).join(', ') + '\n';
+    adpBlock = '\nCURRENT ADP PRODUCTS IN USE: ' + data.adpProducts.map(function(x){return adpLabel(x);}).join(', ') + '\n';
   }
 
   var transcriptBlock = '';
