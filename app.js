@@ -242,7 +242,7 @@ function getHQHTML(session){
       <div class="hq-ttl">Sales Command Center</div>
       <div class="hq-ttl-sub">30-Day ADP Cadence Intelligence Platform</div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="hq-hdr-actions" style="display:flex;align-items:center;gap:10px">
       <div class="hq-date-lbl" id="hq-date">—</div>
       <!-- Notification Bell -->
       <div class="notif-bell-wrap">

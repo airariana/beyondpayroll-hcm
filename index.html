@@ -1147,6 +1147,90 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 @media(max-width:700px){.left-panel{display:none}.right-panel{padding:24px 18px}}
 @media(max-width:800px){.tool-grid,.ec-2col,.rt-days{grid-template-columns:1fr}}
 
+/* ── Mobile top-bar & layout fixes ── */
+@media(max-width:600px){
+  /* ── Top bar: compress to fit all buttons on narrow screens ── */
+  .top-bar{padding:0 10px;gap:6px;height:52px}
+  .tb-sep{display:none}
+  .tb-sub{display:none}
+  .tb-name{font-size:12px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tb-right{gap:5px}
+  .tb-icon-btn{padding:5px 8px;font-size:11px;gap:3px}
+  .user-chip{display:none}
+  .logout-btn{display:none}
+  /* fb-status badge: icon only on mobile */
+  .fb-status{font-size:11px;padding:4px 6px}
+
+  /* ── View padding for shorter top bar ── */
+  #view-hq.portal-view.active{padding-top:52px}
+
+  /* ── Main content padding ── */
+  .hq-wrap{padding:14px 12px 80px}
+
+  /* ── HQ header ── */
+  .hq-hdr{padding:12px 0 14px;gap:8px;flex-direction:column;align-items:flex-start}
+  .hq-hdr-actions{display:none !important}
+  .hq-ttl{font-size:20px}
+
+  /* ── Nav tabs: horizontal scroll, no wrap ── */
+  .hq-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;margin-bottom:14px;padding:3px}
+  .hq-nav::-webkit-scrollbar{display:none}
+  .hq-tab{font-size:11px;padding:6px 10px;white-space:nowrap;flex-shrink:0;gap:4px}
+
+  /* ── Prospect strip: single column fields ── */
+  .ps-fields{grid-template-columns:1fr 1fr}
+  .psf-item{border-right:none;padding:4px 8px 4px 0}
+
+  /* ── Pipeline node: tighter on mobile ── */
+  .pipeline{padding:8px 0;gap:0}
+  .ps-node{min-width:60px}
+  .psn{width:34px;height:34px}
+  .psl{font-size:8px}
+
+  /* ── SRE pain grid: never more than 2 cols ── */
+  .sre-pain-grid,.sre-pain-grid.three{grid-template-columns:repeat(2,1fr)}
+  .sre-prospect-grid{grid-template-columns:1fr 1fr}
+
+  /* ── Cadence timeline rows: stack right side ── */
+  .cdt-day-row{flex-wrap:wrap}
+  .cdt-day-right{padding:6px 10px 8px;gap:5px;width:100%;border-top:1px solid var(--border)}
+  .cdt-open-btn{font-size:9px;padding:4px 8px}
+
+  /* ── Cadence intel rows ── */
+  .cdt-ia-btn{font-size:9px;padding:3px 8px}
+
+  /* ── Email composer: full width ── */
+  .ec-outlook{border-radius:var(--radius-sm)}
+  .ec-body-txt{min-height:160px;font-size:11px}
+  .ec-mto-btn{font-size:12px;padding:12px}
+  .tbtn{font-size:10px;padding:4px 8px}
+
+  /* ── Drawers: full width on mobile, start below top bar ── */
+  .notif-drawer{width:100%;right:-100%;top:52px;height:calc(100vh - 52px)}
+  .pp-drawer{width:100%;right:-100%;top:52px;height:calc(100vh - 52px)}
+
+  /* ── Section headings ── */
+  .sh{flex-wrap:wrap;gap:6px}
+  .sh-ttl{font-size:16px}
+
+  /* ── Modal: full-width, reduced padding ── */
+  .modal{padding:20px 14px;margin:0 8px;max-height:96vh}
+  .modal-box{padding:20px 16px;margin:12px}
+  .track-grid{grid-template-columns:1fr !important}
+
+  /* ── SRE body: force all inline 2-col grids to single col ── */
+  .sre-body [style*="grid-template-columns:1fr 1fr"],
+  .sre-body [style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important}
+  .sre-adp-opts{grid-template-columns:repeat(2,1fr) !important}
+  .sre-prospect-grid{grid-template-columns:1fr 1fr !important}
+
+  /* ── EC composer ── */
+  .ec-body-txt{min-height:120px}
+  .ec-ol-bar{gap:3px}
+  .tbtn{font-size:9px;padding:3px 6px}
+}
+
 /* ═══════════════════════════════════════════
    ANALYSIS TOOLS TAB
    ═══════════════════════════════════════════ */
