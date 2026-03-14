@@ -3396,73 +3396,88 @@ window.sreImgAnalyze = async function() {
   const status = document.getElementById('sre-img-status');
   const results = document.getElementById('sre-img-results');
   const resultsBody = document.getElementById('sre-img-results-body');
-  if (btn) { btn.disabled = true; btn.textContent = '⟳ Analyzing…'; }
-  if (status) status.textContent = 'AI Vision scanning images…';
+  if (btn) { btn.disabled = true; btn.textContent = '\u29f3 Analyzing\u2026'; }
+  if (status) { status.textContent = 'AI Vision scanning images\u2026'; status.style.color = 'var(--text-3)'; }
   if (results) results.style.display = 'none';
 
-  // Build content array: text prompt + all images
-  const imageContent = window._sreImgFiles.map(f => ({
-    type: 'image',
-    source: { type: 'base64', media_type: f.mediaType, data: f.base64 }
-  }));
-
-  const textPrompt = {
-    type: 'text',
-    text: `You are an ADP sales intelligence AI. Analyze these screenshots and extract ONLY sales signals. 
-DO NOT extract or return any of these firmographic fields: company name, contact name, person's name, employee count, headcount, company size, state, location, industry, email address, phone number, ADP product currently used.
-
-Extract and return ONLY the following in this exact JSON format (no markdown):
+  // Build Gemini parts: text prompt + images as inline_data
+  // Routes through same CF Worker proxy as rest of app (X-Service: gemini)
+  const parts = [];
+  parts.push({ text: `You are an ADP sales intelligence AI. Analyze these screenshots and extract ONLY sales signals.
+DO NOT extract or return any firmographic fields: company name, contact name, headcount, state, industry, email, phone.
+Return ONLY valid JSON (no markdown, no preamble) in this exact structure:
 {
-  "pain_points": ["array of specific pain point IDs from this list that are evidenced: payroll_errors, tax_filing, benefits_payment, aca_compliance, workers_comp, multi_entity, platform_failures, manual_spreadsheet, slow_onboarding, high_turnover, compliance_risk, i9_everify, data_security, reporting_analytics, integration_issues, implementation_support, cost_transparency, change_mgmt"],
-  "competitor_mentions": ["any competitor names visible: Paycom, Paylocity, UKG, Dayforce, Workday, Paychex, Justworks, Rippling, TriNet, Insperity, BambooHR, isolved"],
-  "objections": ["array of objection strings extracted verbatim or summarized from the screenshots"],
-  "buying_signals": ["positive signals: budget approved, timeline mentioned, evaluation started, demo requested, etc."],
-  "key_quotes": ["1-3 verbatim quotes that reveal pain, intent, or objection — under 20 words each"],
-  "additional_context": "1-2 sentence summary of any other relevant sales intelligence from the screenshots"
-}`
-  };
+  "pain_points": ["IDs evidenced from: payroll_errors, tax_filing, benefits_payment, aca_compliance, workers_comp, multi_entity, platform_failures, manual_spreadsheet, slow_onboarding, high_turnover, compliance_risk, i9_everify, data_security, reporting_analytics, integration_issues, implementation_support, cost_transparency, change_mgmt"],
+  "competitor_mentions": ["names: Paycom, Paylocity, UKG, Dayforce, Workday, Paychex, Justworks, Rippling, TriNet, Insperity, BambooHR, isolved"],
+  "objections": ["objection strings extracted or summarized"],
+  "buying_signals": ["budget approved, timeline mentioned, evaluation started, demo requested, etc."],
+  "key_quotes": ["1-3 verbatim quotes under 20 words that reveal pain, intent, or objection"],
+  "additional_context": "1-2 sentence summary of other relevant sales intelligence"
+}
+If no signals found, return: {"pain_points":[],"competitor_mentions":[],"objections":[],"buying_signals":[],"key_quotes":[],"additional_context":"No actionable signals detected."}` });
+
+  window._sreImgFiles.forEach(function(f) {
+    parts.push({ inline_data: { mime_type: f.mediaType || 'image/jpeg', data: f.base64 } });
+  });
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(window.CF_WORKER_URL || BP_WORKER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: [...imageContent, textPrompt] }]
-      })
+      headers: { 'Content-Type': 'application/json', 'X-Service': 'gemini' },
+      body: JSON.stringify({ contents: [{ parts: parts }] })
     });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(function(){ return 'Network error'; });
+      throw new Error('Proxy error ' + response.status + ': ' + errText.substring(0, 120));
+    }
+
     const data = await response.json();
-    const raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
+    const raw = bpGeminiText(data) || '';
+    if (!raw) throw new Error('Empty response from AI \u2014 try again');
+
+    // Robust JSON extraction
+    let clean = raw.replace(/```json|```/g, '').trim();
+    const jsonStart = clean.indexOf('{');
+    const jsonEnd = clean.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('AI returned non-JSON \u2014 try a clearer screenshot');
+    clean = clean.slice(jsonStart, jsonEnd + 1);
+
+    let parsed;
+    try { parsed = JSON.parse(clean); }
+    catch(pe) {
+      parsed = { pain_points:[], competitor_mentions:[], objections:[], buying_signals:[], key_quotes:[], additional_context: 'Partial extraction \u2014 signals may be incomplete.' };
+    }
     window._sreImgSignals = parsed;
 
     // Render results preview
     let html = '';
     if (parsed.pain_points && parsed.pain_points.length)
-      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.8px">Pain Points (${parsed.pain_points.length})</span><br><span>${parsed.pain_points.join(' · ')}</span></div>`;
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.8px">Pain Points (${parsed.pain_points.length})</span><br><span>${parsed.pain_points.join(' \u00b7 ')}</span></div>`;
     if (parsed.competitor_mentions && parsed.competitor_mentions.length)
       html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.8px">Competitors Mentioned</span><br><span>${parsed.competitor_mentions.join(', ')}</span></div>`;
     if (parsed.buying_signals && parsed.buying_signals.length)
-      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.8px">Buying Signals</span><br><ul style="margin:4px 0 0 16px;padding:0">${parsed.buying_signals.map(s=>`<li>${s}</li>`).join('')}</ul></div>`;
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.8px">Buying Signals</span><br><ul style="margin:4px 0 0 16px;padding:0">${parsed.buying_signals.map(function(s){return '<li>'+s+'</li>';}).join('')}</ul></div>`;
     if (parsed.objections && parsed.objections.length)
-      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.8px">Objections</span><br><ul style="margin:4px 0 0 16px;padding:0">${parsed.objections.map(o=>`<li>${o}</li>`).join('')}</ul></div>`;
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.8px">Objections</span><br><ul style="margin:4px 0 0 16px;padding:0">${parsed.objections.map(function(o){return '<li>'+o+'</li>';}).join('')}</ul></div>`;
     if (parsed.key_quotes && parsed.key_quotes.length)
-      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px">Key Quotes</span><br>${parsed.key_quotes.map(q=>`<div style="border-left:3px solid var(--navy);padding-left:8px;margin-top:4px;font-style:italic;color:var(--text)">"${q}"</div>`).join('')}</div>`;
+      html += `<div style="margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px">Key Quotes</span><br>${parsed.key_quotes.map(function(q){return '<div style="border-left:3px solid var(--navy);padding-left:8px;margin-top:4px;font-style:italic;color:var(--text)">\"'+q+'\"</div>';}).join('')}</div>`;
     if (parsed.additional_context)
       html += `<div style="margin-top:6px;padding:8px;background:var(--off-white);border-radius:5px;font-size:11px;color:var(--text-2)">${parsed.additional_context}</div>`;
     if (!html) html = '<div style="color:var(--text-3);font-style:italic">No actionable sales signals detected in these images.</div>';
 
     if (resultsBody) resultsBody.innerHTML = html;
     if (results) results.style.display = 'block';
-    if (status) status.textContent = '✓ Signals extracted — review and apply below';
-    if (status) status.style.color = '#15803d';
+    if (status) { status.textContent = '\u2713 Signals extracted \u2014 review and apply below'; status.style.color = '#15803d'; }
+
   } catch(err) {
-    if (status) { status.textContent = '⚠ Could not parse image — try a clearer screenshot'; status.style.color = 'var(--red)'; }
+    console.error('[sreImgAnalyze]', err);
+    const msg = err.message || 'Unknown error';
+    if (status) { status.textContent = '\u26a0 ' + msg; status.style.color = 'var(--red)'; }
+    showToast('Image analysis failed: ' + msg.substring(0, 80), true);
   }
 
-  if (btn) { btn.disabled = false; btn.textContent = '🔍 Extract Intel from Images →'; }
+  if (btn) { btn.disabled = false; btn.textContent = '\ud83d\udd0d Extract Intel from Images \u2192'; }
 };
 
 // Apply extracted signals to the SRE form WITHOUT touching firmographic fields
