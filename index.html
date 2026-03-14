@@ -1813,9 +1813,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
         <button onclick="closeModal()" style="flex:1;padding:10px 16px;background:var(--off-white);color:var(--text-2);border:1.5px solid var(--border);border-radius:8px;font-family:var(--fb);font-weight:600;font-size:13px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='var(--light)'" onmouseout="this.style.background='var(--off-white)'">Cancel</button>
         <button onclick="saveProspect()" style="flex:2;padding:10px 22px;background:var(--navy);color:#fff;border:1.5px solid transparent;border-radius:8px;font-family:var(--fb);font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;letter-spacing:.3px" onmouseover="this.style.background='#1a2460'" onmouseout="this.style.background='var(--navy)'">Initialize Prospect →</button>
       </div>
-      <button onclick="saveAndRouteSRE()" style="width:100%;padding:10px;background:transparent;color:var(--gold);border:1.5px solid var(--gold-border);border-radius:8px;font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.8px;cursor:pointer;text-transform:uppercase;transition:all .15s" onmouseover="this.style.background='var(--gold-bg)'" onmouseout="this.style.background='transparent'">
-        🎯 Save &amp; Route to Smart Product Engine →
-      </button>
+
     </div>
   </div>
 </div>
@@ -3794,7 +3792,6 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
     const titleEl = document.querySelector('#prospectModal .modal-title');
     const subEl   = document.querySelector('#prospectModal .modal-sub');
     const saveBtn = document.querySelector('#prospectModal button[onclick="saveProspect()"]');
-    const routeBtn = document.querySelector('#prospectModal button[onclick="saveAndRouteSRE()"]');
 
     if (mode === 'edit' && p) {
       if (titleEl) titleEl.textContent = 'Edit Prospect';

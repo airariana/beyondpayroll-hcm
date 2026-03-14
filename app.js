@@ -166,13 +166,22 @@ function enterHQ(session){
   document.getElementById('pd-avatar-lg').textContent=initials;
   document.getElementById('pd-username').textContent=session.first+' '+session.last;
   document.getElementById('pd-useremail').textContent=session.email||'';
-  document.getElementById('pd-userrole').textContent=session.role==='WFN'?'ADP WorkforceNow':'ADP TotalSource PEO';
+  document.getElementById('pd-userrole').textContent=session.role==='WFN'?'BP HQ':'BP HQ';
   if(!window._hqLoaded){window._hqLoaded=true;buildHQ(session);}
   // Show admin panel button only for admin account
   if(typeof adminCheckAndShowBtn==='function') adminCheckAndShowBtn(session);
   // Defer Firebase + prospect rendering until after DOM settles
   setTimeout(function(){
     if(typeof fbInit==='function') fbInit(session);
+    // Deduplicate any existing duplicate prospects in localStorage on every login
+    try{
+      const _raw=JSON.parse(localStorage.getItem('bp_prospects')||'[]');
+      const _deduped=dedupeProspects(_raw);
+      if(_deduped.length < _raw.length){
+        saveProspectsLocal(_deduped);
+        console.log('[BP] Removed '+(_raw.length-_deduped.length)+' duplicate prospect(s)');
+      }
+    }catch(e){}
     if(typeof renderSavedProspects==='function') renderSavedProspects();
     // Init notification system
     if(typeof notifUpdateBadge==='function') notifUpdateBadge();
@@ -1490,7 +1499,7 @@ function initHQ(session){
   const ini=(session.first[0]+session.last[0]).toUpperCase();
   const a=document.getElementById('hq-wb-av');if(a)a.textContent=ini;
   const n=document.getElementById('hq-wb-name');if(n)n.textContent='Welcome back, '+session.first;
-  const de=document.getElementById('hq-wb-detail');if(de)de.textContent=session.role==='WFN'?'ADP WorkforceNow Specialist':'ADP TotalSource Specialist';
+  const de=document.getElementById('hq-wb-detail');if(de)de.textContent='BP HQ';
   window._hqProspect=null;window._hqPipelineStep=0;window._hqApproved=false;
   window._ecActiveIdx=0;
   if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
@@ -2425,10 +2434,10 @@ function sreSave(){
     sreDataPoints:dp,
     sreSavedAt:new Date().toISOString()
   });
-  // Save to localStorage
+  // Save to localStorage — dedup by normalized company name
   try{
     const stored=JSON.parse(localStorage.getItem('bp_prospects')||'[]');
-    const idx=stored.findIndex(x=>x.email===p.email&&x.company===p.company);
+    const idx=findProspectIdx(stored, p);
     if(idx>=0) stored[idx]=p; else stored.push(p);
     localStorage.setItem('bp_prospects',JSON.stringify(stored));
     localStorage.setItem('activeProspect',JSON.stringify(p));
@@ -2458,7 +2467,7 @@ window.tbSaveProspect = function() {
     // Fallback: just persist the current prospect object
     try {
       const stored = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
-      const idx = stored.findIndex(function(x){ return x.email === p.email && x.company === p.company; });
+      const idx = findProspectIdx(stored, p);
       if (idx >= 0) stored[idx] = p; else stored.push(p);
       localStorage.setItem('bp_prospects', JSON.stringify(stored));
       localStorage.setItem('activeProspect', JSON.stringify(p));
@@ -2978,9 +2987,9 @@ window.saveProspect=function(){
     updatedAt:  new Date().toISOString(),
     approved:   false
   };
-  // Persist to saved prospects list
+  // Persist to saved prospects list — dedup by normalized company name
   const arr=getProspects();
-  const existing=arr.findIndex(function(x){return x.company===company;});
+  const existing=findProspectIdx(arr, window._hqProspect);
   if(existing>=0){arr[existing]=Object.assign(arr[existing],window._hqProspect);}
   else{arr.unshift(window._hqProspect);}
   saveProspectsLocal(arr);
@@ -5982,6 +5991,45 @@ function getTombstones(){ try{ return JSON.parse(localStorage.getItem(TOMBSTONE_
 function addTombstone(id){ if(!id) return; const t=getTombstones(); if(t.indexOf(id)===-1){ t.push(id); localStorage.setItem(TOMBSTONE_KEY,JSON.stringify(t)); } }
 function isTombstoned(id){ if(!id) return false; return getTombstones().indexOf(id)!==-1; }
 let _fbDb=null,_fbOnline=false,_fbSession=null;
+
+// ── Prospect dedup helpers ───────────────────────────────────────────
+// Normalize company name for matching: lowercase, strip punctuation/spaces
+function normalizeCompany(name) {
+  return String(name||'').toLowerCase().replace(/[^a-z0-9]/g,'').trim();
+}
+// Find existing prospect index using company name (normalized) as primary key
+// Falls back to email match if company is too generic
+function findProspectIdx(arr, prospect) {
+  const co = normalizeCompany(prospect.company);
+  const em = (prospect.email||'').toLowerCase().trim();
+  if (!co) return -1;
+  // 1. Exact normalized company + email match
+  if (em) {
+    const byBoth = arr.findIndex(function(x) {
+      return normalizeCompany(x.company) === co && (x.email||'').toLowerCase().trim() === em;
+    });
+    if (byBoth >= 0) return byBoth;
+  }
+  // 2. Normalized company name match (handles spacing/casing differences)
+  const byCompany = arr.findIndex(function(x) {
+    return normalizeCompany(x.company) === co;
+  });
+  return byCompany;
+}
+// Deduplicate an array of prospects by normalized company name (keep latest updatedAt)
+function dedupeProspects(arr) {
+  const seen = {};
+  arr.forEach(function(p) {
+    const key = normalizeCompany(p.company);
+    if (!key) return;
+    if (!seen[key]) { seen[key] = p; return; }
+    // Keep the one with the more recent updatedAt
+    const existingTs = new Date(seen[key].updatedAt||seen[key].createdAt||0).getTime();
+    const newTs      = new Date(p.updatedAt||p.createdAt||0).getTime();
+    if (newTs >= existingTs) seen[key] = Object.assign({}, seen[key], p);
+  });
+  return Object.values(seen);
+}
 
 function getProspects(){try{return JSON.parse(localStorage.getItem(PROSPECTS_KEY)||'[]');}catch{return[];}}
 function saveProspectsLocal(arr){localStorage.setItem(PROSPECTS_KEY,JSON.stringify(arr));}
