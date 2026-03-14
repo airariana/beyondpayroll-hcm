@@ -655,6 +655,9 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 }
 .tb-icon-btn:hover{border-color:var(--navy);color:var(--navy);background:#fff}
 .tb-icon-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tb-save-btn.has-changes{background:var(--navy);color:#fff;border-color:var(--navy);animation:tb-save-pulse 2s ease-in-out infinite}
+.tb-save-btn.saved{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+@keyframes tb-save-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(13,21,53,.3)}50%{opacity:.9;box-shadow:0 0 0 4px rgba(13,21,53,.12)}}
 .tb-icon-btn .tb-badge{
   background:var(--red);color:#fff;border-radius:10px;
   font-size:9px;font-weight:800;padding:1px 5px;line-height:1.4;
@@ -2071,6 +2074,10 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
     <span class="tb-sub">Sales HQ</span>
 
     <div class="tb-right">
+      <!-- Save prospect button — saves all SRE form data to current prospect -->
+      <button class="tb-icon-btn tb-save-btn" id="tb-save-btn" onclick="tbSaveProspect()" title="Save prospect changes" style="display:none">
+        💾 Save
+      </button>
       <!-- Profiles sidebar button — wired to app.js ppToggleDrawer() -->
       <button class="tb-icon-btn" id="tb-profiles-btn" onclick="ppToggleDrawer()" title="Prospect Profiles">
         📁 Profiles

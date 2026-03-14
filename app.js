@@ -187,6 +187,9 @@ function enterHQ(session){
     // ── Background Email Engine: start on login ──
     if(typeof window.bpEngineInit==='function') window.bpEngineInit(session);
     if(typeof window.bpEngineInjectBadge==='function') setTimeout(window.bpEngineInjectBadge, 600);
+    // Init top bar save button + auto-save listeners
+    if(typeof window.tbInitAutoSave==='function') window.tbInitAutoSave();
+    if(typeof window.tbShowSaveBtn==='function' && window._hqProspect) window.tbShowSaveBtn();
   }, 400);
   // Close dropdown on outside click
   document.addEventListener('click',function(e){
@@ -2440,9 +2443,96 @@ function sreSave(){
   // Restore track/tone selectors if already set
   if(_sreSelectedTrack) sreSelectTrack(_sreSelectedTrack);
   if(_sreCadenceTone) sreToneChanged(_sreCadenceTone);
+  // Mark save button as saved
+  tbMarkSaved();
 }
 
-function sreShowSummary(r){
+// ── Top Bar Save Button ───────────────────────────────────────────────
+// Called by the 💾 Save button in the top bar
+window.tbSaveProspect = function() {
+  const p = window._hqProspect;
+  if (!p) { showToast('No prospect loaded — load a prospect first', true); return; }
+  // If on Command Center tab, run sreSave to collect all SRE form data
+  if (typeof sreSave === 'function') sreSave();
+  else {
+    // Fallback: just persist the current prospect object
+    try {
+      const stored = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
+      const idx = stored.findIndex(function(x){ return x.email === p.email && x.company === p.company; });
+      if (idx >= 0) stored[idx] = p; else stored.push(p);
+      localStorage.setItem('bp_prospects', JSON.stringify(stored));
+      localStorage.setItem('activeProspect', JSON.stringify(p));
+    } catch(e) {}
+    showToast('✓ Prospect saved');
+    tbMarkSaved();
+  }
+};
+
+// Mark Save button as having unsaved changes
+window.tbMarkUnsaved = function() {
+  const btn = document.getElementById('tb-save-btn');
+  if (!btn || !window._hqProspect) return;
+  btn.style.display = '';
+  btn.className = 'tb-icon-btn tb-save-btn has-changes';
+  btn.textContent = '💾 Save';
+  // Debounce auto-save: 4 seconds after last change
+  clearTimeout(window._tbAutoSaveTimer);
+  window._tbAutoSaveTimer = setTimeout(function() {
+    if (window._hqProspect) {
+      window.tbSaveProspect();
+    }
+  }, 4000);
+};
+
+// Mark Save button as saved (green checkmark briefly)
+window.tbMarkSaved = function() {
+  const btn = document.getElementById('tb-save-btn');
+  if (!btn) return;
+  btn.style.display = '';
+  btn.className = 'tb-icon-btn tb-save-btn saved';
+  btn.textContent = '✓ Saved';
+  clearTimeout(window._tbAutoSaveTimer);
+  // Fade back to neutral after 2.5s
+  setTimeout(function() {
+    if (btn.classList.contains('saved')) {
+      btn.className = 'tb-icon-btn tb-save-btn';
+      btn.textContent = '💾 Save';
+    }
+  }, 2500);
+};
+
+// Show Save button whenever a prospect is loaded
+window.tbShowSaveBtn = function() {
+  const btn = document.getElementById('tb-save-btn');
+  if (btn) btn.style.display = '';
+};
+
+// ── Auto-save wiring: attach change listeners to all SRE form fields ──
+// Called once after HQ is built. Listens to any input/change in the SRE
+// section and triggers the unsaved indicator + debounced auto-save.
+window.tbInitAutoSave = function() {
+  const sre = document.querySelector('.sre-wrap') || document.getElementById('hq-cmd');
+  if (!sre) return;
+  // Input events on text fields, selects, textareas
+  sre.addEventListener('input', function(e) {
+    if (window._hqProspect) window.tbMarkUnsaved();
+  });
+  sre.addEventListener('change', function(e) {
+    if (window._hqProspect) window.tbMarkUnsaved();
+  });
+  // Click events for toggle buttons (silo, track, adp opts, pain checkboxes)
+  sre.addEventListener('click', function(e) {
+    const t = e.target;
+    const isToggle = t.classList.contains('sre-silo-opt') ||
+                     t.classList.contains('sre-adp-opt') ||
+                     t.classList.contains('sre-cb') ||
+                     t.classList.contains('sre-track-opt') ||
+                     t.closest('.sre-cb') ||
+                     t.closest('.sre-adp-opt') ||
+                     t.closest('.sre-silo-opt');
+    if (isToggle && window._hqProspect) window.tbMarkUnsaved();
+  });
+};
   document.getElementById('sre-rec-val').textContent='Profile Complete';
   document.getElementById('sre-conf').textContent=r.dp+' pts';
   document.getElementById('sre-client-type-label').textContent=r.clientType==='existing'?'Existing ADP Client':'New Prospect — Net New';
@@ -6339,6 +6429,8 @@ function pdLoadProspect(idx){
   showToast('Loaded: '+p.company);
   const isTS=(p.track||'').toLowerCase().includes('ts')||(p.track||'').toLowerCase().includes('totalsource');
   if(typeof selectTrack==='function')selectTrack(isTS?'TS':'WFN');
+  // Show Save button for this prospect
+  if(typeof window.tbShowSaveBtn==='function') window.tbShowSaveBtn();
   // Fire day trigger check for the newly loaded prospect
   setTimeout(cdtCheckTriggers, 400);
 }
