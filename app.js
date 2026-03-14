@@ -3851,10 +3851,8 @@ UNIVERSAL RULES — apply without exception:
 - Use specific numbers, percentages, and named competitors from the context — this is what makes it real.
 - Sign-off line (include exactly, on its own line after a blank line):
 —
-[Your Name]
-ADP | BeyondPayroll HCM Specialist
-[Your Direct Line]
-[Calendar Link]
+AJ
+ADP
 beyondpayroll.net
 
 TOUCH CONTEXT — Day ${touch.day} (${touch.label}):
@@ -4282,31 +4280,36 @@ async function bpProseFormat(touchKey, rawContext) {
 // into a clean email body and updates the active touch in the composer
 window.bpApplyIntelToEmail = async function(day, intelText) {
   const p = window._hqProspect; if (!p) return;
-  const co = p.company || '[Company]';
-  const ind = p.industry || '[Industry]';
-  const st = p.state || '[State]';
-  const hc = p.headcount || '[X]';
 
   // Map cadence day to prose touch key
   const dayToKey = { 1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel' };
   const touchKey = p.track === 'WFN' ? (dayToKey[day] || 'wfn_day8_intel') : 'wfn_day8_intel';
 
-  const rawContext = `Company: ${co}\nIndustry: ${ind}\nHeadcount: ${hc} employees\nState: ${st}\nTrack: ${p.track === 'WFN' ? 'ADP WorkforceNow' : 'ADP TotalSource'}\nCadence Day: ${day} of 30\n\nINTEL AGENT OUTPUT:\n${intelText}`;
+  // Use full bpEngineBuildContext — pulls pain points, MCA, AT results, transcript, PEO profile, cadence tone
+  const _applyFakeTouch = { day: day, label: (CDT_INTEL_DAYS.find(function(d){return d.day===day;})||{}).label||'Intel Touch' };
+  let rawContext = bpEngineBuildContext(p, _applyFakeTouch, window._atResults || null);
+  rawContext += '\n\nLIVE INTEL REFRESH OUTPUT (use the most specific finding from this):\n' + intelText;
 
   showToast('Formatting email prose…');
   const proseBody = await bpProseFormat(touchKey, rawContext);
+  const sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
+  const fullBody = proseBody + sig;
 
-  // Update the email composer body if it's currently showing this touch
-  const bodyEl = document.getElementById('ec-body-disp') || document.getElementById('emailBody');
-  if (bodyEl && window._ecActiveIdx !== undefined) {
-    const touches = buildTouches(p);
+  // Persist _proseBody onto the touch object so Outlook button uses it
+  const touches = buildTouches(p);
+  const matchTouch = touches.find(function(t){ return t.day === day; });
+  if (matchTouch) {
+    matchTouch._proseBody = fullBody;
+  }
+
+  // Update composer if this touch is currently active
+  if (window._ecActiveIdx !== undefined) {
     const activeTouch = touches[window._ecActiveIdx];
     if (activeTouch && activeTouch.day === day) {
-      // Inject prose body into the active touch display
-      const sig = '\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net';
-      activeTouch._proseBody = proseBody + sig;
       ecRenderAll();
-      showToast('✓ Email updated with intel prose');
+      showToast('✓ Email updated with intel — Outlook button ready');
+    } else {
+      showToast('✓ Intel formatted — Day ' + day + ' Outlook button ready');
     }
   }
 };
@@ -4314,7 +4317,7 @@ window.bpApplyIntelToEmail = async function(day, intelText) {
 function buildTouches(p){
   const co=p.company||'[Company]',nm=(p.contact||'').split(' ')[0]||'[Name]';
   const ind=p.industry||'[Industry]',st=p.state||'[State]',hc=p.headcount||'[X]';
-  const sig='\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net';
+  const sig='\n\n—\nAJ\nADP\nbeyondpayroll.net';
 
   // Helper: use prose-formatted body if available, otherwise use base template
   const body = (touch) => touch._proseBody || touch._baseBody;
@@ -5619,8 +5622,17 @@ function cdtSaveIntelResult(day, result){
 function cdtRenderIntelResult(data){
   const t = new Date(data.ts);
   const timeStr = t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' '+t.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-  // Truncate to first 600 chars for inline preview
-  const preview = data.result.length > 600 ? data.result.slice(0,600)+'…' : data.result;
+  // Strip markdown artifacts before display
+  const clean = data.result
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+    .replace(/^-{3,}$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  const preview = clean.length > 600 ? clean.slice(0,600)+'…' : clean;
   return `<div class="cdt-intel-result">
     <div class="cdt-intel-result-hdr">
       <span class="cdt-intel-result-lbl">📊 Intel Refresh Complete</span>
@@ -5639,22 +5651,22 @@ window.cdtRunIntelRefresh = async function(day){
   if(resultEl) resultEl.innerHTML = '<div class="cdt-intel-result"><span class="cdt-intel-spinner"></span> Pulling real-time competitive intelligence for '+p.company+'…</div>';
 
   const intelDay = CDT_INTEL_DAYS.find(d=>d.day===day);
-  const prompt = `You are an HCM competitive intelligence analyst. Perform a ${intelDay?.label||'competitive'} refresh for this ADP prospect:
 
-Company: ${p.company}
-Industry: ${p.industry||'—'}
-Headcount: ${p.headcount||'—'} employees
-State: ${p.state||'—'}
-Track: ${p.track==='WFN'?'ADP WorkforceNow':'ADP TotalSource PEO'}
-Cadence Day: ${day} of 30
+  // Build full enriched context — same data pipeline as the background email engine
+  const _intelFakeTouch = { day: day, label: intelDay ? intelDay.label : 'Intel Refresh' };
+  const _intelFullCtx = bpEngineBuildContext(p, _intelFakeTouch, window._atResults || null);
 
-Provide a focused competitive intel brief covering:
-1. TOP 3 competitor threats for this specific prospect profile right now
-2. Key messaging angles ADP should use vs each competitor at this stage
-3. Any urgency triggers (renewals, funding, growth, compliance) to reference in Day ${day} outreach
-4. One sharp data point or insight specific to ${p.industry||'this industry'} at ${p.headcount||'this size'}
+  const prompt = `You are an HCM competitive intelligence analyst. Perform a ${intelDay?.label||'competitive'} refresh for this ADP sales rep.
 
-Keep it concise — this is a cadence refresh, not a full report. Focus on what's actionable for Day ${day} outreach.`;
+CRITICAL OUTPUT RULES:
+- Plain text only. No markdown. No asterisks, no bold, no bullet symbols, no headers.
+- Write in concise flowing prose. Not numbered lists. Not bullet points.
+- Be specific and actionable. Every sentence must earn its place.
+- Maximum 300 words total.
+
+${_intelFullCtx}
+
+Deliver a focused intel brief: the single most urgent competitor threat right now (name them and explain why), the sharpest data point or market signal for Day ${day} outreach, one specific urgency trigger to reference in the email, and the strongest angle ADP should lead with. Write as a knowledgeable colleague briefing a sales rep before an important call.`;
 
   try {
     const resp = await bpGeminiFetch({ messages:[{role:'user',content:prompt}] });
@@ -5707,7 +5719,7 @@ function ecGetCurrentTouch(){
 
 function ecBuildEml(touch, toEmail){
   const sigOn = document.getElementById('ec-sig')?.checked !== false;
-  const sig = sigOn ? '\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net' : '';
+  const sig = sigOn ? '\n\n—\nAJ\nADP\nbeyondpayroll.net' : '';
   const body = touch.body.replace(/\n\n—[\s\S]*$/, '') + sig;
   // RFC 2822 .eml format — Outlook opens this as a draft
   return [
@@ -5739,7 +5751,7 @@ window.ecCopyTemplate = function(){
   const touch = ecGetCurrentTouch(); if(!touch){ showToast('No touch loaded',true); return; }
   const p = window._hqProspect;
   const sigOn = document.getElementById('ec-sig')?.checked !== false;
-  const sig = sigOn ? '\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net' : '';
+  const sig = sigOn ? '\n\n—\nAJ\nADP\nbeyondpayroll.net' : '';
   const body = touch.body.replace(/\n\n—[\s\S]*$/, '') + sig;
   const full = `SUBJECT: ${touch.subject}\n\n${body}`;
   copyText(full).then?.(()=>showToast('Template copied — paste directly into Outlook'));
@@ -5769,7 +5781,7 @@ window.cdtDownloadTemplate = function(idx){
   const touch = touches[idx]; if(!touch) return;
   const toEmail = p.email || '';
   const sigOn = document.getElementById('ec-sig')?.checked !== false;
-  const sig = sigOn ? '\n\n—\n[Your Name]\nADP | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net' : '';
+  const sig = sigOn ? '\n\n—\nAJ\nADP\nbeyondpayroll.net' : '';
   const body = touch.body.replace(/\n\n—[\s\S]*$/, '') + sig;
   const eml = ['MIME-Version: 1.0','Content-Type: text/plain; charset=UTF-8','Content-Transfer-Encoding: 8bit','X-Unsent: 1','To: '+toEmail,'Subject: '+touch.subject,'',body].join('\r\n');
   const filename = `ADP_Day${touch.day}_${p.company.replace(/\s+/g,'_')}_${touch.label.replace(/\s+/g,'_')}.eml`;
@@ -6603,32 +6615,54 @@ window.cdtIntelLinkedIn = async function(day) {
   const p = window._hqProspect; if(!p) return;
   const result = cdtGetIntelResult(day);
 
-  const rawContext = [
-    'Company: '+p.company,
-    'Industry: '+(p.industry||'\u2014'),
-    'Headcount: '+(p.headcount||'\u2014')+' employees',
-    'State: '+(p.state||'\u2014'),
-    'Cadence Day: '+day+' of 30',
-    '',
-    'INTEL AGENT OUTPUT:',
-    (result?result.result:'No intel available.')
-  ].join('\n');
+  // Helper: copy text using textarea fallback (works on iOS Safari after async)
+  function _liCopy(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function() { _liCopyFallback(text); });
+      } else {
+        _liCopyFallback(text);
+      }
+    } catch(e) { _liCopyFallback(text); }
+  }
+  function _liCopyFallback(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
 
-  const basePrompt = PROSE_TOUCH_PROMPTS['wfn_day'+day+'_intel'] || PROSE_TOUCH_PROMPTS['wfn_day8_intel'] || '';
-  const liSystemPrompt = basePrompt + '\n\nADDITIONAL RULE FOR LINKEDIN: Rewrite as a short, insight-driven LinkedIn post (3\u20134 sentences max). Use only 2\u20133 relevant hashtags at the end. Do not mention the prospect company by name. Write in first person as a knowledgeable HCM consultant sharing a market observation. No markdown, no bullet points.';
+  // Build enriched context — same pipeline as email engine
+  const _liFakeTouch = { day: day, label: (CDT_INTEL_DAYS.find(function(d){return d.day===day;})||{}).label||'Intel' };
+  const _liFullCtx = bpEngineBuildContext(p, _liFakeTouch, window._atResults || null);
+  const intelOutput = result ? result.result : '';
+  const rawContext = _liFullCtx + (intelOutput ? '\n\nLIVE INTEL OUTPUT:\n' + intelOutput : '');
 
-  showToast('Formatting LinkedIn post\u2026');
+  const liPrompt = 'You are an ADP HCM consultant writing a LinkedIn post to share a market insight. ' +
+    'RULES: Plain text only — no asterisks, no bold, no markdown. ' +
+    '3-4 sentences maximum. Write in first person. ' +
+    'Do NOT name the prospect company. Share the insight as a general industry observation. ' +
+    'End with 2-3 relevant hashtags on their own line. ' +
+    'Do not start with "I" — restructure the opening sentence.\n\n' +
+    'Use the most interesting and specific data point from the intel below to write the post:\n\n' + rawContext;
+
+  showToast('Generating LinkedIn post\u2026');
   try {
-    const resp = await bpGeminiFetch({ messages:[{role:'user', content: liSystemPrompt+'\n\nRAW DATA:\n'+rawContext}] });
+    const resp = await bpGeminiFetch({ messages:[{role:'user', content: liPrompt}] });
     const data = await resp.json();
-    const post = bpGeminiText(data).trim() || rawContext.substring(0,260);
-    if(navigator.clipboard){ navigator.clipboard.writeText(post).then(function(){ showToast('\u2713 LinkedIn post copied \u2014 paste into LinkedIn'); }); }
-    window.open('https://www.linkedin.com/feed/', '_blank');
+    const post = bpGeminiText(data).trim() || (intelOutput ? intelOutput.substring(0,260)+'...' : 'Insight pending.');
+    _liCopy(post);
+    showToast('\u2713 LinkedIn post copied \u2014 opening LinkedIn');
+    // Small delay so toast shows before navigation
+    setTimeout(function(){ window.open('https://www.linkedin.com/feed/', '_blank'); }, 400);
   } catch(e) {
-    showToast('Could not format post \u2014 copying raw intel', true);
-    const fallback = (result?result.result.substring(0,260)+'...':'[Your insight here]');
-    if(navigator.clipboard) navigator.clipboard.writeText(fallback);
-    window.open('https://www.linkedin.com/feed/', '_blank');
+    const fallback = intelOutput ? intelOutput.substring(0,260)+'...' : 'Check out the latest HCM trends.';
+    _liCopy(fallback);
+    showToast('\u2713 Copied \u2014 opening LinkedIn', false);
+    setTimeout(function(){ window.open('https://www.linkedin.com/feed/', '_blank'); }, 400);
   }
 };
 
@@ -6650,12 +6684,12 @@ window.cdtIntelSms = async function(day) {
     (result?result.result.substring(0,400):'No intel \u2014 use prospect profile.')
   ].join('\n');
 
-  let smsBody = 'Hi '+nm+' \u2014 saw something relevant to '+p.company+' I wanted to flag. Worth a quick call this week? \u2014 [Your Name], ADP';
+  let smsBody = 'Hi '+nm+' \u2014 saw something relevant to '+p.company+' I wanted to flag. Worth a quick call this week? \u2014 AJ, ADP';
   try {
     const resp = await bpGeminiFetch({ messages:[{role:'user', content: smsPrompt+'\n\n'+rawContext}] });
     const data = await resp.json();
     const formatted = bpGeminiText(data).trim();
-    if(formatted) smsBody = 'Hi '+nm+' \u2014 '+formatted+' \u2014 [Your Name], ADP';
+    if(formatted) smsBody = 'Hi '+nm+' \u2014 '+formatted+' \u2014 AJ, ADP';
   } catch(e) { console.warn('[ProseFormat] SMS format failed:', e.message); }
 
   ppShowSmsModal(p.phone||'', smsBody, 'Day '+day+' Intel \u2014 '+p.company);
@@ -6666,7 +6700,7 @@ window.ppSendSmsReminder = function(idx) {
   const p = arr[idx]||window._hqProspect; if(!p) return;
   ppShowSmsModal(
     p.phone||'',
-    'Hi '+((p.contact||'').split(' ')[0]||p.company)+'! Following up on our ADP conversation re: '+p.company+'. Do you have 15 min this week? — [Your Name], ADP | beyondpayroll.net',
+    'Hi '+((p.contact||'').split(' ')[0]||p.company)+'! Following up on our ADP conversation re: '+p.company+'. Do you have 15 min this week? — AJ, ADP | beyondpayroll.net',
     'Follow-up Reminder — '+p.company
   );
 };
@@ -8300,7 +8334,7 @@ function generateEmail(){
 +'The bottom line is that TotalSource can consolidate HR, payroll, benefits, and compliance under one umbrella — while giving your team access to Fortune 500-level benefit plans at pricing that works for a group your size.\n\n'
 +'I\'d love to get 20–30 minutes on the calendar to walk through a formal proposal'+(title?' for you as '+company+'\'s '+title:'')+'. No obligation — just want to make sure you have the full picture before renewal season.\n\n'
 +'Would [Day] or [Day] work?\n\n'
-+'Best,\n[Your Name]\nADP TotalSource | [Your Phone] | [Your Email]';
++'Best,\nAJ\nADP TotalSource | beyondpayroll.net';
 }
 
 function copyEmail(){
@@ -9674,7 +9708,7 @@ function generateEmail(){
 +'The bottom line is that TotalSource can consolidate HR, payroll, benefits, and compliance under one umbrella — while giving your team access to Fortune 500-level benefit plans at pricing that works for a group your size.\n\n'
 +'I\'d love to get 20–30 minutes on the calendar to walk through a formal proposal'+(title?' for you as '+company+'\'s '+title:'')+'. No obligation — just want to make sure you have the full picture before renewal season.\n\n'
 +'Would [Day] or [Day] work?\n\n'
-+'Best,\n[Your Name]\nADP TotalSource | [Your Phone] | [Your Email]';
++'Best,\nAJ\nADP TotalSource | beyondpayroll.net';
 }
 
 function copyEmail(){
@@ -9968,7 +10002,7 @@ function tsBuildTouches(){
   var ind=gv('industry')||'[Industry]';
   var st=gv('hqState')||'[State]';
   var hc=gv('numEE')||'[X]';
-  var sig='\n\n—\n[Your Name]\nADP TotalSource | BeyondPayroll HCM Specialist\n[Your Direct Line]\n[Calendar Link]\nbeyondpayroll.net';
+  var sig='\n\n—\nAJ\nADP\nbeyondpayroll.net';
   return[
     {day:2,label:'PEO Reality Check',
      subject:'Is ADP TotalSource still the right model for '+co+' at '+hc+' employees?',
