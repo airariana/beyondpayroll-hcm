@@ -1836,7 +1836,7 @@ Return ONLY a valid JSON object. No markdown. No explanation. The structure must
 }
 
 INSTRUCTIONS:
-- core: always populate these 6 fields if data exists. These are the minimum required fields.
+- core: always populate these 6 fields if data exists. These are the minimum required fields. For linkedin: if an explicit LinkedIn URL is found, use it exactly. If not found but you have a contact name and company name, construct a best-guess LinkedIn profile URL in the format linkedin.com/in/firstname-lastname (lowercase, hyphenated). Always populate this field with your best inference — never leave it blank if you have a name.
 - fields: this is open-ended. Include ANY field that would be useful for a sales rep preparing for a discovery call. Standard ones: Industry, State, Headcount, Website, HQ Address. But also add any that appear in the files: Current Vendor, Contract End Date, Decision Timeline, Key Stakeholders, Annual Revenue, Number of Locations, ERP/HRIS System, Benefits Broker, Recent News, Competitive Risk, Objections Raised, Budget Mentioned, etc. Only include fields where you actually found data. Each field needs: label (clear human-readable name), value (the data), group (one of: firmographic | contact_info | sales_intel | competitive | financial | timeline).
 - insights: list of key intelligence points a sales rep must know — pain points confirmed, signals spotted, risks, opportunities. Each needs label and value.
 - sre: pain_points must only use these exact IDs where evidence exists: sre-401k, sre-wc, sre-aca, sre-benefits, sre-tax, sre-platform, sre-gl, sre-support, sre-i9, sre-multi, sre-manual. adp_products only if currently in use.
@@ -1879,7 +1879,23 @@ INSTRUCTIONS:
     document.getElementById('f-contact').value  = c.contact||'';
     document.getElementById('f-email').value    = c.email||'';
     document.getElementById('f-phone').value    = c.phone||'';
-    document.getElementById('f-linkedin').value = c.linkedin||'';
+    // Auto-construct LinkedIn URL if AI didn't find one explicitly
+    let _liVal = c.linkedin || '';
+    if (!_liVal && c.contact) {
+      // Build best-guess URL: linkedin.com/in/firstname-lastname
+      const _liParts = c.contact.trim().toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .split(/\s+/)
+        .filter(Boolean);
+      if (_liParts.length >= 2) {
+        _liVal = 'linkedin.com/in/' + _liParts.join('-');
+      } else if (_liParts.length === 1) {
+        // Single name — append company slug
+        const _coSlug = (c.company||'').toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,10);
+        _liVal = 'linkedin.com/in/' + _liParts[0] + (_coSlug ? '-' + _coSlug : '');
+      }
+    }
+    document.getElementById('f-linkedin').value = _liVal;
 
     // Map standard fields to hidden legacy inputs
     const fields = parsed.fields||[];
