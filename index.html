@@ -2124,7 +2124,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
             <div class="pd-empty">No saved prospects yet.<br>Click + New Prospect to add one.</div>
           </div>
 
-          <button class="pd-new-btn" onclick="closeProfileDropdown();openModal()">+ New Prospect</button>
+          <button class="pd-new-btn" onclick="closeProfileDropdown();openModal('new')">+ New Prospect</button>
 
           <div class="pd-actions">
             <button class="pd-action-btn" onclick="fbSyncNow()">☁ Sync Firebase</button>
@@ -3731,7 +3731,7 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
     <div class="pp-drawer-empty">No prospects yet.<br>Click + New Prospect to get started.</div>
   </div>
   <div class="pp-drawer-footer">
-    <button class="pp-ftr-btn primary" onclick="ppCloseDrawer();openModal()" style="flex:1;padding:9px;font-size:12px;font-weight:700;background:var(--navy);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--fb)">+ New Prospect</button>
+    <button class="pp-ftr-btn primary" onclick="ppCloseDrawer();openModal('new')" style="flex:1;padding:9px;font-size:12px;font-weight:700;background:var(--navy);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--fb)">+ New Prospect</button>
     <button class="pp-ftr-btn" onclick="exportProspects()" style="padding:9px 12px;font-size:12px;font-weight:600;border:1.5px solid var(--border);border-radius:6px;background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">⬇ Export</button>
   </div>
 </div>
@@ -3757,6 +3757,19 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
       // Call original to open the modal
       if (original) original();
 
+      // 'new' string = explicit new prospect, clear everything
+      if (prospectOrId === 'new' || prospectOrId === null) {
+        window._editingProspectId = null;
+        window._editingOriginalProspect = null;
+        setModalMode('new');
+        // Clear all form fields for a fresh start
+        ['f-company','f-contact','f-email','f-phone','f-linkedin','f-industry','f-state','f-headcount'].forEach(function(id){
+          const el = document.getElementById(id); if(el) el.value = '';
+        });
+        const pEl = document.getElementById('f-persona'); if(pEl) pEl.value = '';
+        return;
+      }
+
       // Resolve the prospect to edit
       let p = null;
 
@@ -3770,20 +3783,19 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
         p = allProspects[prospectOrId] ||
             Object.values(allProspects).find(x => x.id === prospectOrId || x.uid === prospectOrId);
       } else {
-        // No arg passed — this is the Edit button click from app.js
-        // Use the currently active prospect from window._hqProspect
+        // No arg passed — Edit button click, use currently loaded prospect
         p = window._hqProspect || null;
       }
 
       if (!p) {
-        // Genuinely new prospect
+        // No prospect found — open as new
         window._editingProspectId = null;
         setModalMode('new');
         return;
       }
 
       window._editingProspectId = p.id || p.uid || p.company || null;
-      window._editingOriginalProspect = p; // store original for save merge
+      window._editingOriginalProspect = p;
       setModalMode('edit', p);
     };
   }

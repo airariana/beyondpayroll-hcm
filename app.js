@@ -266,7 +266,7 @@ function getHQHTML(session){
       <button id="profiles-drawer-btn" onclick="ppToggleDrawer()" style="padding:9px 14px;font-size:12px;font-weight:700;border-radius:6px;border:1.5px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);display:inline-flex;align-items:center;gap:6px;transition:all .15s" onmouseover="this.style.borderColor='var(--navy)';this.style.color='var(--navy)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'" title="Prospect Profiles">
         📁 Profiles <span id="header-prospect-count" style="font-size:10px;background:var(--navy);color:#fff;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center"></span>
       </button>
-      <button class="btn btn-dark" onclick="openModal()" style="padding:9px 18px;font-size:13px">+ New Prospect</button>
+      <button class="btn btn-dark" onclick="openModal('new')" style="padding:9px 18px;font-size:13px">+ New Prospect</button>
     </div>
   </div>
 
