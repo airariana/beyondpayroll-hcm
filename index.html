@@ -5261,7 +5261,18 @@ beyondpayroll.net`;
     if (!_lastSubject && !_lastBody) return;
     var p = window._hqProspect || {};
     var toEmail = (document.getElementById('eg-to') && document.getElementById('eg-to').value) || p.email || '';
-    var sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
+    
+    // Try to get default signature from Signature Manager (if loaded)
+    var sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net'; // Fallback signature
+    if (typeof getSignatures === 'function') {
+      var sigs = getSignatures();
+      var defaultSig = sigs.find(function(s) { return s.isDefault; });
+      if (defaultSig && defaultSig.content) {
+        sig = '\n\n' + defaultSig.content;
+      }
+    }
+    
+    // Remove any existing signature from body and append the current one
     var body = _lastBody.replace(/\n\n—[\s\S]*$/, '') + sig;
     var uri = 'mailto:' + encodeURIComponent(toEmail) + '?subject=' + encodeURIComponent(_lastSubject) + '&body=' + encodeURIComponent(body);
     var a = document.createElement('a'); a.href = uri; a.style.display = 'none';

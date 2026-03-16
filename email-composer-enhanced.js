@@ -565,6 +565,11 @@ beyondpayroll.net`,
           <button onclick="document.getElementById('signature-manager-modal').remove()" class="eec-modal-close">✕</button>
         </div>
         <div class="eec-modal-body">
+          <div style="background:rgba(184,146,10,.08);border:1px solid rgba(184,146,10,.2);border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--text-2);line-height:1.6">
+            <strong style="color:var(--text);display:block;margin-bottom:4px">📬 Outlook Integration</strong>
+            The <strong>default signature</strong> is automatically appended when you click "Open in Outlook." 
+            Note: Outlook's built-in signatures won't auto-apply to mailto: links—use this signature manager to control what gets sent.
+          </div>
           <div class="eec-template-controls">
             <button onclick="eecNewSignature()" class="eec-btn-primary">+ New Signature</button>
           </div>
