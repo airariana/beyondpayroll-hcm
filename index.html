@@ -1167,17 +1167,45 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 
 /* ── Mobile top-bar & layout fixes ── */
 @media(max-width:600px){
-  /* ── Top bar: compress to fit all buttons on narrow screens ── */
-  .top-bar{padding:0 10px;gap:6px;height:52px}
+  /* ── Top bar: enable horizontal scroll for buttons ── */
+  .top-bar{
+    padding:0 10px;gap:6px;height:52px;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; /* Firefox */
+  }
+  .top-bar::-webkit-scrollbar{display:none} /* Chrome/Safari */
+  .tb-brand{flex-shrink:0} /* Keep brand fixed */
   .tb-sep{display:none}
   .tb-sub{display:none}
   .tb-name{font-size:12px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .tb-right{gap:5px}
-  .tb-icon-btn{padding:5px 8px;font-size:11px;gap:3px}
+  .tb-right{gap:5px;flex-shrink:0;flex-wrap:nowrap} /* Prevent wrapping */
+  .tb-icon-btn{padding:5px 8px;font-size:11px;gap:3px;flex-shrink:0} /* Prevent button shrinking */
   .user-chip{display:none}
   .logout-btn{display:none}
   /* fb-status badge: icon only on mobile */
-  .fb-status{font-size:11px;padding:4px 6px}
+  .fb-status{font-size:11px;padding:4px 6px;flex-shrink:0}
+}
+
+/* ── Extra-small screens: icon-only mode ── */
+@media(max-width:400px){
+  .tb-icon-btn{
+    padding:6px 8px;
+    font-size:16px; /* Make emoji larger */
+    min-width:auto;
+  }
+  /* Hide button text, keep only emoji */
+  .tb-icon-btn{
+    font-size:0; /* Hide text */
+  }
+  .tb-icon-btn::before{
+    font-size:16px; /* But show emoji */
+  }
+  /* Special handling for specific buttons with emojis at start */
+  #tb-profiles-btn::before{content:'📁'}
+  #tb-activity-btn::before{content:'🔔'}
+  .tb-save-btn::before{content:'💾'}
+}
 
   /* ── View padding for shorter top bar ── */
   #view-hq.portal-view.active{padding-top:52px}
