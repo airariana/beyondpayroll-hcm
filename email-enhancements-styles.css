@@ -1,0 +1,948 @@
+/* ══════════════════════════════════════════════════════════════════
+   EMAIL ENHANCEMENTS - CSS STYLES
+   Styles for Template Library, Email History, and Enhanced Composer
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── MODAL OVERLAYS ──────────────────────────────────────────────── */
+.eec-modal-overlay, .ehc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 21, 53, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ehcFadeIn 0.2s ease;
+}
+
+@keyframes ehcFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── MODAL CONTAINERS ────────────────────────────────────────────── */
+.eec-modal, .ehc-modal {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 800px;
+  width: 90%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: ehcSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.eec-modal-large, .ehc-modal-large {
+  max-width: 900px;
+}
+
+.eec-modal-xlarge, .ehc-modal-xlarge {
+  max-width: 1200px;
+}
+
+@keyframes ehcSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── MODAL HEADER ────────────────────────────────────────────────── */
+.eec-modal-header, .ehc-modal-header {
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.eec-modal-title, .ehc-modal-title {
+  font-family: var(--fd);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.5px;
+}
+
+.eec-modal-close, .ehc-modal-close {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: var(--white);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eec-modal-close:hover, .ehc-modal-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+/* ── MODAL BODY ──────────────────────────────────────────────────── */
+.eec-modal-body, .ehc-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ── TEMPLATE LIBRARY ────────────────────────────────────────────── */
+.eec-template-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.eec-search-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: var(--fb);
+  transition: all 0.2s ease;
+}
+
+.eec-search-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184, 146, 10, 0.1);
+}
+
+.eec-btn-primary {
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--fb);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.eec-btn-primary:hover {
+  background: var(--navy-2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 21, 53, 0.3);
+}
+
+.eec-btn-secondary {
+  background: var(--off-white);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--fb);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.eec-btn-secondary:hover {
+  background: var(--light);
+  border-color: var(--border-2);
+}
+
+/* ── TEMPLATE CARDS ──────────────────────────────────────────────── */
+.eec-template-list {
+  display: grid;
+  gap: 16px;
+}
+
+.eec-template-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.eec-template-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.eec-template-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.eec-template-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--fb);
+}
+
+.eec-template-card-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.eec-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.eec-badge-category {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+.eec-badge-track {
+  color: var(--white);
+}
+
+.eec-badge-wfn {
+  background: #1e40af;
+}
+
+.eec-badge-ts {
+  background: #7c3aed;
+}
+
+.eec-badge-both {
+  background: var(--text-2);
+}
+
+.eec-badge-default {
+  background: var(--gold-bg);
+  color: var(--gold);
+}
+
+.eec-template-card-desc {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+.eec-template-card-preview {
+  background: var(--off-white);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.eec-preview-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+}
+
+.eec-preview-text {
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--fm);
+  line-height: 1.5;
+}
+
+.eec-preview-body {
+  white-space: pre-wrap;
+}
+
+.eec-template-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.eec-btn-use {
+  background: var(--gold);
+  color: var(--white);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--fb);
+}
+
+.eec-btn-use:hover {
+  background: var(--gold);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.eec-btn-edit {
+  background: var(--off-white);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--fb);
+}
+
+.eec-btn-edit:hover {
+  background: var(--light);
+}
+
+.eec-btn-delete {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid var(--red);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--fb);
+}
+
+.eec-btn-delete:hover {
+  background: var(--red-bg);
+}
+
+.eec-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+/* ── TEMPLATE EDITOR ─────────────────────────────────────────────── */
+.eec-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.eec-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.eec-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.eec-form-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.eec-form-input, .eec-form-textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: var(--fb);
+  transition: all 0.2s ease;
+  background: var(--white);
+}
+
+.eec-form-input:focus, .eec-form-textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(184, 146, 10, 0.1);
+}
+
+.eec-form-textarea {
+  font-family: var(--fm);
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.eec-token-hint {
+  font-size: 11px;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.eec-token-picker-btn {
+  display: inline-block;
+  background: var(--navy);
+  color: var(--white);
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  width: fit-content;
+  transition: all 0.2s ease;
+}
+
+.eec-token-picker-btn:hover {
+  background: var(--navy-2);
+}
+
+.eec-form-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── TOKEN PICKER ────────────────────────────────────────────────── */
+.eec-token-picker {
+  background: var(--white);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 10001;
+}
+
+.eec-token-picker-header {
+  padding: 12px 14px;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.eec-token-group {
+  border-bottom: 1px solid var(--border);
+  padding: 10px;
+}
+
+.eec-token-group:last-child {
+  border-bottom: none;
+}
+
+.eec-token-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+.eec-token-item {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: var(--fm);
+  color: var(--navy);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 4px;
+}
+
+.eec-token-item:hover {
+  background: var(--gold-bg);
+  color: var(--gold);
+  transform: translateX(4px);
+}
+
+/* ── EMAIL HISTORY ───────────────────────────────────────────────── */
+.ehc-controls {
+  margin-bottom: 20px;
+}
+
+.ehc-filters {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.ehc-filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: var(--fb);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ehc-filter-select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+/* ── EMAIL HISTORY STATS ─────────────────────────────────────────── */
+.ehc-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--off-white);
+  border-radius: var(--radius);
+}
+
+.ehc-stat {
+  text-align: center;
+}
+
+.ehc-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+  font-family: var(--fd);
+}
+
+.ehc-stat-label {
+  font-size: 11px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+}
+
+/* ── EMAIL HISTORY LIST ──────────────────────────────────────────── */
+.ehc-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ehc-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ehc-date-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+  font-family: var(--fb);
+}
+
+.ehc-date-emails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── EMAIL CARDS ─────────────────────────────────────────────────── */
+.ehc-email-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  transition: all 0.2s ease;
+}
+
+.ehc-email-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.ehc-email-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.ehc-email-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ehc-email-card-company {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ehc-email-card-contact {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.ehc-email-card-time {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--fm);
+}
+
+.ehc-email-card-subject {
+  background: var(--off-white);
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-family: var(--fm);
+}
+
+.ehc-subject-label {
+  font-weight: 700;
+  color: var(--text-2);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ehc-email-card-preview {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.ehc-email-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ehc-btn-view, .ehc-btn-action {
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--fb);
+  border: none;
+}
+
+.ehc-btn-view {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.ehc-btn-view:hover {
+  background: var(--navy-2);
+}
+
+.ehc-btn-action {
+  background: var(--off-white);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+
+.ehc-btn-action:hover {
+  background: var(--light);
+}
+
+/* ── EMAIL STATUS BADGES ─────────────────────────────────────────── */
+.ehc-status-draft {
+  background: var(--text-3);
+  color: var(--white);
+}
+
+.ehc-status-generated {
+  background: #f59e0b;
+  color: var(--white);
+}
+
+.ehc-status-sent {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.ehc-status-replied {
+  background: var(--green-v);
+  color: var(--white);
+}
+
+.ehc-status-bounced {
+  background: var(--red);
+  color: var(--white);
+}
+
+.ehc-status-closed {
+  background: var(--text-2);
+  color: var(--white);
+}
+
+.ehc-track-wfn {
+  background: #1e40af;
+  color: var(--white);
+}
+
+.ehc-track-ts {
+  background: #7c3aed;
+  color: var(--white);
+}
+
+/* ── EMAIL DETAIL VIEW ───────────────────────────────────────────── */
+.ehc-email-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ehc-detail-meta {
+  background: var(--off-white);
+  padding: 16px;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ehc-detail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.ehc-detail-label {
+  font-weight: 700;
+  color: var(--text-2);
+  min-width: 100px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.ehc-detail-value {
+  color: var(--text);
+}
+
+.ehc-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ehc-detail-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.ehc-detail-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.ehc-detail-subject {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--fm);
+}
+
+.ehc-detail-body {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  font-family: var(--fm);
+}
+
+.ehc-detail-notes {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+.ehc-detail-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+/* ── ACTIVITY TIMELINE ───────────────────────────────────────────── */
+.ehc-timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.ehc-timeline::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.ehc-timeline-item {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+.ehc-timeline-dot {
+  position: absolute;
+  left: -33px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--navy);
+  border: 3px solid var(--white);
+  box-shadow: 0 0 0 2px var(--border);
+}
+
+.ehc-timeline-dot-success {
+  background: var(--green-v);
+}
+
+.ehc-timeline-content {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.ehc-timeline-date {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--fm);
+  margin-bottom: 6px;
+}
+
+.ehc-timeline-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.ehc-timeline-status {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 10px;
+}
+
+.ehc-timeline-btn {
+  padding: 6px 12px;
+  background: var(--off-white);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ehc-timeline-btn:hover {
+  background: var(--light);
+}
+
+/* ── SIGNATURE MANAGER ───────────────────────────────────────────── */
+.eec-signature-list {
+  display: grid;
+  gap: 16px;
+}
+
+.eec-signature-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.eec-signature-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.eec-signature-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.eec-signature-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eec-signature-preview {
+  background: var(--off-white);
+  padding: 12px;
+  border-radius: 6px;
+  font-family: var(--fm);
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.eec-signature-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .eec-modal, .ehc-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .eec-form-row {
+    flex-direction: column;
+  }
+  
+  .ehc-filters {
+    flex-direction: column;
+  }
+  
+  .ehc-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .ehc-email-card-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
