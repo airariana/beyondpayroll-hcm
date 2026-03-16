@@ -34,6 +34,21 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </noscript>
 
+<!-- Email Enhancements - Critical Styles -->
+<style>
+.eec-modal-overlay,.ehc-modal-overlay{position:fixed;inset:0;background:rgba(13,21,53,.85);backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:center;justify-content:center;animation:ehcFadeIn .2s ease}
+@keyframes ehcFadeIn{from{opacity:0}to{opacity:1}}
+.eec-modal,.ehc-modal{background:var(--white);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,.3);max-width:800px;width:90%;max-height:85vh;display:flex;flex-direction:column;animation:ehcSlideUp .3s cubic-bezier(.34,1.56,.64,1)}
+.eec-modal-large,.ehc-modal-large{max-width:900px}
+.eec-modal-xlarge,.ehc-modal-xlarge{max-width:1200px}
+@keyframes ehcSlideUp{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.eec-modal-header,.ehc-modal-header{padding:20px 24px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.eec-modal-title,.ehc-modal-title{font-family:var(--fd);font-size:20px;font-weight:700;color:var(--white);letter-spacing:-.5px}
+.eec-modal-close,.ehc-modal-close{background:rgba(255,255,255,.15);border:none;color:var(--white);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;transition:all .2s ease;display:flex;align-items:center;justify-content:center}
+.eec-modal-close:hover,.ehc-modal-close:hover{background:rgba(255,255,255,.25);transform:rotate(90deg)}
+.eec-modal-body,.ehc-modal-body{padding:24px;overflow-y:auto;flex:1}
+</style>
+
 </head>
 <body>
 <!-- ══ INSTANT SPLASH — visible before any JS parses ══ -->
@@ -2084,6 +2099,18 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
       <button class="tb-icon-btn" id="tb-activity-btn" onclick="notifOpenDrawer()" title="Activity & Alerts">
         🔔 Activity
       </button>
+      
+      <!-- Email Enhancements Navigation -->
+      <button class="tb-icon-btn" onclick="openTemplateLibrary()" title="Email Templates">
+        📧 Templates
+      </button>
+      <button class="tb-icon-btn" onclick="openEmailHistory()" title="Email History">
+        📊 History
+      </button>
+      <button class="tb-icon-btn" onclick="openSignatureManager()" title="Email Signatures">
+        ✍️ Signatures
+      </button>
+      
       <!-- Firebase sync status -->
       <div class="fb-status offline" id="fb-status-badge" onclick="fbSyncNow()" title="Click to sync">
         <span id="fb-status-dot">●</span>
@@ -3681,6 +3708,15 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
           </div>
           <div class="eg-ai-lbl">Context / Intel (optional)</div>
           <textarea class="eg-ai-context" id="eg-context" placeholder="e.g. 12% renewal increase, frustrated with manual processes, Paylocity renewal in 90 days…"></textarea>
+          
+          <!-- Intel Suggestions Panel -->
+          <div id="eg-intel-suggestions" style="display:none; margin-top:16px">
+            <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">
+              💡 Smart Suggestions
+            </div>
+            <div id="eg-suggestions-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          </div>
+          
           <button class="eg-generate-btn" id="eg-gen-btn" onclick="egGenerate()">
             <span class="eg-spin" id="eg-spinner"></span>
             <span id="eg-btn-lbl">⚡ Generate Email</span>
@@ -5213,6 +5249,102 @@ beyondpayroll.net`;
     if (typeof showToast === 'function') showToast('✓ Email applied to composer');
   };
 })();
+</script>
+
+<!-- Email Enhancements - Auto-Load -->
+<script>
+(function() {
+  // Load enhancement scripts
+  ['email-intel-engine.js','email-composer-enhanced.js','email-history-crm.js'].forEach(function(src) {
+    const s = document.createElement('script');
+    s.src = src;
+    s.defer = true;
+    document.head.appendChild(s);
+  });
+  
+  // Load CSS
+  const l = document.createElement('link');
+  l.rel = 'stylesheet';
+  l.href = 'email-enhancements-styles.css';
+  document.head.appendChild(l);
+})();
+
+// Integration hooks
+window.addEventListener('DOMContentLoaded', function() {
+  // Wrap egGenerate to log emails
+  const _eg = window.egGenerate;
+  if (_eg) {
+    window.egGenerate = async function() {
+      await _eg.apply(this, arguments);
+      setTimeout(function() {
+        if (window._lastSubject && window._lastBody && typeof logEmail === 'function') {
+          const p = window._hqProspect;
+          logEmail({
+            prospectId: p ? (p.id || p.company) : null,
+            companyName: (document.getElementById('eg-company')||{}).value || '',
+            contactName: (document.getElementById('eg-firstName')||{}).value || '',
+            contactEmail: p ? p.email : '',
+            subject: window._lastSubject,
+            body: window._lastBody,
+            touchType: window._touch || 'Email',
+            track: (document.getElementById('eg-track')||{}).value || 'WFN',
+            status: 'generated',
+            intelSnapshot: buildEmailIntelContext ? buildEmailIntelContext(p) : null
+          });
+        }
+      }, 100);
+    };
+  }
+  
+  // Wrap openEmailEngine to show intel suggestions
+  const _oe = window.openEmailEngine;
+  if (_oe) {
+    window.openEmailEngine = function() {
+      _oe.apply(this, arguments);
+      setTimeout(function() {
+        const p = window._hqProspect;
+        if (!p || !buildEmailIntelContext || !getEmailIntelSuggestions) return;
+        const ctx = buildEmailIntelContext(p);
+        const sug = getEmailIntelSuggestions(ctx);
+        if (!sug.length) return;
+        const panel = document.getElementById('eg-intel-suggestions');
+        const list = document.getElementById('eg-suggestions-list');
+        if (!panel || !list) return;
+        list.innerHTML = sug.map(function(s) {
+          return '<div style="background:var(--off-white);border:1px solid var(--border);border-radius:6px;padding:10px">' +
+            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
+            '<span style="font-size:14px">' + s.icon + '</span>' +
+            '<span style="font-size:11px;font-weight:700;color:var(--text-2)">' + s.title + '</span>' +
+            '</div>' +
+            '<div style="font-size:12px;color:var(--text)">' + s.description + '</div>' +
+            (s.solution ? '<div style="font-size:11px;color:var(--text-3);margin-top:4px">💡 ' + s.solution + '</div>' : '') +
+            '</div>';
+        }).join('');
+        panel.style.display = 'block';
+      }, 300);
+    };
+  }
+  
+  // Wrap egOpenMailto to auto-mark as sent
+  const _om = window.egOpenMailto;
+  if (_om) {
+    window.egOpenMailto = function() {
+      if (typeof updateEmailStatus === 'function' && typeof getEmailHistory === 'function') {
+        const h = getEmailHistory();
+        const p = window._hqProspect;
+        if (p) {
+          const r = h.find(function(e) {
+            return e.companyName === p.company && e.status === 'generated';
+          });
+          if (r) updateEmailStatus(r.id, 'sent');
+        }
+      }
+      _om.apply(this, arguments);
+    };
+  }
+});
+
+console.log('[Email Enhancements] Integration loaded');
 </script>
 
 <script src="app.js?v=15" defer></script>
