@@ -432,6 +432,27 @@ ADP
 beyondpayroll.net`,
         description: 'People analytics retention hook',
         created: new Date().toISOString()
+      },
+      
+      {
+        id: 'video_message',
+        name: 'Video Message',
+        category: 'Video',
+        track: 'Both',
+        subject: 'Quick video for {{companyName}}',
+        body: `Hi {{firstName}},
+
+I recorded a quick 2-minute video walking through how {{painSolution}} could eliminate {{topPainPoint}} at {{companyName}}.
+
+Watch here: [VIDEO_LINK]
+
+Worth a follow-up conversation?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Personalized video message template',
+        created: new Date().toISOString()
       }
     ];
 
@@ -552,16 +573,36 @@ beyondpayroll.net`,
       return;
     }
 
-    // Build intel context
-    const intelContext = window.buildEmailIntelContext ? window.buildEmailIntelContext(prospect) : null;
-    if (!intelContext) {
-      if (typeof showToast === 'function') showToast('⚠ Intel engine not loaded', true);
-      return;
-    }
+    let resolvedSubject = template.subject;
+    let resolvedBody = template.body;
 
-    // Resolve tokens in template
-    const resolvedSubject = window.resolveEmailTokens ? window.resolveEmailTokens(template.subject, intelContext) : template.subject;
-    const resolvedBody = window.resolveEmailTokens ? window.resolveEmailTokens(template.body, intelContext) : template.body;
+    // Try to use intel context if available
+    if (window.buildEmailIntelContext && window.resolveEmailTokens) {
+      const intelContext = window.buildEmailIntelContext(prospect);
+      if (intelContext) {
+        resolvedSubject = window.resolveEmailTokens(template.subject, intelContext);
+        resolvedBody = window.resolveEmailTokens(template.body, intelContext);
+      }
+    } else {
+      // FALLBACK: Simple token replacement if intel engine not loaded
+      const simpleReplace = function(text) {
+        return text
+          .replace(/\{\{firstName\}\}/g, prospect.firstName || prospect.contact || 'there')
+          .replace(/\{\{lastName\}\}/g, prospect.lastName || '')
+          .replace(/\{\{companyName\}\}/g, prospect.company || 'your company')
+          .replace(/\{\{headcount\}\}/g, prospect.headcount || '50')
+          .replace(/\{\{industry\}\}/g, prospect.industry || 'your industry')
+          .replace(/\{\{state\}\}/g, prospect.state || 'your state')
+          .replace(/\{\{competitor\}\}/g, prospect.competitor || 'your current system')
+          .replace(/\{\{topPainPoint\}\}/g, prospect.painPoint1 || 'operational inefficiencies')
+          .replace(/\{\{painSolution\}\}/g, 'ADP Workforce Now')
+          .replace(/\{\{timeline\}\}/g, prospect.timeline || 'next quarter')
+          .replace(/\{\{track\}\}/g, prospect.track || 'WFN')
+          .replace(/\{\{trackLabel\}\}/g, prospect.track === 'TS' ? 'TotalSource PEO' : 'Workforce Now');
+      };
+      resolvedSubject = simpleReplace(resolvedSubject);
+      resolvedBody = simpleReplace(resolvedBody);
+    }
 
     // Check if Email Engine modal is open
     const emailEngineModal = document.querySelector('.eg-overlay.open');
@@ -572,12 +613,12 @@ beyondpayroll.net`,
       window._lastBody = resolvedBody;
       
       // Render in the output area
-      if (typeof egRenderOutput === 'function') {
+      if (typeof window.egRenderOutput === 'function') {
         const firstName = prospect.firstName || prospect.contact || 'there';
         const company = prospect.company || 'Prospect';
         const persona = prospect.persona || '';
         const touch = template.name || 'Email';
-        egRenderOutput(`Subject: ${resolvedSubject}\n\n${resolvedBody}`, firstName, company, persona, touch);
+        window.egRenderOutput(`Subject: ${resolvedSubject}\n\n${resolvedBody}`, firstName, company, persona, touch);
         
         // Show action buttons
         const actionsEl = document.getElementById('eg-output-actions');
