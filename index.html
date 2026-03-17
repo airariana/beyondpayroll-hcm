@@ -5287,6 +5287,43 @@ beyondpayroll.net`;
     closeEmailEngine();
     if (typeof showToast === 'function') showToast('✓ Email applied to composer');
   };
+
+  // ── CADENCE TOUCH STEP: OPEN IN OUTLOOK ────────────────────────────
+  window.tsFireMailto = function() {
+    var toEmail = (document.getElementById('ts-to-inp') || {}).value || '';
+    var subject = (document.getElementById('emailSubject') || {}).textContent || '';
+    var body = (document.getElementById('emailBody') || {}).innerText || '';
+    
+    if (!toEmail || !subject || !body) {
+      if (typeof showToast === 'function') showToast('⚠ Fill in To, Subject, and Body first', true);
+      return;
+    }
+    
+    // Try to get default signature from Signature Manager (if loaded)
+    var sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net'; // Fallback signature
+    if (typeof getSignatures === 'function') {
+      var sigs = getSignatures();
+      var defaultSig = sigs.find(function(s) { return s.isDefault; });
+      if (defaultSig && defaultSig.content) {
+        sig = '\n\n' + defaultSig.content;
+      }
+    }
+    
+    // Remove any existing signature from body and append the current one
+    var fullBody = body.replace(/\n\n—[\s\S]*$/, '') + sig;
+    var uri = 'mailto:' + encodeURIComponent(toEmail) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(fullBody);
+    var a = document.createElement('a');
+    a.href = uri;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 500);
+    
+    if (typeof showToast === 'function') showToast('📧 Opening Outlook — email pre-filled');
+    
+    // Mark touch step as completed if possible
+    if (typeof cdxMarkStepComplete === 'function') cdxMarkStepComplete();
+  };
 })();
 </script>
 

@@ -189,6 +189,249 @@ ADP
 beyondpayroll.net`,
         description: 'Existing ADP client upgrade opportunity',
         created: new Date().toISOString()
+      },
+      
+      // ── NEW TEMPLATES ────────────────────────────────────────────
+      {
+        id: 'referral_intro',
+        name: 'Referral Introduction',
+        category: 'Referral',
+        track: 'Both',
+        subject: '{{champion}} mentioned {{companyName}}',
+        body: `Hi {{firstName}},
+
+{{champion}} mentioned {{companyName}} might benefit from a conversation about {{topPainPoint}}.
+
+{{painSolution}} — worth 15 minutes?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Warm introduction via referral',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'open_enrollment',
+        name: 'Open Enrollment Support',
+        category: 'Timing',
+        track: 'Both',
+        subject: 'Open enrollment support — {{companyName}}',
+        body: `Hi {{firstName}},
+
+Open enrollment at {{headcount}} employees gets messy fast. {{painSolution}} automates enrollment, compliance tracking, and carrier feeds.
+
+Want to see what hands-off open enrollment looks like for {{timeline}}?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Timing-based open enrollment hook',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'time_tracking',
+        name: 'Time Tracking Pain',
+        category: 'Pain Point',
+        track: 'Both',
+        subject: 'Time tracking at {{companyName}}',
+        body: `Hi {{firstName}},
+
+Tracking time across {{headcount}} employees in {{industry}} — still using spreadsheets?
+
+{{painSolution}} integrates time capture, overtime alerts, and compliance reporting. {{industryBenchmark}} ROI in first 90 days.
+
+Worth a quick demo?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Time & attendance pain point hook',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'scaling_challenge',
+        name: 'Scaling Challenge',
+        category: 'Growth',
+        track: 'Both',
+        subject: '{{companyName}} growth + HCM',
+        body: `Hi {{firstName}},
+
+Growing from {{headcount}} to 100+ employees? {{competitor}} {{competitorWeakness}} — that's when companies hit the wall.
+
+{{painSolution}} scales with you. Quick benchmark call?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Growth-focused scaling conversation',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'multi_state',
+        name: 'Multi-State Compliance',
+        category: 'Compliance',
+        track: 'Both',
+        subject: 'Multi-state payroll — {{companyName}}',
+        body: `Hi {{firstName}},
+
+Running payroll across state lines? {{stateCompliance}}
+
+{{painSolution}} handles multi-state tax filing, wage laws, and compliance automatically. {{industry}} companies at {{headcount}} see {{industryBenchmark}} in compliance risk reduction.
+
+Quick call to review your setup?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Multi-state expansion compliance',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'year_end_prep',
+        name: 'Year-End Prep',
+        category: 'Timing',
+        track: 'Both',
+        subject: 'Year-end payroll prep — {{companyName}}',
+        body: `Hi {{firstName}},
+
+Year-end tax filing at {{headcount}} employees — W-2s, 1099s, ACA reporting.
+
+{{painSolution}} automates the entire year-end cycle. Want to avoid the usual scramble?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Year-end tax filing timing hook',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'hiring_spike',
+        name: 'Hiring Spike Support',
+        category: 'Growth',
+        track: 'Both',
+        subject: 'Hiring spike at {{companyName}}',
+        body: `Hi {{firstName}},
+
+Planning to hire? Onboarding at scale breaks manual systems.
+
+{{painSolution}} — automated onboarding, I-9 compliance, background checks, benefits enrollment. {{industryBenchmark}} time savings per new hire.
+
+Quick demo for {{timeline}}?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Hiring/onboarding automation hook',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'benefits_renewal',
+        name: 'Benefits Renewal Season',
+        category: 'Timing',
+        track: 'TS',
+        subject: 'Benefits renewal — {{companyName}}',
+        body: `Hi {{firstName}},
+
+Renewal season coming up? TotalSource PEO gives {{companyName}} Fortune 500 carrier access at {{headcount}} employees.
+
+{{industry}} companies typically see {{industryBenchmark}} reduction in benefits costs.
+
+Worth a benefits benchmark review?
+
+— AJ
+ADP TotalSource PEO
+beyondpayroll.net`,
+        description: 'PEO benefits renewal timing',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'remote_workforce',
+        name: 'Remote Workforce Management',
+        category: 'Pain Point',
+        track: 'Both',
+        subject: 'Remote workforce — {{companyName}}',
+        body: `Hi {{firstName}},
+
+Managing {{headcount}} remote employees across time zones? {{topPainPoint}} gets exponentially harder at scale.
+
+{{painSolution}} — centralized time tracking, compliance monitoring, and payroll for distributed teams.
+
+Quick conversation about remote workforce automation?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Remote/distributed team management',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'audit_risk',
+        name: 'Audit Risk Reduction',
+        category: 'Compliance',
+        track: 'Both',
+        subject: 'Audit risk at {{companyName}}',
+        body: `Hi {{firstName}},
+
+{{stateCompliance}}
+
+At {{headcount}} employees, audit risk compounds. {{painSolution}} maintains real-time compliance documentation and audit trails.
+
+Want to review your current risk exposure?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Compliance audit risk hook',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'cost_per_employee',
+        name: 'Cost Per Employee Analysis',
+        category: 'Value',
+        track: 'Both',
+        subject: 'HCM cost per employee — {{companyName}}',
+        body: `Hi {{firstName}},
+
+What's {{companyName}} paying per employee for full HCM?
+
+{{industry}} at {{headcount}} employees: {{industryBenchmark}}. If you're over that, worth a quick benchmark call.
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'Cost efficiency benchmark angle',
+        created: new Date().toISOString()
+      },
+      
+      {
+        id: 'retention_analytics',
+        name: 'Retention Analytics',
+        category: 'Analytics',
+        track: 'Both',
+        subject: 'Turnover data — {{companyName}}',
+        body: `Hi {{firstName}},
+
+Do you know your real cost of turnover at {{headcount}} employees?
+
+{{painSolution}} tracks retention patterns, exit analytics, and cost-per-hire metrics. {{industry}} companies use this to reduce turnover by 15-20%.
+
+Want to see your numbers?
+
+— AJ
+ADP
+beyondpayroll.net`,
+        description: 'People analytics retention hook',
+        created: new Date().toISOString()
       }
     ];
 
@@ -320,14 +563,36 @@ beyondpayroll.net`,
     const resolvedSubject = window.resolveEmailTokens ? window.resolveEmailTokens(template.subject, intelContext) : template.subject;
     const resolvedBody = window.resolveEmailTokens ? window.resolveEmailTokens(template.body, intelContext) : template.body;
 
-    // Apply to composer
-    const subjectEl = document.getElementById('emailSubject');
-    const bodyEl = document.getElementById('emailBody');
+    // Check if Email Engine modal is open
+    const emailEngineModal = document.querySelector('.eg-overlay.open');
     
-    if (subjectEl) subjectEl.textContent = resolvedSubject;
-    if (bodyEl) {
-      bodyEl.innerText = resolvedBody;
-      if (window.cdxUpdateBodyStats) window.cdxUpdateBodyStats();
+    if (emailEngineModal) {
+      // Apply to Email Engine modal
+      window._lastSubject = resolvedSubject;
+      window._lastBody = resolvedBody;
+      
+      // Render in the output area
+      if (typeof egRenderOutput === 'function') {
+        const firstName = prospect.firstName || prospect.contact || 'there';
+        const company = prospect.company || 'Prospect';
+        const persona = prospect.persona || '';
+        const touch = template.name || 'Email';
+        egRenderOutput(`Subject: ${resolvedSubject}\n\n${resolvedBody}`, firstName, company, persona, touch);
+        
+        // Show action buttons
+        const actionsEl = document.getElementById('eg-output-actions');
+        if (actionsEl) actionsEl.style.display = 'flex';
+      }
+    } else {
+      // Apply to Cadence Composer
+      const subjectEl = document.getElementById('emailSubject');
+      const bodyEl = document.getElementById('emailBody');
+      
+      if (subjectEl) subjectEl.textContent = resolvedSubject;
+      if (bodyEl) {
+        bodyEl.innerText = resolvedBody;
+        if (window.cdxUpdateBodyStats) window.cdxUpdateBodyStats();
+      }
     }
 
     // Close template library
