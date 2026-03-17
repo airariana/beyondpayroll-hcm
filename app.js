@@ -5840,12 +5840,16 @@ window.cdtRunIntelRefresh = async function(day){
 CRITICAL OUTPUT RULES:
 - Plain text only. No markdown. No asterisks, no bold, no bullet symbols, no headers.
 - Write in concise flowing prose. Not numbered lists. Not bullet points.
+- Use double line breaks (two newlines) between paragraphs for proper formatting.
+- Break content into 3-4 short paragraphs for readability.
 - Be specific and actionable. Every sentence must earn its place.
 - Maximum 300 words total.
 
 ${_intelFullCtx}
 
-Deliver a focused intel brief: the single most urgent competitor threat right now (name them and explain why), the sharpest data point or market signal for Day ${day} outreach, one specific urgency trigger to reference in the email, and the strongest angle ADP should lead with. Write as a knowledgeable colleague briefing a sales rep before an important call.`;
+Deliver a focused intel brief: the single most urgent competitor threat right now (name them and explain why), the sharpest data point or market signal for Day ${day} outreach, one specific urgency trigger to reference in the email, and the strongest angle ADP should lead with. Write as a knowledgeable colleague briefing a sales rep before an important call.
+
+FORMAT: Write 3-4 paragraphs separated by blank lines. Each paragraph should focus on one key point.`;
 
   try {
     const resp = await bpGeminiFetch({ messages:[{role:'user',content:prompt}] });
@@ -10270,7 +10274,19 @@ function tsLoadTouch(){
   var p=window._hqProspect;
   if(!toEl.value&&p&&p.email)toEl.value=p.email;
   if(subjEl)subjEl.textContent=t.subject;
-  if(bodyEl)bodyEl.textContent=t.body.replace(/\\n/g,'\n');
+  
+  // Convert line breaks to HTML for proper display
+  if(bodyEl){
+    var bodyText = t.body.replace(/\\n/g,'\n');
+    var htmlBody = bodyText
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>');
+    bodyEl.innerHTML = '<p>' + htmlBody + '</p>';
+  }
+  
   if(lbl)lbl.textContent='Day '+t.day+' · '+t.label;
   var stEl=document.getElementById('ts-touch-status');
   if(stEl)stEl.value=_tsTouchStatuses[_tsTouchIdx]||'Pending';
@@ -10310,8 +10326,41 @@ function tsFireMailto(){
   var touches=tsBuildTouches();var t=touches[_tsTouchIdx];
   var toVal=(document.getElementById('ts-to-inp').value||'').trim();
   if(!toVal){alert('Please add a recipient email.');return;}
-  var body=(document.getElementById('emailBody')||{}).textContent||t.body;
-  var uri='mailto:'+encodeURIComponent(toVal)+'?subject='+encodeURIComponent(t.subject)+'&body='+encodeURIComponent(body);
+  
+  // Get body and preserve paragraph structure
+  var bodyEl = document.getElementById('emailBody');
+  var body = '';
+  
+  if (bodyEl) {
+    // If it has HTML content with proper structure, convert to text with line breaks
+    if (bodyEl.innerHTML && bodyEl.innerHTML.includes('<')) {
+      // Has HTML - convert <br>, <p>, </div> to line breaks
+      body = bodyEl.innerHTML
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<[^>]+>/g, '')  // Remove remaining HTML tags
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .trim();
+    } else {
+      // Plain text - use textContent
+      body = bodyEl.textContent || t.body;
+    }
+    
+    // Clean up excessive line breaks (more than 2 consecutive)
+    body = body.replace(/\n{3,}/g, '\n\n');
+  } else {
+    body = t.body;
+  }
+  
+  // Strip any existing signature - let Outlook add its own
+  var cleanBody = body.replace(/\n\n—[\s\S]*$/, '');
+  
+  var uri='mailto:'+encodeURIComponent(toVal)+'?subject='+encodeURIComponent(t.subject)+'&body='+encodeURIComponent(cleanBody);
   var a=document.createElement('a');a.href=uri;a.style.display='none';document.body.appendChild(a);a.click();
   setTimeout(function(){document.body.removeChild(a);},500);
 }
