@@ -530,6 +530,7 @@ beyondpayroll.net`,
         </div>
         <div class="eec-template-card-actions">
           <button onclick="eecUseTemplate('${t.id}')" class="eec-btn-use">Use Template</button>
+          <button onclick="eecSendWithOutlook('${t.id}')" class="eec-btn-outlook" style="background:#1e40af;color:#fff">📧 Send with Outlook</button>
           <button onclick="eecEditTemplate('${t.id}')" class="eec-btn-edit">Edit</button>
           <button onclick="eecDeleteTemplate('${t.id}')" class="eec-btn-delete">Delete</button>
         </div>
@@ -641,6 +642,101 @@ beyondpayroll.net`,
     if (modal) modal.remove();
 
     if (typeof showToast === 'function') showToast('✓ Template applied');
+  };
+
+  // ── SEND DIRECTLY WITH OUTLOOK ────────────────────────────────────
+  window.eecSendWithOutlook = function(templateId) {
+    const templates = getTemplates();
+    const template = templates.find(t => t.id === templateId);
+    if (!template) return;
+
+    // Get current prospect context
+    const prospect = window._hqProspect;
+    if (!prospect) {
+      if (typeof showToast === 'function') showToast('⚠ Load a prospect first', true);
+      return;
+    }
+
+    // Prompt for recipient email
+    const toEmail = prompt('Enter recipient email address:', prospect.email || '');
+    if (!toEmail) return;
+
+    let resolvedSubject = template.subject;
+    let resolvedBody = template.body;
+
+    // Try to use intel context if available
+    if (window.buildEmailIntelContext && window.resolveEmailTokens) {
+      const intelContext = window.buildEmailIntelContext(prospect);
+      if (intelContext) {
+        resolvedSubject = window.resolveEmailTokens(template.subject, intelContext);
+        resolvedBody = window.resolveEmailTokens(template.body, intelContext);
+      }
+    } else {
+      // FALLBACK: Simple token replacement
+      const simpleReplace = function(text) {
+        return text
+          .replace(/\{\{firstName\}\}/g, prospect.firstName || prospect.contact || 'there')
+          .replace(/\{\{lastName\}\}/g, prospect.lastName || '')
+          .replace(/\{\{companyName\}\}/g, prospect.company || 'your company')
+          .replace(/\{\{headcount\}\}/g, prospect.headcount || '50')
+          .replace(/\{\{industry\}\}/g, prospect.industry || 'your industry')
+          .replace(/\{\{state\}\}/g, prospect.state || 'your state')
+          .replace(/\{\{competitor\}\}/g, prospect.competitor || 'your current system')
+          .replace(/\{\{topPainPoint\}\}/g, prospect.painPoint1 || 'operational inefficiencies')
+          .replace(/\{\{painSolution\}\}/g, 'ADP Workforce Now')
+          .replace(/\{\{timeline\}\}/g, prospect.timeline || 'next quarter')
+          .replace(/\{\{track\}\}/g, prospect.track || 'WFN')
+          .replace(/\{\{trackLabel\}\}/g, prospect.track === 'TS' ? 'TotalSource PEO' : 'Workforce Now');
+      };
+      resolvedSubject = simpleReplace(resolvedSubject);
+      resolvedBody = simpleReplace(resolvedBody);
+    }
+
+    // Get signature
+    let sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
+    if (typeof getSignatures === 'function') {
+      const sigs = getSignatures();
+      const defaultSig = sigs.find(s => s.isDefault);
+      if (defaultSig && defaultSig.content) {
+        sig = '\n\n' + defaultSig.content;
+      }
+    }
+
+    // Build mailto URL
+    const fullBody = resolvedBody.replace(/\n\n—[\s\S]*$/, '') + sig;
+    const uri = 'mailto:' + encodeURIComponent(toEmail) + 
+                '?subject=' + encodeURIComponent(resolvedSubject) + 
+                '&body=' + encodeURIComponent(fullBody);
+    
+    // Open Outlook
+    const a = document.createElement('a');
+    a.href = uri;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); }, 500);
+
+    // Close template library
+    const modal = document.getElementById('template-library-modal');
+    if (modal) modal.remove();
+
+    if (typeof showToast === 'function') showToast('📧 Opening Outlook with template');
+    
+    // Log email if possible
+    if (typeof logEmail === 'function') {
+      logEmail({
+        prospectId: prospect.id || prospect.company,
+        companyName: prospect.company || '',
+        contactName: prospect.firstName || '',
+        contactEmail: toEmail,
+        subject: resolvedSubject,
+        body: fullBody,
+        touchType: template.name || 'Email',
+        track: prospect.track || 'WFN',
+        status: 'sent',
+        intelSnapshot: window.buildEmailIntelContext ? window.buildEmailIntelContext(prospect) : null
+      });
+    }
   };
 
   window.eecOpenTemplateEditor = function(template) {
