@@ -5234,6 +5234,10 @@ beyondpayroll.net`;
     var subMatch = text.match(/Subject:\s*(.+)/);
     _lastSubject = subMatch ? subMatch[1].trim() : '';
     _lastBody = text.replace(/Subject:\s*.+\n?/, '').trim();
+    
+    // Update global references for template system
+    window._lastSubject = _lastSubject;
+    window._lastBody = _lastBody;
 
     var label = document.getElementById('eg-output-label');
     if (label) label.textContent = touch + ' — ' + company;
@@ -5254,6 +5258,9 @@ beyondpayroll.net`;
       + '<div class="eg-body-area">' + _lastBody + '</div>'
       + '</div>';
   }
+
+  // Expose for template system
+  window.egRenderOutput = egRenderOutput;
 
   window.egCopyBody    = function() { if (_lastBody) { navigator.clipboard.writeText(_lastBody); if (typeof showToast === 'function') showToast('✓ Body copied'); } };
   window.egCopyAll     = function() { if (_lastSubject || _lastBody) { navigator.clipboard.writeText('Subject: ' + _lastSubject + '\n\n' + _lastBody); if (typeof showToast === 'function') showToast('✓ Full email copied'); } };
