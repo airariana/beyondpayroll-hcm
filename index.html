@@ -5246,6 +5246,17 @@ beyondpayroll.net`;
     var label = document.getElementById('eg-output-label');
     if (label) label.textContent = touch + ' — ' + company;
 
+    // Convert line breaks to HTML for display
+    var htmlBody = _lastBody
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n\n/g, '</p><p>')  // Double line breaks = new paragraphs
+      .replace(/\n/g, '<br>');      // Single line breaks = br tags
+    
+    // Wrap in paragraph tags
+    htmlBody = '<p>' + htmlBody + '</p>';
+
     document.getElementById('eg-output-area').innerHTML =
       '<div class="eg-email-card">'
       + '<div class="eg-email-chrome">'
@@ -5259,7 +5270,7 @@ beyondpayroll.net`;
       + '<div class="eg-meta-row"><span class="eg-meta-key">To</span><span class="eg-meta-val">' + firstName + (persona ? ' (' + persona + ')' : '') + ' — ' + company + '</span></div>'
       + '<div class="eg-meta-row" style="margin-top:4px"><span class="eg-meta-key">Subject</span><span class="eg-subject">' + (_lastSubject || '—') + '</span></div>'
       + '</div>'
-      + '<div class="eg-body-area">' + _lastBody + '</div>'
+      + '<div class="eg-body-area">' + htmlBody + '</div>'
       + '</div>';
   }
 
@@ -5273,19 +5284,10 @@ beyondpayroll.net`;
     var p = window._hqProspect || {};
     var toEmail = (document.getElementById('eg-to') && document.getElementById('eg-to').value) || p.email || '';
     
-    // Try to get default signature from Signature Manager (if loaded)
-    var sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net'; // Fallback signature
-    if (typeof getSignatures === 'function') {
-      var sigs = getSignatures();
-      var defaultSig = sigs.find(function(s) { return s.isDefault; });
-      if (defaultSig && defaultSig.content) {
-        sig = '\n\n' + defaultSig.content;
-      }
-    }
+    // Strip any existing signature from body - let Outlook add its own
+    var cleanBody = _lastBody.replace(/\n\n—[\s\S]*$/, '');
     
-    // Remove any existing signature from body and append the current one
-    var body = _lastBody.replace(/\n\n—[\s\S]*$/, '') + sig;
-    var uri = 'mailto:' + encodeURIComponent(toEmail) + '?subject=' + encodeURIComponent(_lastSubject) + '&body=' + encodeURIComponent(body);
+    var uri = 'mailto:' + encodeURIComponent(toEmail) + '?subject=' + encodeURIComponent(_lastSubject) + '&body=' + encodeURIComponent(cleanBody);
     var a = document.createElement('a'); a.href = uri; a.style.display = 'none';
     document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); }, 500);
     if (typeof showToast === 'function') showToast('📧 Opening Outlook — email pre-filled');
@@ -5303,26 +5305,44 @@ beyondpayroll.net`;
   window.tsFireMailto = function() {
     var toEmail = (document.getElementById('ts-to-inp') || {}).value || '';
     var subject = (document.getElementById('emailSubject') || {}).textContent || '';
-    var body = (document.getElementById('emailBody') || {}).innerText || '';
+    
+    // Get body and preserve paragraph structure
+    var bodyEl = document.getElementById('emailBody');
+    var body = '';
+    
+    if (bodyEl) {
+      // If it has HTML content with proper structure, convert to text with line breaks
+      if (bodyEl.innerHTML && bodyEl.innerHTML.includes('<')) {
+        // Has HTML - convert <br>, <p>, </div> to line breaks
+        body = bodyEl.innerHTML
+          .replace(/<br\s*\/?>/gi, '\n')
+          .replace(/<\/p>/gi, '\n\n')
+          .replace(/<\/div>/gi, '\n')
+          .replace(/<[^>]+>/g, '')  // Remove remaining HTML tags
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .trim();
+      } else {
+        // Plain text - use innerText but try to preserve structure
+        body = bodyEl.innerText || bodyEl.textContent || '';
+      }
+      
+      // Clean up excessive line breaks (more than 2 consecutive)
+      body = body.replace(/\n{3,}/g, '\n\n');
+    }
     
     if (!toEmail || !subject || !body) {
       if (typeof showToast === 'function') showToast('⚠ Fill in To, Subject, and Body first', true);
       return;
     }
     
-    // Try to get default signature from Signature Manager (if loaded)
-    var sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net'; // Fallback signature
-    if (typeof getSignatures === 'function') {
-      var sigs = getSignatures();
-      var defaultSig = sigs.find(function(s) { return s.isDefault; });
-      if (defaultSig && defaultSig.content) {
-        sig = '\n\n' + defaultSig.content;
-      }
-    }
+    // Strip any existing signature - let Outlook add its own default signature
+    var cleanBody = body.replace(/\n\n—[\s\S]*$/, '');
     
-    // Remove any existing signature from body and append the current one
-    var fullBody = body.replace(/\n\n—[\s\S]*$/, '') + sig;
-    var uri = 'mailto:' + encodeURIComponent(toEmail) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(fullBody);
+    var uri = 'mailto:' + encodeURIComponent(toEmail) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(cleanBody);
     var a = document.createElement('a');
     a.href = uri;
     a.style.display = 'none';

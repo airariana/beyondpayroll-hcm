@@ -70,11 +70,7 @@
 
 {{companyName}} — {{headcount}}-person {{industry}} in {{state}}. {{topPainPoint}} usually means {{painSolution}}.
 
-Worth a 15-minute benchmark conversation?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Worth a 15-minute benchmark conversation?`,
         description: 'Research-driven cold opener with pain point hook',
         created: new Date().toISOString()
       },
@@ -90,11 +86,7 @@ beyondpayroll.net`,
 
 {{painSolution}} eliminates that entirely. For {{headcount}}-person {{industry}} companies in {{state}}, we're seeing {{painImpact}}.
 
-Does {{timeline}} work for a quick benchmark review?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Does {{timeline}} work for a quick benchmark review?`,
         description: 'Competitive positioning with specific competitor weakness',
         created: new Date().toISOString()
       },
@@ -110,11 +102,7 @@ beyondpayroll.net`,
 
 {{painSolution}} for {{headcount}}-person {{industry}} companies handles this automatically.
 
-Quick call to walk through {{state}}-specific requirements?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Quick call to walk through {{state}}-specific requirements?`,
         description: 'State-specific compliance hook',
         created: new Date().toISOString()
       },
@@ -128,11 +116,7 @@ beyondpayroll.net`,
 
 {{industry}} companies at {{headcount}} employees typically pay {{industryBenchmark}} for full HCM.
 
-Worth comparing what {{companyName}} is running now?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Worth comparing what {{companyName}} is running now?`,
         description: 'Industry benchmark with cost comparison',
         created: new Date().toISOString()
       },
@@ -146,11 +130,7 @@ beyondpayroll.net`,
 
 Last note — {{topPainPoint}} doesn't fix itself.
 
-If that changes and {{companyName}} wants to see what {{painSolution}} looks like in practice, I'm here.
-
-— AJ
-ADP
-beyondpayroll.net`,
+If that changes and {{companyName}} wants to see what {{painSolution}} looks like in practice, I'm here.`,
         description: 'Pattern interrupt breakup email',
         created: new Date().toISOString()
       },
@@ -164,11 +144,7 @@ beyondpayroll.net`,
 
 TotalSource PEO gives {{companyName}} Fortune 500 carrier access at {{headcount}} employees — {{industry}} companies typically see {{industryBenchmark}} in benefits cost reduction.
 
-Worth a benefits benchmark review?
-
-— AJ
-ADP TotalSource PEO
-beyondpayroll.net`,
+Worth a benefits benchmark review?`,
         description: 'PEO benefits cost reduction angle',
         created: new Date().toISOString()
       },
@@ -182,11 +158,7 @@ beyondpayroll.net`,
 
 {{competitor}} served you well at smaller scale — at {{headcount}} employees, {{adpAdvantage}}.
 
-Quick conversation about what the upgrade path looks like?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Quick conversation about what the upgrade path looks like?`,
         description: 'Existing ADP client upgrade opportunity',
         created: new Date().toISOString()
       },
@@ -202,11 +174,7 @@ beyondpayroll.net`,
 
 {{champion}} mentioned {{companyName}} might benefit from a conversation about {{topPainPoint}}.
 
-{{painSolution}} — worth 15 minutes?
-
-— AJ
-ADP
-beyondpayroll.net`,
+{{painSolution}} — worth 15 minutes?`,
         description: 'Warm introduction via referral',
         created: new Date().toISOString()
       },
@@ -221,11 +189,7 @@ beyondpayroll.net`,
 
 Open enrollment at {{headcount}} employees gets messy fast. {{painSolution}} automates enrollment, compliance tracking, and carrier feeds.
 
-Want to see what hands-off open enrollment looks like for {{timeline}}?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Want to see what hands-off open enrollment looks like for {{timeline}}?`,
         description: 'Timing-based open enrollment hook',
         created: new Date().toISOString()
       },
@@ -242,11 +206,7 @@ Tracking time across {{headcount}} employees in {{industry}} — still using spr
 
 {{painSolution}} integrates time capture, overtime alerts, and compliance reporting. {{industryBenchmark}} ROI in first 90 days.
 
-Worth a quick demo?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Worth a quick demo?`,
         description: 'Time & attendance pain point hook',
         created: new Date().toISOString()
       },
@@ -261,11 +221,7 @@ beyondpayroll.net`,
 
 Growing from {{headcount}} to 100+ employees? {{competitor}} {{competitorWeakness}} — that's when companies hit the wall.
 
-{{painSolution}} scales with you. Quick benchmark call?
-
-— AJ
-ADP
-beyondpayroll.net`,
+{{painSolution}} scales with you. Quick benchmark call?`,
         description: 'Growth-focused scaling conversation',
         created: new Date().toISOString()
       },
@@ -282,11 +238,7 @@ Running payroll across state lines? {{stateCompliance}}
 
 {{painSolution}} handles multi-state tax filing, wage laws, and compliance automatically. {{industry}} companies at {{headcount}} see {{industryBenchmark}} in compliance risk reduction.
 
-Quick call to review your setup?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Quick call to review your setup?`,
         description: 'Multi-state expansion compliance',
         created: new Date().toISOString()
       },
@@ -301,11 +253,7 @@ beyondpayroll.net`,
 
 Year-end tax filing at {{headcount}} employees — W-2s, 1099s, ACA reporting.
 
-{{painSolution}} automates the entire year-end cycle. Want to avoid the usual scramble?
-
-— AJ
-ADP
-beyondpayroll.net`,
+{{painSolution}} automates the entire year-end cycle. Want to avoid the usual scramble?`,
         description: 'Year-end tax filing timing hook',
         created: new Date().toISOString()
       },
@@ -322,11 +270,7 @@ Planning to hire? Onboarding at scale breaks manual systems.
 
 {{painSolution}} — automated onboarding, I-9 compliance, background checks, benefits enrollment. {{industryBenchmark}} time savings per new hire.
 
-Quick demo for {{timeline}}?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Quick demo for {{timeline}}?`,
         description: 'Hiring/onboarding automation hook',
         created: new Date().toISOString()
       },
@@ -343,11 +287,7 @@ Renewal season coming up? TotalSource PEO gives {{companyName}} Fortune 500 carr
 
 {{industry}} companies typically see {{industryBenchmark}} reduction in benefits costs.
 
-Worth a benefits benchmark review?
-
-— AJ
-ADP TotalSource PEO
-beyondpayroll.net`,
+Worth a benefits benchmark review?`,
         description: 'PEO benefits renewal timing',
         created: new Date().toISOString()
       },
@@ -364,11 +304,7 @@ Managing {{headcount}} remote employees across time zones? {{topPainPoint}} gets
 
 {{painSolution}} — centralized time tracking, compliance monitoring, and payroll for distributed teams.
 
-Quick conversation about remote workforce automation?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Quick conversation about remote workforce automation?`,
         description: 'Remote/distributed team management',
         created: new Date().toISOString()
       },
@@ -385,11 +321,7 @@ beyondpayroll.net`,
 
 At {{headcount}} employees, audit risk compounds. {{painSolution}} maintains real-time compliance documentation and audit trails.
 
-Want to review your current risk exposure?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Want to review your current risk exposure?`,
         description: 'Compliance audit risk hook',
         created: new Date().toISOString()
       },
@@ -404,11 +336,7 @@ beyondpayroll.net`,
 
 What's {{companyName}} paying per employee for full HCM?
 
-{{industry}} at {{headcount}} employees: {{industryBenchmark}}. If you're over that, worth a quick benchmark call.
-
-— AJ
-ADP
-beyondpayroll.net`,
+{{industry}} at {{headcount}} employees: {{industryBenchmark}}. If you're over that, worth a quick benchmark call.`,
         description: 'Cost efficiency benchmark angle',
         created: new Date().toISOString()
       },
@@ -425,11 +353,7 @@ Do you know your real cost of turnover at {{headcount}} employees?
 
 {{painSolution}} tracks retention patterns, exit analytics, and cost-per-hire metrics. {{industry}} companies use this to reduce turnover by 15-20%.
 
-Want to see your numbers?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Want to see your numbers?`,
         description: 'People analytics retention hook',
         created: new Date().toISOString()
       },
@@ -446,11 +370,7 @@ I recorded a quick 2-minute video walking through how {{painSolution}} could eli
 
 Watch here: [VIDEO_LINK]
 
-Worth a follow-up conversation?
-
-— AJ
-ADP
-beyondpayroll.net`,
+Worth a follow-up conversation?`,
         description: 'Personalized video message template',
         created: new Date().toISOString()
       }
@@ -692,21 +612,14 @@ beyondpayroll.net`,
       resolvedBody = simpleReplace(resolvedBody);
     }
 
-    // Get signature
-    let sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
-    if (typeof getSignatures === 'function') {
-      const sigs = getSignatures();
-      const defaultSig = sigs.find(s => s.isDefault);
-      if (defaultSig && defaultSig.content) {
-        sig = '\n\n' + defaultSig.content;
-      }
-    }
+    // Don't append signature - let Outlook use its own default signature
+    // Strip any existing signature from template body
+    const cleanBody = resolvedBody.replace(/\n\n—[\s\S]*$/, '');
 
     // Build mailto URL
-    const fullBody = resolvedBody.replace(/\n\n—[\s\S]*$/, '') + sig;
     const uri = 'mailto:' + encodeURIComponent(toEmail) + 
                 '?subject=' + encodeURIComponent(resolvedSubject) + 
-                '&body=' + encodeURIComponent(fullBody);
+                '&body=' + encodeURIComponent(cleanBody);
     
     // Open Outlook
     const a = document.createElement('a');
@@ -730,7 +643,7 @@ beyondpayroll.net`,
         contactName: prospect.firstName || '',
         contactEmail: toEmail,
         subject: resolvedSubject,
-        body: fullBody,
+        body: cleanBody,
         touchType: template.name || 'Email',
         track: prospect.track || 'WFN',
         status: 'sent',
