@@ -7211,34 +7211,35 @@ console.log('[Email Enhancements] Integration loaded');
 <script src="app.js?v=15" defer></script>
 
 <!-- ═══════════════════════════════════════════════════════════
-     MOBILE BOTTOM NAVIGATION - FIXED
-     Replace the existing bottom nav with this
+     MOBILE BOTTOM NAVIGATION - FIXED & SIMPLIFIED
      ═══════════════════════════════════════════════════════════ -->
 <div class="mobile-bottom-nav">
   <!-- Home - Goes to command center -->
-  <div class="nav-item active" onclick="switchView('portal'); document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(n => n.classList.remove('active')); event.currentTarget.classList.add('active');">
+  <div class="nav-item active" id="nav-home">
     <div class="nav-icon">🏠</div>
     <div class="nav-label">Home</div>
   </div>
   
-  <!-- Pipeline - Opens saved prospects list (profile dropdown) -->
-  <div class="nav-item" onclick="toggleProfileDropdown(); document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(n => n.classList.remove('active')); event.currentTarget.classList.add('active');">
+  <!-- Pipeline - Opens saved prospects list -->
+  <div class="nav-item" id="nav-pipeline">
     <div class="nav-icon">📊</div>
     <div class="nav-label">Pipeline</div>
   </div>
   
-  <!-- Email - Opens email generator -->
-  <div class="nav-item" onclick="typeof openEmailEngine === 'function' && openEmailEngine(); document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(n => n.classList.remove('active')); event.currentTarget.classList.add('active');">
-    <div class="nav-icon">✉️</div>
-    <div class="nav-label">Email</div>
+  <!-- Email Generator - Lightning bolt -->
+  <div class="nav-item" id="nav-email">
+    <div class="nav-icon">⚡</div>
+    <div class="nav-label">EG</div>
   </div>
   
-  <!-- Profile - Opens user settings/profile menu -->
-  <div class="nav-item" onclick="openProfileSettings(); document.querySelectorAll('.mobile-bottom-nav .nav-item').forEach(n => n.classList.remove('active')); event.currentTarget.classList.add('active');">
+  <!-- Profile - Opens user settings -->
+  <div class="nav-item" id="nav-profile">
     <div class="nav-icon">👤</div>
     <div class="nav-label">Profile</div>
   </div>
 </div>
+
+
 
 <script>
 // Profile settings function for bottom nav
@@ -7262,186 +7263,102 @@ function openProfileSettings() {
 
 <script>
 // ══════════════════════════════════════════════════════
-// BOTTOM NAVIGATION - Full functionality fix
+// BOTTOM NAV - Simple, direct handlers
 // ══════════════════════════════════════════════════════
 (function() {
   'use strict';
   
-  function initBottomNav() {
-    console.log('[Bottom Nav] Initializing...');
+  function setupBottomNav() {
+    // Get buttons by ID (more reliable)
+    const homeBtn = document.getElementById('nav-home');
+    const pipelineBtn = document.getElementById('nav-pipeline');
+    const emailBtn = document.getElementById('nav-email');
+    const profileBtn = document.getElementById('nav-profile');
     
-    // Wait for DOM to be ready
-    const navItems = document.querySelectorAll('.mobile-bottom-nav .nav-item');
-    if (navItems.length === 0) {
-      console.log('[Bottom Nav] Nav items not found, retrying...');
-      setTimeout(initBottomNav, 500);
+    if (!homeBtn) {
+      console.log('[Bottom Nav] Buttons not ready, retrying...');
+      setTimeout(setupBottomNav, 500);
       return;
     }
     
-    console.log('[Bottom Nav] Found', navItems.length, 'nav items');
+    console.log('[Bottom Nav] Setting up simple handlers...');
     
-    // Get references to each button
-    const homeBtn = navItems[0];
-    const pipelineBtn = navItems[1];
-    const emailBtn = navItems[2];
-    const profileBtn = navItems[3];
-    
-    // ══════════════════════════════════════════════════════
-    // HOME BUTTON - Return to command center
-    // ══════════════════════════════════════════════════════
-    if (homeBtn) {
-      homeBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log('[Bottom Nav] Home clicked');
-        
-        // Try multiple methods to return to command center
-        if (typeof switchView === 'function') {
-          switchView('portal');
-        } else if (typeof switchView === 'function') {
-          switchView('hq');
-        } else {
-          // Fallback: reload the page
-          window.location.hash = '';
-          window.location.reload();
-        }
-        
-        // Close any open modals
-        closeAllModals();
-        
-        // Set active state
-        setActiveNav(0);
-      };
-    }
-    
-    // ══════════════════════════════════════════════════════
-    // PIPELINE BUTTON - Open prospect list
-    // ══════════════════════════════════════════════════════
-    if (pipelineBtn) {
-      pipelineBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log('[Bottom Nav] Pipeline clicked');
-        
-        // Try to open profile dropdown (which contains saved prospects)
-        if (typeof toggleProfileDropdown === 'function') {
-          toggleProfileDropdown();
-        } else if (typeof ppToggleDrawer === 'function') {
-          ppToggleDrawer();
-        } else {
-          // Fallback: trigger the profile button in topbar
-          const profileBtn = document.querySelector('#profileBtn, .profile-btn');
-          if (profileBtn) {
-            profileBtn.click();
-          }
-        }
-        
-        setActiveNav(1);
-      };
-    }
-    
-    // ══════════════════════════════════════════════════════
-    // EMAIL BUTTON - Open email generator
-    // ══════════════════════════════════════════════════════
-    if (emailBtn) {
-      emailBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log('[Bottom Nav] Email clicked');
-        
-        // Try to open email engine
-        if (typeof openEmailEngine === 'function') {
-          openEmailEngine();
-        } else if (typeof egOpen === 'function') {
-          egOpen();
-        } else {
-          // Fallback: look for email button in the UI
-          const emailBtns = document.querySelectorAll('[onclick*="openEmailEngine"], [onclick*="egOpen"], button:contains("Email")');
-          if (emailBtns.length > 0) {
-            emailBtns[0].click();
-          } else {
-            alert('Email Generator is not loaded yet. Please wait a moment and try again.');
-          }
-        }
-        
-        setActiveNav(2);
-      };
-    }
-    
-    // ══════════════════════════════════════════════════════
-    // PROFILE BUTTON - Open profile settings
-    // ══════════════════════════════════════════════════════
-    if (profileBtn) {
-      profileBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        console.log('[Bottom Nav] Profile clicked');
-        
-        // Open profile dropdown
-        if (typeof toggleProfileDropdown === 'function') {
-          toggleProfileDropdown();
-        } else {
-          const profileBtn = document.querySelector('#profileBtn, .profile-btn');
-          if (profileBtn) {
-            profileBtn.click();
-          }
-        }
-        
-        setActiveNav(3);
-      };
-    }
-    
-    // ══════════════════════════════════════════════════════
-    // HELPER FUNCTIONS
-    // ══════════════════════════════════════════════════════
-    
-    function setActiveNav(index) {
-      navItems.forEach((item, i) => {
-        if (i === index) {
-          item.classList.add('active');
-        } else {
-          item.classList.remove('active');
-        }
-      });
-    }
-    
-    function closeAllModals() {
-      // Close email generator if open
-      const emailOverlay = document.querySelector('.eg-overlay, #eg-overlay');
-      if (emailOverlay) {
-        emailOverlay.style.display = 'none';
-      }
-      
-      // Close profile dropdown
-      const profileDropdown = document.querySelector('#profileDropdown, .profile-dropdown');
-      if (profileDropdown) {
-        profileDropdown.style.display = 'none';
-      }
-      
-      // Re-enable body scroll
-      document.body.style.overflow = '';
-    }
-    
-    console.log('[Bottom Nav] All buttons initialized ✓');
-  }
-  
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(initBottomNav, 1000);
+    // Remove any existing onclick to prevent conflicts
+    [homeBtn, pipelineBtn, emailBtn, profileBtn].forEach(btn => {
+      if (btn) btn.onclick = null;
     });
-  } else {
-    setTimeout(initBottomNav, 1000);
+    
+    // HOME - Reload page to command center
+    homeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      console.log('[Nav] Home clicked');
+      
+      // Close any modals
+      document.querySelectorAll('.eg-overlay, #eg-overlay, .profile-dropdown').forEach(el => {
+        el.style.display = 'none';
+      });
+      
+      // Reload to fresh state
+      window.location.hash = '';
+      window.location.href = window.location.pathname;
+    });
+    
+    // PIPELINE - Click the profile button in topbar
+    pipelineBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      console.log('[Nav] Pipeline clicked');
+      
+      const topProfileBtn = document.querySelector('#profileBtn, .profile-btn');
+      if (topProfileBtn) {
+        topProfileBtn.click();
+      }
+    });
+    
+    // EMAIL GENERATOR - Find and click email button or open directly
+    emailBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      console.log('[Nav] Email Generator clicked');
+      
+      // Try direct function first
+      if (typeof window.openEmailEngine === 'function') {
+        window.openEmailEngine();
+        return;
+      }
+      
+      // Fallback: find email button in UI
+      const emailBtns = document.querySelectorAll('button[onclick*="Email"], [class*="email"]');
+      for (let btn of emailBtns) {
+        if (btn.textContent.includes('Email') || btn.onclick) {
+          btn.click();
+          return;
+        }
+      }
+      
+      console.log('[Nav] Email generator not found');
+    });
+    
+    // PROFILE - Click profile button
+    profileBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      console.log('[Nav] Profile clicked');
+      
+      const topProfileBtn = document.querySelector('#profileBtn, .profile-btn');
+      if (topProfileBtn) {
+        topProfileBtn.click();
+      }
+    });
+    
+    console.log('[Bottom Nav] ✓ Setup complete');
   }
   
-  // Also try after page fully loads
-  window.addEventListener('load', function() {
-    setTimeout(initBottomNav, 1500);
-  });
+  // Run setup after page loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(setupBottomNav, 1000));
+  } else {
+    setTimeout(setupBottomNav, 1000);
+  }
+  
+  window.addEventListener('load', () => setTimeout(setupBottomNav, 1500));
 })();
 </script>
 
@@ -7806,6 +7723,63 @@ function openProfileSettings() {
 })();
 </script>
 
+
+
+
+<script>
+// Prevent email generator from auto-opening on page load
+(function() {
+  'use strict';
+  
+  // Track if this is a fresh page load
+  let isPageLoad = true;
+  
+  // After 3 seconds, allow email generator to open normally
+  setTimeout(function() {
+    isPageLoad = false;
+  }, 3000);
+  
+  // Intercept email generator opens during page load
+  const originalOpenEmail = window.openEmailEngine;
+  if (typeof originalOpenEmail === 'function') {
+    window.openEmailEngine = function() {
+      // If it's been less than 3 seconds since page load, ignore
+      if (isPageLoad) {
+        console.log('[Page Load] Blocked auto-open of email generator');
+        return;
+      }
+      
+      // Otherwise, open normally
+      originalOpenEmail.apply(this, arguments);
+    };
+  }
+  
+  // Also check for any auto-trigger scripts
+  const observer = new MutationObserver(function(mutations) {
+    if (isPageLoad) {
+      // Check if email modal appeared
+      const emailModal = document.querySelector('.eg-overlay, #eg-overlay');
+      if (emailModal && emailModal.style.display !== 'none') {
+        console.log('[Page Load] Detected auto-opened email modal, closing it');
+        emailModal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Stop observing after 3 seconds
+  setTimeout(function() {
+    observer.disconnect();
+  }, 3000);
+  
+  console.log('[Page Load] Email auto-open prevention active for 3 seconds');
+})();
+</script>
 
 
 <!-- ═══════════════════════════════════════════════════════════
