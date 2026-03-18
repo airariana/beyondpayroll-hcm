@@ -1126,6 +1126,143 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
     transform: scale(0.98) !important;
   }
 
+
+  /* ══════════════════════════════════════════════════════
+     CRITICAL FIX: Ensure close button and scrolling work
+     ══════════════════════════════════════════════════════ */
+  
+  /* Make sure modal doesn't block everything */
+  .eg-overlay,
+  #eg-overlay,
+  .email-gen-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 10000 !important;
+    overflow: hidden !important;
+  }
+  
+  /* Ensure close button is always visible and clickable */
+  .eg-modal-close,
+  #eg-close-btn,
+  .email-close-btn {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    background: rgba(255,255,255,0.15) !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 10001 !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .eg-modal-close:active {
+    background: rgba(255,255,255,0.25) !important;
+    transform: scale(0.95) !important;
+  }
+  
+  /* Make header sticky so close button always accessible */
+  .eg-modal-header,
+  .email-gen-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    background: var(--bg-secondary, #111827) !important;
+  }
+  
+  /* Ensure body scrolls properly */
+  .eg-modal-body,
+  .email-gen-body {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-height: calc(100vh - 80px) !important;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px) !important;
+  }
+  
+  /* Bottom nav should be hidden when email modal is open */
+  .eg-overlay ~ .mobile-bottom-nav,
+  #eg-overlay ~ .mobile-bottom-nav {
+    display: none !important;
+  }
+
+
+  /* ══════════════════════════════════════════════════════
+     ORIENTATION FIX: Close button works in ALL orientations
+     ══════════════════════════════════════════════════════ */
+  
+  /* Force close button visibility in portrait mode */
+  @media (max-width: 768px) and (orientation: portrait) {
+    .eg-modal-close,
+    #eg-close-btn,
+    .email-close-btn,
+    button[onclick*="closeEmailEngine"],
+    button[onclick*="egClose"] {
+      display: flex !important;
+      position: fixed !important;
+      top: calc(env(safe-area-inset-top) + 12px) !important;
+      right: 12px !important;
+      width: 48px !important;
+      height: 48px !important;
+      border-radius: 50% !important;
+      background: rgba(0,0,0,0.8) !important;
+      backdrop-filter: blur(10px) !important;
+      border: 2px solid rgba(255,255,255,0.3) !important;
+      color: #fff !important;
+      font-size: 28px !important;
+      font-weight: 300 !important;
+      line-height: 1 !important;
+      z-index: 99999 !important;
+      cursor: pointer !important;
+      align-items: center !important;
+      justify-content: center !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+    
+    .eg-modal-close:active {
+      background: rgba(255,0,0,0.8) !important;
+      transform: scale(0.9) !important;
+    }
+    
+    /* Make header transparent so close button always visible */
+    .eg-modal-header {
+      background: rgba(17, 24, 39, 0.95) !important;
+      backdrop-filter: blur(10px) !important;
+    }
+    
+    /* Add padding to header content so it doesn't overlap close button */
+    .eg-modal-title {
+      padding-right: 60px !important;
+    }
+  }
+  
+  /* Landscape mode adjustments */
+  @media (max-width: 926px) and (orientation: landscape) {
+    .eg-modal-close,
+    #eg-close-btn,
+    .email-close-btn {
+      top: 8px !important;
+      right: 8px !important;
+      width: 40px !important;
+      height: 40px !important;
+    }
+  }
+
+
+
+
   /* Email Output Section */
   .eg-output {
     margin-top: 24px !important;
@@ -7327,6 +7464,161 @@ function openProfileSettings() {
   console.log('[Mobile Enhancements] Hamburger menu & Email auto-fill initialized');
 })();
 </script>
+
+
+
+
+<script>
+// ULTRA-ROBUST: Close button fix for portrait mode
+(function() {
+  'use strict';
+  
+  let closeAttempts = 0;
+  const maxAttempts = 20;
+  
+  function forceEmailClose() {
+    console.log('[Email Close Fix] Attempting to close email generator...');
+    
+    // Try all possible selectors
+    const selectors = [
+      '.eg-overlay',
+      '#eg-overlay', 
+      '.email-gen-overlay',
+      '.eg-modal',
+      '#email-generator-modal',
+      '[id*="email"][id*="modal"]',
+      '[class*="email"][class*="overlay"]'
+    ];
+    
+    for (let selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        element.style.display = 'none';
+        element.style.visibility = 'hidden';
+        element.style.opacity = '0';
+        element.style.pointerEvents = 'none';
+        
+        // Also try removing it
+        if (element.parentNode) {
+          element.parentNode.removeChild(element);
+        }
+      }
+    }
+    
+    // Re-enable scrolling
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    
+    // Show bottom nav
+    const bottomNav = document.querySelector('.mobile-bottom-nav');
+    if (bottomNav) {
+      bottomNav.style.display = 'flex';
+    }
+    
+    console.log('[Email Close Fix] Email generator closed');
+  }
+  
+  function findAndFixCloseButton() {
+    if (closeAttempts >= maxAttempts) return;
+    closeAttempts++;
+    
+    // Find ALL possible close buttons
+    const closeButtons = document.querySelectorAll(`
+      .eg-modal-close,
+      #eg-close-btn,
+      .email-close-btn,
+      button[onclick*="close"],
+      button[onclick*="Close"],
+      .modal-close,
+      [aria-label*="close"],
+      [aria-label*="Close"]
+    `);
+    
+    if (closeButtons.length > 0) {
+      console.log('[Email Close Fix] Found', closeButtons.length, 'close buttons');
+      
+      closeButtons.forEach((btn, index) => {
+        // Remove all existing event listeners by cloning
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        // Add our close handler
+        newBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          forceEmailClose();
+        });
+        
+        newBtn.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          forceEmailClose();
+        });
+        
+        // Make sure it's visible and clickable
+        newBtn.style.display = 'flex';
+        newBtn.style.visibility = 'visible';
+        newBtn.style.opacity = '1';
+        newBtn.style.pointerEvents = 'auto';
+        newBtn.style.zIndex = '99999';
+        
+        console.log('[Email Close Fix] Button', index, 'handler attached');
+      });
+    }
+    
+    // Keep trying until we find buttons or max out
+    if (closeButtons.length === 0 && closeAttempts < maxAttempts) {
+      setTimeout(findAndFixCloseButton, 200);
+    }
+  }
+  
+  // Start trying to fix close buttons
+  findAndFixCloseButton();
+  
+  // Also try when email generator opens
+  const originalOpenEmail = window.openEmailEngine;
+  if (typeof originalOpenEmail === 'function') {
+    window.openEmailEngine = function() {
+      originalOpenEmail.apply(this, arguments);
+      closeAttempts = 0;
+      setTimeout(findAndFixCloseButton, 300);
+    };
+  }
+  
+  // Emergency close: Double-tap top-right corner
+  let lastTap = 0;
+  document.addEventListener('touchend', function(e) {
+    const now = Date.now();
+    const timeSince = now - lastTap;
+    
+    // Check if tap was in top-right corner (within 100px of edge)
+    const touch = e.changedTouches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
+    const windowWidth = window.innerWidth;
+    
+    if (x > windowWidth - 100 && y < 100) {
+      if (timeSince < 300 && timeSince > 0) {
+        // Double tap detected in top-right
+        console.log('[Emergency Close] Double-tap detected');
+        forceEmailClose();
+      }
+      lastTap = now;
+    }
+  });
+  
+  // Orientation change detection
+  window.addEventListener('orientationchange', function() {
+    console.log('[Orientation] Changed, re-fixing close buttons');
+    closeAttempts = 0;
+    setTimeout(findAndFixCloseButton, 500);
+  });
+  
+  console.log('[Email Close Fix] Ultra-robust close system initialized');
+  console.log('[Emergency Close] Double-tap top-right corner to force close');
+})();
+</script>
+
 
 
 <!-- ═══════════════════════════════════════════════════════════
