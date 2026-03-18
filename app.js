@@ -12505,3 +12505,195 @@ function notifRenderIntelTabEnhanced(listEl){
 }
 
 console.log('✓ Enhanced notification UI loaded - streamlined cadence visibility');
+
+/* ════════════════════════════════════════════════════════════════════
+   UI FIXES - COMPREHENSIVE PATCH
+   
+   Issue 1: "Regenerate" button appears before first analysis run
+   Issue 2: X button in Prospect Profiles drawer doesn't close
+   
+   Add this to the end of app.js
+════════════════════════════════════════════════════════════════════ */
+
+// ══════════════════════════════════════════════════════════════════════
+// FIX 1: Change button text based on whether analysis has been run
+// ══════════════════════════════════════════════════════════════════════
+(function() {
+  // Track whether analysis has been run
+  window._atAnalysisRun = window._atAnalysisRun || false;
+  
+  // Update the button text when the analysis panel loads
+  function updateAnalysisButtonText() {
+    // Find the button - it's inside the analysis tools panel
+    const btn = document.querySelector('.at-btn.primary[onclick="atRunAnalysis()"]');
+    
+    if (btn && !window._atAnalysisRun) {
+      // First time - show "Run Analysis"
+      btn.innerHTML = '▶ Run Analysis';
+      console.log('✓ Analysis button set to "Run Analysis"');
+    } else if (btn && window._atAnalysisRun) {
+      // After first run - show "Regenerate"
+      btn.innerHTML = '↻ Regenerate';
+    }
+  }
+  
+  // Wrap the original atRunAnalysis function
+  const originalAtRunAnalysis = window.atRunAnalysis;
+  if (originalAtRunAnalysis) {
+    window.atRunAnalysis = function() {
+      // Mark that analysis has been run
+      window._atAnalysisRun = true;
+      
+      // Call original function
+      const result = originalAtRunAnalysis.apply(this, arguments);
+      
+      // Update button text to "Regenerate" after successful run
+      setTimeout(function() {
+        const btn = document.querySelector('.at-btn.primary[onclick="atRunAnalysis()"]');
+        if (btn) {
+          btn.innerHTML = '↻ Regenerate';
+        }
+      }, 100);
+      
+      return result;
+    };
+  }
+  
+  // Run on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateAnalysisButtonText);
+  } else {
+    updateAnalysisButtonText();
+  }
+  
+  // Also run when switching tabs or loading prospect
+  setTimeout(updateAnalysisButtonText, 500);
+  setTimeout(updateAnalysisButtonText, 2000);
+  
+  // Watch for the button being added to DOM
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      mutation.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1) {
+          const btn = node.querySelector ? node.querySelector('.at-btn.primary[onclick="atRunAnalysis()"]') : null;
+          if (btn || (node.classList && node.classList.contains('at-btn'))) {
+            setTimeout(updateAnalysisButtonText, 50);
+          }
+        }
+      });
+    });
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  console.log('✓ Analysis button text fix loaded');
+})();
+
+// ══════════════════════════════════════════════════════════════════════
+// FIX 2: Ensure Prospect Profiles X button works
+// ══════════════════════════════════════════════════════════════════════
+(function() {
+  function fixProspectProfilesCloseButton() {
+    const closeBtn = document.querySelector('.pp-drawer-close');
+    
+    if (closeBtn && !closeBtn.dataset.fixedClose) {
+      closeBtn.dataset.fixedClose = 'true';
+      
+      // Ensure CSS allows clicks
+      closeBtn.style.cursor = 'pointer';
+      closeBtn.style.pointerEvents = 'auto';
+      closeBtn.style.zIndex = '10000';
+      closeBtn.style.position = 'relative';
+      
+      // Remove any existing onclick and add fresh listener
+      closeBtn.onclick = null;
+      
+      closeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        console.log('✓ Close button clicked');
+        
+        // Try the official close function first
+        if (typeof ppCloseDrawer === 'function') {
+          ppCloseDrawer();
+        } else {
+          // Fallback: manually close
+          const drawer = document.getElementById('pp-drawer');
+          const backdrop = document.getElementById('pp-drawer-backdrop');
+          
+          if (drawer) {
+            drawer.classList.remove('open');
+            drawer.style.right = '-100%';
+          }
+          
+          if (backdrop) {
+            backdrop.classList.remove('open');
+            backdrop.style.display = 'none';
+          }
+        }
+      });
+      
+      console.log('✓ Prospect Profiles close button fixed');
+    }
+  }
+  
+  // Run on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fixProspectProfilesCloseButton);
+  } else {
+    fixProspectProfilesCloseButton();
+  }
+  
+  // Re-run after drawer opens
+  setTimeout(fixProspectProfilesCloseButton, 500);
+  setTimeout(fixProspectProfilesCloseButton, 2000);
+  
+  // Watch for drawer being added/opened
+  const drawerObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      // Check if drawer opened
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        const drawer = document.getElementById('pp-drawer');
+        if (drawer && drawer.classList.contains('open')) {
+          setTimeout(fixProspectProfilesCloseButton, 50);
+        }
+      }
+      
+      // Check for new close buttons
+      mutation.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1) {
+          const closeBtn = node.querySelector ? node.querySelector('.pp-drawer-close') : null;
+          if (closeBtn || (node.classList && node.classList.contains('pp-drawer-close'))) {
+            setTimeout(fixProspectProfilesCloseButton, 50);
+          }
+        }
+      });
+    });
+  });
+  
+  drawerObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class']
+  });
+  
+  // Also wrap ppOpenDrawer to fix button after opening
+  const originalPpOpenDrawer = window.ppOpenDrawer;
+  if (originalPpOpenDrawer) {
+    window.ppOpenDrawer = function() {
+      const result = originalPpOpenDrawer.apply(this, arguments);
+      setTimeout(fixProspectProfilesCloseButton, 100);
+      return result;
+    };
+  }
+  
+  console.log('✓ Prospect Profiles drawer close fix loaded');
+})();
+
+console.log('✓ All UI fixes loaded successfully');
