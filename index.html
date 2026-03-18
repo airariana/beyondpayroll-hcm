@@ -4970,6 +4970,156 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 .dyn-insight-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px}
 .dyn-insight-lbl{font-size:11px;font-weight:700;color:var(--text-2);min-width:110px;padding-top:1px}
 .dyn-insight-val{font-size:11px;color:var(--text);line-height:1.5;flex:1}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SALES INTELLIGENCE HQ CARD - PREMIUM STYLING
+   ══════════════════════════════════════════════════════════════════════ */
+
+.sales-hq-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 20px;
+  margin: 20px 16px;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.sales-hq-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+}
+
+.sales-hq-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.sales-hq-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  position: relative;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.sales-hq-icon::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent);
+  z-index: -1;
+}
+
+.sales-hq-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.sales-hq-text {
+  flex: 1;
+}
+
+.sales-hq-title {
+  font-family: var(--fd);
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.5px;
+}
+
+.sales-hq-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sales-hq-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sales-hq-badge::before {
+  content: '✨';
+  font-size: 12px;
+}
+
+.sales-hq-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.15), transparent);
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .sales-hq-title {
+    font-size: 18px;
+  }
+  
+  .sales-hq-subtitle {
+    font-size: 12px;
+  }
+  
+  .sales-hq-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 26px;
+  }
+}
+
 </style>
 
 <div id="ts-panel">
@@ -7211,6 +7361,8 @@ console.log('[Email Enhancements] Integration loaded');
 <script src="app.js?v=15" defer></script>
 <script src="nurture-campaign-system.js" defer></script>
 <script src="learning-agent-system.js" defer></script>
+<script src="nurture-ui-components.js" defer></script>
+
 
 <!-- ═══════════════════════════════════════════════════════════
      MOBILE BOTTOM NAVIGATION - FIXED & SIMPLIFIED
