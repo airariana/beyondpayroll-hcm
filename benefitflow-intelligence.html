@@ -589,6 +589,29 @@
 
                     <div id="status" class="status" style="display:none;"></div>
 
+                    <!-- Debug Console -->
+                    <div id="debugConsole" style="background: #1a202c; color: #48bb78; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; display: none;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong style="color: white;">🐛 Debug Log:</strong>
+                            <button onclick="clearDebugLog()" style="padding: 2px 8px; font-size: 10px; background: #f56565;">Clear</button>
+                        </div>
+                        <div id="debugLog"></div>
+                    </div>
+
+                    <div style="text-align: center; margin: 10px 0;">
+                        <button onclick="toggleDebugConsole()" style="padding: 8px 15px; font-size: 12px; background: #4a5568;">
+                            👁️ Show/Hide Debug Console
+                        </button>
+                        <button onclick="testOCR()" style="padding: 8px 15px; font-size: 12px; background: #9f7aea; margin-left: 10px;">
+                            🧪 Test OCR Pipeline
+                        </button>
+                    </div>
+
+                    <div id="testStatus" style="background: #edf2f7; padding: 15px; border-radius: 8px; margin: 10px 0; display: none;">
+                        <strong>Test Results:</strong>
+                        <div id="testResults" style="margin-top: 10px; font-family: monospace; font-size: 12px;"></div>
+                    </div>
+
                     <div id="screenshotsList" class="screenshots-list"></div>
                 </div>
             </div>
@@ -856,6 +879,108 @@
             lastCaptureTime = Date.now();
         }
 
+        // Debug Console Functions
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEl = document.getElementById('debugLog');
+            const color = type === 'error' ? '#f56565' : type === 'success' ? '#48bb78' : '#63b3ed';
+            
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '5px';
+            entry.innerHTML = `<span style="color: #718096;">[${timestamp}]</span> <span style="color: ${color};">${message}</span>`;
+            
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+            
+            // Also log to console
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function toggleDebugConsole() {
+            const debugConsole = document.getElementById('debugConsole');
+            debugConsole.style.display = debugConsole.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function clearDebugLog() {
+            document.getElementById('debugLog').innerHTML = '';
+        }
+
+        // Test OCR Pipeline
+        async function testOCR() {
+            debugLog('🧪 Starting OCR Pipeline Test...', 'info');
+            document.getElementById('testStatus').style.display = 'block';
+            document.getElementById('testResults').innerHTML = '<p>⏳ Testing OCR pipeline...</p>';
+            
+            try {
+                // Create a test image with clear text
+                const testCanvas = document.createElement('canvas');
+                testCanvas.width = 800;
+                testCanvas.height = 200;
+                const ctx = testCanvas.getContext('2d');
+                
+                // White background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, 800, 200);
+                
+                // Black text
+                ctx.fillStyle = 'black';
+                ctx.font = 'bold 24px Arial';
+                ctx.fillText('Test Company Inc    123 Main St    Richmond    23220', 50, 80);
+                ctx.fillText('Marsh McLennan    Kaiser Permanente    1-Jan', 50, 130);
+                
+                debugLog('✅ Created test image with sample BenefitFlow data');
+                
+                // Convert to base64
+                const base64Image = testCanvas.toDataURL('image/png').split(',')[1];
+                debugLog(`📄 Test image base64 length: ${base64Image.length} chars`);
+                
+                // Call OCR
+                debugLog('📡 Calling Google Vision API with test image...');
+                const ocrText = await callGoogleVisionOCR(base64Image);
+                
+                if (!ocrText || ocrText.trim().length === 0) {
+                    throw new Error('OCR returned empty result for test image');
+                }
+                
+                debugLog(`✅ OCR extracted ${ocrText.length} characters: "${ocrText}"`, 'success');
+                
+                // Parse the result
+                const parsedRows = parseBenefitFlowTable(ocrText);
+                debugLog(`📊 Parser extracted ${parsedRows.length} rows`, 'success');
+                
+                // Display results
+                let resultHTML = `
+                    <p style="color: #48bb78; font-weight: bold;">✅ OCR Pipeline Test PASSED!</p>
+                    <p><strong>Extracted Text:</strong></p>
+                    <pre style="background: white; padding: 10px; border-radius: 5px; overflow-x: auto;">${ocrText}</pre>
+                    <p><strong>Parsed Data:</strong></p>
+                    <pre style="background: white; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(parsedRows, null, 2)}</pre>
+                    <p style="margin-top: 10px;"><strong>Conclusion:</strong> Google Vision API is working! The issue is likely screen glare/moiré patterns from photographing your screen. <strong>Try the file upload method instead.</strong></p>
+                `;
+                
+                document.getElementById('testResults').innerHTML = resultHTML;
+                debugLog('🎉 Test completed successfully!', 'success');
+                
+            } catch (error) {
+                debugLog(`❌ Test FAILED: ${error.message}`, 'error');
+                
+                let resultHTML = `
+                    <p style="color: #f56565; font-weight: bold;">❌ OCR Pipeline Test FAILED</p>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p style="margin-top: 10px;"><strong>Possible causes:</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li>Google Vision API key is invalid or restricted</li>
+                        <li>API key doesn't allow requests from beyondpayroll.net</li>
+                        <li>Vision API is not enabled in Google Cloud Console</li>
+                        <li>Network/CORS blocking the request</li>
+                    </ul>
+                    <p style="margin-top: 10px;"><strong>Next steps:</strong> Check the debug console above for detailed error messages.</p>
+                `;
+                
+                document.getElementById('testResults').innerHTML = resultHTML;
+            }
+        }
+
         // Tab switching
         function switchTab(tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1023,44 +1148,46 @@
                 return;
             }
 
+            debugLog(`🚀 Starting OCR processing for ${screenshots.length} screenshots`);
             showStatus('Processing screenshots with Google Vision OCR...', 'processing');
             document.getElementById('processBtn').disabled = true;
 
             try {
                 // Process each screenshot
                 for (let i = 0; i < screenshots.length; i++) {
+                    debugLog(`📸 Processing screenshot ${i + 1}/${screenshots.length}...`);
                     showStatus(`Processing screenshot ${i + 1} of ${screenshots.length}...`, 'processing');
                     
                     const base64Image = await blobToBase64(screenshots[i].blob);
-                    
-                    console.log(`Processing screenshot ${i + 1}, base64 length:`, base64Image.length);
+                    debugLog(`📄 Base64 image length: ${base64Image.length} chars`);
                     
                     const ocrText = await callGoogleVisionOCR(base64Image);
                     
-                    console.log(`OCR Result ${i + 1}:`, ocrText);
-                    
                     if (!ocrText || ocrText.trim().length === 0) {
+                        debugLog(`⚠️ Screenshot ${i + 1} returned no text. Skipping...`, 'error');
                         showStatus(`⚠️ Screenshot ${i + 1} returned no text. Trying next...`, 'processing');
                         continue;
                     }
                     
                     // Parse the OCR text into structured data
                     const parsedRows = parseBenefitFlowTable(ocrText);
-                    
-                    console.log(`Parsed ${parsedRows.length} rows from screenshot ${i + 1}`);
+                    debugLog(`📊 Parsed ${parsedRows.length} rows from screenshot ${i + 1}`, 'success');
                     
                     extractedData.push(...parsedRows);
                 }
 
                 // Remove duplicates (in case of overlapping screenshots)
                 extractedData = removeDuplicates(extractedData);
+                debugLog(`✅ Total unique records after deduplication: ${extractedData.length}`, 'success');
 
                 if (extractedData.length === 0) {
+                    debugLog('❌ FINAL RESULT: No data extracted from any screenshot', 'error');
                     showStatus('⚠️ No data extracted. Try: 1) Better lighting, 2) Closer to screen, 3) Straighter angle', 'error');
                     document.getElementById('processBtn').disabled = false;
                     return;
                 }
 
+                debugLog(`🎉 SUCCESS! Extracted ${extractedData.length} employer records`, 'success');
                 showStatus(`✅ Processed ${screenshots.length} screenshots, extracted ${extractedData.length} employer records!`, 'success');
                 
                 // Update preview table
@@ -1070,11 +1197,12 @@
                 switchTab('preview');
                 document.querySelectorAll('.tab')[1].classList.add('active');
             } catch (error) {
+                debugLog(`❌ FATAL ERROR: ${error.message}`, 'error');
                 showStatus('Error: ' + error.message, 'error');
                 console.error('Processing error:', error);
                 
                 // Show detailed error for debugging
-                alert(`OCR Error Details:\n\n${error.message}\n\nCheck browser console for more info.`);
+                alert(`OCR Error Details:\n\n${error.message}\n\nCheck debug console for more info.`);
             } finally {
                 document.getElementById('processBtn').disabled = false;
             }
@@ -1090,6 +1218,8 @@
         }
 
         async function callGoogleVisionOCR(base64Image) {
+            debugLog('📡 Calling Google Vision API...');
+            
             try {
                 const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
                     method: 'POST',
@@ -1104,19 +1234,35 @@
                     })
                 });
                 
+                debugLog(`✅ API Response Status: ${response.status} ${response.statusText}`);
+                
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    debugLog(`❌ API Error Response: ${errorText}`, 'error');
                     throw new Error(`Google Vision API error: ${response.status} ${response.statusText}`);
                 }
                 
                 const data = await response.json();
+                debugLog('📦 API Response received, parsing...');
                 
                 if (data.responses[0].error) {
+                    debugLog(`❌ Vision API Error: ${data.responses[0].error.message}`, 'error');
                     throw new Error(`Vision API error: ${data.responses[0].error.message}`);
                 }
                 
+                const extractedText = data.responses[0].fullTextAnnotation?.text || '';
+                
+                if (extractedText) {
+                    debugLog(`✅ Extracted ${extractedText.length} characters of text`, 'success');
+                    debugLog(`First 100 chars: ${extractedText.substring(0, 100)}...`);
+                } else {
+                    debugLog('⚠️ No text extracted from image', 'error');
+                }
+                
                 // Return the extracted text
-                return data.responses[0].fullTextAnnotation?.text || '';
+                return extractedText;
             } catch (error) {
+                debugLog(`❌ OCR Error: ${error.message}`, 'error');
                 console.error('OCR Error:', error);
                 throw new Error(`Failed to extract text: ${error.message}`);
             }
