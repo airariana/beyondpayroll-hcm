@@ -7259,6 +7259,193 @@ function openProfileSettings() {
 
 
 
+
+<script>
+// ══════════════════════════════════════════════════════
+// BOTTOM NAVIGATION - Full functionality fix
+// ══════════════════════════════════════════════════════
+(function() {
+  'use strict';
+  
+  function initBottomNav() {
+    console.log('[Bottom Nav] Initializing...');
+    
+    // Wait for DOM to be ready
+    const navItems = document.querySelectorAll('.mobile-bottom-nav .nav-item');
+    if (navItems.length === 0) {
+      console.log('[Bottom Nav] Nav items not found, retrying...');
+      setTimeout(initBottomNav, 500);
+      return;
+    }
+    
+    console.log('[Bottom Nav] Found', navItems.length, 'nav items');
+    
+    // Get references to each button
+    const homeBtn = navItems[0];
+    const pipelineBtn = navItems[1];
+    const emailBtn = navItems[2];
+    const profileBtn = navItems[3];
+    
+    // ══════════════════════════════════════════════════════
+    // HOME BUTTON - Return to command center
+    // ══════════════════════════════════════════════════════
+    if (homeBtn) {
+      homeBtn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('[Bottom Nav] Home clicked');
+        
+        // Try multiple methods to return to command center
+        if (typeof switchView === 'function') {
+          switchView('portal');
+        } else if (typeof switchView === 'function') {
+          switchView('hq');
+        } else {
+          // Fallback: reload the page
+          window.location.hash = '';
+          window.location.reload();
+        }
+        
+        // Close any open modals
+        closeAllModals();
+        
+        // Set active state
+        setActiveNav(0);
+      };
+    }
+    
+    // ══════════════════════════════════════════════════════
+    // PIPELINE BUTTON - Open prospect list
+    // ══════════════════════════════════════════════════════
+    if (pipelineBtn) {
+      pipelineBtn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('[Bottom Nav] Pipeline clicked');
+        
+        // Try to open profile dropdown (which contains saved prospects)
+        if (typeof toggleProfileDropdown === 'function') {
+          toggleProfileDropdown();
+        } else if (typeof ppToggleDrawer === 'function') {
+          ppToggleDrawer();
+        } else {
+          // Fallback: trigger the profile button in topbar
+          const profileBtn = document.querySelector('#profileBtn, .profile-btn');
+          if (profileBtn) {
+            profileBtn.click();
+          }
+        }
+        
+        setActiveNav(1);
+      };
+    }
+    
+    // ══════════════════════════════════════════════════════
+    // EMAIL BUTTON - Open email generator
+    // ══════════════════════════════════════════════════════
+    if (emailBtn) {
+      emailBtn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('[Bottom Nav] Email clicked');
+        
+        // Try to open email engine
+        if (typeof openEmailEngine === 'function') {
+          openEmailEngine();
+        } else if (typeof egOpen === 'function') {
+          egOpen();
+        } else {
+          // Fallback: look for email button in the UI
+          const emailBtns = document.querySelectorAll('[onclick*="openEmailEngine"], [onclick*="egOpen"], button:contains("Email")');
+          if (emailBtns.length > 0) {
+            emailBtns[0].click();
+          } else {
+            alert('Email Generator is not loaded yet. Please wait a moment and try again.');
+          }
+        }
+        
+        setActiveNav(2);
+      };
+    }
+    
+    // ══════════════════════════════════════════════════════
+    // PROFILE BUTTON - Open profile settings
+    // ══════════════════════════════════════════════════════
+    if (profileBtn) {
+      profileBtn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('[Bottom Nav] Profile clicked');
+        
+        // Open profile dropdown
+        if (typeof toggleProfileDropdown === 'function') {
+          toggleProfileDropdown();
+        } else {
+          const profileBtn = document.querySelector('#profileBtn, .profile-btn');
+          if (profileBtn) {
+            profileBtn.click();
+          }
+        }
+        
+        setActiveNav(3);
+      };
+    }
+    
+    // ══════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ══════════════════════════════════════════════════════
+    
+    function setActiveNav(index) {
+      navItems.forEach((item, i) => {
+        if (i === index) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+    
+    function closeAllModals() {
+      // Close email generator if open
+      const emailOverlay = document.querySelector('.eg-overlay, #eg-overlay');
+      if (emailOverlay) {
+        emailOverlay.style.display = 'none';
+      }
+      
+      // Close profile dropdown
+      const profileDropdown = document.querySelector('#profileDropdown, .profile-dropdown');
+      if (profileDropdown) {
+        profileDropdown.style.display = 'none';
+      }
+      
+      // Re-enable body scroll
+      document.body.style.overflow = '';
+    }
+    
+    console.log('[Bottom Nav] All buttons initialized ✓');
+  }
+  
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(initBottomNav, 1000);
+    });
+  } else {
+    setTimeout(initBottomNav, 1000);
+  }
+  
+  // Also try after page fully loads
+  window.addEventListener('load', function() {
+    setTimeout(initBottomNav, 1500);
+  });
+})();
+</script>
+
+
 <!-- ═══════════════════════════════════════════════════════════
      HAMBURGER MENU & EMAIL AUTO-FILL JAVASCRIPT
      Add this before closing </body> tag
