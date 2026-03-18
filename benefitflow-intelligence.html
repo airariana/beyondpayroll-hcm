@@ -583,6 +583,7 @@
                     
                     <div class="capture-controls">
                         <button id="startCamera" onclick="startCamera()">📷 Start Camera</button>
+                        <button id="saveScreenshots" onclick="saveScreenshotsToPhone()" style="background: #4299e1;" disabled>💾 Save Screenshots to Phone</button>
                         <button id="processBtn" onclick="processScreenshots()" class="secondary" disabled>🔄 Process All Screenshots</button>
                         <button id="stopCamera" onclick="stopCamera()" class="danger" disabled>⏹️ Stop Camera</button>
                     </div>
@@ -1054,6 +1055,7 @@
                 renderScreenshots();
                 
                 document.getElementById('processBtn').disabled = false;
+                document.getElementById('saveScreenshots').disabled = false;
                 showStatus(`Screenshot captured! Total: ${screenshots.length}`, 'success');
             });
         }
@@ -1074,9 +1076,59 @@
             
             if (screenshots.length === 0) {
                 document.getElementById('processBtn').disabled = true;
+                document.getElementById('saveScreenshots').disabled = true;
             }
             
             showStatus(`Screenshot removed. Remaining: ${screenshots.length}`, 'success');
+        }
+
+        // Save screenshots to phone
+        async function saveScreenshotsToPhone() {
+            if (screenshots.length === 0) {
+                showStatus('No screenshots to save!', 'error');
+                return;
+            }
+
+            showStatus(`Downloading ${screenshots.length} screenshot(s) to your phone...`, 'processing');
+            debugLog(`💾 Saving ${screenshots.length} screenshots to phone...`);
+
+            try {
+                for (let i = 0; i < screenshots.length; i++) {
+                    const screenshot = screenshots[i];
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = screenshot.url;
+                    
+                    // Generate filename with timestamp
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+                    link.download = `benefitflow-screenshot-${i + 1}-${timestamp}.png`;
+                    
+                    // Trigger download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    debugLog(`✅ Downloaded screenshot ${i + 1}/${screenshots.length}`, 'success');
+                    
+                    // Small delay between downloads to avoid browser blocking
+                    if (i < screenshots.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                }
+
+                showStatus(`✅ Downloaded ${screenshots.length} screenshot(s)! Check your Downloads folder.`, 'success');
+                debugLog(`🎉 All screenshots saved successfully!`, 'success');
+                
+                // Show helpful message
+                setTimeout(() => {
+                    alert(`📸 ${screenshots.length} screenshots saved to your phone!\n\nNow you can:\n1. Take more screenshots if needed, OR\n2. Click "Process All Screenshots" to extract the data\n\nTip: You can also upload these saved screenshots later using the "Upload Screenshots" button.`);
+                }, 500);
+                
+            } catch (error) {
+                showStatus(`Error saving screenshots: ${error.message}`, 'error');
+                debugLog(`❌ Error saving screenshots: ${error.message}`, 'error');
+            }
         }
 
         // File Upload Handler
@@ -1102,6 +1154,7 @@
 
             renderScreenshots();
             document.getElementById('processBtn').disabled = false;
+            document.getElementById('saveScreenshots').disabled = false;
             
             showStatus(`✅ Added ${files.length} screenshot(s)! Total: ${screenshots.length}. Click "Process All Screenshots" when ready.`, 'success');
 
