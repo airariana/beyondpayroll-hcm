@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BenefitFlow Intelligence - Sales HQ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* Camera Capture Styles */
+        .camera-container {
+            text-align: center;
+        }
+
+        #videoElement {
+            width: 100%;
+            max-width: 800px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .capture-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button.secondary {
+            background: #48bb78;
+        }
+
+        button.secondary:hover {
+            background: #38a169;
+        }
+
+        button.danger {
+            background: #f56565;
+        }
+
+        button.danger:hover {
+            background: #e53e3e;
+        }
+
+        .status {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status.processing {
+            background: #fef5e7;
+            color: #7c2d12;
+        }
+
+        /* Data Preview Table */
+        .data-preview {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        td input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* Broker Dashboard Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card .value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .broker-list {
+            margin: 20px 0;
+        }
+
+        .broker-card {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .broker-card:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .broker-card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        .broker-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .detail-value {
+            color: #2d3748;
+        }
+
+        .carrier-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .carrier-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .priority-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .priority-high {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .priority-medium {
+            background: #fef5e7;
+            color: #7c2d12;
+        }
+
+        .priority-low {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .screenshots-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .screenshot-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .screenshot-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .screenshot-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #f56565;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .instructions {
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #48bb78;
+        }
+
+        .instructions h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #4a5568;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 BenefitFlow Intelligence</h1>
+            <p>Camera OCR extraction, broker analysis, and competitive intelligence for ADP Mid-Atlantic</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('capture')">📸 Capture Data</div>
+            <div class="tab" onclick="switchTab('preview')">📊 Preview & Edit</div>
+            <div class="tab" onclick="switchTab('analysis')">🔍 Broker Analysis</div>
+        </div>
+
+        <!-- Tab 1: Capture Data -->
+        <div id="capture" class="tab-content active">
+            <div class="card">
+                <h2>📸 Camera Capture</h2>
+                
+                <div class="instructions">
+                    <h3>How to use:</h3>
+                    <ol>
+                        <li>Open BenefitFlow on your desktop/laptop</li>
+                        <li>Click "Start Camera" on your phone</li>
+                        <li>Point camera at BenefitFlow table (straight on, good lighting)</li>
+                        <li>Take 5-10 photos as you scroll through the data</li>
+                        <li>Click "Process All Screenshots" when done</li>
+                    </ol>
+                </div>
+
+                <div class="camera-container">
+                    <video id="videoElement" autoplay playsinline></video>
+                    <canvas id="canvas"></canvas>
+                    
+                    <div class="capture-controls">
+                        <button id="startCamera" onclick="startCamera()">📷 Start Camera</button>
+                        <button id="captureBtn" onclick="captureScreenshot()" disabled>📸 Take Screenshot</button>
+                        <button id="processBtn" onclick="processScreenshots()" class="secondary" disabled>🔄 Process All Screenshots</button>
+                        <button id="stopCamera" onclick="stopCamera()" class="danger" disabled>⏹️ Stop Camera</button>
+                    </div>
+
+                    <div id="status" class="status" style="display:none;"></div>
+
+                    <div id="screenshotsList" class="screenshots-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Preview & Edit -->
+        <div id="preview" class="tab-content">
+            <div class="card">
+                <h2>📊 Data Preview & Validation</h2>
+                <p style="margin-bottom: 20px; color: #666;">Review the extracted data and correct any OCR errors before analysis.</p>
+                
+                <div class="data-preview">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>Employer Name</th>
+                                <th>City</th>
+                                <th>Zip</th>
+                                <th>Primary Broker</th>
+                                <th>Primary Carrier</th>
+                                <th>Renewal Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                                    No data yet. Capture screenshots and process them first.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="saveAndAnalyze()" class="secondary">✅ Save & Analyze</button>
+                    <button onclick="clearData()" class="danger">🗑️ Clear All Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Analysis -->
+        <div id="analysis" class="tab-content">
+            <div class="card">
+                <h2>🔍 Broker Intelligence Dashboard</h2>
+                
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <h3>Total Brokers</h3>
+                        <div class="value" id="totalBrokers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Employers</h3>
+                        <div class="value" id="totalEmployers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Mid-Atlantic</h3>
+                        <div class="value" id="midAtlanticCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Unique Carriers</h3>
+                        <div class="value" id="uniqueCarriers">0</div>
+                    </div>
+                </div>
+
+                <div id="brokerAnalysis" class="broker-list">
+                    <p style="text-align: center; color: #999; padding: 40px;">
+                        Process data first to see broker analysis
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let screenshots = [];
+        let extractedData = [];
+        let stream = null;
+        const GOOGLE_VISION_API_KEY = 'YOUR_API_KEY_HERE'; // Will be replaced with actual key
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                document.getElementById('videoElement').srcObject = stream;
+                
+                document.getElementById('startCamera').disabled = true;
+                document.getElementById('captureBtn').disabled = false;
+                document.getElementById('stopCamera').disabled = false;
+                
+                showStatus('Camera started! Point at BenefitFlow table and capture screenshots.', 'success');
+            } catch (err) {
+                showStatus('Error accessing camera: ' + err.message, 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('videoElement').srcObject = null;
+                
+                document.getElementById('startCamera').disabled = false;
+                document.getElementById('captureBtn').disabled = true;
+                document.getElementById('stopCamera').disabled = true;
+                
+                showStatus('Camera stopped.', 'success');
+            }
+        }
+
+        function captureScreenshot() {
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('canvas');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            canvas.toBlob((blob) => {
+                const screenshot = {
+                    id: Date.now(),
+                    blob: blob,
+                    url: URL.createObjectURL(blob)
+                };
+                
+                screenshots.push(screenshot);
+                renderScreenshots();
+                
+                document.getElementById('processBtn').disabled = false;
+                showStatus(`Screenshot captured! Total: ${screenshots.length}`, 'success');
+            });
+        }
+
+        function renderScreenshots() {
+            const container = document.getElementById('screenshotsList');
+            container.innerHTML = screenshots.map(s => `
+                <div class="screenshot-item">
+                    <img src="${s.url}" alt="Screenshot">
+                    <button class="remove-btn" onclick="removeScreenshot(${s.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeScreenshot(id) {
+            screenshots = screenshots.filter(s => s.id !== id);
+            renderScreenshots();
+            
+            if (screenshots.length === 0) {
+                document.getElementById('processBtn').disabled = true;
+            }
+            
+            showStatus(`Screenshot removed. Remaining: ${screenshots.length}`, 'success');
+        }
+
+        // OCR Processing
+        async function processScreenshots() {
+            if (screenshots.length === 0) {
+                showStatus('No screenshots to process!', 'error');
+                return;
+            }
+
+            showStatus('Processing screenshots with Google Vision OCR...', 'processing');
+            document.getElementById('processBtn').disabled = true;
+
+            try {
+                // Process each screenshot
+                for (let i = 0; i < screenshots.length; i++) {
+                    showStatus(`Processing screenshot ${i + 1} of ${screenshots.length}...`, 'processing');
+                    
+                    const base64Image = await blobToBase64(screenshots[i].blob);
+                    const ocrText = await callGoogleVisionOCR(base64Image);
+                    
+                    // Parse the OCR text into structured data
+                    const parsedRows = parseBenefitFlowTable(ocrText);
+                    extractedData.push(...parsedRows);
+                }
+
+                // Remove duplicates (in case of overlapping screenshots)
+                extractedData = removeDuplicates(extractedData);
+
+                showStatus(`✅ Processed ${screenshots.length} screenshots, extracted ${extractedData.length} employer records!`, 'success');
+                
+                // Update preview table
+                renderDataPreview();
+                
+                // Switch to preview tab
+                switchTab('preview');
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            } catch (error) {
+                showStatus('Error processing screenshots: ' + error.message, 'error');
+                console.error(error);
+            } finally {
+                document.getElementById('processBtn').disabled = false;
+            }
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function callGoogleVisionOCR(base64Image) {
+            // This is a placeholder - actual implementation would call Google Vision API
+            // For demo purposes, we'll simulate OCR response
+            
+            // In production, this would be:
+            /*
+            const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    requests: [{
+                        image: { content: base64Image },
+                        features: [{ type: 'DOCUMENT_TEXT_DETECTION' }]
+                    }]
+                })
+            });
+            const data = await response.json();
+            return data.responses[0].fullTextAnnotation.text;
+            */
+            
+            // Simulated response for demo
+            return `Adusa Distribution Llc\t11091 Lamonte Dr\tDispulanta\t23842\tMarsh Mclennan\tKaiser Permanente\t1-Jul
+Delta Star Inc\t3550 Mayflower Dr\tLynchburg\t24501\tNo Broker\tHealthkeepers\t1-Jan
+Hill Phoenix Inc\t1925 Ruffin Rd Ste C\tSouth Chesterfield\t23834\tMarsh Mclennan\tCigna\t1-Nov`;
+        }
+
+        function parseBenefitFlowTable(ocrText) {
+            const rows = [];
+            const lines = ocrText.split('\n').filter(line => line.trim());
+
+            for (const line of lines) {
+                // Split by tab or multiple spaces
+                const cols = line.split(/\t+|\s{2,}/);
+                
+                if (cols.length >= 6) {
+                    rows.push({
+                        employerName: cols[0] || '',
+                        address: cols[1] || '',
+                        city: cols[2] || '',
+                        zip: cols[3] || '',
+                        broker: cols[4] || '',
+                        carrier: cols[5] || '',
+                        renewalDate: cols[6] || ''
+                    });
+                }
+            }
+
+            return rows;
+        }
+
+        function removeDuplicates(data) {
+            const seen = new Set();
+            return data.filter(row => {
+                const key = `${row.employerName}-${row.zip}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        function renderDataPreview() {
+            const tbody = document.getElementById('dataTableBody');
+            
+            if (extractedData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">No data yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = extractedData.map((row, index) => `
+                <tr>
+                    <td><input type="text" value="${row.employerName}" onchange="updateRow(${index}, 'employerName', this.value)"></td>
+                    <td><input type="text" value="${row.city}" onchange="updateRow(${index}, 'city', this.value)"></td>
+                    <td><input type="text" value="${row.zip}" onchange="updateRow(${index}, 'zip', this.value)"></td>
+                    <td><input type="text" value="${row.broker}" onchange="updateRow(${index}, 'broker', this.value)"></td>
+                    <td><input type="text" value="${row.carrier}" onchange="updateRow(${index}, 'carrier', this.value)"></td>
+                    <td><input type="text" value="${row.renewalDate}" onchange="updateRow(${index}, 'renewalDate', this.value)"></td>
+                    <td><button onclick="deleteRow(${index})" class="danger" style="padding:8px 15px;font-size:12px;">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function updateRow(index, field, value) {
+            extractedData[index][field] = value;
+        }
+
+        function deleteRow(index) {
+            extractedData.splice(index, 1);
+            renderDataPreview();
+        }
+
+        function clearData() {
+            if (confirm('Are you sure you want to clear all data?')) {
+                extractedData = [];
+                screenshots = [];
+                renderDataPreview();
+                renderScreenshots();
+                showStatus('All data cleared.', 'success');
+            }
+        }
+
+        // Analysis functions
+        function saveAndAnalyze() {
+            if (extractedData.length === 0) {
+                showStatus('No data to analyze!', 'error');
+                return;
+            }
+
+            // Save to localStorage
+            localStorage.setItem('benefitflow_data', JSON.stringify(extractedData));
+            
+            // Run analysis
+            runBrokerAnalysis();
+            
+            // Switch to analysis tab
+            switchTab('analysis');
+            document.querySelectorAll('.tab')[2].classList.add('active');
+            
+            showStatus('Data saved and analyzed!', 'success');
+        }
+
+        function runBrokerAnalysis() {
+            // Calculate stats
+            const midAtlanticStates = ['DC', 'MD', 'VA', 'Maryland', 'Virginia', 'Washington'];
+            const midAtlanticCount = extractedData.filter(row => 
+                midAtlanticStates.some(state => row.city.includes(state) || row.address.includes(state))
+            ).length;
+
+            const uniqueBrokers = [...new Set(extractedData.map(r => r.broker).filter(b => b && b !== 'No Broker'))];
+            const uniqueCarriers = [...new Set(extractedData.map(r => r.carrier).filter(c => c))];
+
+            document.getElementById('totalBrokers').textContent = uniqueBrokers.length;
+            document.getElementById('totalEmployers').textContent = extractedData.length;
+            document.getElementById('midAtlanticCount').textContent = midAtlanticCount;
+            document.getElementById('uniqueCarriers').textContent = uniqueCarriers.length;
+
+            // Broker analysis
+            const brokerData = {};
+            
+            extractedData.forEach(row => {
+                if (!row.broker || row.broker === 'No Broker') return;
+                
+                if (!brokerData[row.broker]) {
+                    brokerData[row.broker] = {
+                        name: row.broker,
+                        clients: [],
+                        carriers: new Set(),
+                        midAtlanticClients: 0
+                    };
+                }
+
+                brokerData[row.broker].clients.push(row);
+                brokerData[row.broker].carriers.add(row.carrier);
+                
+                if (midAtlanticStates.some(state => row.city.includes(state) || row.address.includes(state))) {
+                    brokerData[row.broker].midAtlanticClients++;
+                }
+            });
+
+            // Sort brokers by Mid-Atlantic client count
+            const sortedBrokers = Object.values(brokerData)
+                .sort((a, b) => b.midAtlanticClients - a.midAtlanticClients);
+
+            // Render broker cards
+            renderBrokerAnalysis(sortedBrokers);
+        }
+
+        function renderBrokerAnalysis(brokers) {
+            const container = document.getElementById('brokerAnalysis');
+            
+            if (brokers.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No broker data available</p>';
+                return;
+            }
+
+            container.innerHTML = brokers.map((broker, index) => {
+                const priority = broker.midAtlanticClients >= 5 ? 'high' : 
+                                broker.midAtlanticClients >= 2 ? 'medium' : 'low';
+                
+                return `
+                    <div class="broker-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <h3>${index + 1}. ${broker.name}</h3>
+                            <span class="priority-badge priority-${priority}">
+                                ${priority} priority
+                            </span>
+                        </div>
+                        
+                        <div class="broker-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Total Clients:</span>
+                                <span class="detail-value">${broker.clients.length}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Mid-Atlantic:</span>
+                                <span class="detail-value">${broker.midAtlanticClients}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Carriers:</span>
+                                <span class="detail-value">${broker.carriers.size}</span>
+                            </div>
+                        </div>
+
+                        <div class="carrier-tags">
+                            ${[...broker.carriers].slice(0, 5).map(c => 
+                                `<span class="carrier-tag">${c}</span>`
+                            ).join('')}
+                            ${broker.carriers.size > 5 ? `<span class="carrier-tag">+${broker.carriers.size - 5} more</span>` : ''}
+                        </div>
+
+                        <div style="margin-top:15px;">
+                            <button onclick="viewBrokerDetails('${broker.name}')" style="padding:10px 20px;font-size:14px;">
+                                📧 Generate Outreach Email
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function viewBrokerDetails(brokerName) {
+            alert(`Email generation for ${brokerName} coming soon!\n\nThis will integrate with your Sales HQ email composer.`);
+        }
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        // Load saved data on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedData = localStorage.getItem('benefitflow_data');
+            if (savedData) {
+                extractedData = JSON.parse(savedData);
+                renderDataPreview();
+                runBrokerAnalysis();
+            }
+        });
+    </script>
+</body>
+</html>
