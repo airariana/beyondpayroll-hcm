@@ -534,7 +534,7 @@
         let screenshots = [];
         let extractedData = [];
         let stream = null;
-        const GOOGLE_VISION_API_KEY = 'YOUR_API_KEY_HERE'; // Will be replaced with actual key
+        const GOOGLE_VISION_API_KEY = 'AIzaSyD-Ka3mxApP0RR4Gvdf8tOd9IPAsEVhaOw';
 
         // Tab switching
         function switchTab(tabName) {
@@ -674,28 +674,36 @@
         }
 
         async function callGoogleVisionOCR(base64Image) {
-            // This is a placeholder - actual implementation would call Google Vision API
-            // For demo purposes, we'll simulate OCR response
-            
-            // In production, this would be:
-            /*
-            const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    requests: [{
-                        image: { content: base64Image },
-                        features: [{ type: 'DOCUMENT_TEXT_DETECTION' }]
-                    }]
-                })
-            });
-            const data = await response.json();
-            return data.responses[0].fullTextAnnotation.text;
-            */
-            
-            // Simulated response for demo
-            return `Adusa Distribution Llc\t11091 Lamonte Dr\tDispulanta\t23842\tMarsh Mclennan\tKaiser Permanente\t1-Jul
-Delta Star Inc\t3550 Mayflower Dr\tLynchburg\t24501\tNo Broker\tHealthkeepers\t1-Jan
-Hill Phoenix Inc\t1925 Ruffin Rd Ste C\tSouth Chesterfield\t23834\tMarsh Mclennan\tCigna\t1-Nov`;
+            try {
+                const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        requests: [{
+                            image: { content: base64Image },
+                            features: [{ type: 'DOCUMENT_TEXT_DETECTION' }]
+                        }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Google Vision API error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.responses[0].error) {
+                    throw new Error(`Vision API error: ${data.responses[0].error.message}`);
+                }
+                
+                // Return the extracted text
+                return data.responses[0].fullTextAnnotation?.text || '';
+            } catch (error) {
+                console.error('OCR Error:', error);
+                throw new Error(`Failed to extract text: ${error.message}`);
+            }
         }
 
         function parseBenefitFlowTable(ocrText) {
@@ -703,19 +711,35 @@ Hill Phoenix Inc\t1925 Ruffin Rd Ste C\tSouth Chesterfield\t23834\tMarsh Mclenna
             const lines = ocrText.split('\n').filter(line => line.trim());
 
             for (const line of lines) {
-                // Split by tab or multiple spaces
-                const cols = line.split(/\t+|\s{2,}/);
+                // Skip header lines or lines that look like headers
+                if (line.includes('Employer Name') || line.includes('Primary Broker') || line.includes('Primary Carrier')) {
+                    continue;
+                }
                 
-                if (cols.length >= 6) {
-                    rows.push({
-                        employerName: cols[0] || '',
-                        address: cols[1] || '',
-                        city: cols[2] || '',
-                        zip: cols[3] || '',
-                        broker: cols[4] || '',
-                        carrier: cols[5] || '',
-                        renewalDate: cols[6] || ''
-                    });
+                // Split by tab or multiple spaces (2 or more)
+                let cols = line.split(/\t+/);
+                
+                // If no tabs, try splitting by multiple spaces
+                if (cols.length === 1) {
+                    cols = line.split(/\s{2,}/);
+                }
+                
+                // BenefitFlow format: Employer Name | Address | City | Zip | Broker | Carrier | Renewal Date
+                if (cols.length >= 5) {
+                    const row = {
+                        employerName: (cols[0] || '').trim(),
+                        address: (cols[1] || '').trim(),
+                        city: (cols[2] || '').trim(),
+                        zip: (cols[3] || '').trim(),
+                        broker: (cols[4] || '').trim(),
+                        carrier: (cols[5] || '').trim(),
+                        renewalDate: (cols[6] || '').trim()
+                    };
+                    
+                    // Only add rows that have at least an employer name
+                    if (row.employerName && row.employerName.length > 2) {
+                        rows.push(row);
+                    }
                 }
             }
 
