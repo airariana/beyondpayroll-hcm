@@ -7261,97 +7261,108 @@ function openProfileSettings() {
 
 
 
+
+
+
 <script>
 // ══════════════════════════════════════════════════════
-// BOTTOM NAV - Simple, direct handlers
+// BOTTOM NAV - Bulletproof handlers (v3)
 // ══════════════════════════════════════════════════════
 (function() {
   'use strict';
   
+  let setupAttempts = 0;
+  const maxAttempts = 10;
+  
   function setupBottomNav() {
-    // Get buttons by ID (more reliable)
+    if (setupAttempts >= maxAttempts) {
+      console.log('[Bottom Nav] Max setup attempts reached');
+      return;
+    }
+    setupAttempts++;
+    
+    // Get buttons by ID
     const homeBtn = document.getElementById('nav-home');
     const pipelineBtn = document.getElementById('nav-pipeline');
     const emailBtn = document.getElementById('nav-email');
     const profileBtn = document.getElementById('nav-profile');
     
-    if (!homeBtn) {
-      console.log('[Bottom Nav] Buttons not ready, retrying...');
-      setTimeout(setupBottomNav, 500);
+    if (!homeBtn || !pipelineBtn || !emailBtn || !profileBtn) {
+      console.log('[Bottom Nav] Buttons not ready, retry', setupAttempts);
+      setTimeout(setupBottomNav, 300);
       return;
     }
     
-    console.log('[Bottom Nav] Setting up simple handlers...');
+    console.log('[Bottom Nav] All buttons found, setting up...');
     
-    // Remove any existing onclick to prevent conflicts
-    [homeBtn, pipelineBtn, emailBtn, profileBtn].forEach(btn => {
-      if (btn) btn.onclick = null;
-    });
+    // CRITICAL: Clear ALL existing event listeners by cloning
+    const newHomeBtn = homeBtn.cloneNode(true);
+    const newPipelineBtn = pipelineBtn.cloneNode(true);
+    const newEmailBtn = emailBtn.cloneNode(true);
+    const newProfileBtn = profileBtn.cloneNode(true);
     
-    // HOME - Reload page to command center
-    homeBtn.addEventListener('click', function(e) {
+    homeBtn.parentNode.replaceChild(newHomeBtn, homeBtn);
+    pipelineBtn.parentNode.replaceChild(newPipelineBtn, pipelineBtn);
+    emailBtn.parentNode.replaceChild(newEmailBtn, emailBtn);
+    profileBtn.parentNode.replaceChild(newProfileBtn, profileBtn);
+    
+    // HOME - Just reload the page
+    newHomeBtn.addEventListener('click', function(e) {
+      e.preventDefault();
       e.stopPropagation();
-      console.log('[Nav] Home clicked');
-      
-      // Close any modals
-      document.querySelectorAll('.eg-overlay, #eg-overlay, .profile-dropdown').forEach(el => {
-        el.style.display = 'none';
-      });
-      
-      // Reload to fresh state
-      window.location.hash = '';
+      console.log('[Bottom Nav] HOME clicked - reloading');
       window.location.href = window.location.pathname;
     });
     
-    // PIPELINE - Click the profile button in topbar
-    pipelineBtn.addEventListener('click', function(e) {
+    newHomeBtn.addEventListener('touchend', function(e) {
+      e.preventDefault();
       e.stopPropagation();
-      console.log('[Nav] Pipeline clicked');
+      console.log('[Bottom Nav] HOME touched - reloading');
+      window.location.href = window.location.pathname;
+    });
+    
+    // PIPELINE - Open profile dropdown
+    newPipelineBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('[Bottom Nav] PIPELINE clicked');
       
-      const topProfileBtn = document.querySelector('#profileBtn, .profile-btn');
-      if (topProfileBtn) {
-        topProfileBtn.click();
+      const profileBtn = document.querySelector('#profileBtn, .profile-btn');
+      if (profileBtn) {
+        profileBtn.click();
       }
     });
     
-    // EMAIL GENERATOR - Find and click email button or open directly
-    emailBtn.addEventListener('click', function(e) {
+    // EMAIL - Open email generator
+    newEmailBtn.addEventListener('click', function(e) {
+      e.preventDefault();
       e.stopPropagation();
-      console.log('[Nav] Email Generator clicked');
+      console.log('[Bottom Nav] EMAIL clicked');
       
-      // Try direct function first
+      // Call the function directly
       if (typeof window.openEmailEngine === 'function') {
         window.openEmailEngine();
-        return;
+      } else {
+        console.log('[Bottom Nav] openEmailEngine not found');
       }
-      
-      // Fallback: find email button in UI
-      const emailBtns = document.querySelectorAll('button[onclick*="Email"], [class*="email"]');
-      for (let btn of emailBtns) {
-        if (btn.textContent.includes('Email') || btn.onclick) {
-          btn.click();
-          return;
-        }
-      }
-      
-      console.log('[Nav] Email generator not found');
     });
     
-    // PROFILE - Click profile button
-    profileBtn.addEventListener('click', function(e) {
+    // PROFILE - Open profile dropdown
+    newProfileBtn.addEventListener('click', function(e) {
+      e.preventDefault();
       e.stopPropagation();
-      console.log('[Nav] Profile clicked');
+      console.log('[Bottom Nav] PROFILE clicked');
       
-      const topProfileBtn = document.querySelector('#profileBtn, .profile-btn');
-      if (topProfileBtn) {
-        topProfileBtn.click();
+      const profileBtn = document.querySelector('#profileBtn, .profile-btn');
+      if (profileBtn) {
+        profileBtn.click();
       }
     });
     
-    console.log('[Bottom Nav] ✓ Setup complete');
+    console.log('[Bottom Nav] ✓ All handlers attached');
   }
   
-  // Run setup after page loads
+  // Initialize
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(setupBottomNav, 1000));
   } else {
@@ -7361,7 +7372,6 @@ function openProfileSettings() {
   window.addEventListener('load', () => setTimeout(setupBottomNav, 1500));
 })();
 </script>
-
 
 <!-- ═══════════════════════════════════════════════════════════
      HAMBURGER MENU & EMAIL AUTO-FILL JAVASCRIPT
@@ -7408,10 +7418,7 @@ function openProfileSettings() {
         eval(item.onclick);
         hideDropdown();
       };
-      menuItem.innerHTML = `
-        <span class="tb-dropdown-item-icon">${item.icon}</span>
-        <span>${item.label}</span>
-      `;
+      menuItem.innerHTML = '<span class="tb-dropdown-item-icon">' + item.icon + '</span><span>' + item.label + '</span>';
       dropdown.appendChild(menuItem);
     });
 
@@ -7453,47 +7460,79 @@ function openProfileSettings() {
   // ══════════════════════════════════════════════════════
 
   function autoFillEmailEngine() {
-    // Wait for the email engine to open
+    console.log('[Email Auto-fill] Starting...');
+    
     const checkEmailEngine = setInterval(function() {
-      const emailModal = document.querySelector('.eg-modal, #eg-overlay');
+      const emailModal = document.querySelector('.eg-modal, #eg-overlay, .email-gen-overlay');
       
-      if (emailModal && emailModal.style.display !== 'none') {
+      if (emailModal && window.getComputedStyle(emailModal).display !== 'none') {
         clearInterval(checkEmailEngine);
+        console.log('[Email Auto-fill] Modal detected, filling fields...');
         
-        // Get current prospect data
-        const prospect = window._hqProspect || {};
+        let prospect = window._hqProspect || {};
+        console.log('[Email Auto-fill] Prospect from _hqProspect:', prospect);
         
-        // Auto-fill fields if they exist
-        fillField('eg-first-name', prospect.contact || prospect.contactName || '');
-        fillField('eg-company', prospect.company || '');
-        fillField('eg-title', prospect.persona || prospect.title || prospect.contactTitle || '');
-        fillField('eg-employees', prospect.headcount || prospect.numEE || prospect.employees || '');
-        fillField('eg-state', prospect.state || prospect.hqState || '');
-        fillField('eg-industry', prospect.industry || '');
-        fillField('eg-track', prospect.track || '');
-        fillField('eg-competitor', prospect.competitor || prospect.incumbent || '');
-        
-        // Auto-fill from TotalSource if we have that data
-        const companyName = document.getElementById('companyName')?.value;
-        const contactName = document.getElementById('contactName')?.value;
-        const numEE = document.getElementById('numEE')?.value;
-        const hqState = document.getElementById('hqState')?.value;
-        const industry = document.getElementById('industry')?.value;
-        
-        if (companyName) fillField('eg-company', companyName);
-        if (contactName) {
-          const firstName = contactName.split(' ')[0];
-          fillField('eg-first-name', firstName);
+        if (!prospect || !prospect.company) {
+          const sreCompany = document.querySelector('input[placeholder*="company" i], #sreCompany, #companyName');
+          const sreContact = document.querySelector('input[placeholder*="contact" i], #sreContact, #contactName');
+          const sreTitle = document.querySelector('input[placeholder*="title" i], #sreTitle, #contactTitle');
+          const sreEmployees = document.querySelector('input[placeholder*="employee" i], #numEE, #employees');
+          const sreState = document.querySelector('select#hqState, #state');
+          const sreIndustry = document.querySelector('select#industry');
+          
+          if (sreCompany && sreCompany.value) {
+            prospect.company = sreCompany.value;
+            console.log('[Email Auto-fill] Company from SRE:', prospect.company);
+          }
+          if (sreContact && sreContact.value) {
+            prospect.contact = sreContact.value;
+            console.log('[Email Auto-fill] Contact from SRE:', prospect.contact);
+          }
+          if (sreTitle && sreTitle.value) prospect.title = sreTitle.value;
+          if (sreEmployees && sreEmployees.value) prospect.employees = sreEmployees.value;
+          if (sreState && sreState.value) prospect.state = sreState.value;
+          if (sreIndustry && sreIndustry.value) prospect.industry = sreIndustry.value;
         }
-        if (numEE) fillField('eg-employees', numEE);
-        if (hqState) fillField('eg-state', hqState);
-        if (industry) fillField('eg-industry', industry);
         
-        console.log('[Email Engine] Auto-filled prospect data');
+        const tsCompany = document.getElementById('companyName');
+        const tsContact = document.getElementById('contactName');
+        const tsNumEE = document.getElementById('numEE');
+        const tsState = document.getElementById('hqState');
+        const tsIndustry = document.getElementById('industry');
+        
+        if (tsCompany && tsCompany.value && !prospect.company) prospect.company = tsCompany.value;
+        if (tsContact && tsContact.value && !prospect.contact) prospect.contact = tsContact.value;
+        if (tsNumEE && tsNumEE.value && !prospect.employees) prospect.employees = tsNumEE.value;
+        if (tsState && tsState.value && !prospect.state) prospect.state = tsState.value;
+        if (tsIndustry && tsIndustry.value && !prospect.industry) prospect.industry = tsIndustry.value;
+        
+        console.log('[Email Auto-fill] Final prospect data:', prospect);
+        
+        if (prospect.contact) {
+          const firstName = prospect.contact.split(' ')[0];
+          fillField('eg-first-name', firstName);
+          fillField('first-name', firstName);
+        }
+        
+        fillField('eg-company', prospect.company || '');
+        fillField('company', prospect.company || '');
+        fillField('eg-title', prospect.title || prospect.persona || '');
+        fillField('title', prospect.title || prospect.persona || '');
+        fillField('eg-employees', prospect.employees || prospect.headcount || prospect.numEE || '');
+        fillField('employees', prospect.employees || prospect.headcount || '');
+        fillField('eg-state', prospect.state || prospect.hqState || '');
+        fillField('state', prospect.state || '');
+        fillField('eg-industry', prospect.industry || '');
+        fillField('industry', prospect.industry || '');
+        fillField('eg-track', prospect.track || '');
+        fillField('track', prospect.track || '');
+        fillField('eg-competitor', prospect.competitor || prospect.incumbent || '');
+        fillField('competitor', prospect.competitor || '');
+        
+        console.log('[Email Auto-fill] ✓ Complete');
       }
     }, 100);
     
-    // Stop checking after 5 seconds
     setTimeout(function() {
       clearInterval(checkEmailEngine);
     }, 5000);
@@ -7505,16 +7544,12 @@ function openProfileSettings() {
     const field = document.getElementById(fieldId);
     if (field && !field.value) {
       field.value = value;
-      
-      // Trigger change event in case there are listeners
       const event = new Event('change', { bubbles: true });
       field.dispatchEvent(event);
     }
   }
 
-  // Patch the email engine open function to trigger auto-fill
   function patchEmailEngineOpen() {
-    // Try to find and wrap the openEmailEngine function
     if (typeof window.openEmailEngine === 'function') {
       const originalOpen = window.openEmailEngine;
       window.openEmailEngine = function() {
@@ -7524,7 +7559,6 @@ function openProfileSettings() {
       console.log('[Email Engine] Auto-fill patched ✓');
     }
     
-    // Also try egOpen or any other variants
     if (typeof window.egOpen === 'function') {
       const originalEgOpen = window.egOpen;
       window.egOpen = function() {
@@ -7534,7 +7568,6 @@ function openProfileSettings() {
     }
   }
 
-  // Initialize everything when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       initHamburgerMenu();
@@ -7545,19 +7578,16 @@ function openProfileSettings() {
     setTimeout(patchEmailEngineOpen, 1000);
   }
 
-  // Re-init on window resize (in case orientation changes)
   let resizeTimer;
   window.addEventListener('resize', function() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function() {
-      // Remove old hamburger and dropdown if screen gets larger
       if (window.innerWidth > 768) {
         const hamburger = document.querySelector('.tb-hamburger');
         const dropdown = document.getElementById('tb-dropdown');
         if (hamburger) hamburger.remove();
         if (dropdown) dropdown.remove();
       } else {
-        // Re-init if screen gets smaller and hamburger doesn't exist
         if (!document.querySelector('.tb-hamburger')) {
           initHamburgerMenu();
         }
@@ -7778,6 +7808,90 @@ function openProfileSettings() {
   }, 3000);
   
   console.log('[Page Load] Email auto-open prevention active for 3 seconds');
+})();
+</script>
+
+
+
+<script>
+// ══════════════════════════════════════════════════════
+// OUTLOOK MAILTO BUTTONS - Mobile fix
+// ══════════════════════════════════════════════════════
+(function() {
+  'use strict';
+  
+  function fixOutlookButtons() {
+    console.log('[Outlook Fix] Setting up mailto handlers...');
+    
+    // Find all "Send with Outlook" buttons
+    const outlookButtons = document.querySelectorAll('button[onclick*="mailto"], button:contains("Outlook"), [class*="outlook-btn"], .ec-send-outlook');
+    
+    outlookButtons.forEach(btn => {
+      console.log('[Outlook Fix] Found button:', btn.textContent);
+      
+      // Remove old onclick
+      btn.onclick = null;
+      
+      // Add new click handler
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('[Outlook] Button clicked');
+        
+        // Try to find the email content
+        const subjectField = document.querySelector('#eg-subject, [id*="subject"]');
+        const bodyField = document.querySelector('#eg-body, [id*="body"], .email-body, textarea');
+        
+        let subject = subjectField ? subjectField.value || subjectField.textContent : 'Sales Outreach';
+        let body = bodyField ? bodyField.value || bodyField.textContent : '';
+        
+        // URL encode
+        subject = encodeURIComponent(subject);
+        body = encodeURIComponent(body);
+        
+        // Create mailto link
+        const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+        
+        console.log('[Outlook] Opening mailto:', mailtoLink);
+        
+        // Open mailto (works on all devices)
+        window.location.href = mailtoLink;
+      });
+    });
+    
+    // Also fix template buttons
+    const templateButtons = document.querySelectorAll('button[onclick*="template" i], .template-btn, button:contains("Use Template")');
+    
+    templateButtons.forEach(btn => {
+      console.log('[Template Fix] Found button:', btn.textContent);
+      
+      btn.addEventListener('click', function(e) {
+        console.log('[Template] Button clicked');
+        // Template functionality should already exist in app.js
+        // Just make sure it's not prevented
+      });
+    });
+    
+    console.log('[Outlook Fix] ✓', outlookButtons.length, 'buttons fixed');
+  }
+  
+  // Run after email generator opens
+  const observer = new MutationObserver(function(mutations) {
+    const emailModal = document.querySelector('.eg-modal, #eg-overlay, .email-gen-overlay');
+    if (emailModal && window.getComputedStyle(emailModal).display !== 'none') {
+      setTimeout(fixOutlookButtons, 500);
+    }
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // Also run on page load
+  setTimeout(fixOutlookButtons, 2000);
+  window.addEventListener('load', () => setTimeout(fixOutlookButtons, 3000));
 })();
 </script>
 
