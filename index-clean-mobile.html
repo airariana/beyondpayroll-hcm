@@ -825,6 +825,235 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
   }
 }
 
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE TOPBAR FIX - Resolves overlapping icons
+   Add this to your mobile-responsive.css or as additional styles
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  
+  /* ══════════════════════════════════════════════════════
+     TOP BAR - Mobile optimized layout
+     ══════════════════════════════════════════════════════ */
+  
+  #top-bar,
+  .top-bar {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    padding-top: calc(env(safe-area-inset-top) + 8px) !important;
+    gap: 8px !important;
+    min-height: auto !important;
+  }
+
+  /* Brand section */
+  .tb-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 14px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .tb-logo {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .tb-name {
+    display: none !important; /* Hide "BEYONDPAYROLL HCM" text on mobile */
+  }
+
+  .tb-sep {
+    display: none !important; /* Hide separator */
+  }
+
+  .tb-sub {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    flex-grow: 1 !important;
+    margin-left: 0 !important;
+  }
+
+  /* Right side buttons */
+  .tb-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Hide non-essential buttons on mobile */
+  .tb-icon-btn[title="Email Templates"],
+  .tb-icon-btn[title="Email History"],
+  .tb-icon-btn[title="Email Signatures"] {
+    display: none !important;
+  }
+
+  /* Keep only essential buttons */
+  .tb-icon-btn {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    min-width: auto !important;
+    height: auto !important;
+  }
+
+  /* Simplify button text to icons only on very small screens */
+  @media (max-width: 400px) {
+    .tb-icon-btn {
+      font-size: 18px !important;
+      padding: 8px !important;
+      width: 40px !important;
+      height: 40px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    /* Hide text, show only emoji */
+    .tb-icon-btn {
+      text-indent: -9999px !important;
+      position: relative !important;
+    }
+
+    .tb-icon-btn::before {
+      position: absolute !important;
+      text-indent: 0 !important;
+      left: 50% !important;
+      top: 50% !important;
+      transform: translate(-50%, -50%) !important;
+    }
+
+    #tb-profiles-btn::before {
+      content: '📁' !important;
+    }
+
+    #tb-activity-btn::before {
+      content: '🔔' !important;
+    }
+
+    .tb-save-btn::before {
+      content: '💾' !important;
+    }
+  }
+
+  /* Firebase status badge - more compact */
+  .fb-status,
+  #fb-status-badge {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
+    gap: 4px !important;
+    border-radius: 8px !important;
+  }
+
+  #fb-status-dot {
+    font-size: 10px !important;
+  }
+
+  #fb-status-lbl {
+    display: none !important; /* Hide "Offline" text on mobile, keep just the dot */
+  }
+
+  @media (min-width: 400px) {
+    #fb-status-lbl {
+      display: inline !important; /* Show text on slightly larger screens */
+    }
+  }
+
+  /* Profile button - more compact */
+  .profile-btn,
+  #profileBtn {
+    padding: 4px 8px !important;
+    gap: 6px !important;
+    min-width: auto !important;
+  }
+
+  .pb-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+
+  .pb-info {
+    display: none !important; /* Hide name/role on mobile */
+  }
+
+  .pb-caret {
+    font-size: 10px !important;
+  }
+
+  /* Show name/role on slightly larger screens */
+  @media (min-width: 400px) {
+    .pb-info {
+      display: block !important;
+    }
+
+    .pb-name {
+      font-size: 12px !important;
+      line-height: 1.2 !important;
+    }
+
+    .pb-role {
+      font-size: 10px !important;
+    }
+  }
+
+  /* ══════════════════════════════════════════════════════
+     ALTERNATIVE: Hamburger menu approach (optional)
+     ══════════════════════════════════════════════════════ */
+
+  /* If you want a cleaner mobile topbar with hamburger menu,
+     uncomment this section and add the hamburger menu HTML */
+
+  /*
+  .tb-right {
+    position: relative;
+  }
+
+  .tb-hamburger {
+    display: flex !important;
+    width: 40px;
+    height: 40px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .tb-menu-drawer {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: var(--bg-primary);
+    box-shadow: -4px 0 16px rgba(0,0,0,0.3);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    padding: 60px 20px 20px;
+  }
+
+  .tb-menu-drawer.open {
+    right: 0;
+  }
+
+  .tb-menu-drawer .tb-icon-btn {
+    width: 100%;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+  }
+  */
+}
+
 </style>
 
 </head>
