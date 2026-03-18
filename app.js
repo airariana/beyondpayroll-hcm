@@ -12697,3 +12697,274 @@ console.log('✓ Enhanced notification UI loaded - streamlined cadence visibilit
 })();
 
 console.log('✓ All UI fixes loaded successfully');
+
+/* ════════════════════════════════════════════════════════════════════
+   COMPLETE INTEGRATION SCRIPT
+   
+   This adds:
+   1. Sales Intelligence HQ card to command center
+   2. Nurture tab/button to pipeline
+   3. "Move to Nurture" buttons on prospect cards
+   
+   Add this to the END of your app.js file
+════════════════════════════════════════════════════════════════════ */
+
+// ══════════════════════════════════════════════════════════════════════
+// 1. ADD SALES INTELLIGENCE HQ CARD TO COMMAND CENTER
+// ══════════════════════════════════════════════════════════════════════
+
+(function() {
+  // Wrap the original initHQ function to add the card
+  const originalInitHQ = window.initHQ;
+  
+  if (originalInitHQ) {
+    window.initHQ = function(session) {
+      // Call original
+      originalInitHQ(session);
+      
+      // Add Sales HQ card at top of command center
+      setTimeout(function() {
+        const container = document.getElementById('hq-container');
+        if (!container) return;
+        
+        const cardHTML = `
+          <div class="sales-hq-card">
+            <div class="sales-hq-content">
+              <div class="sales-hq-icon">⚡</div>
+              <div class="sales-hq-text">
+                <h3 class="sales-hq-title">Sales Intelligence HQ</h3>
+                <p class="sales-hq-subtitle">
+                  AI-Powered Cadence Platform
+                  <span class="sales-hq-badge">Admin</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Prepend card to container
+        container.insertAdjacentHTML('afterbegin', cardHTML);
+        
+        console.log('✓ Sales Intelligence HQ card added');
+      }, 100);
+    };
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════════════
+// 2. ADD NURTURE TAB TO PIPELINE
+// ══════════════════════════════════════════════════════════════════════
+
+(function() {
+  // Add nurture button to pipeline filters
+  function addNurtureButton() {
+    // Find the pipeline filter area
+    const filterArea = document.querySelector('.pipeline-filters') || 
+                       document.querySelector('.filter-buttons') ||
+                       document.querySelector('[onclick*="filterPipeline"]')?.parentElement;
+    
+    if (!filterArea || document.getElementById('nurture-filter-btn')) return;
+    
+    const nurtureCount = getNurtureProspects ? getNurtureProspects().length : 0;
+    
+    const btnHTML = `
+      <button id="nurture-filter-btn" 
+              class="filter-btn" 
+              onclick="renderNurtureView()" 
+              style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s">
+        <span>🌱 Nurture</span>
+        ${nurtureCount > 0 ? `<span style="background:var(--green);color:#fff;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700">${nurtureCount}</span>` : ''}
+      </button>
+    `;
+    
+    filterArea.insertAdjacentHTML('beforeend', btnHTML);
+    console.log('✓ Nurture button added to pipeline');
+  }
+  
+  // Try to add button when pipeline loads
+  setTimeout(addNurtureButton, 1000);
+  setTimeout(addNurtureButton, 3000);
+  
+  // Also try when switching tabs
+  const originalHqTab = window.hqTab;
+  if (originalHqTab) {
+    window.hqTab = function(tab) {
+      const result = originalHqTab.apply(this, arguments);
+      if (tab === 'pipeline') {
+        setTimeout(addNurtureButton, 200);
+      }
+      return result;
+    };
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════════════
+// 3. ADD "MOVE TO NURTURE" BUTTONS TO PROSPECT CARDS
+// ══════════════════════════════════════════════════════════════════════
+
+(function() {
+  // Watch for prospect cards being added to the DOM
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      mutation.addedNodes.forEach(function(node) {
+        if (node.nodeType === 1 && node.classList) {
+          // Check if this is a prospect card or contains prospect cards
+          const cards = node.classList.contains('prospect-card') ? [node] : 
+                       node.querySelectorAll ? node.querySelectorAll('.prospect-card, .pipeline-card, .pp-card') : [];
+          
+          cards.forEach(function(card) {
+            // Only add button once
+            if (card.querySelector('.nurture-btn')) return;
+            
+            // Find the action buttons area
+            const actionArea = card.querySelector('.card-actions, .prospect-actions, .pp-actions') ||
+                              card.querySelector('button')?.parentElement;
+            
+            if (!actionArea) return;
+            
+            // Get prospect ID from card
+            const prospectId = card.dataset.prospectId || 
+                              card.querySelector('[data-prospect-id]')?.dataset.prospectId ||
+                              card.querySelector('[onclick*="loadProspect"]')?.onclick?.toString().match(/['"]([^'"]+)['"]/)?.[1];
+            
+            if (!prospectId) return;
+            
+            // Add nurture button
+            const btnHTML = `
+              <button class="nurture-btn" 
+                      onclick="showMoveToNurtureModal('${prospectId}')" 
+                      style="font-size:11px;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;font-weight:600;transition:all .15s"
+                      onmouseover="this.style.background='var(--off-white)'"
+                      onmouseout="this.style.background='var(--white)'">
+                <span>🌱</span>
+                <span>Nurture</span>
+              </button>
+            `;
+            
+            actionArea.insertAdjacentHTML('beforeend', btnHTML);
+          });
+        }
+      });
+    });
+  });
+  
+  // Start observing
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  console.log('✓ Watching for prospect cards to add nurture buttons');
+})();
+
+// ══════════════════════════════════════════════════════════════════════
+// 4. ADD AGENT STATUS TO TOPBAR
+// ══════════════════════════════════════════════════════════════════════
+
+(function() {
+  function addAgentStatus() {
+    const topbar = document.querySelector('.tb-right, .top-bar .tb-right');
+    if (!topbar || document.getElementById('agent-status-btn')) return;
+    
+    const confidence = window.AgentKnowledge?.metadata?.confidence_score || 0;
+    
+    const btnHTML = `
+      <button id="agent-status-btn" 
+              class="tb-icon-btn" 
+              onclick="showAgentPanel()" 
+              title="Learning Agent Status"
+              style="display:inline-flex;align-items:center;gap:6px">
+        <span>🤖</span>
+        <span style="font-size:10px;font-weight:700;color:${confidence > 60 ? 'var(--green)' : 'var(--text-3)'}">
+          ${confidence}%
+        </span>
+      </button>
+    `;
+    
+    // Add before profile button
+    const profileBtn = topbar.querySelector('.profile-btn, #profileBtn');
+    if (profileBtn) {
+      profileBtn.insertAdjacentHTML('beforebegin', btnHTML);
+    } else {
+      topbar.insertAdjacentHTML('beforeend', btnHTML);
+    }
+    
+    console.log('✓ Agent status button added to topbar');
+  }
+  
+  // Add on load
+  setTimeout(addAgentStatus, 1000);
+  
+  // Update confidence display every 30 seconds
+  setInterval(function() {
+    const statusBtn = document.getElementById('agent-status-btn');
+    if (statusBtn && window.AgentKnowledge) {
+      const confidence = window.AgentKnowledge.metadata.confidence_score || 0;
+      const span = statusBtn.querySelector('span:last-child');
+      if (span) {
+        span.textContent = confidence + '%';
+        span.style.color = confidence > 60 ? 'var(--green)' : 'var(--text-3)';
+      }
+    }
+  }, 30000);
+})();
+
+// ══════════════════════════════════════════════════════════════════════
+// 5. SIMPLE AGENT PANEL MODAL
+// ══════════════════════════════════════════════════════════════════════
+
+window.showAgentPanel = function() {
+  if (!window.AgentKnowledge) {
+    alert('Agent not initialized yet. Keep working and the agent will learn your patterns!');
+    return;
+  }
+  
+  const meta = AgentKnowledge.metadata;
+  
+  const modalHTML = `
+    <div class="ehc-modal-overlay" onclick="if(event.target===this)this.remove()">
+      <div class="ehc-modal">
+        <div class="ehc-modal-header">
+          <div class="ehc-modal-title">🤖 Background Learning Agent</div>
+          <button class="ehc-modal-close" onclick="this.closest('.ehc-modal-overlay').remove()">✕</button>
+        </div>
+        <div class="ehc-modal-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+            <div style="text-align:center;padding:16px;background:var(--off-white);border-radius:8px">
+              <div style="font-size:24px;font-weight:700;color:var(--text)">${meta.total_actions_observed}</div>
+              <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;margin-top:4px">Actions Observed</div>
+            </div>
+            <div style="text-align:center;padding:16px;background:var(--off-white);border-radius:8px">
+              <div style="font-size:24px;font-weight:700;color:${meta.confidence_score > 60 ? 'var(--green)' : 'var(--text)'}">${meta.confidence_score}%</div>
+              <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;margin-top:4px">Confidence</div>
+            </div>
+            <div style="text-align:center;padding:16px;background:var(--off-white);border-radius:8px">
+              <div style="font-size:24px;font-weight:700;color:var(--text)">${meta.cowork_launches || 0}</div>
+              <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;margin-top:4px">Cowork Launches</div>
+            </div>
+          </div>
+          
+          <div style="background:var(--off-white);padding:14px;border-radius:8px;margin-bottom:16px">
+            <div style="font-size:12px;font-weight:700;margin-bottom:8px">Learning Since</div>
+            <div style="font-size:13px;color:var(--text-2)">
+              ${meta.learning_since ? new Date(meta.learning_since).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}) : 'Not started'}
+            </div>
+          </div>
+          
+          <div style="display:flex;gap:12px">
+            <button class="btn" onclick="launchToCowork(prompt('What task should the agent complete?'))">🚀 Launch to Cowork</button>
+            <button class="btn secondary" onclick="exportAgentKnowledge()">💾 Export Knowledge</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+console.log('✓ Complete integration script loaded');
+console.log('  • Sales HQ card will appear on command center');
+console.log('  • Nurture button added to pipeline');
+console.log('  • Move to Nurture buttons on prospect cards');
+console.log('  • Agent status in topbar');
