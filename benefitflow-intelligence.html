@@ -491,6 +491,8 @@
 
                 <div style="text-align: center; margin-top: 20px;">
                     <button onclick="saveAndAnalyze()" class="secondary">✅ Save & Analyze</button>
+                    <button onclick="exportToCSV()" style="background: #4299e1;">📥 Export to CSV</button>
+                    <button onclick="copyToClipboard()" style="background: #9f7aea;">📋 Copy All Data</button>
                     <button onclick="clearData()" class="danger">🗑️ Clear All Data</button>
                 </div>
             </div>
@@ -524,6 +526,10 @@
                     <p style="text-align: center; color: #999; padding: 40px;">
                         Process data first to see broker analysis
                     </p>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="exportBrokerAnalysis()" style="background: #4299e1;">📥 Export Broker Analysis</button>
                 </div>
             </div>
         </div>
@@ -638,15 +644,34 @@
                     showStatus(`Processing screenshot ${i + 1} of ${screenshots.length}...`, 'processing');
                     
                     const base64Image = await blobToBase64(screenshots[i].blob);
+                    
+                    console.log(`Processing screenshot ${i + 1}, base64 length:`, base64Image.length);
+                    
                     const ocrText = await callGoogleVisionOCR(base64Image);
+                    
+                    console.log(`OCR Result ${i + 1}:`, ocrText);
+                    
+                    if (!ocrText || ocrText.trim().length === 0) {
+                        showStatus(`⚠️ Screenshot ${i + 1} returned no text. Trying next...`, 'processing');
+                        continue;
+                    }
                     
                     // Parse the OCR text into structured data
                     const parsedRows = parseBenefitFlowTable(ocrText);
+                    
+                    console.log(`Parsed ${parsedRows.length} rows from screenshot ${i + 1}`);
+                    
                     extractedData.push(...parsedRows);
                 }
 
                 // Remove duplicates (in case of overlapping screenshots)
                 extractedData = removeDuplicates(extractedData);
+
+                if (extractedData.length === 0) {
+                    showStatus('⚠️ No data extracted. Try: 1) Better lighting, 2) Closer to screen, 3) Straighter angle', 'error');
+                    document.getElementById('processBtn').disabled = false;
+                    return;
+                }
 
                 showStatus(`✅ Processed ${screenshots.length} screenshots, extracted ${extractedData.length} employer records!`, 'success');
                 
@@ -657,8 +682,11 @@
                 switchTab('preview');
                 document.querySelectorAll('.tab')[1].classList.add('active');
             } catch (error) {
-                showStatus('Error processing screenshots: ' + error.message, 'error');
-                console.error(error);
+                showStatus('Error: ' + error.message, 'error');
+                console.error('Processing error:', error);
+                
+                // Show detailed error for debugging
+                alert(`OCR Error Details:\n\n${error.message}\n\nCheck browser console for more info.`);
             } finally {
                 document.getElementById('processBtn').disabled = false;
             }
@@ -917,6 +945,164 @@
 
         function viewBrokerDetails(brokerName) {
             alert(`Email generation for ${brokerName} coming soon!\n\nThis will integrate with your Sales HQ email composer.`);
+        }
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        // Export Functions
+        function exportToCSV() {
+            if (extractedData.length === 0) {
+                showStatus('No data to export!', 'error');
+                return;
+            }
+
+            // Create CSV header
+            const headers = ['Employer Name', 'Address', 'City', 'Zip', 'Primary Broker', 'Primary Carrier', 'Renewal Date'];
+            const csvContent = [
+                headers.join(','),
+                ...extractedData.map(row => [
+                    escapeCsvValue(row.employerName),
+                    escapeCsvValue(row.address),
+                    escapeCsvValue(row.city),
+                    escapeCsvValue(row.zip),
+                    escapeCsvValue(row.broker),
+                    escapeCsvValue(row.carrier),
+                    escapeCsvValue(row.renewalDate)
+                ].join(','))
+            ].join('\n');
+
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const timestamp = new Date().toISOString().split('T')[0];
+            link.setAttribute('href', url);
+            link.setAttribute('download', `benefitflow-data-${timestamp}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showStatus(`✅ Exported ${extractedData.length} records to CSV!`, 'success');
+        }
+
+        function escapeCsvValue(value) {
+            if (!value) return '';
+            // Escape quotes and wrap in quotes if contains comma, quote, or newline
+            const stringValue = String(value);
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                return '"' + stringValue.replace(/"/g, '""') + '"';
+            }
+            return stringValue;
+        }
+
+        async function copyToClipboard() {
+            if (extractedData.length === 0) {
+                showStatus('No data to copy!', 'error');
+                return;
+            }
+
+            // Create tab-separated text for easy pasting into spreadsheets
+            const headers = ['Employer Name', 'Address', 'City', 'Zip', 'Primary Broker', 'Primary Carrier', 'Renewal Date'];
+            const textContent = [
+                headers.join('\t'),
+                ...extractedData.map(row => [
+                    row.employerName,
+                    row.address,
+                    row.city,
+                    row.zip,
+                    row.broker,
+                    row.carrier,
+                    row.renewalDate
+                ].join('\t'))
+            ].join('\n');
+
+            try {
+                await navigator.clipboard.writeText(textContent);
+                showStatus(`✅ Copied ${extractedData.length} records to clipboard! Paste into Excel/Sheets.`, 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = textContent;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showStatus(`✅ Copied ${extractedData.length} records to clipboard!`, 'success');
+            }
+        }
+
+        function exportBrokerAnalysis() {
+            if (extractedData.length === 0) {
+                showStatus('No data to export!', 'error');
+                return;
+            }
+
+            // Calculate broker stats
+            const brokerData = {};
+            const midAtlanticStates = ['DC', 'MD', 'VA', 'Maryland', 'Virginia', 'Washington'];
+            
+            extractedData.forEach(row => {
+                if (!row.broker || row.broker === 'No Broker') return;
+                
+                if (!brokerData[row.broker]) {
+                    brokerData[row.broker] = {
+                        name: row.broker,
+                        totalClients: 0,
+                        midAtlanticClients: 0,
+                        carriers: new Set()
+                    };
+                }
+
+                brokerData[row.broker].totalClients++;
+                brokerData[row.broker].carriers.add(row.carrier);
+                
+                if (midAtlanticStates.some(state => row.city.includes(state) || row.address.includes(state))) {
+                    brokerData[row.broker].midAtlanticClients++;
+                }
+            });
+
+            // Create CSV
+            const headers = ['Broker Name', 'Total Clients', 'Mid-Atlantic Clients', 'Unique Carriers', 'Priority'];
+            const csvContent = [
+                headers.join(','),
+                ...Object.values(brokerData)
+                    .sort((a, b) => b.midAtlanticClients - a.midAtlanticClients)
+                    .map(broker => {
+                        const priority = broker.midAtlanticClients >= 5 ? 'HIGH' : 
+                                       broker.midAtlanticClients >= 2 ? 'MEDIUM' : 'LOW';
+                        return [
+                            escapeCsvValue(broker.name),
+                            broker.totalClients,
+                            broker.midAtlanticClients,
+                            broker.carriers.size,
+                            priority
+                        ].join(',');
+                    })
+            ].join('\n');
+
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const timestamp = new Date().toISOString().split('T')[0];
+            link.setAttribute('href', url);
+            link.setAttribute('download', `broker-analysis-${timestamp}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showStatus(`✅ Exported broker analysis to CSV!`, 'success');
         }
 
         function showStatus(message, type = 'info') {
