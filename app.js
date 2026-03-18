@@ -132,7 +132,7 @@ async function doSignIn(){
   const isApprovedUser = user.email===ADMIN_EMAIL || user.approvedBy===ADMIN_EMAIL || user.isAdmin===true;
   if(!isApprovedUser){showBanner('signin-err','signin-err-msg','Access denied. Contact admin@beyondpayroll.net to request access.');document.getElementById('si-pass').value='';return}
   const session={email:user.email,first:user.first,last:user.last,role:user.role};
-  saveSession(session);showToast('Welcome back, '+user.first+'!');
+  saveSession(session);showToast('⚡ Welcome to Sales HQ, '+user.first+'!');
   const _sp=document.getElementById('bp-splash');if(_sp)_sp.classList.add('hide');
   setTimeout(()=>enterHQ(session),400);
 }
@@ -1498,8 +1498,8 @@ function initHQ(session){
   if(d)d.textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
   const ini=(session.first[0]+session.last[0]).toUpperCase();
   const a=document.getElementById('hq-wb-av');if(a)a.textContent=ini;
-  const n=document.getElementById('hq-wb-name');if(n)n.textContent='Welcome back, '+session.first;
-  const de=document.getElementById('hq-wb-detail');if(de)de.textContent='BP HQ';
+  const n=document.getElementById('hq-wb-name');if(n)n.textContent='⚡ Sales Intelligence HQ';
+  const de=document.getElementById('hq-wb-detail');if(de)de.textContent='AI-Powered Cadence Platform • '+session.first;
   window._hqProspect=null;window._hqPipelineStep=0;window._hqApproved=false;
   window._ecActiveIdx=0;
   if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
