@@ -6880,13 +6880,30 @@ window.cdtIntelLinkedIn = async function(day) {
     const post = bpGeminiText(data).trim() || (intelOutput ? intelOutput.substring(0,260)+'...' : 'Insight pending.');
     _liCopy(post);
     showToast('\u2713 LinkedIn post copied \u2014 opening LinkedIn');
-    // Small delay so toast shows before navigation
-    setTimeout(function(){ window.open('https://www.linkedin.com/feed/', '_blank'); }, 400);
+    // Open LinkedIn app on mobile (iOS/Android) or web fallback
+    setTimeout(function(){ 
+      const linkedinUrl = 'linkedin://share?text=' + encodeURIComponent(post);
+      const fallbackUrl = 'https://www.linkedin.com/feed/';
+      
+      // Try to open LinkedIn app first
+      window.location.href = linkedinUrl;
+      
+      // Fallback to web if app doesn't open (desktop)
+      setTimeout(function(){ 
+        window.open(fallbackUrl, '_blank'); 
+      }, 1000);
+    }, 400);
   } catch(e) {
     const fallback = intelOutput ? intelOutput.substring(0,260)+'...' : 'Check out the latest HCM trends.';
     _liCopy(fallback);
     showToast('\u2713 Copied \u2014 opening LinkedIn', false);
-    setTimeout(function(){ window.open('https://www.linkedin.com/feed/', '_blank'); }, 400);
+    setTimeout(function(){ 
+      const linkedinUrl = 'linkedin://';
+      window.location.href = linkedinUrl;
+      setTimeout(function(){ 
+        window.open('https://www.linkedin.com/feed/', '_blank'); 
+      }, 1000);
+    }, 400);
   }
 };
 
