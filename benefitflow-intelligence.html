@@ -103,6 +103,63 @@
             border-radius: 10px;
             margin: 20px 0;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        #videoElement.ready-to-capture {
+            border: 5px solid #48bb78;
+            box-shadow: 0 0 30px rgba(72, 187, 120, 0.6);
+        }
+
+        .auto-capture-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(72, 187, 120, 0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 36px;
+            font-weight: 700;
+            display: none;
+            z-index: 100;
+        }
+
+        .auto-capture-overlay.active {
+            display: block;
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .auto-capture-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 99;
+        }
+
+        .auto-capture-status.detecting {
+            background: rgba(237, 137, 54, 0.9);
+        }
+
+        .auto-capture-status.ready {
+            background: rgba(72, 187, 120, 0.9);
+        }
+
+        .camera-wrapper {
+            position: relative;
+            display: inline-block;
         }
 
         #canvas {
@@ -115,6 +172,60 @@
             justify-content: center;
             flex-wrap: wrap;
             margin: 20px 0;
+        }
+
+        /* Floating Capture Button */
+        .floating-capture {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #48bb78;
+            color: white;
+            border: none;
+            font-size: 36px;
+            box-shadow: 0 8px 24px rgba(72, 187, 120, 0.4);
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .floating-capture:active {
+            transform: scale(0.9);
+        }
+
+        .floating-capture.visible {
+            display: flex;
+        }
+
+        /* File Upload Area */
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .upload-area.dragover {
+            border-color: #48bb78;
+            background: #c6f6d5;
+        }
+
+        #fileInput {
+            display: none;
         }
 
         button {
@@ -432,23 +543,46 @@
                 <h2>📸 Camera Capture</h2>
                 
                 <div class="instructions">
-                    <h3>How to use:</h3>
+                    <h3>📸 Two Ways to Capture Data:</h3>
                     <ol>
-                        <li>Open BenefitFlow on your desktop/laptop</li>
-                        <li>Click "Start Camera" on your phone</li>
-                        <li>Point camera at BenefitFlow table (straight on, good lighting)</li>
-                        <li>Take 5-10 photos as you scroll through the data</li>
-                        <li>Click "Process All Screenshots" when done</li>
+                        <li><strong>Method 1 (Recommended):</strong> Take screenshot on your laptop → Upload here for better OCR accuracy</li>
+                        <li><strong>Method 2:</strong> Use phone camera (works but less accurate due to screen glare)</li>
                     </ol>
                 </div>
 
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <h3>📤 Upload Screenshots</h3>
+                    <p>Click here or drag & drop BenefitFlow screenshots</p>
+                    <p style="font-size: 14px; color: #666; margin-top: 10px;">Supports: PNG, JPG, JPEG</p>
+                    <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFileUpload(event)">
+                </div>
+
+                <div style="text-align: center; margin: 20px 0;">
+                    <p style="font-size: 14px; color: #999;">- OR -</p>
+                </div>
+
                 <div class="camera-container">
-                    <video id="videoElement" autoplay playsinline></video>
+                    <div class="camera-wrapper">
+                        <video id="videoElement" autoplay playsinline></video>
+                        <div class="auto-capture-status" id="autoCaptureStatus">Ready</div>
+                        <div class="auto-capture-overlay" id="captureOverlay">📸</div>
+                    </div>
                     <canvas id="canvas"></canvas>
+                    
+                    <!-- Auto-Capture Toggle -->
+                    <div style="text-align: center; margin: 20px 0;">
+                        <label style="display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="autoCapture" onchange="toggleAutoCapture()" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 600; font-size: 16px;">🤖 Auto-Capture Mode (Smart Detection)</span>
+                        </label>
+                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Camera automatically captures when it detects a clear table view</p>
+                    </div>
+                    
+                    <!-- Floating Capture Button -->
+                    <button id="floatingCapture" class="floating-capture" onclick="captureScreenshot()">📸</button>
                     
                     <div class="capture-controls">
                         <button id="startCamera" onclick="startCamera()">📷 Start Camera</button>
-                        <button id="captureBtn" onclick="captureScreenshot()" disabled>📸 Take Screenshot</button>
                         <button id="processBtn" onclick="processScreenshots()" class="secondary" disabled>🔄 Process All Screenshots</button>
                         <button id="stopCamera" onclick="stopCamera()" class="danger" disabled>⏹️ Stop Camera</button>
                     </div>
@@ -540,7 +674,187 @@
         let screenshots = [];
         let extractedData = [];
         let stream = null;
+        let autoCaptureEnabled = false;
+        let autoCaptureInterval = null;
+        let lastCaptureTime = 0;
+        let captureDebounce = 3000; // 3 seconds between auto-captures
         const GOOGLE_VISION_API_KEY = 'AIzaSyD-Ka3mxApP0RR4Gvdf8tOd9IPAsEVhaOw';
+
+        // Auto-capture detection
+        function toggleAutoCapture() {
+            autoCaptureEnabled = document.getElementById('autoCapture').checked;
+            
+            if (autoCaptureEnabled) {
+                startAutoCaptureDetection();
+                showStatus('🤖 Auto-capture enabled! Point camera at BenefitFlow table...', 'success');
+            } else {
+                stopAutoCaptureDetection();
+                showStatus('Manual capture mode.', 'success');
+            }
+        }
+
+        function startAutoCaptureDetection() {
+            if (autoCaptureInterval) return;
+            
+            // Check every 500ms for good capture conditions
+            autoCaptureInterval = setInterval(() => {
+                if (!autoCaptureEnabled || !stream) {
+                    stopAutoCaptureDetection();
+                    return;
+                }
+                
+                checkCaptureConditions();
+            }, 500);
+        }
+
+        function stopAutoCaptureDetection() {
+            if (autoCaptureInterval) {
+                clearInterval(autoCaptureInterval);
+                autoCaptureInterval = null;
+            }
+            updateAutoCaptureStatus('Ready', false);
+        }
+
+        async function checkCaptureConditions() {
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('canvas');
+            
+            if (!video.videoWidth || !video.videoHeight) return;
+            
+            // Debounce - don't capture too frequently
+            const now = Date.now();
+            if (now - lastCaptureTime < captureDebounce) {
+                updateAutoCaptureStatus('Waiting...', false);
+                return;
+            }
+            
+            // Capture frame for analysis
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            // Check if image is sharp enough (blur detection)
+            const isSharp = await checkImageSharpness(canvas);
+            
+            if (!isSharp) {
+                updateAutoCaptureStatus('Move closer / Focus...', false);
+                return;
+            }
+            
+            // Check if there's text-like content (table detection)
+            const hasText = await checkForText(canvas);
+            
+            if (!hasText) {
+                updateAutoCaptureStatus('Looking for table...', false);
+                return;
+            }
+            
+            // All conditions met - capture!
+            updateAutoCaptureStatus('Perfect! Capturing...', true);
+            
+            setTimeout(() => {
+                autoCapture();
+            }, 500); // Brief delay to show feedback
+        }
+
+        function checkImageSharpness(canvas) {
+            return new Promise((resolve) => {
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                // Calculate variance of Laplacian (simple blur detection)
+                let sum = 0;
+                let sumSq = 0;
+                let count = 0;
+                
+                for (let y = 1; y < canvas.height - 1; y++) {
+                    for (let x = 1; x < canvas.width - 1; x++) {
+                        const idx = (y * canvas.width + x) * 4;
+                        
+                        // Simple Laplacian kernel
+                        const center = data[idx];
+                        const top = data[((y-1) * canvas.width + x) * 4];
+                        const bottom = data[((y+1) * canvas.width + x) * 4];
+                        const left = data[(y * canvas.width + (x-1)) * 4];
+                        const right = data[(y * canvas.width + (x+1)) * 4];
+                        
+                        const laplacian = Math.abs(4 * center - top - bottom - left - right);
+                        
+                        sum += laplacian;
+                        sumSq += laplacian * laplacian;
+                        count++;
+                    }
+                }
+                
+                const mean = sum / count;
+                const variance = (sumSq / count) - (mean * mean);
+                
+                // Higher variance = sharper image
+                // Threshold tuned for table text
+                const isSharp = variance > 100;
+                
+                resolve(isSharp);
+            });
+        }
+
+        function checkForText(canvas) {
+            return new Promise((resolve) => {
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                // Simple edge detection to find text-like structures
+                let edgeCount = 0;
+                const sampleSize = 1000; // Sample pixels for speed
+                
+                for (let i = 0; i < sampleSize; i++) {
+                    const x = Math.floor(Math.random() * (canvas.width - 1));
+                    const y = Math.floor(Math.random() * (canvas.height - 1));
+                    const idx = (y * canvas.width + x) * 4;
+                    
+                    const current = data[idx];
+                    const right = data[(y * canvas.width + (x+1)) * 4];
+                    const bottom = data[((y+1) * canvas.width + x) * 4];
+                    
+                    if (Math.abs(current - right) > 30 || Math.abs(current - bottom) > 30) {
+                        edgeCount++;
+                    }
+                }
+                
+                // If we see enough edges, likely has text/table structure
+                const hasText = edgeCount > (sampleSize * 0.3);
+                
+                resolve(hasText);
+            });
+        }
+
+        function updateAutoCaptureStatus(message, isReady) {
+            const statusEl = document.getElementById('autoCaptureStatus');
+            const videoEl = document.getElementById('videoElement');
+            
+            statusEl.textContent = message;
+            statusEl.className = 'auto-capture-status ' + (isReady ? 'ready' : 'detecting');
+            
+            if (isReady) {
+                videoEl.classList.add('ready-to-capture');
+            } else {
+                videoEl.classList.remove('ready-to-capture');
+            }
+        }
+
+        function autoCapture() {
+            const overlay = document.getElementById('captureOverlay');
+            overlay.classList.add('active');
+            
+            setTimeout(() => {
+                overlay.classList.remove('active');
+            }, 500);
+            
+            captureScreenshot();
+            lastCaptureTime = Date.now();
+        }
 
         // Tab switching
         function switchTab(tabName) {
@@ -555,15 +869,24 @@
         async function startCamera() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    } 
                 });
                 document.getElementById('videoElement').srcObject = stream;
                 
                 document.getElementById('startCamera').disabled = true;
-                document.getElementById('captureBtn').disabled = false;
+                document.getElementById('floatingCapture').classList.add('visible');
                 document.getElementById('stopCamera').disabled = false;
                 
-                showStatus('Camera started! Point at BenefitFlow table and capture screenshots.', 'success');
+                // Start auto-capture if enabled
+                if (document.getElementById('autoCapture').checked) {
+                    startAutoCaptureDetection();
+                }
+                
+                showStatus('Camera started! ' + (autoCaptureEnabled ? '🤖 Auto-capture active' : 'Use 📸 button to capture'), 'success');
             } catch (err) {
                 showStatus('Error accessing camera: ' + err.message, 'error');
             }
@@ -575,8 +898,11 @@
                 document.getElementById('videoElement').srcObject = null;
                 
                 document.getElementById('startCamera').disabled = false;
-                document.getElementById('captureBtn').disabled = true;
+                document.getElementById('floatingCapture').classList.remove('visible');
                 document.getElementById('stopCamera').disabled = true;
+                
+                // Stop auto-capture detection
+                stopAutoCaptureDetection();
                 
                 showStatus('Camera stopped.', 'success');
             }
@@ -627,6 +953,68 @@
             
             showStatus(`Screenshot removed. Remaining: ${screenshots.length}`, 'success');
         }
+
+        // File Upload Handler
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            showStatus(`Adding ${files.length} screenshot(s)...`, 'processing');
+
+            for (let file of files) {
+                if (!file.type.startsWith('image/')) {
+                    continue;
+                }
+
+                const screenshot = {
+                    id: Date.now() + Math.random(),
+                    blob: file,
+                    url: URL.createObjectURL(file)
+                };
+
+                screenshots.push(screenshot);
+            }
+
+            renderScreenshots();
+            document.getElementById('processBtn').disabled = false;
+            
+            showStatus(`✅ Added ${files.length} screenshot(s)! Total: ${screenshots.length}. Click "Process All Screenshots" when ready.`, 'success');
+
+            // Reset file input
+            event.target.value = '';
+        }
+
+        // Drag and drop support
+        window.addEventListener('DOMContentLoaded', () => {
+            const uploadArea = document.querySelector('.upload-area');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileUpload({ target: { files } });
+                }
+            });
+
+            // Load saved data
+            const savedData = localStorage.getItem('benefitflow_data');
+            if (savedData) {
+                extractedData = JSON.parse(savedData);
+                renderDataPreview();
+                runBrokerAnalysis();
+            }
+        });
 
         // OCR Processing
         async function processScreenshots() {
@@ -1111,16 +1499,6 @@
             status.className = `status ${type}`;
             status.style.display = 'block';
         }
-
-        // Load saved data on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedData = localStorage.getItem('benefitflow_data');
-            if (savedData) {
-                extractedData = JSON.parse(savedData);
-                renderDataPreview();
-                runBrokerAnalysis();
-            }
-        });
     </script>
 </body>
 </html>
