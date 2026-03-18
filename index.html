@@ -874,6 +874,56 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
     display: none !important;
   }
 
+  
+/* Hamburger menu for overflow buttons */
+@media (max-width: 768px) {
+  .tb-hamburger {
+    width: 40px !important;
+    height: 40px !important;
+    background: var(--bg-card, rgba(255,255,255,0.05)) !important;
+    border: 1px solid var(--border, rgba(255,255,255,0.1)) !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+    cursor: pointer !important;
+  }
+
+  .tb-dropdown-menu {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top) + 60px) !important;
+    right: 12px !important;
+    background: var(--bg-elevated, #2a3649) !important;
+    border: 1px solid var(--border-strong, rgba(255,255,255,0.15)) !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    z-index: 10000 !important;
+    min-width: 200px !important;
+    display: none !important;
+  }
+
+  .tb-dropdown-menu.show {
+    display: block !important;
+  }
+
+  .tb-dropdown-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    color: var(--text-primary, #f8fafc) !important;
+  }
+
+  .tb-dropdown-item:active {
+    background: rgba(255,255,255,0.1) !important;
+  }
+}
+
   /* Icon-only buttons on small screens */
   @media (max-width: 500px) {
     .tb-icon-btn {
@@ -6448,6 +6498,108 @@ console.log('[Email Enhancements] Integration loaded');
     <div class="nav-label">Profile</div>
   </div>
 </div>
+
+
+<script>
+// Add hamburger menu for Templates/History/Signatures
+(function() {
+  if (window.innerWidth > 768) return;
+  
+  setTimeout(function() {
+    const tbRight = document.querySelector('.tb-right');
+    const fbBadge = document.querySelector('#fb-status-badge, .fb-status');
+    
+    if (!tbRight || document.querySelector('.tb-hamburger')) return;
+    
+    // Create hamburger button
+    const hamburger = document.createElement('button');
+    hamburger.className = 'tb-hamburger';
+    hamburger.innerHTML = '☰';
+    hamburger.onclick = function(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('tb-dropdown');
+      if (menu) menu.classList.toggle('show');
+    };
+    
+    // Create dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'tb-dropdown-menu';
+    dropdown.id = 'tb-dropdown';
+    dropdown.innerHTML = `
+      <div class="tb-dropdown-item" onclick="if(typeof openTemplateLibrary==='function') openTemplateLibrary(); document.getElementById('tb-dropdown').classList.remove('show');">
+        📧 Email Templates
+      </div>
+      <div class="tb-dropdown-item" onclick="if(typeof openEmailHistory==='function') openEmailHistory(); document.getElementById('tb-dropdown').classList.remove('show');">
+        📊 Email History
+      </div>
+      <div class="tb-dropdown-item" onclick="if(typeof openSignatureManager==='function') openSignatureManager(); document.getElementById('tb-dropdown').classList.remove('show');">
+        ✍️ Signatures
+      </div>
+    `;
+    
+    // Insert before Firebase badge
+    if (fbBadge) {
+      tbRight.insertBefore(hamburger, fbBadge);
+    } else {
+      tbRight.appendChild(hamburger);
+    }
+    
+    document.body.appendChild(dropdown);
+    
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.tb-hamburger') && !e.target.closest('.tb-dropdown-menu')) {
+        const menu = document.getElementById('tb-dropdown');
+        if (menu) menu.classList.remove('show');
+      }
+    });
+  }, 1500);
+})();
+</script>
+
+
+<script>
+// Add Templates button to cadence touch cards
+(function() {
+  setTimeout(function() {
+    // Find all cadence touch sections that have Outlook/LinkedIn/SMS buttons
+    const touchCards = document.querySelectorAll('.ec-touch-card, [class*="touch"], [class*="cadence"]');
+    
+    touchCards.forEach(function(card) {
+      // Look for the button container with Outlook/LinkedIn/SMS
+      const btnContainer = card.querySelector('.ec-actions, .touch-actions, [class*="btn-group"]');
+      
+      if (btnContainer) {
+        // Check if Templates button already exists
+        if (btnContainer.querySelector('[onclick*="Template"], [class*="template"]')) return;
+        
+        // Get the first button to copy its style
+        const firstBtn = btnContainer.querySelector('button');
+        if (!firstBtn) return;
+        
+        // Create Templates button
+        const templateBtn = document.createElement('button');
+        templateBtn.className = firstBtn.className;
+        templateBtn.innerHTML = '📋 Templates';
+        templateBtn.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof openTemplateLibrary === 'function') {
+            openTemplateLibrary();
+          } else {
+            alert('Template library will open here');
+          }
+        };
+        
+        // Insert as first button
+        btnContainer.insertBefore(templateBtn, btnContainer.firstChild);
+      }
+    });
+    
+    console.log('[Templates] Added to cadence cards');
+  }, 2000);
+})();
+</script>
 
 </body>
 </html>
