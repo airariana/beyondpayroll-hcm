@@ -3,15 +3,17 @@
 // ══════════════════════════════════════════════════════════════════════════
 const API_KEYS = {
   // Google Gemini API Key (for AI prospect analysis)
-  // Get yours at: https://aistudio.google.com/app/apikey
-  GEMINI_API_KEY: 'AIzaSyDXwV2U1XaQScpZ8d1CKxrOCJ2o397rF7s',
+  // This placeholder will be replaced by GitHub Actions during deployment
+  // Real key is stored in GitHub Secrets
+  GEMINI_API_KEY: 'GEMINI_API_KEY_PLACEHOLDER',
   
   // Google Vision API Key (for OCR/image analysis - currently not used, but available)
-  // Get yours at: https://console.cloud.google.com/apis/credentials
-  GOOGLE_VISION_API_KEY: 'AIzaSyD-Ka3mxApP0RR4Gvdf8tOd9IPAsEVhaOw'
+  // This placeholder will be replaced by GitHub Actions during deployment
+  // Real key is stored in GitHub Secrets
+  GOOGLE_VISION_API_KEY: 'VISION_API_KEY_PLACEHOLDER'
   
-  // Note: Anthropic API integration removed to avoid GitHub secret scanning
-  // Add it back manually if needed in the future
+  // Note: Keys are injected at build time via GitHub Actions
+  // They NEVER appear in the source code repository
 };
 
 // Gemini API endpoint - using Flash model for speed
