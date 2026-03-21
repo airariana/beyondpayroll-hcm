@@ -1,0 +1,61 @@
+name: Deploy to GitHub Pages with Secrets
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Inject API keys into app.js
+        run: |
+          echo "🔍 Checking for placeholders in app.js..."
+          
+          # Show what we're looking for (without exposing secrets)
+          grep -n "PLACEHOLDER" app.js || echo "No PLACEHOLDER text found"
+          
+          # Replace Gemini API key placeholder
+          sed -i "s/GEMINI_API_KEY_PLACEHOLDER/${{ secrets.GEMINI_API_KEY }}/g" app.js
+          
+          # Replace Vision API key placeholder  
+          sed -i "s/VISION_API_KEY_PLACEHOLDER/${{ secrets.GOOGLE_VISION_API_KEY }}/g" app.js
+          
+          # Verify replacements worked (without showing the actual keys)
+          if grep -q "PLACEHOLDER" app.js; then
+            echo "❌ ERROR: Placeholders still found after replacement!"
+            echo "This means app.js doesn't have the expected placeholder text."
+            exit 1
+          else
+            echo "✅ API keys injected successfully"
+          fi
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
