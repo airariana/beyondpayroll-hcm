@@ -7358,7 +7358,8 @@ window.addEventListener('DOMContentLoaded', function() {
 console.log('[Email Enhancements] Integration loaded');
 </script>
 
-<script src="app.js?v=15" defer></script>
+<script src="config.js"></script>
+    <script src="app.js?v=15" defer></script>
 <script src="nurture-campaign-system.js" defer></script>
 <script src="learning-agent-system.js" defer></script>
 <script src="nurture-ui-components.js" defer></script>
@@ -7977,8 +7978,8 @@ function openProfileSettings() {
   function fixOutlookButtons() {
     console.log('[Outlook Fix] Setting up mailto handlers...');
     
-    // Find all "Send with Outlook" buttons
-    const outlookButtons = document.querySelectorAll('button[onclick*="mailto"], button:contains("Outlook"), [class*="outlook-btn"], .ec-send-outlook');
+    // Find all "Send with Outlook" buttons (removed invalid :contains selector)
+    const outlookButtons = document.querySelectorAll('button[onclick*="mailto"], [class*="outlook-btn"], .ec-send-outlook');
     
     outlookButtons.forEach(btn => {
       console.log('[Outlook Fix] Found button:', btn.textContent);
