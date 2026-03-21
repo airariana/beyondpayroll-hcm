@@ -1,3 +1,26 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  🔑 API CONFIGURATION — EDIT YOUR API KEYS HERE
+// ══════════════════════════════════════════════════════════════════════════
+const API_KEYS = {
+  // Google Gemini API Key (for AI prospect analysis)
+  // Get yours at: https://aistudio.google.com/app/apikey
+  GEMINI_API_KEY: 'AIzaSyDXwV2U1XaQScpZ8d1CKxrOCJ2o397rF7s',
+  
+  // Google Vision API Key (for OCR/image analysis - currently not used, but available)
+  // Get yours at: https://console.cloud.google.com/apis/credentials
+  GOOGLE_VISION_API_KEY: 'AIzaSyD-Ka3mxApP0RR4Gvdf8tOd9IPAsEVhaOw'
+  
+  // Note: Anthropic API integration removed to avoid GitHub secret scanning
+  // Add it back manually if needed in the future
+};
+
+// Gemini API endpoint - using Flash model for speed
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+// ══════════════════════════════════════════════════════════════════════════
+//  END API CONFIGURATION
+// ══════════════════════════════════════════════════════════════════════════
+
 // ══════════════════════════════════════════════════
 //  STORAGE
 // ══════════════════════════════════════════════════
@@ -1795,21 +1818,17 @@ async function mfAnalyzeAll(){
     }catch(e){console.warn('mfRead:',f.name,e);}
   }
 
-  // ── Fetch URL content via CF Worker ────────────────────────
+  // ── Fetch URL content (simplified - direct fetch, no CF Worker) ────────
   for(let u=0; u<_mfUrls.length; u++){
     const urlObj = _mfUrls[u];
     lbl.textContent = 'Fetching '+urlObj.label+'...';
     fill.style.width = (60 + Math.round((u+0.5)/_mfUrls.length*15))+'%';
     try{
-      const fetchResp = await fetch(window.CF_WORKER_URL||'https://beyondpayroll-proxy.aj-3ab.workers.dev',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-Service':'fetch-url'},
-        body:JSON.stringify({url: urlObj.raw})
-      });
-      const fetchData = await fetchResp.json();
-      const pageText = fetchData.text||fetchData.content||fetchData.body||'';
+      // Direct fetch - will work for CORS-enabled sites
+      // For sites without CORS, this will fail silently and skip the URL
+      const fetchResp = await fetch(urlObj.raw);
+      const pageText = await fetchResp.text();
       if(pageText){
-        // Truncate to avoid token overload — 8000 chars is plenty for a company page
         const truncated = pageText.substring(0,8000);
         parts.push({text:'[WEBSITE: '+urlObj.raw+']\n'+truncated});
       } else {
@@ -1817,7 +1836,7 @@ async function mfAnalyzeAll(){
       }
     }catch(urlErr){
       console.warn('URL fetch failed for',urlObj.raw, urlErr);
-      parts.push({text:'[WEBSITE: '+urlObj.raw+' — could not be fetched, use for context only]'});
+      parts.push({text:'[WEBSITE: '+urlObj.raw+' — could not be fetched (CORS restriction), use for context only]'});
     }
   }
 
@@ -1866,15 +1885,33 @@ INSTRUCTIONS:
   parts.push({text: prompt});
 
   try{
-    const resp = await fetch(window.CF_WORKER_URL||'https://beyondpayroll-proxy.aj-3ab.workers.dev',{
-      method:'POST', headers:{'Content-Type':'application/json','X-Service':'gemini'},
-      body:JSON.stringify({contents:[{parts}]})
+    // ✨ DIRECT GEMINI API CALL - NO CLOUDFLARE WORKER NEEDED
+    const resp = await fetch(GEMINI_API_URL + '?key=' + API_KEYS.GEMINI_API_KEY, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{
+          parts: parts
+        }]
+      })
     });
+    
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      console.error('[Gemini API Error]', errorText);
+      throw new Error('Gemini API request failed: ' + resp.status + ' - Check your API key in app.js');
+    }
+    
     const data = await resp.json();
     const raw = (data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts
       ? data.candidates[0].content.parts.map(function(p){return p.text||'';}).join('')
-      : (data.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('')
+      : ''
     );
+    
+    if (!raw) {
+      throw new Error('No response from Gemini API - check your API key');
+    }
+    
     // Robust JSON extraction — strip fences, find outermost { }
     let clean = raw.replace(/```json|```/g,'').trim();
     const jsonStart = clean.indexOf('{');
@@ -1965,6 +2002,7 @@ INSTRUCTIONS:
     console.error('[BeyondPayroll] mfAnalyzeAll:',err);
   }
 }
+
 
 function dynSetPersona(title){
   const t=(title||'').toLowerCase();
@@ -2118,7 +2156,8 @@ async function imgProcess(file){ _mfFiles=[file]; mfRenderChips(); await mfAnaly
 // SMART ROUTING ENGINE
 // ═══════════════════════════════════════════════════════
 // ── Cloudflare Worker proxy URL (handles Anthropic + Gemini auth) ──
-const BP_WORKER_URL = 'https://beyondpayroll-proxy.aj-3ab.workers.dev';
+// Cloudflare Worker URL removed - now using direct Gemini API calls
+// API keys are configured at the top of this file
 
 // Helper: POST to Gemini via CF Worker proxy
 // Wraps a plain { messages:[{role,content}] } body into Gemini format
@@ -3522,15 +3561,16 @@ If no signals found, return: {"pain_points":[],"competitor_mentions":[],"objecti
   });
 
   try {
-    const response = await fetch(window.CF_WORKER_URL || BP_WORKER_URL, {
+    // ✨ DIRECT GEMINI API CALL
+    const response = await fetch(GEMINI_API_URL + '?key=' + API_KEYS.GEMINI_API_KEY, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Service': 'gemini' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: parts }] })
     });
 
     if (!response.ok) {
       const errText = await response.text().catch(function(){ return 'Network error'; });
-      throw new Error('Proxy error ' + response.status + ': ' + errText.substring(0, 120));
+      throw new Error('Gemini API error ' + response.status + ': ' + errText.substring(0, 120) + ' - Check your API key in app.js');
     }
 
     const data = await response.json();
