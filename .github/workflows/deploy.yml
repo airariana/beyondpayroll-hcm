@@ -26,12 +26,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Verify files exist
+        run: |
+          echo "📁 Checking required files..."
+          ls -lh index.html app.js
+          echo "✅ Files found"
+      
       - name: Inject API keys into app.js
         run: |
-          echo "🔍 Checking for placeholders in app.js..."
+          echo "🔍 Looking for placeholders in app.js..."
           
-          # Show what we're looking for (without exposing secrets)
-          grep -n "PLACEHOLDER" app.js || echo "No PLACEHOLDER text found"
+          # Check if placeholders exist before replacing
+          if grep -q "GEMINI_API_KEY_PLACEHOLDER" app.js; then
+            echo "✅ Found GEMINI_API_KEY_PLACEHOLDER"
+          else
+            echo "⚠️  GEMINI_API_KEY_PLACEHOLDER not found - checking what's there..."
+            grep "GEMINI_API_KEY" app.js | head -5
+          fi
+          
+          if grep -q "VISION_API_KEY_PLACEHOLDER" app.js; then
+            echo "✅ Found VISION_API_KEY_PLACEHOLDER"
+          else
+            echo "⚠️  VISION_API_KEY_PLACEHOLDER not found"
+          fi
           
           # Replace Gemini API key placeholder
           sed -i "s/GEMINI_API_KEY_PLACEHOLDER/${{ secrets.GEMINI_API_KEY }}/g" app.js
@@ -39,13 +56,16 @@ jobs:
           # Replace Vision API key placeholder  
           sed -i "s/VISION_API_KEY_PLACEHOLDER/${{ secrets.GOOGLE_VISION_API_KEY }}/g" app.js
           
-          # Verify replacements worked (without showing the actual keys)
+          # Verify replacements worked
+          echo "🔍 Verifying replacements..."
           if grep -q "PLACEHOLDER" app.js; then
             echo "❌ ERROR: Placeholders still found after replacement!"
-            echo "This means app.js doesn't have the expected placeholder text."
+            echo "Remaining placeholders:"
+            grep "PLACEHOLDER" app.js
             exit 1
           else
             echo "✅ API keys injected successfully"
+            echo "✅ No placeholders remaining"
           fi
       
       - name: Setup Pages
@@ -59,3 +79,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      
+      - name: Deployment complete
+        run: |
+          echo "🚀 Deployment successful!"
+          echo "🌐 Site URL: ${{ steps.deployment.outputs.page_url }}"
