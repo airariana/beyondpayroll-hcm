@@ -1,19 +1,19 @@
 // ══════════════════════════════════════════════════════════════════════════
-//  🔑 API CONFIGURATION — EDIT YOUR API KEYS HERE
+//  🔑 API CONFIGURATION — INJECTED BY GITHUB ACTIONS
 // ══════════════════════════════════════════════════════════════════════════
 const API_KEYS = {
   // Google Gemini API Key (for AI prospect analysis)
   // This placeholder will be replaced by GitHub Actions during deployment
-  // Real key is stored in GitHub Secrets
+  // Real key is stored in GitHub Secrets (GEMINI_API_KEY)
   GEMINI_API_KEY: 'GEMINI_API_KEY_PLACEHOLDER',
   
-  // Google Vision API Key (for OCR/image analysis - currently not used, but available)
+  // Google Vision API Key (for OCR/image analysis)
   // This placeholder will be replaced by GitHub Actions during deployment
-  // Real key is stored in GitHub Secrets
+  // Real key is stored in GitHub Secrets (GOOGLE_VISION_API_KEY)
   GOOGLE_VISION_API_KEY: 'VISION_API_KEY_PLACEHOLDER'
   
-  // Note: Keys are injected at build time via GitHub Actions
-  // They NEVER appear in the source code repository
+  // NOTE: These placeholders are replaced automatically by GitHub Actions
+  // DO NOT put real API keys here - they will be exposed in Git history
 };
 
 // Gemini API endpoint - using Flash model for speed
@@ -2169,9 +2169,11 @@ function bpGeminiFetch(body) {
     return { role: m.role === 'assistant' ? 'model' : 'user',
              parts: [{ text: typeof m.content === 'string' ? m.content : (m.content[0] && m.content[0].text) || '' }] };
   });
-  return fetch(BP_WORKER_URL, {
+  
+  // ✨ DIRECT GEMINI API CALL - NO CLOUDFLARE WORKER
+  return fetch(GEMINI_API_URL + '?key=' + API_KEYS.GEMINI_API_KEY, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Service': 'gemini' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents: contents })
   });
 }
