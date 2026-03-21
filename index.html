@@ -8015,8 +8015,8 @@ function openProfileSettings() {
       });
     });
     
-    // Also fix template buttons (removed invalid :contains selector)
-    const templateButtons = document.querySelectorAll('button[onclick*="template" i], .template-btn');
+    // Also fix template buttons
+    const templateButtons = document.querySelectorAll('button[onclick*="template" i], .template-btn, button:contains("Use Template")');
     
     templateButtons.forEach(btn => {
       console.log('[Template Fix] Found button:', btn.textContent);
