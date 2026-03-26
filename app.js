@@ -1889,8 +1889,8 @@ INSTRUCTIONS:
   parts.push({text: prompt});
 
   try{
-    // ✨ DIRECT GEMINI API CALL - NO CLOUDFLARE WORKER NEEDED
-    const resp = await fetch(GEMINI_API_URL + '?key=' + API_KEYS.GEMINI_API_KEY, {
+    // ✨ VERCEL PROXY CALL - API key handled server-side
+    const resp = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -3560,8 +3560,8 @@ If no signals found, return: {"pain_points":[],"competitor_mentions":[],"objecti
   });
 
   try {
-    // ✨ DIRECT GEMINI API CALL
-    const response = await fetch(GEMINI_API_URL + '?key=' + API_KEYS.GEMINI_API_KEY, {
+    // ✨ VERCEL PROXY CALL - API key handled server-side
+    const response = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: parts }] })
