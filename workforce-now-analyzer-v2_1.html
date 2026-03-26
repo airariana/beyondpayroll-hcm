@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workforce Now Fit & Upgrade Analyzer v2</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Archivo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #0055A5;
+    --primary-light: #0066CC;
+    --primary-dim: rgba(0, 85, 165, 0.1);
+    --secondary: #00A3E0;
+    --success: #00C389;
+    --success-dim: rgba(0, 195, 137, 0.12);
+    --warning: #FF9500;
+    --warning-dim: rgba(255, 149, 0, 0.12);
+    --danger: #E63946;
+    --danger-dim: rgba(230, 57, 70, 0.12);
+    --ink: #0D1B2A;
+    --ink2: #1B263B;
+    --slate: #415A77;
+    --muted: #778DA9;
+    --ghost: #B0B8C4;
+    --line: #E0E5EB;
+    --surface: #F8FAFB;
+    --white: #FFFFFF;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: white;
+    padding: 0 40px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--primary);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 18px;
+    color: white;
+    letter-spacing: -1px;
+  }
+
+  .logo-text {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--secondary);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-badge {
+    background: rgba(0, 163, 224, 0.2);
+    border: 1px solid rgba(0, 163, 224, 0.4);
+    color: var(--secondary);
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  .hero {
+    margin-bottom: 40px;
+    padding: 32px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    border-radius: 12px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero h1 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 36px;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+  }
+
+  .hero p {
+    font-size: 16px;
+    opacity: 0.95;
+    max-width: 700px;
+    line-height: 1.6;
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 32px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--primary-dim);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* FORM */
+  .card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--slate);
+    font-weight: 600;
+  }
+
+  .form-label.required::after {
+    content: ' *';
+    color: var(--danger);
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: white;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    transition: all 0.2s;
+    outline: none;
+  }
+
+  .form-input:focus,
+  .form-select:focus,
+  .form-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-dim);
+  }
+
+  .form-textarea {
+    min-height: 120px;
+    resize: vertical;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  /* COMPETITOR SELECTION */
+  .competitor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 768px) {
+    .competitor-grid { grid-template-columns: 1fr; }
+  }
+
+  .competitor-option {
+    position: relative;
+  }
+
+  .competitor-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .competitor-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border: 2px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .competitor-checkbox:checked + .competitor-label {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+  }
+
+  .competitor-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .competitor-rating {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--warning);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  /* BUTTONS */
+  .btn-analyze {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    padding: 16px 36px;
+    border-radius: 8px;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 85, 165, 0.3);
+  }
+
+  .btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 85, 165, 0.4);
+  }
+
+  .btn-analyze:disabled {
+    background: var(--ghost);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-clear {
+    padding: 16px 24px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-clear:hover {
+    border-color: var(--slate);
+    color: var(--ink);
+  }
+
+  .analyze-section {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin: 32px 0;
+  }
+
+  /* LOADING */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 60px 0;
+  }
+
+  .loading.active { display: block; }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--line);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* RESULTS */
+  #results {
+    display: none;
+  }
+
+  #results.active { display: block; }
+
+  .results-header {
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .results-meta h2 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .results-meta p {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .classification-badge {
+    text-align: right;
+  }
+
+  .classification-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .classification-type {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .type-upgrade { color: var(--success); }
+  .type-new-sale { color: var(--primary); }
+  .type-competitive { color: var(--warning); }
+
+  /* SCORE GRID */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 900px) {
+    .score-grid { grid-template-columns: 1fr; }
+  }
+
+  .score-card {
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+  }
+
+  .score-card.fit::before { background: var(--success); }
+  .score-card.opportunity::before { background: var(--warning); }
+  .score-card.urgency::before { background: var(--danger); }
+
+  .score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .score-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .score-value {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 42px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .score-fit { color: var(--success); }
+  .score-opportunity { color: var(--warning); }
+  .score-urgency { color: var(--danger); }
+
+  .score-bar {
+    height: 8px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .score-fill {
+    height: 100%;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0;
+  }
+
+  .fill-fit { background: var(--success); }
+  .fill-opportunity { background: var(--warning); }
+  .fill-urgency { background: var(--danger); }
+
+  .score-description {
+    font-size: 13px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  /* INSIGHTS */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 900px) {
+    .insights-grid { grid-template-columns: 1fr; }
+  }
+
+  .insight-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+  }
+
+  .insight-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .insight-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+  }
+
+  .insight-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  .insight-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .dot-success { background: var(--success); }
+  .dot-warning { background: var(--warning); }
+  .dot-primary { background: var(--primary); }
+  .dot-danger { background: var(--danger); }
+
+  /* REVIEW BADGE */
+  .review-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--warning-dim);
+    border: 1px solid var(--warning);
+    margin-top: 8px;
+  }
+
+  .review-badge-rating {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--warning);
+  }
+
+  .review-badge-source {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ROI CALCULATOR */
+  .roi-section {
+    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+    border: 2px solid var(--secondary);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 32px;
+  }
+
+  .roi-header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .roi-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .roi-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .roi-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .roi-metrics { grid-template-columns: 1fr 1fr; }
+  }
+
+  .roi-metric {
+    text-align: center;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 163, 224, 0.2);
+  }
+
+  .roi-metric-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .roi-metric-value {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 28px;
+    color: var(--primary);
+    line-height: 1;
+  }
+
+  /* PLAYBOOK */
+  .playbook-section {
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 32px;
+  }
+
+  .playbook-header {
+    margin-bottom: 24px;
+  }
+
+  .playbook-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .playbook-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .playbook-step {
+    display: flex;
+    gap: 20px;
+  }
+
+  .step-number {
+    width: 36px;
+    height: 36px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .step-content h4 {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .step-content p {
+    font-size: 14px;
+    color: var(--slate);
+    line-height: 1.6;
+  }
+
+  /* EXPORT */
+  .export-bar {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  /* Outlook Email Section */
+  .email-section {
+    margin-top: 24px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .email-section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .email-section-title {
+    font-family: 'Archivo', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .email-section-body { padding: 20px; }
+  .ec-outlook{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .ec-ol-tb{background:#1a2460;padding:7px 12px;display:flex;align-items:center;gap:8px}
+  .ec-ol-ico{width:22px;height:22px;background:#0078d4;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+  .ec-ol-bar{background:#e8ebf5;border-bottom:1px solid var(--line);padding:6px 10px;display:flex;gap:4px;flex-wrap:wrap}
+  .ec-fr{display:flex;align-items:flex-start;border-bottom:1px solid var(--line);min-height:34px}
+  .ec-fl{font-size:9px;color:var(--muted);font-weight:700;padding:10px 8px;min-width:52px;flex-shrink:0;border-right:1px solid var(--line);letter-spacing:1px;text-transform:uppercase}
+  .ec-fi-box{width:100%;height:100%;background:transparent;border:none;padding:8px 10px;font-size:13px;color:var(--ink);font-family:'IBM Plex Sans',sans-serif;outline:none;flex:1}
+  .ec-body-txt{min-height:200px;padding:12px;font-size:12px;line-height:1.8;color:var(--ink);white-space:pre-wrap;font-family:'Calibri',sans-serif;border-top:1px solid var(--line);background:#fff}
+  .ec-ol-ft{background:#f8fafb;border-top:1px solid var(--line);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px}
+  .ec-mto{background:#f8fafb;border:1.5px solid var(--line);border-radius:8px;padding:16px}
+  .ec-mto-hdr{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .ec-mto-btn{width:100%;background:#0055A5;border:none;border-radius:6px;padding:13px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;margin-bottom:10px;}
+  .ec-mto-btn:hover{opacity:.88}
+  .ec-tip{background:rgba(255,149,0,.07);border:1px solid rgba(255,149,0,.2);border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:var(--slate);line-height:1.65}
+  .ec-or{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .ec-or-line{flex:1;height:1px;background:var(--line)}
+  .ec-or-txt{font-size:10px;color:var(--muted);font-weight:500}
+  .ec-crow{background:white;border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:7px}
+  .ec-cprev{font-size:10px;color:var(--muted);background:#f8fafb;border:1px solid var(--line);border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5;max-height:46px;overflow:hidden;font-family:'Calibri',sans-serif;word-break:break-word}
+  .ec-cbtn{width:100%;padding:8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid;display:flex;align-items:center;justify-content:center;gap:5px;font-family:'IBM Plex Sans',sans-serif;transition:opacity .15s;background:transparent;color:var(--ink);border-color:var(--line);}
+  .ec-cbtn:hover{opacity:.8}
+  .ec-smb{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;border:1px solid var(--line);background:white;color:var(--muted);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;flex-shrink:0;margin:auto 8px auto 0;transition:all .15s}
+  .ec-smb:hover{border-color:var(--primary);color:var(--primary)}
+  .ec-gen-btn{padding:9px 18px;background:var(--primary);color:white;border:none;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
+  .ec-gen-btn:hover{background:var(--primary-light)}
+  .ec-gen-btn:disabled{opacity:.5;cursor:not-allowed}
+  .ec-loading{font-size:12px;color:var(--muted);font-style:italic;padding:8px 0}
+
+  .btn-export {
+    padding: 10px 20px;
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-export:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  /* API CONFIG */
+  .api-config {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .api-config-toggle {
+    width: 48px;
+    height: 48px;
+    background: var(--slate);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+  }
+
+  .api-config-toggle:hover {
+    background: var(--primary);
+    transform: scale(1.05);
+  }
+
+  .api-config-panel {
+    position: absolute;
+    bottom: 60px;
+    right: 0;
+    width: 320px;
+    background: white;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    padding: 20px;
+    display: none;
+  }
+
+  .api-config-panel.open {
+    display: block;
+  }
+
+  .api-config-title {
+    font-family: 'Archivo', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+
+  .api-key-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+
+  .api-save-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Archivo', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .api-save-btn:hover {
+    background: var(--primary-light);
+  }
+
+  .api-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  .api-hint a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+
+  .api-hint a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">WN</div>
+    <div>
+      <div class="logo-text">Workforce Now Analyzer v2</div>
+      <div class="logo-sub">Fit & Upgrade Intelligence</div>
+    </div>
+  </div>
+  <div class="header-badge">ADP Internal Tool</div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-content">
+      <h1>Workforce Now Fit & Upgrade Analysis</h1>
+      <p>Identify upgrade candidates from ADP Classic/RUN, detect competitive displacement opportunities with review-backed intelligence, and calculate switching ROI for mid-market prospects.</p>
+    </div>
+  </div>
+
+  <!-- CLIENT INFO -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-icon">🏢</div>
+      <div>
+        <div class="section-title">Client Information</div>
+        <div class="section-subtitle">Basic firmographic and account details</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label required">Company Name</label>
+          <input type="text" class="form-input" id="companyName" placeholder="e.g., Acme Corporation">
+        </div>
+        <div class="form-field">
+          <label class="form-label required">Employee Count</label>
+          <input type="number" class="form-input" id="employeeCount" placeholder="e.g., 350">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Industry</label>
+          <input type="text" class="form-input" id="industry" placeholder="e.g., Technology, Manufacturing">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Annual Revenue</label>
+          <input type="text" class="form-input" id="revenue" placeholder="e.g., $45M">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Number of Locations</label>
+          <input type="number" class="form-input" id="locations" placeholder="e.g., 5">
+        </div>
+        <div class="form-field">
+          <label class="form-label">States Operating In</label>
+          <input type="text" class="form-input" id="states" placeholder="e.g., CA, TX, NY">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CURRENT SYSTEM & COMPETITOR SELECTION -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-icon">💻</div>
+      <div>
+        <div class="section-title">Current HCM/Payroll System</div>
+        <div class="section-subtitle">Select all systems currently in use (with third-party ratings)</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-field">
+        <label class="form-label required">Primary HCM/Payroll Platform</label>
+        <select class="form-select" id="primaryPlatform">
+          <option value="">Select primary platform...</option>
+          <option value="ADP Classic">ADP Classic / Workforce Manager (UPGRADE CANDIDATE)</option>
+          <option value="ADP RUN">ADP RUN (UPGRADE CANDIDATE)</option>
+          <option value="Paylocity">Paylocity</option>
+          <option value="Paychex">Paychex Flex</option>
+          <option value="Ceridian">Ceridian Dayforce</option>
+          <option value="UKG">UKG (Ultimate Kronos)</option>
+          <option value="Workday">Workday</option>
+          <option value="BambooHR">BambooHR</option>
+          <option value="Gusto">Gusto</option>
+          <option value="Rippling">Rippling</option>
+          <option value="Other">Other / Multiple Systems</option>
+        </select>
+      </div>
+
+      <div class="form-field" style="margin-top:20px;">
+        <label class="form-label">Additional Systems/Modules (Select all that apply)</label>
+        <div class="competitor-grid">
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="comp-paylocity" value="Paylocity">
+            <label class="competitor-label" for="comp-paylocity">
+              <span class="competitor-name">Paylocity</span>
+              <span class="competitor-rating">⭐ 4.4 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="comp-paychex" value="Paychex">
+            <label class="competitor-label" for="comp-paychex">
+              <span class="competitor-name">Paychex</span>
+              <span class="competitor-rating">⭐ 4.1 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="comp-ceridian" value="Ceridian">
+            <label class="competitor-label" for="comp-ceridian">
+              <span class="competitor-name">Ceridian</span>
+              <span class="competitor-rating">⭐ 4.2 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="comp-workday" value="Workday">
+            <label class="competitor-label" for="comp-workday">
+              <span class="competitor-name">Workday</span>
+              <span class="competitor-rating">⭐ 4.0 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="comp-ukg" value="UKG">
+            <label class="competitor-label" for="comp-ukg">
+              <span class="competitor-name">UKG</span>
+              <span class="competitor-rating">⭐ 4.1 G2</span>
+            </label>
+          </div>
+          <div class="competitor-option">
+            <input type="checkbox" class="competitor-checkbox" id="comp-bamboo" value="BambooHR">
+            <label class="competitor-label" for="comp-bamboo">
+              <span class="competitor-name">BambooHR</span>
+              <span class="competitor-rating">⭐ 4.5 G2</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-field" style="margin-top:20px;">
+        <label class="form-label">ADP Usage Data (if existing ADP client)</label>
+        <textarea class="form-textarea" id="adpUsageData" placeholder="Paste ADP usage data here...
+
+Example:
+Current Product: ADP RUN
+Modules: Payroll only
+Employees in System: 180
+Time & Attendance: Manual spreadsheets
+Benefits Admin: Not using ADP
+Last Upgrade Discussion: 2022
+Pain Points Noted: Manual time entry, no integration with benefits"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALL TRANSCRIPT -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-icon">📞</div>
+      <div>
+        <div class="section-title">Call Notes / Transcript</div>
+        <div class="section-subtitle">Conversation insights and stated needs</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-field">
+        <label class="form-label">Gong Transcript or Call Summary</label>
+        <textarea class="form-textarea" id="callTranscript" style="min-height:180px;" placeholder="Paste Gong call transcript or summary here...
+
+Example:
+[Prospect mentioned they're struggling with manual time entry across 3 locations]
+[Currently using Paychex Flex but frustrated with reporting]
+[Needs better integration between payroll and time tracking]
+[Interested in self-service portal for employees]
+[Budget approved for Q2 implementation]"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYZE -->
+  <div class="analyze-section">
+    <button class="btn-analyze" id="analyzeBtn" onclick="analyzeClient()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      Analyze Fit & Opportunity
+    </button>
+    <button class="btn-clear" onclick="clearForm()">Clear Form</button>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Analyzing client data and generating recommendations...</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="errorBox" style="display:none;background:#fff0f0;border:1px solid #e63946;border-radius:8px;padding:16px 20px;margin-bottom:20px;font-size:13px;color:#c0392b;max-width:1200px;margin-left:auto;margin-right:auto;">
+    <strong>Analysis failed.</strong> <span id="errorMsg"></span>
+    <div style="margin-top:6px;font-size:12px;color:#888;">Open browser console (Option+Cmd+J) for full details.</div>
+  </div>
+  <div id="results">
+    <div class="results-header">
+      <div class="results-meta">
+        <h2 id="resultCompany">—</h2>
+        <p id="resultMeta">Analysis complete</p>
+      </div>
+      <div class="classification-badge">
+        <div class="classification-label">Classification</div>
+        <div class="classification-type" id="classificationType">—</div>
+      </div>
+    </div>
+
+    <!-- SCORES -->
+    <div class="score-grid">
+      <div class="score-card fit">
+        <div class="score-header">
+          <div class="score-label">WFN Fit Score</div>
+          <div class="score-value score-fit" id="fitScore">—</div>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill fill-fit" id="fitBar"></div>
+        </div>
+        <div class="score-description" id="fitReason">—</div>
+      </div>
+
+      <div class="score-card opportunity">
+        <div class="score-header">
+          <div class="score-label">Revenue Opportunity</div>
+          <div class="score-value score-opportunity" id="opportunityScore">—</div>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill fill-opportunity" id="opportunityBar"></div>
+        </div>
+        <div class="score-description" id="opportunityReason">—</div>
+      </div>
+
+      <div class="score-card urgency">
+        <div class="score-header">
+          <div class="score-label">Urgency Level</div>
+          <div class="score-value score-urgency" id="urgencyScore">—</div>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill fill-urgency" id="urgencyBar"></div>
+        </div>
+        <div class="score-description" id="urgencyReason">—</div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="insights-grid">
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#E7F5F0;color:var(--success)">✓</div>
+          <div class="insight-title">Cross-Sell Opportunities</div>
+        </div>
+        <ul class="insight-list" id="crossSellList"></ul>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#FFF4E6;color:var(--warning)">⚠️</div>
+          <div class="insight-title">Key Signals Detected</div>
+        </div>
+        <ul class="insight-list" id="signalsList"></ul>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#E8F4FD;color:var(--primary)">🎯</div>
+          <div class="insight-title">Competitive Angles</div>
+        </div>
+        <ul class="insight-list" id="competitiveList"></ul>
+        <div id="competitorReviews"></div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-header">
+          <div class="insight-icon" style="background:#FDE8EB;color:var(--danger)">🚩</div>
+          <div class="insight-title">Risk Factors</div>
+        </div>
+        <ul class="insight-list" id="risksList"></ul>
+      </div>
+    </div>
+
+    <!-- ROI CALCULATOR -->
+    <div class="roi-section">
+      <div class="roi-header">
+        <div class="roi-title">💰 Estimated Switching ROI</div>
+        <div class="roi-subtitle">Projected value of moving to Workforce Now</div>
+      </div>
+      <div class="roi-metrics">
+        <div class="roi-metric">
+          <div class="roi-metric-label">Annual Savings</div>
+          <div class="roi-metric-value" id="roiSavings">—</div>
+        </div>
+        <div class="roi-metric">
+          <div class="roi-metric-label">Efficiency Gain</div>
+          <div class="roi-metric-value" id="roiEfficiency">—</div>
+        </div>
+        <div class="roi-metric">
+          <div class="roi-metric-label">Payback Period</div>
+          <div class="roi-metric-value" id="roiPayback">—</div>
+        </div>
+        <div class="roi-metric">
+          <div class="roi-metric-label">3-Year Value</div>
+          <div class="roi-metric-value" id="roi3Year">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYBOOK -->
+    <div class="playbook-section">
+      <div class="playbook-header">
+        <div class="playbook-title">📋 Recommended Sales Playbook</div>
+      </div>
+      <div class="playbook-steps" id="playbookSteps"></div>
+      
+      <div class="export-bar">
+        <button class="btn-export" onclick="copyReport()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:6px;">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy Report
+        </button>
+        <button class="btn-export" onclick="window.print()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:6px;">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Print / PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── OUTLOOK EMAIL SECTION ── -->
+  <div class="email-section" id="emailSection" style="display:none">
+    <div class="email-section-header">
+      <div class="email-section-title">✉️ Outreach Email</div>
+      <button class="ec-gen-btn" id="ecGenBtn" onclick="ecGenerate()">⟳ Generate Email via AI</button>
+    </div>
+    <div class="email-section-body">
+      <div id="ecLoadingMsg" class="ec-loading" style="display:none">⏳ Generating personalized email…</div>
+
+      <!-- Outlook mock -->
+      <div class="ec-outlook" id="ecOutlookWrap" style="display:none">
+        <div class="ec-ol-tb">
+          <div class="ec-ol-ico">O</div>
+          <span style="font-size:12px;font-weight:600;color:#fff">New Message — Outlook</span>
+        </div>
+        <div class="ec-ol-bar">
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopyAll()">⎘ Copy All</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopy('to')">To</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopy('subj')">Subject</button>
+          <button class="btn-export" style="padding:4px 10px;font-size:11px;margin:0" onclick="ecCopy('body')">Body</button>
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">To</div>
+          <input class="ec-fi-box" id="ec-to-inp" placeholder="recipient@company.com">
+          <button class="ec-smb" id="smb-to" onclick="ecCopy('to')">copy</button>
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">Cc</div>
+          <input class="ec-fi-box" id="ec-cc-inp" placeholder="optional">
+        </div>
+        <div class="ec-fr">
+          <div class="ec-fl">Subject</div>
+          <div class="ec-fi-box" id="ec-subj-disp" style="font-weight:600;font-size:12px;display:flex;align-items:center;padding:8px 10px;flex:1"></div>
+          <button class="ec-smb" id="smb-subj" onclick="ecCopy('subj')">copy</button>
+        </div>
+        <div class="ec-body-txt" id="ec-body-disp"></div>
+        <div class="ec-ol-ft">
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--slate);cursor:pointer;font-weight:500">
+            <input type="checkbox" id="ec-sig" checked style="accent-color:var(--primary)" onchange="ecRefreshBody()"> Include signature
+          </label>
+          <button class="btn-export" style="padding:5px 12px;font-size:11px;margin:0" onclick="ecCopyAll()">⎘ Copy All Fields</button>
+        </div>
+      </div>
+
+      <!-- Outlook launch panel -->
+      <div class="ec-mto" id="ecMtoWrap" style="display:none">
+        <div class="ec-mto-hdr">
+          <span style="font-size:22px;flex-shrink:0">📧</span>
+          <div>
+            <div style="font-weight:700;font-size:14px;margin-bottom:2px;color:var(--ink)">Open in Outlook</div>
+            <div style="font-size:11px;color:var(--slate);line-height:1.55">One tap launches Outlook with <strong style="color:var(--ink)">To, Subject & Body pre-filled</strong>. Just review and hit Send.</div>
+          </div>
+        </div>
+        <button class="ec-mto-btn" id="ec-mto-btn" onclick="ecFireMailto()">
+          <span style="font-size:16px">✉️</span>
+          <span id="ec-mto-lbl">Open in Outlook — Pre-filled & Ready</span>
+        </button>
+        <div class="ec-tip">
+          <strong style="color:var(--warning);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
+          If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
+        </div>
+        <div class="ec-or"><div class="ec-or-line"></div><span class="ec-or-txt">or copy individually</span><div class="ec-or-line"></div></div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="prev-to"></div>
+          <button class="ec-cbtn" onclick="ecCopy('to')" id="cpbtn-to">⎘ Copy To</button>
+        </div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="prev-subj"></div>
+          <button class="ec-cbtn" onclick="ecCopy('subj')" id="cpbtn-subj">⎘ Copy Subject</button>
+        </div>
+        <div class="ec-crow">
+          <div class="ec-cprev" id="prev-body"></div>
+          <button class="ec-cbtn" onclick="ecCopy('body')" id="cpbtn-body" style="color:#0055A5;border-color:rgba(0,85,165,.25);background:rgba(0,85,165,.05)">⎘ Copy Body</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- API CONFIGURATION -->
+<div class="api-config">
+  <button class="api-config-toggle" onclick="toggleApiConfig()" title="API Configuration">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6"/>
+    </svg>
+  </button>
+  <div class="api-config-panel" id="apiConfigPanel">
+    <div class="api-config-title">🔑 Data Enrichment APIs</div>
+    
+    <!-- CRUNCHBASE API -->
+    <div style="margin-bottom:16px;">
+      <label class="form-label" style="margin-bottom:6px;">Crunchbase API Key (Optional)</label>
+      <input 
+        type="password" 
+        class="api-key-input" 
+        id="crunchbaseApiKey" 
+        placeholder="Enter Crunchbase API key">
+      <div class="api-hint">
+        <strong>Free Tier:</strong> 200 lookups/month<br>
+        Get key at <a href="https://data.crunchbase.com/docs" target="_blank">Crunchbase API</a>
+      </div>
+    </div>
+
+    <button class="api-save-btn" onclick="saveApiKeys()">💾 Save API Key</button>
+
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line);">
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;">
+        <strong>Current Data Sources:</strong><br>
+        ✅ AI Intelligence (Claude)<br>
+        ✅ Manual competitor selection<br>
+        ✅ Third-party review data (G2, TrustRadius)<br>
+        ✅ Crunchbase (if API key set)
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── COMPETITOR REVIEW DATABASE ──────────────────────────────────────────────
+const COMPETITOR_REVIEWS = {
+  'Paylocity': {
+    g2Rating: 4.4,
+    g2Reviews: 2800,
+    trustRadiusRating: 8.2,
+    trustRadiusReviews: 450,
+    commonComplaints: ['Complex reporting', 'Limited customization', 'Steep learning curve'],
+    wfnAdvantages: ['Better analytics', 'More flexible reporting', 'Easier implementation']
+  },
+  'Paychex': {
+    g2Rating: 4.1,
+    g2Reviews: 1900,
+    trustRadiusRating: 7.8,
+    trustRadiusReviews: 380,
+    commonComplaints: ['Outdated UI', 'Poor customer service', 'Limited integrations'],
+    wfnAdvantages: ['Modern interface', 'Better support', 'Robust integration options']
+  },
+  'Ceridian': {
+    g2Rating: 4.2,
+    g2Reviews: 1500,
+    trustRadiusRating: 8.0,
+    trustRadiusReviews: 320,
+    commonComplaints: ['Expensive', 'Complex setup', 'Slow support response'],
+    wfnAdvantages: ['Better value', 'Faster implementation', 'Responsive support']
+  },
+  'Workday': {
+    g2Rating: 4.0,
+    g2Reviews: 1200,
+    trustRadiusRating: 7.5,
+    trustRadiusReviews: 290,
+    commonComplaints: ['Very expensive', 'Slow updates', 'Complex for mid-market'],
+    wfnAdvantages: ['Cost-effective for mid-market', 'Faster updates', 'Right-sized for 100-10K employees']
+  },
+  'UKG': {
+    g2Rating: 4.1,
+    g2Reviews: 1100,
+    trustRadiusRating: 7.9,
+    trustRadiusReviews: 260,
+    commonComplaints: ['Integration challenges', 'Reporting limitations', 'Support inconsistency'],
+    wfnAdvantages: ['Seamless integrations', 'Advanced analytics', 'Consistent support quality']
+  },
+  'BambooHR': {
+    g2Rating: 4.5,
+    g2Reviews: 1800,
+    trustRadiusRating: 8.5,
+    trustRadiusReviews: 410,
+    commonComplaints: ['Limited payroll features', 'Not scalable for growth', 'Basic reporting'],
+    wfnAdvantages: ['Full payroll + HCM', 'Scales with growth', 'Enterprise-grade analytics']
+  }
+};
+
+// ─── API CONFIGURATION ───────────────────────────────────────────────────────
+function toggleApiConfig() {
+  const panel = document.getElementById('apiConfigPanel');
+  panel.classList.toggle('open');
+}
+
+function saveApiKeys() {
+  const crunchbaseKey = document.getElementById('crunchbaseApiKey').value.trim();
+  try {
+    if (crunchbaseKey) { localStorage.setItem('crunchbaseApiKey', crunchbaseKey); }
+    else { localStorage.removeItem('crunchbaseApiKey'); }
+  } catch(e) {}
+  alert('Settings saved!');
+  document.getElementById('apiConfigPanel').classList.remove('open');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const savedCrunchbase = localStorage.getItem('crunchbaseApiKey');
+    if (savedCrunchbase) { document.getElementById('crunchbaseApiKey').value = savedCrunchbase; }
+  } catch(e) {}
+});
+
+// ─── FORM HANDLING ───────────────────────────────────────────────────────────
+function clearForm() {
+  document.getElementById('companyName').value = '';
+  document.getElementById('employeeCount').value = '';
+  document.getElementById('industry').value = '';
+  document.getElementById('revenue').value = '';
+  document.getElementById('locations').value = '';
+  document.getElementById('states').value = '';
+  document.getElementById('primaryPlatform').value = '';
+  document.querySelectorAll('.competitor-checkbox').forEach(cb => cb.checked = false);
+  document.getElementById('adpUsageData').value = '';
+  document.getElementById('callTranscript').value = '';
+  document.getElementById('results').classList.remove('active');
+}
+
+function getSelectedCompetitors() {
+  const selected = [];
+  document.querySelectorAll('.competitor-checkbox:checked').forEach(cb => {
+    selected.push(cb.value);
+  });
+  return selected;
+}
+
+// ─── ANALYSIS ────────────────────────────────────────────────────────────────
+async function analyzeClient() {
+  const companyName = document.getElementById('companyName').value.trim();
+  const employeeCount = document.getElementById('employeeCount').value.trim();
+  const primaryPlatform = document.getElementById('primaryPlatform').value;
+
+  if (!companyName || !employeeCount || !primaryPlatform) {
+    alert('Please fill in Company Name, Employee Count, and Primary Platform');
+    return;
+  }
+
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('results').classList.remove('active');
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('analyzeBtn').disabled = true;
+
+  const selectedCompetitors = getSelectedCompetitors();
+
+  const data = {
+    company: companyName,
+    employees: employeeCount,
+    industry: document.getElementById('industry').value.trim(),
+    revenue: document.getElementById('revenue').value.trim(),
+    locations: document.getElementById('locations').value.trim(),
+    states: document.getElementById('states').value.trim(),
+    primaryPlatform: primaryPlatform,
+    additionalSystems: selectedCompetitors,
+    adpUsageData: document.getElementById('adpUsageData').value.trim(),
+    callTranscript: document.getElementById('callTranscript').value.trim()
+  };
+
+  try {
+    // Build competitor intelligence context
+    const competitorContext = selectedCompetitors.map(comp => {
+      const reviewData = COMPETITOR_REVIEWS[comp];
+      if (!reviewData) return '';
+      return `${comp}: G2 ${reviewData.g2Rating}/5 (${reviewData.g2Reviews} reviews), TrustRadius ${reviewData.trustRadiusRating}/10. Common complaints: ${reviewData.commonComplaints.join(', ')}. WFN advantages: ${reviewData.wfnAdvantages.join(', ')}.`;
+    }).filter(Boolean).join(' ');
+
+    const prompt = `You are an ADP Workforce Now sales analyst. Analyze this prospect for WFN fit and opportunities.
+
+COMPANY DATA:
+Company: ${data.company}
+Employees: ${data.employees}
+Industry: ${data.industry || 'Not provided'}
+Revenue: ${data.revenue || 'Not provided'}
+Locations: ${data.locations || 'Not provided'}
+States: ${data.states || 'Not provided'}
+
+CURRENT SYSTEM:
+Primary Platform: ${data.primaryPlatform}
+Additional Systems: ${data.additionalSystems.join(', ') || 'None selected'}
+
+${competitorContext ? `COMPETITOR INTELLIGENCE (from G2/TrustRadius):
+${competitorContext}
+
+Use this review data to inform competitive angles and identify weaknesses in their current systems.
+` : ''}
+
+${data.adpUsageData ? `ADP USAGE DATA:
+${data.adpUsageData}
+` : ''}
+
+${data.callTranscript ? `CALL NOTES:
+${data.callTranscript}
+` : ''}
+
+Return ONLY valid JSON (no markdown):
+
+{
+  "classification": "UPGRADE" | "NEW SALE" | "COMPETITIVE DISPLACEMENT",
+  "fitScore": 0-100,
+  "fitReason": "One sentence why they fit WFN",
+  "opportunityScore": 0-100,
+  "opportunityReason": "One sentence on revenue potential",
+  "urgencyScore": 0-100,
+  "urgencyReason": "One sentence on timing",
+  "crossSell": ["Module 1", "Module 2", "Module 3"],
+  "signals": ["Signal 1", "Signal 2", "Signal 3"],
+  "competitive": ["Angle 1 (reference review data)", "Angle 2", "Angle 3"],
+  "risks": ["Risk 1", "Risk 2"],
+  "roi": {
+    "annualSavings": "$XX,XXX",
+    "efficiencyGain": "XX hrs/mo",
+    "payback": "X months",
+    "threeYear": "$XXX,XXX"
+  },
+  "playbook": [
+    {"step": "Action", "detail": "How to execute"},
+    {"step": "Action", "detail": "How to execute"},
+    {"step": "Action", "detail": "How to execute"}
+  ]
+}
+
+CLASSIFICATION LOGIC:
+- UPGRADE if currently on ADP Classic or ADP RUN
+- COMPETITIVE DISPLACEMENT if on Paylocity, Paychex, Ceridian, UKG, Workday, BambooHR, etc.
+- NEW SALE if on other/multiple systems
+
+COMPETITIVE ANGLES:
+- Reference specific weaknesses from review data (e.g., "Paylocity users complain about complex reporting - WFN has better analytics")
+- Use G2/TrustRadius ratings to build credibility
+- Focus on pain points mentioned in reviews
+
+SCORING:
+FIT: 100-10K employees ideal, multi-state, unified platform need
+OPPORTUNITY: Revenue potential, cross-sell, competitive switch
+URGENCY: Contract timing, pain points, budget
+
+Keep all text concise (under 100 chars per field).`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-api-key": "ignored", "anthropic-version": "2023-06-01" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 3500,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error('API error ' + response.status + ': ' + errBody.substring(0, 300));
+    }
+
+    const result = await response.json();
+
+    if (!result.content || result.content.length === 0) {
+      throw new Error('Empty response: ' + JSON.stringify(result).substring(0, 200));
+    }
+
+    const raw = result.content.map(i => i.text || "").join("");
+    const clean = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+
+    let analysis;
+    try {
+      analysis = JSON.parse(clean);
+    } catch(parseErr) {
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+      if (jsonMatch) { analysis = JSON.parse(jsonMatch[0]); }
+      else { throw new Error('Could not parse response: ' + clean.substring(0, 200)); }
+    }
+
+    renderResults(analysis, data);
+
+  } catch (err) {
+    console.error('Analysis error:', err);
+    document.getElementById('errorMsg').textContent = err.message;
+    document.getElementById('errorBox').style.display = 'block';
+  } finally {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('analyzeBtn').disabled = false;
+  }
+}
+
+// ─── RENDER RESULTS ──────────────────────────────────────────────────────────
+function renderResults(analysis, data) {
+  // Header
+  document.getElementById('resultCompany').textContent = data.company;
+  document.getElementById('resultMeta').textContent = `${data.employees} employees · ${data.primaryPlatform}`;
+  
+  const classEl = document.getElementById('classificationType');
+  classEl.textContent = analysis.classification;
+  classEl.className = 'classification-type type-' + analysis.classification.toLowerCase().replace(' ', '-');
+
+  // Scores
+  setScore('fit', analysis.fitScore, analysis.fitReason);
+  setScore('opportunity', analysis.opportunityScore, analysis.opportunityReason);
+  setScore('urgency', analysis.urgencyScore, analysis.urgencyReason);
+
+  // Insights
+  renderList('crossSellList', analysis.crossSell, 'dot-success');
+  renderList('signalsList', analysis.signals, 'dot-warning');
+  renderList('competitiveList', analysis.competitive, 'dot-primary');
+  renderList('risksList', analysis.risks, 'dot-danger');
+
+  // Add competitor review badges
+  const competitorReviewsEl = document.getElementById('competitorReviews');
+  competitorReviewsEl.innerHTML = '';
+  
+  data.additionalSystems.forEach(comp => {
+    const reviewData = COMPETITOR_REVIEWS[comp];
+    if (reviewData) {
+      competitorReviewsEl.innerHTML += `
+        <div class="review-badge">
+          <span class="review-badge-rating">⭐ ${reviewData.g2Rating}/5</span>
+          <span class="review-badge-source">${comp} on G2</span>
+        </div>
+      `;
+    }
+  });
+
+  // ROI
+  document.getElementById('roiSavings').textContent = analysis.roi.annualSavings;
+  document.getElementById('roiEfficiency').textContent = analysis.roi.efficiencyGain;
+  document.getElementById('roiPayback').textContent = analysis.roi.payback;
+  document.getElementById('roi3Year').textContent = analysis.roi.threeYear;
+
+  // Playbook
+  const playbookEl = document.getElementById('playbookSteps');
+  playbookEl.innerHTML = '';
+  analysis.playbook.forEach((step, i) => {
+    playbookEl.innerHTML += `
+      <div class="playbook-step">
+        <div class="step-number">${i + 1}</div>
+        <div class="step-content">
+          <h4>${step.step}</h4>
+          <p>${step.detail}</p>
+        </div>
+      </div>`;
+  });
+
+  // Show results
+  document.getElementById('results').classList.add('active');
+  // Show email section and store data for AI generation
+  document.getElementById('emailSection').style.display = 'block';
+  _ecCurrentData = Object.assign({}, data, {
+    classification: analysis.classification,
+    fitScore: analysis.fitScore,
+    opportunityScore: analysis.opportunityScore,
+    signals: analysis.signals,
+    competitive: analysis.competitive,
+    crossSell: analysis.crossSell,
+    roi: analysis.roi
+  });
+  // Reset outlook mock
+  document.getElementById('ecOutlookWrap').style.display = 'none';
+  document.getElementById('ecMtoWrap').style.display = 'none';
+  document.getElementById('ecGenBtn').textContent = '⟳ Generate Email via AI';
+  document.getElementById('ecGenBtn').disabled = false;
+
+  // Animate bars
+  setTimeout(() => {
+    document.getElementById('fitBar').style.width = analysis.fitScore + '%';
+    document.getElementById('opportunityBar').style.width = analysis.opportunityScore + '%';
+    document.getElementById('urgencyBar').style.width = analysis.urgencyScore + '%';
+  }, 100);
+}
+
+function setScore(type, score, reason) {
+  document.getElementById(`${type}Score`).textContent = score;
+  document.getElementById(`${type}Reason`).textContent = reason;
+}
+
+function renderList(containerId, items, dotClass) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  if (!items || items.length === 0) {
+    el.innerHTML = '<li class="insight-item" style="color:var(--ghost);font-style:italic;">None detected</li>';
+    return;
+  }
+  items.forEach(item => {
+    el.innerHTML += `
+      <li class="insight-item">
+        <div class="insight-dot ${dotClass}"></div>
+        <span>${item}</span>
+      </li>`;
+  });
+}
+
+function copyReport() {
+  const text = document.getElementById('results').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Report copied to clipboard!');
+  });
+}
+
+// ── Outlook Email Mock ─────────────────────────────────
+var _ecSubject = '';
+var _ecBodyRaw = '';
+var _ecBody = '';
+var _ecCurrentData = null;
+
+function ecRefreshBody() {
+  const sig = document.getElementById('ec-sig') && document.getElementById('ec-sig').checked;
+  const body = sig ? _ecBodyRaw : _ecBodyRaw.replace(/\n\n—[\s\S]*$/, '');
+  _ecBody = body;
+  document.getElementById('ec-body-disp').textContent = body;
+  document.getElementById('prev-body').textContent = body.substring(0, 88) + '…';
+}
+
+function ecSetEmail(subject, bodyRaw) {
+  _ecSubject = subject;
+  _ecBodyRaw = bodyRaw;
+  ecRefreshBody();
+  document.getElementById('ec-subj-disp').textContent = subject;
+  document.getElementById('prev-to').textContent = document.getElementById('ec-to-inp').value || 'recipient@company.com';
+  document.getElementById('prev-subj').textContent = subject;
+  document.getElementById('ec-mto-lbl').textContent = 'Open in Outlook — Pre-filled & Ready';
+  document.getElementById('ecOutlookWrap').style.display = 'block';
+  document.getElementById('ecMtoWrap').style.display = 'block';
+}
+
+function ecFireMailto() {
+  const toVal = (document.getElementById('ec-to-inp').value || '').trim();
+  if (!toVal) { alert('Add a recipient email first'); return; }
+  const uri = 'mailto:' + encodeURIComponent(toVal) + '?subject=' + encodeURIComponent(_ecSubject) + '&body=' + encodeURIComponent(_ecBody);
+  const a = document.createElement('a'); a.href = uri; a.style.display = 'none'; document.body.appendChild(a); a.click();
+  setTimeout(() => document.body.removeChild(a), 500);
+  document.getElementById('ec-mto-lbl').textContent = '✓ Outlook Opened — Email Launched';
+}
+
+function ecCopyText(text, btnId, label) {
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  if (btnId) {
+    const btn = document.getElementById(btnId); if (!btn) return;
+    const orig = btn.textContent; btn.textContent = '✓ Copied!'; btn.style.color = 'var(--success)'; btn.style.borderColor = 'var(--success)';
+    setTimeout(() => { btn.textContent = label; btn.style.color = ''; btn.style.borderColor = ''; }, 1800);
+  }
+}
+
+function ecCopy(field) {
+  const toVal = document.getElementById('ec-to-inp').value || '';
+  if (field === 'to') ecCopyText(toVal, 'cpbtn-to', '⎘ Copy To');
+  else if (field === 'subj') {
+    ecCopyText(_ecSubject, 'cpbtn-subj', '⎘ Copy Subject');
+    const smb = document.getElementById('smb-subj'); if (smb) { smb.textContent = '✓'; setTimeout(() => smb.textContent = 'copy', 1800); }
+  } else if (field === 'body') ecCopyText(_ecBody, 'cpbtn-body', '⎘ Copy Body');
+}
+
+function ecCopyAll() {
+  const toVal = document.getElementById('ec-to-inp').value || '';
+  ecCopyText('TO: ' + toVal + '\nSUBJECT: ' + _ecSubject + '\n\n' + _ecBody, null, '');
+}
+
+async function ecGenerate() {
+  if (!_ecCurrentData) { alert('Run an analysis first'); return; }
+  const d = _ecCurrentData;
+  const btn = document.getElementById('ecGenBtn');
+  const loading = document.getElementById('ecLoadingMsg');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+  loading.style.display = 'block';
+  document.getElementById('ecOutlookWrap').style.display = 'none';
+  document.getElementById('ecMtoWrap').style.display = 'none';
+
+  const prompt = `You are an elite B2B sales rep for ADP Workforce Now. Write a short, punchy cold outreach email to a prospect based on this analysis.
+
+COMPANY: ${d.company}
+EMPLOYEES: ${d.employees}
+INDUSTRY: ${d.industry || 'Not specified'}
+CURRENT PLATFORM: ${d.primaryPlatform}
+CLASSIFICATION: ${d.classification}
+FIT SCORE: ${d.fitScore}/100
+OPPORTUNITY SCORE: ${d.opportunityScore}/100
+TOP SIGNALS: ${(d.signals || []).slice(0,2).join('; ')}
+COMPETITIVE ANGLES: ${(d.competitive || []).slice(0,2).join('; ')}
+TOP CROSS-SELL MODULES: ${(d.crossSell || []).slice(0,3).join(', ')}
+ROI: ${d.roi ? d.roi.annualSavings + ' annual savings, ' + d.roi.payback + ' payback' : 'not calculated'}
+
+Write a concise, specific, value-driven email. Lead with insight, not a pitch. 
+Reference their current platform's weaknesses. Include 1 compelling stat or data point.
+End with a soft CTA (15-min call, not a demo request).
+
+Respond ONLY with valid JSON (no markdown):
+{
+  "subject": "compelling subject line under 60 chars",
+  "body": "full email body with proper line breaks. Include a signature placeholder: \\n\\n—\\n[Your Name]\\nADP Workforce Now | [Your Phone]\\nbeyondpayroll.net"
+}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const result = await response.json();
+    const raw = result.content.map(i => i.text || '').join('');
+    const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(clean); } catch(e) {
+      const m = clean.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : null;
+    }
+    if (parsed && parsed.subject && parsed.body) {
+      ecSetEmail(parsed.subject, parsed.body);
+    } else {
+      throw new Error('Could not parse email response');
+    }
+  } catch(err) {
+    alert('Email generation failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⟳ Regenerate Email';
+    loading.style.display = 'none';
+  }
+}
+</script>
+
+</body>
+</html>

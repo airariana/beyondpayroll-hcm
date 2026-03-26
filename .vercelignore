@@ -1,0 +1,9 @@
+# Don't deploy these to Vercel
+config.js
+config.template.js
+.git
+.DS_Store
+node_modules
+__pycache__
+*.pyc
+sales_cadence_mcp/.venv/
