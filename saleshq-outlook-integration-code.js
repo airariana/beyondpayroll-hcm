@@ -68,21 +68,25 @@ function attachCanvaEventHandlers() {
   
   // Touch events for better mobile support
   panel.addEventListener('touchstart', function(e) {
-    // Prevent double-tap zoom on buttons
+    // DON'T prevent default - let clicks fire naturally
+    // Just add touch-active class for visual feedback
     const isButton = e.target.closest('button, .asset-type-btn');
     if (isButton) {
-      e.preventDefault();
+      isButton.classList.add('touch-active');
+      setTimeout(() => isButton.classList.remove('touch-active'), 200);
     }
-  }, { passive: false });
+  }, { passive: true });
   
   // Overlay click to close
   const overlay = document.getElementById('canvaOverlay');
   if (overlay) {
     overlay.addEventListener('click', toggleCanvaPanel);
-    overlay.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      toggleCanvaPanel();
-    }, { passive: false });
+    overlay.addEventListener('touchend', function(e) {
+      // Use touchend instead of touchstart for better mobile UX
+      if (e.target === overlay) {
+        toggleCanvaPanel();
+      }
+    }, { passive: true });
   }
 }
 
@@ -132,7 +136,8 @@ function setProspectContext(prospect) {
 
 // ==================== ASSET SELECTION ====================
 
-let selectedAssetType = null;
+// Note: selectedAssetType is already declared in saleshq-canva-integration.js
+// We'll use the existing global variable
 
 // Select asset type and show form
 window.selectAssetType = function(assetType) {
