@@ -9121,81 +9121,106 @@ console.log('✅ Navigation ready');
 <script src="saleshq-outlook-integration-code.js"></script>
 
 
-<!-- Canva Hotfix - Ensures button works even if other errors occur -->
+<!-- Canva Hotfix ENHANCED - Forces panel creation -->
 <script>
 (function() {
   'use strict';
   
-  console.log('🔧 Canva hotfix loading...');
+  console.log('🔧 Enhanced Canva hotfix loading...');
   
-  // Ensure openCanvaPanel exists immediately
-  if (typeof window.openCanvaPanel !== 'function') {
-    console.log('⚠️ openCanvaPanel not found, creating fallback...');
+  // Enhanced openCanvaPanel that creates panel if needed
+  window.openCanvaPanel = function() {
+    console.log('✅ Canva button clicked (enhanced hotfix)');
     
-    window.openCanvaPanel = function() {
-      console.log('✅ Canva button clicked (hotfix version)');
+    // Get containers
+    const container = document.getElementById('canvaPanelContainer');
+    let panel = document.getElementById('canvaPanel');
+    let overlay = document.getElementById('canvaOverlay');
+    
+    // Check if panel content exists
+    if (!panel || !panel.innerHTML || panel.innerHTML.trim() === '') {
+      console.log('⚠️ Panel empty, creating content...');
       
-      // Check if panel exists
-      let panel = document.getElementById('canvaPanel');
-      let overlay = document.getElementById('canvaOverlay');
-      
-      if (!panel) {
-        // Panel doesn't exist, try to initialize
-        if (typeof initializeCanvaPanel === 'function') {
-          try {
-            initializeCanvaPanel();
-          } catch (e) {
-            console.error('Failed to initialize panel:', e);
+      // Create panel content
+      if (typeof createCanvaPanel === 'function') {
+        try {
+          const panelHTML = createCanvaPanel();
+          if (container) {
+            container.innerHTML = panelHTML;
+            console.log('✅ Panel content created via createCanvaPanel');
           }
+        } catch (e) {
+          console.error('❌ createCanvaPanel failed:', e);
         }
-        
-        panel = document.getElementById('canvaPanel');
-        overlay = document.getElementById('canvaOverlay');
-      }
-      
-      // Open panel
-      if (panel && overlay) {
-        panel.style.display = 'block';
-        overlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-        console.log('✅ Panel opened');
+      } else if (typeof window.createCanvaPanel === 'function') {
+        try {
+          const panelHTML = window.createCanvaPanel();
+          if (container) {
+            container.innerHTML = panelHTML;
+            console.log('✅ Panel content created via window.createCanvaPanel');
+          }
+        } catch (e) {
+          console.error('❌ window.createCanvaPanel failed:', e);
+        }
       } else {
-        console.error('❌ Panel elements not found');
-        alert('Canva panel not ready. Please refresh the page.');
-      }
-    };
-    
-    console.log('✅ Fallback openCanvaPanel created');
-  } else {
-    console.log('✅ openCanvaPanel already exists');
-  }
-  
-  // Also ensure toggleCanvaPanel exists
-  if (typeof window.toggleCanvaPanel !== 'function') {
-    window.toggleCanvaPanel = function() {
-      const panel = document.getElementById('canvaPanel');
-      const overlay = document.getElementById('canvaOverlay');
-      
-      if (!panel || !overlay) {
-        window.openCanvaPanel();
+        console.error('❌ createCanvaPanel function not found');
+        alert('Canva integration not fully loaded. Please refresh the page and try again.');
         return;
       }
       
-      if (panel.style.display === 'none' || !panel.style.display) {
-        panel.style.display = 'block';
-        overlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-      } else {
-        panel.style.display = 'none';
-        overlay.style.display = 'none';
-        document.body.style.overflow = 'auto';
+      // Get elements again after creation
+      panel = document.getElementById('canvaPanel');
+      overlay = document.getElementById('canvaOverlay');
+    }
+    
+    // Open panel
+    if (panel && overlay) {
+      panel.style.display = 'block';
+      overlay.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+      console.log('✅ Panel opened successfully!');
+      
+      // Attach event handlers if function exists
+      if (typeof attachCanvaEventHandlers === 'function') {
+        try {
+          attachCanvaEventHandlers();
+          console.log('✅ Event handlers attached');
+        } catch (e) {
+          console.log('⚠️ Event handlers not attached:', e.message);
+        }
       }
-    };
-  }
+    } else {
+      console.error('❌ Panel or overlay still not found after creation attempt');
+      console.log('Panel:', panel);
+      console.log('Overlay:', overlay);
+      alert('Could not create Canva panel. Please refresh the page.');
+    }
+  };
   
-  console.log('✅ Canva hotfix complete - button should work now');
+  // Toggle function
+  window.toggleCanvaPanel = function() {
+    const panel = document.getElementById('canvaPanel');
+    const overlay = document.getElementById('canvaOverlay');
+    
+    if (!panel || !overlay) {
+      window.openCanvaPanel();
+      return;
+    }
+    
+    if (panel.style.display === 'none' || !panel.style.display) {
+      window.openCanvaPanel();
+    } else {
+      panel.style.display = 'none';
+      overlay.style.display = 'none';
+      document.body.style.overflow = 'auto';
+      console.log('✅ Panel closed');
+    }
+  };
+  
+  console.log('✅ Enhanced Canva hotfix complete - ready to create and open panel');
 })();
 </script>
+
 
 </body>
 
