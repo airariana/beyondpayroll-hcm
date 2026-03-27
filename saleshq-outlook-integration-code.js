@@ -6,11 +6,15 @@
 // ==================== INITIALIZATION ====================
 
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎨 Initializing Canva integration...');
+  
   // Initialize Canva panel
   initializeCanvaPanel();
   
   // Initialize Outlook integration
   initializeOutlookMode();
+  
+  console.log('✅ Canva integration connected to existing research workflow');
 });
 
 function initializeCanvaPanel() {
@@ -20,6 +24,65 @@ function initializeCanvaPanel() {
     
     // Enable Outlook mode styling
     document.getElementById('canvaPanel').classList.add('outlook-mode');
+    
+    // Attach event handlers using event delegation (works on mobile)
+    attachCanvaEventHandlers();
+  }
+}
+
+// Attach all event handlers using event delegation
+function attachCanvaEventHandlers() {
+  const panel = document.getElementById('canvaPanel');
+  if (!panel) return;
+  
+  // Asset type selection - use event delegation
+  panel.addEventListener('click', function(e) {
+    // Find clicked asset button
+    const assetBtn = e.target.closest('.asset-type-btn');
+    if (assetBtn) {
+      const assetType = assetBtn.dataset.type;
+      if (assetType) {
+        selectAssetType(assetType);
+      }
+      return;
+    }
+    
+    // Close button
+    if (e.target.closest('.close-btn')) {
+      toggleCanvaPanel();
+      return;
+    }
+    
+    // Generate button
+    if (e.target.closest('#generateAssetBtn')) {
+      generateCanvaAsset();
+      return;
+    }
+    
+    // Cancel button
+    if (e.target.closest('#cancelGenerationBtn')) {
+      resetGenerationForm();
+      return;
+    }
+  });
+  
+  // Touch events for better mobile support
+  panel.addEventListener('touchstart', function(e) {
+    // Prevent double-tap zoom on buttons
+    const isButton = e.target.closest('button, .asset-type-btn');
+    if (isButton) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+  
+  // Overlay click to close
+  const overlay = document.getElementById('canvaOverlay');
+  if (overlay) {
+    overlay.addEventListener('click', toggleCanvaPanel);
+    overlay.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      toggleCanvaPanel();
+    }, { passive: false });
   }
 }
 
@@ -67,6 +130,79 @@ function setProspectContext(prospect) {
   };
 }
 
+// ==================== ASSET SELECTION ====================
+
+let selectedAssetType = null;
+
+// Select asset type and show form
+window.selectAssetType = function(assetType) {
+  selectedAssetType = assetType;
+  
+  // Update UI - remove all selected states
+  document.querySelectorAll('.asset-type-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  
+  // Add selected state to clicked button
+  const selectedBtn = document.querySelector(`[data-type="${assetType}"]`);
+  if (selectedBtn) {
+    selectedBtn.classList.add('selected');
+  }
+  
+  // Update form header
+  const assetConfig = CanvaIntegration.assetTypes[assetType];
+  if (assetConfig) {
+    document.getElementById('selectedAssetName').textContent = assetConfig.name;
+  }
+  
+  // Show generation form
+  document.getElementById('generationForm').style.display = 'block';
+  
+  // Auto-fill form if data available
+  autoFillProspectData();
+  
+  // Scroll to form on mobile
+  setTimeout(() => {
+    const form = document.getElementById('generationForm');
+    if (form && window.innerWidth < 768) {
+      form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 100);
+};
+
+// Auto-fill form with prospect data
+function autoFillProspectData() {
+  // Try enriched data first
+  if (typeof CanvaWithEnrichedData !== 'undefined') {
+    try {
+      const enrichedData = CanvaWithEnrichedData.collectAllProspectData();
+      document.getElementById('canva-company').value = enrichedData.company || '';
+      document.getElementById('canva-industry').value = enrichedData.industry || '';
+      document.getElementById('canva-painpoint').value = enrichedData.painPoint || '';
+      return;
+    } catch (e) {
+      console.log('Could not load enriched data:', e);
+    }
+  }
+  
+  // Fallback to current prospect or window._hqProspect
+  const prospect = window.currentProspect || window._hqProspect || {};
+  document.getElementById('canva-company').value = prospect.company || '';
+  document.getElementById('canva-industry').value = prospect.industry || '';
+  document.getElementById('canva-painpoint').value = prospect.painPoint || prospect.challenges || '';
+}
+
+// Reset form
+function resetGenerationForm() {
+  selectedAssetType = null;
+  document.querySelectorAll('.asset-type-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  document.getElementById('generationForm').style.display = 'none';
+  document.getElementById('canvaLoading').style.display = 'none';
+  document.getElementById('canvaError').style.display = 'none';
+}
+
 // ==================== CANVA PANEL CONTROLS ====================
 
 // Open Canva panel (generic)
@@ -85,12 +221,13 @@ function openCanvaForProspect(prospect) {
 }
 
 // Toggle panel visibility
-const originalToggle = window.toggleCanvaPanel;
 window.toggleCanvaPanel = function() {
   const panel = document.getElementById('canvaPanel');
   const overlay = document.getElementById('canvaOverlay');
   
-  if (panel.style.display === 'none') {
+  if (!panel || !overlay) return;
+  
+  if (panel.style.display === 'none' || !panel.style.display) {
     panel.style.display = 'block';
     overlay.style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -98,55 +235,76 @@ window.toggleCanvaPanel = function() {
     panel.style.display = 'none';
     overlay.style.display = 'none';
     document.body.style.overflow = 'auto';
+    
+    // Reset form when closing
+    resetGenerationForm();
   }
 };
 
 // ==================== MODIFIED GENERATE FUNCTION ====================
 
 // Override the standard generate function with Outlook-optimized version
-const originalGenerateCanvaAsset = window.generateCanvaAsset;
 window.generateCanvaAsset = async function() {
   if (!selectedAssetType) {
     alert('Please select an asset type first');
     return;
   }
 
-  // Collect form data
-  const prospectData = {
-    name: window.currentProspect?.name || '',
-    company: document.getElementById('canva-company').value,
-    industry: document.getElementById('canva-industry').value,
-    painPoint: document.getElementById('canva-painpoint').value,
-    repName: document.getElementById('canva-repname').value,
-    useBrand: document.getElementById('canva-usebrand').checked
-  };
-
   // Show loading state
   document.getElementById('generationForm').style.display = 'none';
   document.getElementById('canvaLoading').style.display = 'block';
 
   try {
-    // Use Outlook-optimized generation
-    const result = await OutlookCanvaIntegration.generateWithOutlookUI(
-      selectedAssetType,
-      prospectData,
-      {
-        companyBrand: prospectData.useBrand ? 'beyondpayroll' : null,
-        includeLinkInEmail: true,
-        autoDownload: false
-      }
-    );
+    // Use enriched data if available
+    let prospectData;
+    if (typeof CanvaWithEnrichedData !== 'undefined') {
+      prospectData = CanvaWithEnrichedData.collectAllProspectData();
+    } else {
+      // Fallback to basic form data
+      prospectData = {
+        name: window.currentProspect?.name || '',
+        company: document.getElementById('canva-company').value,
+        industry: document.getElementById('canva-industry').value,
+        painPoint: document.getElementById('canva-painpoint').value,
+        repName: document.getElementById('canva-repname')?.value || 'Sales Rep',
+        useBrand: document.getElementById('canva-usebrand')?.checked
+      };
+    }
+
+    // Use Outlook-optimized generation if available
+    let result;
+    if (typeof OutlookCanvaIntegration !== 'undefined') {
+      result = await OutlookCanvaIntegration.generateWithOutlookUI(
+        selectedAssetType,
+        prospectData,
+        {
+          companyBrand: prospectData.useBrand ? 'beyondpayroll' : null,
+          includeLinkInEmail: true,
+          autoDownload: false
+        }
+      );
+    } else {
+      // Fallback to standard generation
+      result = await CanvaIntegration.generateAsset(selectedAssetType, prospectData);
+    }
 
     // Hide loading, close main panel
     document.getElementById('canvaLoading').style.display = 'none';
     toggleCanvaPanel();
 
-    // Outlook results panel opens automatically via generateWithOutlookUI
+    // Show success notification
+    if (result.success) {
+      showNotification('✅ Canva asset generated successfully!');
+    }
     
   } catch (error) {
+    console.error('Generation failed:', error);
     document.getElementById('canvaLoading').style.display = 'none';
     document.getElementById('canvaError').style.display = 'block';
-    document.getElementById('errorMessage').textContent = error.message;
+    const errorEl = document.getElementById('errorMessage');
+    if (errorEl) {
+      errorEl.textContent = error.message || 'Generation failed. Please try again.';
+    }
   }
 };
 
