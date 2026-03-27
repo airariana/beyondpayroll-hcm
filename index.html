@@ -743,83 +743,6 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
 
 @media (max-width: 768px) {
   
-  /* Add this HTML to your index.html body:
-  
-  <div class="mobile-bottom-nav">
-    <div class="nav-item active" onclick="switchView('portal')">
-      <div class="nav-icon">🏠</div>
-      <div class="nav-label">Home</div>
-    </div>
-    <div class="nav-item" onclick="ppToggleDrawer()">
-      <div class="nav-icon">📊</div>
-      <div class="nav-label">Pipeline</div>
-    </div>
-    <div class="nav-item" onclick="openEmailEngine()">
-      <div class="nav-icon">✉️</div>
-      <div class="nav-label">Email</div>
-    </div>
-    <div class="nav-item" onclick="toggleProfileDropdown()">
-      <div class="nav-icon">👤</div>
-      <div class="nav-label">Profile</div>
-    </div>
-  </div>
-  
-  */
-  
-  .mobile-bottom-nav {
-    display: flex !important;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--bg-primary);
-    border-top: 1px solid var(--border);
-    padding: 8px 16px;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
-    justify-content: space-around;
-    z-index: 150;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-
-  .mobile-bottom-nav .nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    flex: 1;
-    max-width: 80px;
-  }
-
-  .mobile-bottom-nav .nav-icon {
-    font-size: 24px;
-    opacity: 0.5;
-    transition: all 0.2s ease;
-  }
-
-  .mobile-bottom-nav .nav-label {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-
-  .mobile-bottom-nav .nav-item.active .nav-icon {
-    opacity: 1;
-    filter: drop-shadow(0 0 8px var(--accent));
-  }
-
-  .mobile-bottom-nav .nav-item.active .nav-label {
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .mobile-bottom-nav .nav-item:active {
-    transform: scale(0.95);
-  }
 }
 
 /* Hide on desktop */
@@ -1193,11 +1116,6 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
     padding-bottom: calc(env(safe-area-inset-bottom) + 20px) !important;
   }
   
-  /* Bottom nav should be hidden when email modal is open */
-  .eg-overlay ~ .mobile-bottom-nav,
-  #eg-overlay ~ .mobile-bottom-nav {
-    display: none !important;
-  }
 
 
   /* ══════════════════════════════════════════════════════
@@ -1348,11 +1266,6 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
 }
 
 
-@media (min-width: 769px) {
-  .mobile-bottom-nav {
-    display: none !important;
-  }
-}
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -1570,11 +1483,6 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
 }
 
 
-@media (min-width: 769px) {
-  .mobile-bottom-nav {
-    display: none !important;
-  }
-}
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -7398,359 +7306,14 @@ console.log('[Email Enhancements] Integration loaded');
 <script src="nurture-ui-components.js" defer></script>
 
 
-<!-- ═══════════════════════════════════════════════════════════
-     MOBILE BOTTOM NAVIGATION - FIXED & SIMPLIFIED
-     ═══════════════════════════════════════════════════════════ -->
-<div class="mobile-bottom-nav">
-  <!-- Home - Goes to command center -->
-  <div class="nav-item active" id="nav-home" onclick="if(typeof switchView==='function')switchView('portal');document.querySelectorAll('.modal,.eg-modal').forEach(m=>m.style.display='none');">
-    <div class="nav-icon">🏠</div>
-    <div class="nav-label">Home</div>
-  </div>
-  
-  <!-- Pipeline - Opens saved prospects list -->
-  <div class="nav-item" id="nav-pipeline" onclick="if(typeof ppToggleDrawer==='function')ppToggleDrawer();">
-    <div class="nav-icon">📊</div>
-    <div class="nav-label">Pipeline</div>
-  </div>
-  
-  <!-- Email Generator - Lightning bolt -->
-  <div class="nav-item" id="nav-email" onclick="if(typeof window.openEmailEngine==='function')window.openEmailEngine();else document.getElementById('eg-overlay')?.classList.add('open');">
-    <div class="nav-icon">⚡</div>
-    <div class="nav-label">EG</div>
-  </div>
-  
-  <!-- Profile - Opens user settings -->
-  <div class="nav-item" id="nav-profile" onclick="if(typeof toggleProfileDropdown==='function')toggleProfileDropdown();">
-    <div class="nav-icon">👤</div>
-    <div class="nav-label">Profile</div>
-  </div>
-</div>
 
 
 
 <script>
-// Profile settings function for bottom nav
-function openProfileSettings() {
-  // Check if admin panel exists and user has access
-  const adminBtn = document.getElementById('admin-panel-btn');
-  if (adminBtn && adminBtn.style.display !== 'none' && typeof adminOpenPanel === 'function') {
-    adminOpenPanel();
-    return;
-  }
-  
-  // Otherwise show a simple alert/modal with profile options
-  // Or just toggle the profile dropdown (since it has sync and logout)
-  toggleProfileDropdown();
-}
-</script>
 
 
 
 
-
-
-
-
-<script>
-// ══════════════════════════════════════════════════════
-// BOTTOM NAV - Bulletproof handlers (v3)
-// ══════════════════════════════════════════════════════
-(function() {
-  'use strict';
-  
-  let setupAttempts = 0;
-  const maxAttempts = 10;
-  
-  function setupBottomNav() {
-    if (setupAttempts >= maxAttempts) {
-      console.log('[Bottom Nav] Max setup attempts reached');
-      return;
-    }
-    setupAttempts++;
-    
-    // Get buttons by ID
-    const homeBtn = document.getElementById('nav-home');
-    const pipelineBtn = document.getElementById('nav-pipeline');
-    const emailBtn = document.getElementById('nav-email');
-    const profileBtn = document.getElementById('nav-profile');
-    
-    if (!homeBtn || !pipelineBtn || !emailBtn || !profileBtn) {
-      console.log('[Bottom Nav] Buttons not ready, retry', setupAttempts);
-      setTimeout(setupBottomNav, 300);
-      return;
-    }
-    
-    // Check if already setup
-    if (homeBtn._navSetup) {
-      console.log('[Bottom Nav] Already setup, skipping');
-      return;
-    }
-    
-    console.log('[Bottom Nav] All buttons found, setting up...');
-    console.log('[Bottom Nav] Button IDs:', {
-      home: homeBtn.id,
-      pipeline: pipelineBtn.id,
-      email: emailBtn.id,
-      profile: profileBtn.id
-    });
-    
-    // CRITICAL: Clear ALL existing event listeners by cloning
-    const newHomeBtn = homeBtn.cloneNode(true);
-    const newPipelineBtn = pipelineBtn.cloneNode(true);
-    const newEmailBtn = emailBtn.cloneNode(true);
-    const newProfileBtn = profileBtn.cloneNode(true);
-    
-    homeBtn.parentNode.replaceChild(newHomeBtn, homeBtn);
-    pipelineBtn.parentNode.replaceChild(newPipelineBtn, pipelineBtn);
-    emailBtn.parentNode.replaceChild(newEmailBtn, emailBtn);
-    profileBtn.parentNode.replaceChild(newProfileBtn, profileBtn);
-    
-    // HOME - Go to command center / main view (DO NOT RELOAD - preserves data)
-    newHomeBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[Bottom Nav] HOME clicked - switching to portal view');
-      
-      // Switch to portal view without reloading
-      if (typeof switchView === 'function') {
-        switchView('portal');
-      }
-      
-      // Close any open modals
-      var modals = document.querySelectorAll('.modal, .eg-modal');
-      modals.forEach(function(m) {
-        if (m.style.display === 'flex' || m.style.display === 'block') {
-          m.style.display = 'none';
-        }
-      });
-      
-      // Mark as active
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newHomeBtn.classList.add('active');
-    });
-    
-    newHomeBtn.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[Bottom Nav] HOME touched - switching to portal view');
-      
-      if (typeof switchView === 'function') {
-        switchView('portal');
-      }
-      
-      var modals = document.querySelectorAll('.modal, .eg-modal');
-      modals.forEach(function(m) {
-        if (m.style.display === 'flex' || m.style.display === 'block') {
-          m.style.display = 'none';
-        }
-      });
-      
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newHomeBtn.classList.add('active');
-    });
-    
-    // PIPELINE - Open pipeline/saved prospects drawer
-    newPipelineBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[Bottom Nav] PIPELINE clicked - opening pipeline drawer');
-      
-      // Call pipeline toggle function
-      if (typeof ppToggleDrawer === 'function') {
-        ppToggleDrawer();
-      } else if (typeof window.ppToggleDrawer === 'function') {
-        window.ppToggleDrawer();
-      } else {
-        console.warn('[Bottom Nav] ppToggleDrawer function not found');
-      }
-      
-      // Mark as active
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newPipelineBtn.classList.add('active');
-    });
-    
-    newPipelineBtn.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[Bottom Nav] PIPELINE touched - opening pipeline drawer');
-      
-      if (typeof ppToggleDrawer === 'function') {
-        ppToggleDrawer();
-      } else if (typeof window.ppToggleDrawer === 'function') {
-        window.ppToggleDrawer();
-      }
-      
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newPipelineBtn.classList.add('active');
-    });
-    
-    // EMAIL - Open email generator engine
-    newEmailBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[Bottom Nav] EMAIL clicked - opening email generator');
-      console.log('[Bottom Nav] openEmailEngine exists?', typeof window.openEmailEngine);
-      console.log('[Bottom Nav] window._hqProspect:', window._hqProspect);
-      
-      // Call the email engine function directly
-      if (typeof window.openEmailEngine === 'function') {
-        try {
-          window.openEmailEngine();
-          console.log('[Bottom Nav] openEmailEngine called successfully');
-        } catch(err) {
-          console.error('[Bottom Nav] Error calling openEmailEngine:', err);
-          
-          // Fallback: try to open the modal directly
-          try {
-            var overlay = document.getElementById('eg-overlay');
-            if (overlay) {
-              overlay.classList.add('open');
-              console.log('[Bottom Nav] Opened modal directly as fallback');
-            } else {
-              alert('Email generator modal not found. Please refresh the page.');
-            }
-          } catch(err2) {
-            alert('Error opening email generator: ' + err2.message);
-          }
-        }
-      } else {
-        console.error('[Bottom Nav] openEmailEngine not found!');
-        console.log('[Bottom Nav] Available window functions:', Object.keys(window).filter(k => k.includes('email') || k.includes('Email')));
-        
-        // Fallback: try to open the modal directly
-        try {
-          var overlay = document.getElementById('eg-overlay');
-          if (overlay) {
-            overlay.classList.add('open');
-            console.log('[Bottom Nav] Opened modal directly (function not found)');
-          } else {
-            alert('Email generator not ready. Please refresh the page.');
-          }
-        } catch(err) {
-          alert('Email generator not ready. Please refresh the page.');
-        }
-      }
-      
-      // Mark as active
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newEmailBtn.classList.add('active');
-    });
-    
-    newEmailBtn.addEventListener('touchstart', function(e) {
-      // Visual feedback on touch
-      newEmailBtn.style.opacity = '0.7';
-    });
-    
-    newEmailBtn.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Restore visual state
-      newEmailBtn.style.opacity = '1';
-      
-      console.log('[Bottom Nav] EMAIL touched - opening email generator');
-      
-      // Small delay to ensure proper execution
-      setTimeout(function() {
-        if (typeof window.openEmailEngine === 'function') {
-          window.openEmailEngine();
-        } else {
-          console.warn('[Bottom Nav] openEmailEngine not found');
-          alert('Email generator not ready. Please refresh the page.');
-        }
-      }, 100);
-      
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newEmailBtn.classList.add('active');
-    });
-    
-    newEmailBtn.addEventListener('touchcancel', function(e) {
-      // Restore visual state if touch is cancelled
-      newEmailBtn.style.opacity = '1';
-    });
-    
-    // PROFILE - Open profile dropdown
-    newProfileBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[Bottom Nav] PROFILE clicked - opening profile settings');
-      
-      // Call toggle profile dropdown
-      if (typeof toggleProfileDropdown === 'function') {
-        toggleProfileDropdown();
-      } else if (typeof window.toggleProfileDropdown === 'function') {
-        window.toggleProfileDropdown();
-      } else {
-        console.warn('[Bottom Nav] toggleProfileDropdown not found');
-      }
-      
-      // Mark as active
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newProfileBtn.classList.add('active');
-    });
-    
-    newProfileBtn.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('[Bottom Nav] PROFILE touched - opening profile settings');
-      
-      if (typeof toggleProfileDropdown === 'function') {
-        toggleProfileDropdown();
-      } else if (typeof window.toggleProfileDropdown === 'function') {
-        window.toggleProfileDropdown();
-      }
-      
-      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
-      newProfileBtn.classList.add('active');
-    });
-    
-    // Mark as setup
-    newHomeBtn._navSetup = true;
-    newPipelineBtn._navSetup = true;
-    newEmailBtn._navSetup = true;
-    newProfileBtn._navSetup = true;
-    
-    console.log('[Bottom Nav] ✓ All handlers attached');
-  }
-  
-  // Initialize with multiple attempts and better logging
-  console.log('[Bottom Nav] Starting initialization...');
-  console.log('[Bottom Nav] Document state:', document.readyState);
-  
-  if (document.readyState === 'loading') {
-    console.log('[Bottom Nav] Document still loading, waiting for DOMContentLoaded');
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('[Bottom Nav] DOMContentLoaded fired');
-      setTimeout(setupBottomNav, 1000);
-    });
-  } else {
-    console.log('[Bottom Nav] Document already loaded, setting up immediately');
-    setTimeout(setupBottomNav, 1000);
-  }
-  
-  window.addEventListener('load', function() {
-    console.log('[Bottom Nav] Window load event fired');
-    setTimeout(setupBottomNav, 1500);
-  });
-  
-  // Aggressive fallback - try every 2 seconds for up to 10 seconds
-  var fallbackAttempts = 0;
-  var fallbackInterval = setInterval(function() {
-    fallbackAttempts++;
-    console.log('[Bottom Nav] Fallback attempt', fallbackAttempts);
-    
-    var homeBtn = document.getElementById('nav-home');
-    if (homeBtn && !homeBtn._navSetup) {
-      console.log('[Bottom Nav] Running setup via fallback');
-      setupBottomNav();
-      clearInterval(fallbackInterval);
-    }
-    
-    if (fallbackAttempts >= 5) {
-      console.error('[Bottom Nav] Failed to setup after 5 fallback attempts');
-      clearInterval(fallbackInterval);
-    }
   }, 2000);
 })();
 </script>
@@ -8026,11 +7589,6 @@ function openProfileSettings() {
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
     
-    // Show bottom nav
-    const bottomNav = document.querySelector('.mobile-bottom-nav');
-    if (bottomNav) {
-      bottomNav.style.display = 'flex';
-    }
     
     console.log('[Email Close Fix] Email generator closed');
   }
@@ -9261,9 +8819,8 @@ function openProfileSettings() {
 </script>
 
 
-<!-- Hide bottom nav and email generator -->
+<!-- Hide email generator -->
 <style>
-.mobile-bottom-nav { display: none !important; }
 .eg-overlay, #eg-overlay { display: none !important; }
 </style>
 
@@ -9564,4 +9121,4 @@ console.log('✅ Navigation ready');
 <script src="saleshq-outlook-integration-code.js"></script>
 
 </body>
-</html>
+

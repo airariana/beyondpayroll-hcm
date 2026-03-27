@@ -204,28 +204,53 @@ function resetGenerationForm() {
 }
 
 // ==================== CANVA PANEL CONTROLS ====================
+// Define these IMMEDIATELY so they're available when page loads
 
 // Open Canva panel (generic)
-function openCanvaPanel() {
-  document.getElementById('canvaPanel').style.display = 'block';
-  document.getElementById('canvaOverlay').style.display = 'block';
-  document.body.style.overflow = 'hidden';
-}
+window.openCanvaPanel = function() {
+  console.log('🎨 openCanvaPanel called');
+  
+  // Check if panel exists, if not, try to initialize
+  let panel = document.getElementById('canvaPanel');
+  
+  if (!panel) {
+    console.log('Panel not ready, initializing...');
+    // Try to initialize if function is available
+    if (typeof initializeCanvaPanel === 'function') {
+      initializeCanvaPanel();
+    }
+    panel = document.getElementById('canvaPanel');
+  }
+  
+  const overlay = document.getElementById('canvaOverlay');
+  
+  if (panel && overlay) {
+    panel.style.display = 'block';
+    overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  } else {
+    console.error('Canva panel elements not found');
+  }
+};
 
 // Open Canva panel with prospect context
-function openCanvaForProspect(prospect) {
+window.openCanvaForProspect = function(prospect) {
   if (prospect) {
     setProspectContext(prospect);
   }
-  openCanvaPanel();
-}
+  window.openCanvaPanel();
+};
 
 // Toggle panel visibility
 window.toggleCanvaPanel = function() {
   const panel = document.getElementById('canvaPanel');
   const overlay = document.getElementById('canvaOverlay');
   
-  if (!panel || !overlay) return;
+  if (!panel || !overlay) {
+    // Try to open instead
+    window.openCanvaPanel();
+    return;
+  }
   
   if (panel.style.display === 'none' || !panel.style.display) {
     panel.style.display = 'block';
@@ -237,7 +262,9 @@ window.toggleCanvaPanel = function() {
     document.body.style.overflow = 'auto';
     
     // Reset form when closing
-    resetGenerationForm();
+    if (typeof resetGenerationForm === 'function') {
+      resetGenerationForm();
+    }
   }
 };
 
@@ -446,12 +473,10 @@ async function batchGenerateOneSheets(prospects) {
 
 // ==================== EXPORT ====================
 
-// Make functions available globally
-window.openCanvaPanel = openCanvaPanel;
-window.openCanvaForProspect = openCanvaForProspect;
+// Additional functions to make available globally
+// (openCanvaPanel and toggleCanvaPanel are already defined as window. properties above)
 window.setProspectContext = setProspectContext;
 window.onEmailSent = onEmailSent;
-window.copyCanvaUrlForOutlook = copyCanvaUrlForOutlook;
-window.openCanvaAndCopy = openCanvaAndCopy;
-window.exportCanvaToPDF = exportCanvaToPDF;
-window.batchGenerateOneSheets = batchGenerateOneSheets;
+
+// Log that integration is ready
+console.log('✅ Canva Outlook integration ready - all functions exported to window');

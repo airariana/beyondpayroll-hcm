@@ -62,7 +62,14 @@ const CanvaWithEnrichedData = {
       }
     });
 
-    // ── Pain points (from SRE checkboxes) ──
+    // ── Extracted Signals (from intelligence extraction - Gong, call transcripts, etc.) ──
+    const extractedSignals = p.extractedSignals || p.signals || {};
+    const extractedPainPoints = extractedSignals.painPoints || p.painPointsExtracted || [];
+    const buyingSignals = extractedSignals.buyingSignals || p.buyingSignals || [];
+    const objections = extractedSignals.objections || p.objections || [];
+    const keyQuotes = extractedSignals.keyQuotes || p.keyQuotes || [];
+    
+    // ── Pain points (from SRE checkboxes + extracted signals) ──
     const painPoints = [];
     const painMap = {
       'sre-401k': '401k admin errors', 
@@ -77,10 +84,24 @@ const CanvaWithEnrichedData = {
       'sre-multi': 'multi-entity payroll complexity',
       'sre-manual': 'excessive manual HR/payroll processes'
     };
+    
+    // Collect from SRE checkboxes
     Object.entries(painMap).forEach(([id, label]) => {
       const el = document.getElementById(id);
       if (el && el.checked) painPoints.push(label);
     });
+    
+    // Add extracted pain points (from intelligence extraction)
+    if (extractedPainPoints && Array.isArray(extractedPainPoints)) {
+      extractedPainPoints.forEach(pp => {
+        const formatted = String(pp).replace(/_/g, ' ');
+        if (!painPoints.includes(formatted)) {
+          painPoints.push(formatted);
+        }
+      });
+    }
+    
+    // Fallback to saved pain points
     if (!painPoints.length && p.painPoints && p.painPoints.length) {
       painPoints.push(...p.painPoints);
     }
@@ -153,7 +174,12 @@ const CanvaWithEnrichedData = {
     } catch(e) {}
 
     // ── Build comprehensive context for Canva ──
-    const painPoint = this.buildPainPointNarrative(painPoints, enrichmentLines, transcript);
+    const painPoint = this.buildPainPointNarrative(
+      painPoints, 
+      enrichmentLines, 
+      transcript, 
+      { buyingSignals, objections, keyQuotes }
+    );
     const companyContext = this.buildCompanyContext({
       companyName, industry, numEE, state, competitor,
       marketIntelSummary, intelSummary, sreRec, enrichmentLines
@@ -184,6 +210,10 @@ const CanvaWithEnrichedData = {
         aiSources,
         aiNotes,
         painPoints,
+        extractedPainPoints,  // Specific extracted pain points
+        buyingSignals,        // Buying signals from intelligence
+        objections,           // Objections raised
+        keyQuotes,            // Key quotes from conversations
         transcript,
         intelSummary,
         marketIntelSummary,
@@ -196,26 +226,47 @@ const CanvaWithEnrichedData = {
   },
 
   /**
-   * Build narrative pain point from multiple sources
+   * Build narrative pain point from multiple sources including extracted signals
    */
-  buildPainPointNarrative(painPoints, enrichmentLines, transcript) {
+  buildPainPointNarrative(painPoints, enrichmentLines, transcript, extractedData = {}) {
     const parts = [];
+    const { buyingSignals = [], objections = [], keyQuotes = [] } = extractedData;
     
+    // Pain points (prioritize extracted ones)
     if (painPoints.length) {
-      parts.push(`Key challenges: ${painPoints.slice(0, 3).join(', ')}`);
+      parts.push(`Key challenges: ${painPoints.slice(0, 5).join(', ')}`);
     }
     
+    // Key quotes (most impactful first)
+    if (keyQuotes.length) {
+      const quote = Array.isArray(keyQuotes) ? keyQuotes[0] : keyQuotes;
+      parts.push(`"${String(quote).replace(/^"/, '').replace(/"$/, '')}"`);
+    }
+    
+    // Buying signals (show readiness)
+    if (buyingSignals.length) {
+      const signal = Array.isArray(buyingSignals) ? buyingSignals.join(', ') : buyingSignals;
+      parts.push(`Buying signals: ${signal}`);
+    }
+    
+    // Objections (to address)
+    if (objections.length) {
+      const objection = Array.isArray(objections) ? objections[0] : objections;
+      parts.push(`Concern: ${objection}`);
+    }
+    
+    // AI enrichment from uploads
     if (enrichmentLines.length) {
-      parts.push(`From uploaded docs: ${enrichmentLines.slice(0, 2).join(' | ')}`);
+      parts.push(`Context: ${enrichmentLines.slice(0, 2).join(' | ')}`);
     }
     
-    if (transcript) {
-      // Extract first pain point mention from transcript
+    // Transcript excerpts
+    if (transcript && parts.length < 3) {
       const painMention = transcript.slice(0, 200);
       if (painMention.toLowerCase().includes('challenge') || 
           painMention.toLowerCase().includes('problem') ||
           painMention.toLowerCase().includes('issue')) {
-        parts.push(`From call: ${painMention}`);
+        parts.push(`From conversation: ${painMention}`);
       }
     }
     

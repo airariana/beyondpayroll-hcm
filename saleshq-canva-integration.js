@@ -100,37 +100,70 @@ const CanvaIntegration = {
 
   // Build context-aware query based on asset type and prospect
   buildQuery(assetType, prospectData) {
+    // Extract enriched intelligence data
+    const raw = prospectData.rawData || {};
+    const painPoints = raw.painPoints || [];
+    const buyingSignals = raw.buyingSignals || [];
+    const objections = raw.objections || [];
+    const keyQuotes = raw.keyQuotes || [];
+    
+    // Build context string from extracted intelligence
+    let intelligenceContext = '';
+    if (keyQuotes.length) {
+      intelligenceContext += `\nKey quote from prospect: "${keyQuotes[0]}"`;
+    }
+    if (buyingSignals.length) {
+      intelligenceContext += `\nBuying signals: ${buyingSignals.join(', ')}`;
+    }
+    if (objections.length) {
+      intelligenceContext += `\nConcerns to address: ${objections.join(', ')}`;
+    }
+    if (painPoints.length > 0) {
+      intelligenceContext += `\nSpecific pain points: ${painPoints.slice(0, 5).join(', ')}`;
+    }
+    
     const queries = {
       proposal: `Create a professional business proposal for ${prospectData.company || 'prospect'}.
         Industry: ${prospectData.industry || 'general'}
         Key pain point: ${prospectData.painPoint || 'operational efficiency'}
-        Solution: Beyond Payroll - integrated payroll and workforce management
-        Include: Executive summary, problem statement, our solution, pricing tiers, next steps
-        Make it visually compelling with charts and graphics.`,
+        Solution: Beyond Payroll - integrated payroll and workforce management${intelligenceContext}
+        
+        Include: Executive summary, problem statement directly addressing their challenges, our solution, pricing tiers, next steps
+        Make it visually compelling with charts and graphics.
+        ${keyQuotes.length ? 'Reference their specific concerns about: ' + keyQuotes[0] : ''}`,
 
       oneSheet: `Create a one-page product overview flyer for Beyond Payroll targeting ${prospectData.company || 'prospects'}.
         Industry focus: ${prospectData.industry || 'general business'}
+        Their challenges: ${painPoints.slice(0, 3).join(', ') || prospectData.painPoint || 'operational efficiency'}${intelligenceContext}
+        
         Highlight: Automated payroll, compliance tracking, workforce analytics
-        Include: Key benefits, ROI stats, customer logos, contact CTA
-        Design style: Professional, clean, data-driven`,
+        Include: Key benefits addressing their specific pain points, ROI stats, customer logos, contact CTA
+        Design style: Professional, clean, data-driven
+        ${objections.length ? 'Address concern: ' + objections[0] : ''}`,
 
       caseStudy: `Create a case study document showcasing success with a client similar to ${prospectData.company || 'prospect'}.
         Industry: ${prospectData.industry || 'general'}
         Challenge: ${prospectData.painPoint || 'Manual payroll processes causing errors'}
+        Specific pain points: ${painPoints.slice(0, 3).join(', ') || 'Payroll errors, compliance risks'}${intelligenceContext}
+        
         Solution: Beyond Payroll automation
         Results: 75% time savings, 95% error reduction, $50K annual cost savings
-        Include: Before/after comparison, testimonial quote, metrics dashboard`,
+        Include: Before/after comparison, testimonial quote (${keyQuotes.length ? 'similar to: "' + keyQuotes[0] + '"' : 'about time savings'}), metrics dashboard`,
 
       infographic: `Create an infographic showing the value proposition for ${prospectData.company || 'prospects'}.
         Focus: ${prospectData.painPoint || 'Payroll automation benefits'}
+        Address these challenges: ${painPoints.slice(0, 4).join(', ') || 'Time waste, errors, compliance'}${intelligenceContext}
+        
         Data points: 
-        - 10 hours/week time savings
+        - 10 hours/week time savings (addresses: ${painPoints[0] || 'manual processes'})
         - 95% reduction in payroll errors
         - 60% faster month-end close
-        - Full compliance automation
-        Design: Modern, colorful, icon-driven with data visualizations`,
+        - Full compliance automation (addresses: ${painPoints.find(p => p.includes('compliance') || p.includes('tax')) || 'regulatory requirements'})
+        Design: Modern, colorful, icon-driven with data visualizations
+        ${buyingSignals.length ? 'Emphasize: ' + buyingSignals[0] : ''}`,
 
       socialPost: `Create a LinkedIn post graphic announcing a partnership/win with ${prospectData.company || 'a client'}.
+        Context: They were facing ${painPoints.slice(0, 2).join(' and ') || 'payroll challenges'}
         Message: "Excited to partner with [Company] to transform their workforce management"
         Include: Beyond Payroll logo, celebration theme, professional imagery
         Style: Corporate but warm, celebration-worthy`,
