@@ -9189,6 +9189,39 @@ console.log('✅ Navigation ready');
           console.log('⚠️ Event handlers not attached:', e.message);
         }
       }
+      
+      // AUTO-FILL: Fill form with prospect data
+      setTimeout(function() {
+        console.log('🔍 Checking for prospect data to auto-fill...');
+        
+        // Try window._hqProspect first
+        if (window._hqProspect && typeof window._hqProspect === 'object') {
+          console.log('✅ Found window._hqProspect:', window._hqProspect);
+          
+          const companyField = document.getElementById('canva-company');
+          const industryField = document.getElementById('canva-industry');
+          const painpointField = document.getElementById('canva-painpoint');
+          
+          if (companyField) {
+            companyField.value = window._hqProspect.company || window._hqProspect.companyName || '';
+            console.log('  ✅ Company:', companyField.value);
+          }
+          
+          if (industryField) {
+            industryField.value = window._hqProspect.industry || window._hqProspect.vertical || '';
+            console.log('  ✅ Industry:', industryField.value);
+          }
+          
+          if (painpointField) {
+            painpointField.value = window._hqProspect.painPoint || window._hqProspect.challenges || window._hqProspect.notes || '';
+            console.log('  ✅ Pain Point:', painpointField.value);
+          }
+          
+          console.log('✅ Auto-fill complete from window._hqProspect');
+        } else {
+          console.log('⚠️ window._hqProspect not found, fields will use defaults');
+        }
+      }, 100);
     } else {
       console.error('❌ Panel or overlay still not found after creation attempt');
       console.log('Panel:', panel);
