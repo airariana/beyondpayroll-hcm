@@ -52,6 +52,7 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
 <!-- Canva Integration Styles -->
 <link rel="stylesheet" href="saleshq-canva-styles.css">
 <link rel="stylesheet" href="saleshq-outlook-canva-styles.css">
+<link rel="stylesheet" href="signature-manager-styles.css">
 
 <!-- ═══════════════════════════════════════════════════════════
      MOBILE RESPONSIVE STYLES
@@ -8920,9 +8921,8 @@ function openEmailHistory() {
 
 // Signature Manager
 function openSignatureManager() {
-  showToast('✍️ Signature Manager feature coming soon!');
   console.log('[Signatures] Opening signature manager...');
-  // TODO: Implement signature manager modal
+  showSignatureManager(); // Call the real signature manager from signature-manager-with-images.js
 }
 
 // Activity & Alerts Drawer
@@ -9120,6 +9120,9 @@ console.log('✅ Navigation ready');
 <script src="saleshq-canva-enriched-integration.js"></script>
 <script src="saleshq-outlook-integration-code.js"></script>
 
+<!-- Signature Manager with Image Upload -->
+<script src="signature-manager-with-images.js"></script>
+
 
 <!-- Canva Hotfix ENHANCED - Forces panel creation -->
 <script>
@@ -9177,7 +9180,8 @@ console.log('✅ Navigation ready');
     if (panel && overlay) {
       panel.style.display = 'block';
       overlay.style.display = 'block';
-      document.body.style.overflow = 'hidden';
+      // DON'T lock body scroll - let panel handle its own scrolling
+      // document.body.style.overflow = 'hidden';
       console.log('✅ Panel opened successfully!');
       
       // Attach event handlers if function exists
@@ -9245,7 +9249,7 @@ console.log('✅ Navigation ready');
     } else {
       panel.style.display = 'none';
       overlay.style.display = 'none';
-      document.body.style.overflow = 'auto';
+      // document.body.style.overflow = 'auto';
       console.log('✅ Panel closed');
     }
   };
