@@ -1890,13 +1890,12 @@ INSTRUCTIONS:
 
   try{
     // ✨ CLOUDFLARE WORKER PROXY - API key handled server-side
+    // Convert Gemini parts → Anthropic messages format (worker converts internally)
     const resp = await fetch(API_ENDPOINTS.gemini, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        contents: [{
-          parts: parts
-        }]
+        messages: [{ role: 'user', content: partsToAnthropicContent(parts) }]
       })
     });
     
@@ -2160,6 +2159,19 @@ async function imgProcess(file){ _mfFiles=[file]; mfRenderChips(); await mfAnaly
 // SMART ROUTING ENGINE
 // ═══════════════════════════════════════════════════════
 // ── Cloudflare Worker proxy handles all API authentication ──
+
+// Helper: convert Gemini native parts array → Anthropic content array
+// Needed because the CF Worker expects Anthropic format and converts internally
+function partsToAnthropicContent(parts) {
+  return parts.map(function(p) {
+    if (p.text !== undefined) {
+      return { type: 'text', text: p.text };
+    } else if (p.inline_data) {
+      return { type: 'image', source: { type: 'base64', media_type: p.inline_data.mime_type || 'image/jpeg', data: p.inline_data.data } };
+    }
+    return null;
+  }).filter(Boolean);
+}
 
 // Helper: POST to Gemini via Cloudflare Worker
 // Worker handles API key injection and format conversion
@@ -3561,10 +3573,11 @@ If no signals found, return: {"pain_points":[],"competitor_mentions":[],"objecti
 
   try {
     // ✨ CLOUDFLARE WORKER PROXY - API key handled server-side
+    // Convert Gemini parts → Anthropic messages format (worker converts internally)
     const response = await fetch(API_ENDPOINTS.gemini, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: parts }] })
+      body: JSON.stringify({ messages: [{ role: 'user', content: partsToAnthropicContent(parts) }] })
     });
 
     if (!response.ok) {

@@ -7738,10 +7738,19 @@ function openProfileSettings() {
     console.log('[Bottom Nav] Fallback attempt', fallbackAttempts);
     
     var homeBtn = document.getElementById('nav-home');
+
+    // Setup already completed — stop polling
+    if (homeBtn && homeBtn._navSetup) {
+      console.log('[Bottom Nav] Already setup, stopping fallback interval');
+      clearInterval(fallbackInterval);
+      return;
+    }
+
     if (homeBtn && !homeBtn._navSetup) {
       console.log('[Bottom Nav] Running setup via fallback');
       setupBottomNav();
       clearInterval(fallbackInterval);
+      return;
     }
     
     if (fallbackAttempts >= 5) {
@@ -8240,8 +8249,11 @@ function openProfileSettings() {
       });
     });
     
-    // Also fix template buttons
-    const templateButtons = document.querySelectorAll('button[onclick*="template" i], .template-btn, button:contains("Use Template")');
+    // Also fix template buttons — use valid selectors only; filter text manually
+    const templateButtons = [
+      ...document.querySelectorAll('button[onclick*="template"], .template-btn'),
+      ...Array.from(document.querySelectorAll('button')).filter(function(b){ return b.textContent.includes('Use Template'); })
+    ];
     
     templateButtons.forEach(btn => {
       console.log('[Template Fix] Found button:', btn.textContent);
