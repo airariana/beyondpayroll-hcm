@@ -9120,5 +9120,82 @@ console.log('✅ Navigation ready');
 <script src="saleshq-canva-enriched-integration.js"></script>
 <script src="saleshq-outlook-integration-code.js"></script>
 
+
+<!-- Canva Hotfix - Ensures button works even if other errors occur -->
+<script>
+(function() {
+  'use strict';
+  
+  console.log('🔧 Canva hotfix loading...');
+  
+  // Ensure openCanvaPanel exists immediately
+  if (typeof window.openCanvaPanel !== 'function') {
+    console.log('⚠️ openCanvaPanel not found, creating fallback...');
+    
+    window.openCanvaPanel = function() {
+      console.log('✅ Canva button clicked (hotfix version)');
+      
+      // Check if panel exists
+      let panel = document.getElementById('canvaPanel');
+      let overlay = document.getElementById('canvaOverlay');
+      
+      if (!panel) {
+        // Panel doesn't exist, try to initialize
+        if (typeof initializeCanvaPanel === 'function') {
+          try {
+            initializeCanvaPanel();
+          } catch (e) {
+            console.error('Failed to initialize panel:', e);
+          }
+        }
+        
+        panel = document.getElementById('canvaPanel');
+        overlay = document.getElementById('canvaOverlay');
+      }
+      
+      // Open panel
+      if (panel && overlay) {
+        panel.style.display = 'block';
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        console.log('✅ Panel opened');
+      } else {
+        console.error('❌ Panel elements not found');
+        alert('Canva panel not ready. Please refresh the page.');
+      }
+    };
+    
+    console.log('✅ Fallback openCanvaPanel created');
+  } else {
+    console.log('✅ openCanvaPanel already exists');
+  }
+  
+  // Also ensure toggleCanvaPanel exists
+  if (typeof window.toggleCanvaPanel !== 'function') {
+    window.toggleCanvaPanel = function() {
+      const panel = document.getElementById('canvaPanel');
+      const overlay = document.getElementById('canvaOverlay');
+      
+      if (!panel || !overlay) {
+        window.openCanvaPanel();
+        return;
+      }
+      
+      if (panel.style.display === 'none' || !panel.style.display) {
+        panel.style.display = 'block';
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+      } else {
+        panel.style.display = 'none';
+        overlay.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      }
+    };
+  }
+  
+  console.log('✅ Canva hotfix complete - button should work now');
+})();
+</script>
+
 </body>
 
