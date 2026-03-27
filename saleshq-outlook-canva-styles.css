@@ -1,0 +1,379 @@
+/* ==================== OUTLOOK + CANVA INTEGRATION STYLES ==================== */
+
+/* Notification System */
+.outlook-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10000;
+  transform: translateX(400px);
+  opacity: 0;
+  transition: all 0.3s ease-out;
+  max-width: 400px;
+}
+
+.outlook-notification.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.outlook-notification-success {
+  background: #10b981;
+  color: white;
+}
+
+.outlook-notification-error {
+  background: #ef4444;
+  color: white;
+}
+
+.outlook-notification-info {
+  background: #3b82f6;
+  color: white;
+}
+
+.outlook-notification-warning {
+  background: #f59e0b;
+  color: white;
+}
+
+/* Outlook Results Panel */
+.outlook-results-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: auto;
+  z-index: 10001;
+  opacity: 0;
+  transition: all 0.3s ease-out;
+}
+
+.outlook-results-panel.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Results Header */
+.outlook-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.outlook-results-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.outlook-results-header .close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.outlook-results-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Results Content */
+.outlook-results-content {
+  padding: 24px;
+}
+
+/* Outlook Actions Section */
+.outlook-actions {
+  margin-bottom: 32px;
+}
+
+.outlook-actions h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.outlook-action-btn {
+  display: block;
+  width: 100%;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.outlook-action-btn:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+  transform: translateX(4px);
+}
+
+.outlook-action-btn:active {
+  transform: translateX(2px);
+}
+
+/* Email Template Section */
+.email-template-section {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  border: 2px solid #e5e7eb;
+}
+
+.email-template-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Template Fields */
+.template-field {
+  margin-bottom: 20px;
+}
+
+.template-field:last-child {
+  margin-bottom: 0;
+}
+
+.template-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.template-value {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 14px;
+  color: #1f2937;
+  position: relative;
+}
+
+.template-value pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+.template-body {
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Copy Buttons */
+.copy-mini-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-mini-btn:hover {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.copy-btn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Outlook-specific Canva Panel Modifications */
+.canva-panel.outlook-mode .canva-header {
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+}
+
+.canva-panel.outlook-mode .btn-primary {
+  background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+}
+
+.canva-panel.outlook-mode .asset-type-btn.selected {
+  border-color: #0078d4;
+  background: linear-gradient(135deg, #0078d415 0%, #005a9e15 100%);
+}
+
+.canva-panel.outlook-mode .asset-type-btn:hover {
+  border-color: #0078d4;
+}
+
+/* Outlook Integration Badge */
+.outlook-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #0078d4;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+/* Outlook Workflow Steps */
+.outlook-workflow {
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+}
+
+.outlook-workflow h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.outlook-workflow ol {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #1e3a8a;
+  line-height: 1.8;
+}
+
+.outlook-workflow ol li {
+  margin-bottom: 8px;
+}
+
+/* Company Selector */
+.company-selector {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.company-selector label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.company-selector select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+  cursor: pointer;
+}
+
+.company-selector select:focus {
+  outline: none;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .outlook-results-panel {
+    width: 95%;
+  }
+
+  .outlook-notification {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .template-body {
+    max-height: 200px;
+  }
+}
+
+/* Animation Keyframes */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
