@@ -49,6 +49,9 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
 .eec-modal-body,.ehc-modal-body{padding:24px;overflow-y:auto;flex:1}
 </style>
 
+<!-- Canva Integration Styles -->
+<link rel="stylesheet" href="saleshq-canva-styles.css">
+<link rel="stylesheet" href="saleshq-outlook-canva-styles.css">
 
 <!-- ═══════════════════════════════════════════════════════════
      MOBILE RESPONSIVE STYLES
@@ -3911,7 +3914,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
       <button class="tb-icon-btn" onclick="openSignatureManager()" title="Email Signatures">
         ✍️ Signatures
       </button>
-      <button class="tb-icon-btn" onclick="openCanva()" title="Create with Canva">
+      <button class="tb-icon-btn" onclick="openCanvaPanel()" title="Generate Sales Collateral">
         🎨 Canva
       </button>
       
@@ -3962,7 +3965,7 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
           <div class="pd-actions">
             <button class="pd-action-btn" onclick="closeProfileDropdown();goHome()" style="background:rgba(59,130,246,.08);color:#3b82f6;border-color:rgba(59,130,246,.3)">🏠 Home</button>
             <button class="pd-action-btn" onclick="closeProfileDropdown();openPipeline()" style="background:rgba(147,51,234,.08);color:#9333ea;border-color:rgba(147,51,234,.3)">📊 Pipeline</button>
-            <button class="pd-action-btn" onclick="closeProfileDropdown();openCanva()" style="background:rgba(236,72,153,.08);color:#ec4899;border-color:rgba(236,72,153,.3)">🎨 Canva</button>
+            <button class="pd-action-btn" onclick="closeProfileDropdown();openCanvaPanel()" style="background:rgba(236,72,153,.08);color:#ec4899;border-color:rgba(236,72,153,.3)">🎨 Canva</button>
           </div>
 
           <div class="pd-section-title">Actions</div>
@@ -7738,19 +7741,10 @@ function openProfileSettings() {
     console.log('[Bottom Nav] Fallback attempt', fallbackAttempts);
     
     var homeBtn = document.getElementById('nav-home');
-
-    // Setup already completed — stop polling
-    if (homeBtn && homeBtn._navSetup) {
-      console.log('[Bottom Nav] Already setup, stopping fallback interval');
-      clearInterval(fallbackInterval);
-      return;
-    }
-
     if (homeBtn && !homeBtn._navSetup) {
       console.log('[Bottom Nav] Running setup via fallback');
       setupBottomNav();
       clearInterval(fallbackInterval);
-      return;
     }
     
     if (fallbackAttempts >= 5) {
@@ -7797,7 +7791,7 @@ function openProfileSettings() {
       { icon: '📧', label: 'Email Templates', onclick: 'openTemplateLibrary()' },
       { icon: '📊', label: 'Email History', onclick: 'openEmailHistory()' },
       { icon: '✍️', label: 'Signatures', onclick: 'openSignatureManager()' },
-      { icon: '🎨', label: 'Canva', onclick: 'openCanva()' }
+      { icon: '🎨', label: 'Canva', onclick: 'openCanvaPanel()' }
     ];
 
     menuItems.forEach(item => {
@@ -8249,11 +8243,8 @@ function openProfileSettings() {
       });
     });
     
-    // Also fix template buttons — use valid selectors only; filter text manually
-    const templateButtons = [
-      ...document.querySelectorAll('button[onclick*="template"], .template-btn'),
-      ...Array.from(document.querySelectorAll('button')).filter(function(b){ return b.textContent.includes('Use Template'); })
-    ];
+    // Also fix template buttons
+    const templateButtons = document.querySelectorAll('button[onclick*="template" i], .template-btn, button:contains("Use Template")');
     
     templateButtons.forEach(btn => {
       console.log('[Template Fix] Found button:', btn.textContent);
@@ -9519,7 +9510,8 @@ function fbSyncNow() {
   }, 1500);
 }
 
-// Canva modal
+// OLD Canva modal - kept for backwards compatibility
+// New Canva integration uses openCanvaPanel() defined in saleshq-outlook-integration-code.js
 function openCanva() {
   var html = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center" onclick="this.remove()">';
   html += '<div style="background:white;border-radius:16px;max-width:500px;width:90%;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,0.3)" onclick="event.stopPropagation()">';
@@ -9560,6 +9552,16 @@ function openCanva() {
 
 console.log('✅ Navigation ready');
 </script>
+
+<!-- Canva Integration Containers -->
+<div id="canvaPanelContainer"></div>
+<div id="canvaOverlay" class="canva-overlay" style="display: none;" onclick="toggleCanvaPanel()"></div>
+
+<!-- Canva Integration Scripts -->
+<script src="saleshq-canva-integration.js"></script>
+<script src="saleshq-outlook-canva.js"></script>
+<script src="saleshq-canva-enriched-integration.js"></script>
+<script src="saleshq-outlook-integration-code.js"></script>
 
 </body>
 </html>
