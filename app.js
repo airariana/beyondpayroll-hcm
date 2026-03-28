@@ -13157,10 +13157,23 @@ function openMarketIntel() {
   
   // Check if there's saved Market Intelligence Panel data for this prospect
   const p = window._hqProspect;
+  
+  // DEBUG LOGGING
+  console.log('=== Market Intelligence Panel Opened ===');
+  console.log('Prospect loaded:', p ? p.company : 'No prospect');
+  console.log('Has saved panel data:', !!(p && p.marketIntelligencePanel));
+  
   if (p && p.marketIntelligencePanel && p.marketIntelPanelLastUpdated) {
     const date = new Date(p.marketIntelPanelLastUpdated);
     const timeAgo = getTimeAgo(date);
     const isStale = isDataStale(date, 7);
+    
+    console.log('✓ Restoring saved analysis:');
+    console.log('  • Generated:', timeAgo);
+    console.log('  • Track:', p.marketIntelligencePanel.track);
+    console.log('  • Cadence:', p.marketIntelligencePanel.cadence);
+    console.log('  • Screenshots:', p.marketIntelligencePanel.screenshotCount);
+    console.log('  • Stale:', isStale);
     
     // Show notification that saved data is available
     setTimeout(() => {
@@ -13195,6 +13208,8 @@ function openMarketIntel() {
         savedProcessingTime
       );
       
+      console.log('✓ Dashboard rendered with saved data');
+      
       // Add freshness banner
       const banner = document.createElement('div');
       banner.style.cssText = `
@@ -13217,13 +13232,15 @@ function openMarketIntel() {
             Generated ${timeAgo} with ${data.screenshotCount} screenshot${data.screenshotCount > 1 ? 's' : ''}
           </span>
         </div>
-        <button onclick="document.getElementById('market-intel-dashboard').innerHTML = '<div style=\\'text-align: center; padding: 3rem 1rem; color: var(--text-3);\\'>📊 Ready to analyze<br><span style=\\'font-size: 12px; margin-top: 8px; display: block;\\'>Upload transcript screenshots and click Run Analysis</span></div>'; uploadedGongScreenshots = [];" style="font-size: 11px; padding: 6px 12px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-weight: 500;">
+        <button onclick="clearMarketIntelDashboard()" style="font-size: 11px; padding: 6px 12px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-weight: 500;">
           Start Fresh Analysis
         </button>
       `;
       
       dashboardEl.insertBefore(banner, dashboardEl.firstChild);
     }
+  } else {
+    console.log('No saved analysis found - showing empty dashboard');
   }
 }
 
@@ -13233,6 +13250,25 @@ function openMarketIntel() {
 function closeMarketIntel() {
   document.getElementById('market-intel-overlay').style.display = 'none';
   document.body.style.overflow = '';
+}
+
+/**
+ * Clear Market Intelligence Dashboard and reset for fresh analysis
+ */
+function clearMarketIntelDashboard() {
+  const dashboardEl = document.getElementById('market-intel-dashboard');
+  if (dashboardEl) {
+    dashboardEl.innerHTML = `
+      <div style="text-align: center; padding: 3rem 1rem; color: var(--text-3);">
+        📊 Ready to analyze<br>
+        <span style="font-size: 12px; margin-top: 8px; display: block;">
+          Upload transcript screenshots and click Run Analysis
+        </span>
+      </div>
+    `;
+  }
+  uploadedGongScreenshots = [];
+  console.log('✓ Market Intelligence dashboard cleared');
 }
 
 /**
@@ -13641,10 +13677,15 @@ Focus on actionable insights. Keep talking points concise and ready to paste int
       };
       window._hqProspect.marketIntelPanelLastUpdated = new Date().toISOString();
       
-      // Auto-save to persist the data
-      if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
-      
-      console.log('✓ Market Intelligence saved to prospect profile');
+      // IMMEDIATE SAVE - Don't wait for 4-second auto-save debounce
+      if (typeof window.tbSaveProspect === 'function') {
+        window.tbSaveProspect();
+        console.log('✓ Market Intelligence saved immediately to localStorage');
+      } else {
+        // Fallback to auto-save if direct save not available
+        if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+        console.log('✓ Market Intelligence queued for auto-save');
+      }
     }
     
     renderIntelligenceDashboard(intelligence, gongPainPoints, competitiveSignals, processingTime);
