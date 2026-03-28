@@ -2206,6 +2206,65 @@ function sreSilo(type){
 function sreAdpToggle(key,el){
   if(_sreAdpProducts.has(key)){_sreAdpProducts.delete(key);el.classList.remove('active');}
   else{_sreAdpProducts.add(key);el.classList.add('active');}
+  
+  // AUTO-SYNC PRIMARY INCUMBENT FIELD
+  syncPrimaryIncumbentFromADPProducts();
+}
+
+/**
+ * Sync the Primary Incumbent dropdown based on selected ADP products
+ * Automatically updates when user toggles ADP product checkboxes
+ */
+function syncPrimaryIncumbentFromADPProducts() {
+  const competitorField = document.getElementById('sre-competitor');
+  if (!competitorField) return;
+  
+  // Get current ADP products
+  const products = Array.from(_sreAdpProducts);
+  
+  if (products.length === 0) {
+    // No products selected - do nothing or clear if it was an ADP value
+    const currentValue = competitorField.value;
+    if (currentValue && currentValue.startsWith('adp_')) {
+      competitorField.value = '';
+      sreCompetitorChanged();
+    }
+    return;
+  }
+  
+  // Determine primary ADP product based on priority
+  // Priority: WFN > TotalSource > RUN > Classic > Others
+  let primaryIncumbent = '';
+  
+  if (products.includes('wfn')) {
+    primaryIncumbent = 'adp_workforce_now';
+  } else if (products.includes('ts')) {
+    primaryIncumbent = 'adp_totalsource';
+  } else if (products.includes('run')) {
+    primaryIncumbent = 'adp_run';
+  } else if (products.includes('classic')) {
+    primaryIncumbent = 'adp_run'; // Classic maps to RUN in dropdown
+  } else if (products.includes('etime')) {
+    primaryIncumbent = 'adp_time';
+  } else if (products.includes('benefits')) {
+    primaryIncumbent = 'adp_benefits';
+  } else if (products.includes('wc')) {
+    primaryIncumbent = 'adp_wc';
+  } else if (products.includes('401k')) {
+    primaryIncumbent = 'adp_401k';
+  } else if (products.includes('other')) {
+    primaryIncumbent = 'adp_other';
+  }
+  
+  // Only update if we determined a primary incumbent
+  if (primaryIncumbent) {
+    competitorField.value = primaryIncumbent;
+    
+    // Trigger the competitor changed handler to update the banner
+    sreCompetitorChanged();
+    
+    console.log(`✓ Auto-synced Primary Incumbent to: ${primaryIncumbent}`);
+  }
 }
 
 function sreRefresh(){
@@ -2260,6 +2319,11 @@ function sreRefresh(){
     });
     // If any products selected, switch to existing client silo
     if(_sreAdpProducts.size>0) sreSilo('existing');
+    
+    // AUTO-SYNC: If no competitor is saved, sync from ADP products
+    if(!p.competitor){
+      syncPrimaryIncumbentFromADPProducts();
+    }
   }
   const rdEl=document.getElementById('sre-renewal-date');
   if(rdEl&&p.renewalDate) rdEl.value=p.renewalDate;
@@ -6539,6 +6603,8 @@ function pdLoadProspect(idx){
   if(typeof window.tbShowSaveBtn==='function') window.tbShowSaveBtn();
   // Fire day trigger check for the newly loaded prospect
   setTimeout(cdtCheckTriggers, 400);
+  // RESTORE SAVED MARKET ANALYSIS DATA
+  if(typeof window.restoreMarketAnalysis==='function') setTimeout(window.restoreMarketAnalysis, 500);
 }
 
 function pdAddToCadence(idx){
@@ -6553,6 +6619,8 @@ function pdAddToCadence(idx){
   // Route directly to 30-Day Cadence tab if approved, else Command Center
   if(typeof hqTab==='function') hqTab(window._hqApproved?'composer':'cmd');
   showToast(p.company+' loaded — opening 30-Day Cadence');
+  // RESTORE SAVED MARKET ANALYSIS DATA
+  if(typeof window.restoreMarketAnalysis==='function') setTimeout(window.restoreMarketAnalysis, 500);
 }
 
 function exportProspects(){
@@ -11161,6 +11229,15 @@ window.atRunWeeklyIntel = function() {
     var raw=bpGeminiText(resp);
     var clean=raw.replace(/```json|```/g,'').trim();
     var d=JSON.parse(clean);
+    
+    // SAVE TO PROSPECT OBJECT
+    if (window._hqProspect) {
+      window._hqProspect.marketIntelligence = d;
+      window._hqProspect.marketIntelLastUpdated = new Date().toISOString();
+      // Auto-save to persist the data
+      if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+    }
+    
     atRenderWeeklyIntel(bodyEl,d);
     showToast('✓ Competitor Intel report complete');
   })
@@ -11348,6 +11425,15 @@ window.atRunSocialAgent = function() {
     var raw=bpGeminiText(resp);
     var clean=raw.replace(/```json|```/g,'').trim();
     var d=JSON.parse(clean);
+    
+    // SAVE TO PROSPECT OBJECT
+    if (window._hqProspect) {
+      window._hqProspect.socialListening = d;
+      window._hqProspect.socialListenLastUpdated = new Date().toISOString();
+      // Auto-save to persist the data
+      if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+    }
+    
     atRenderSocialAgent(bodyEl,d);
     showToast('✓ Social Listening scan complete');
   })
@@ -13068,6 +13154,77 @@ const COMP_DATA = {
 function openMarketIntel() {
   document.getElementById('market-intel-overlay').style.display = 'block';
   document.body.style.overflow = 'hidden';
+  
+  // Check if there's saved Market Intelligence Panel data for this prospect
+  const p = window._hqProspect;
+  if (p && p.marketIntelligencePanel && p.marketIntelPanelLastUpdated) {
+    const date = new Date(p.marketIntelPanelLastUpdated);
+    const timeAgo = getTimeAgo(date);
+    const isStale = isDataStale(date, 7);
+    
+    // Show notification that saved data is available
+    setTimeout(() => {
+      showMIToast(`ℹ️ Saved analysis from ${timeAgo} available. ${isStale ? 'Consider refreshing.' : ''}`);
+    }, 500);
+    
+    // Optionally auto-restore the dashboard
+    const dashboardEl = document.getElementById('market-intel-dashboard');
+    if (dashboardEl && p.marketIntelligencePanel.intelligence) {
+      const data = p.marketIntelligencePanel;
+      
+      // Restore track and cadence selections
+      selectedMITrack = data.track || 'TotalSource';
+      selectedMICadence = data.cadence || 'Consultative';
+      
+      // Update UI buttons
+      document.querySelectorAll('.mi-track-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.track === selectedMITrack);
+      });
+      document.querySelectorAll('.mi-cadence-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cadence === selectedMICadence);
+      });
+      
+      // Show note about processing time from saved data
+      const savedProcessingTime = 'saved';
+      
+      // Render the saved dashboard with freshness indicator
+      renderIntelligenceDashboard(
+        data.intelligence,
+        data.painPoints || [],
+        data.signals || [],
+        savedProcessingTime
+      );
+      
+      // Add freshness banner
+      const banner = document.createElement('div');
+      banner.style.cssText = `
+        padding: 12px 16px;
+        background: ${isStale ? 'var(--gold-bg)' : 'var(--blue-bg)'};
+        border-left: 3px solid ${isStale ? 'var(--gold)' : 'var(--blue)'};
+        border-radius: var(--radius-sm);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+      `;
+      banner.innerHTML = `
+        <div>
+          <span style="font-weight: 600; color: ${isStale ? 'var(--gold)' : 'var(--blue)'};">
+            ${isStale ? '⚠️ Saved Analysis (may be outdated)' : 'ℹ️ Saved Analysis'}
+          </span>
+          <span style="color: var(--text-3); margin-left: 8px;">
+            Generated ${timeAgo} with ${data.screenshotCount} screenshot${data.screenshotCount > 1 ? 's' : ''}
+          </span>
+        </div>
+        <button onclick="document.getElementById('market-intel-dashboard').innerHTML = '<div style=\\'text-align: center; padding: 3rem 1rem; color: var(--text-3);\\'>📊 Ready to analyze<br><span style=\\'font-size: 12px; margin-top: 8px; display: block;\\'>Upload transcript screenshots and click Run Analysis</span></div>'; uploadedGongScreenshots = [];" style="font-size: 11px; padding: 6px 12px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-weight: 500;">
+          Start Fresh Analysis
+        </button>
+      `;
+      
+      dashboardEl.insertBefore(banner, dashboardEl.firstChild);
+    }
+  }
 }
 
 /**
@@ -13472,6 +13629,24 @@ Focus on actionable insights. Keep talking points concise and ready to paste int
     
     const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
     
+    // SAVE TO PROSPECT OBJECT
+    if (window._hqProspect) {
+      window._hqProspect.marketIntelligencePanel = {
+        intelligence: intelligence,
+        painPoints: gongPainPoints,
+        signals: competitiveSignals,
+        track: selectedMITrack,
+        cadence: selectedMICadence,
+        screenshotCount: uploadedGongScreenshots.length
+      };
+      window._hqProspect.marketIntelPanelLastUpdated = new Date().toISOString();
+      
+      // Auto-save to persist the data
+      if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+      
+      console.log('✓ Market Intelligence saved to prospect profile');
+    }
+    
     renderIntelligenceDashboard(intelligence, gongPainPoints, competitiveSignals, processingTime);
     
     saveIntelligenceToCache(intelligence);
@@ -13772,3 +13947,205 @@ async function saveIntelligenceToFirebase(intelligence) {
 
 console.log('✓ Market & Competitive Intelligence module loaded');
 console.log('  Call openMarketIntel() to launch the panel');
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  RESTORE SAVED MARKET ANALYSIS DATA WHEN LOADING PROSPECTS
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Restore and render saved market intelligence when loading a prospect
+ * Call this after loading a prospect into window._hqProspect
+ */
+window.restoreMarketAnalysis = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  let restoredCount = 0;
+  
+  // Restore Weekly Competitor Intelligence
+  if (p.marketIntelligence) {
+    const bodyEl = document.getElementById('at-intel-body');
+    const resultsEl = document.getElementById('at-intel-results');
+    
+    if (bodyEl && resultsEl) {
+      atRenderWeeklyIntel(bodyEl, p.marketIntelligence);
+      resultsEl.style.display = 'block';
+      
+      // Add timestamp and refresh indicator to header
+      if (p.marketIntelLastUpdated) {
+        const date = new Date(p.marketIntelLastUpdated);
+        const timeAgo = getTimeAgo(date);
+        const isStale = isDataStale(date, 7); // 7 days
+        
+        addDataTimestamp(bodyEl, timeAgo, isStale, 'atRunWeeklyIntel()');
+        console.log(`✓ Restored Competitor Intel (generated ${timeAgo}${isStale ? ' - STALE' : ''})`);
+        restoredCount++;
+      }
+    }
+  }
+  
+  // Restore Social Listening data
+  if (p.socialListening) {
+    const bodyEl = document.getElementById('at-social-body');
+    const resultsEl = document.getElementById('at-social-results');
+    
+    if (bodyEl && resultsEl) {
+      atRenderSocialAgent(bodyEl, p.socialListening);
+      resultsEl.style.display = 'block';
+      
+      // Add timestamp and refresh indicator to header
+      if (p.socialListenLastUpdated) {
+        const date = new Date(p.socialListenLastUpdated);
+        const timeAgo = getTimeAgo(date);
+        const isStale = isDataStale(date, 3); // 3 days for social media
+        
+        addDataTimestamp(bodyEl, timeAgo, isStale, 'atRunSocialAgent()');
+        console.log(`✓ Restored Social Listening (generated ${timeAgo}${isStale ? ' - STALE' : ''})`);
+        restoredCount++;
+      }
+    }
+  }
+  
+  // Restore Market Intelligence Panel data (Gong transcript analysis)
+  if (p.marketIntelligencePanel && p.marketIntelPanelLastUpdated) {
+    const date = new Date(p.marketIntelPanelLastUpdated);
+    const timeAgo = getTimeAgo(date);
+    const isStale = isDataStale(date, 7);
+    
+    console.log(`✓ Market Intelligence Panel data available (generated ${timeAgo}${isStale ? ' - STALE' : ''})`);
+    console.log(`  • Track: ${p.marketIntelligencePanel.track}`);
+    console.log(`  • Cadence: ${p.marketIntelligencePanel.cadence}`);
+    console.log(`  • Screenshots: ${p.marketIntelligencePanel.screenshotCount}`);
+    restoredCount++;
+    
+    // Note: Panel data will be restored when user opens the Market Intelligence modal
+  }
+  
+  // Show notification if data was restored
+  if (restoredCount > 0) {
+    const message = `✓ Restored ${restoredCount} market analysis report${restoredCount > 1 ? 's' : ''}`;
+    setTimeout(() => showToast(message), 600);
+  }
+};
+
+/**
+ * Helper function to get time ago string
+ */
+function getTimeAgo(date) {
+  const now = new Date();
+  const diff = now - date;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+  return date.toLocaleDateString();
+}
+
+/**
+ * Check if data is stale based on age
+ * @param {Date} date - Date when data was generated
+ * @param {number} daysThreshold - Number of days before data is considered stale
+ */
+function isDataStale(date, daysThreshold = 7) {
+  const now = new Date();
+  const diff = now - date;
+  const days = Math.floor(diff / 86400000);
+  return days >= daysThreshold;
+}
+
+/**
+ * Add timestamp banner to agent results
+ * @param {HTMLElement} bodyEl - Container element
+ * @param {string} timeAgo - Time ago string
+ * @param {boolean} isStale - Whether data is stale
+ * @param {string} refreshFn - Function name to call for refresh
+ */
+function addDataTimestamp(bodyEl, timeAgo, isStale, refreshFn) {
+  if (!bodyEl) return;
+  
+  // Check if banner already exists
+  const existingBanner = bodyEl.querySelector('.at-data-timestamp-banner');
+  if (existingBanner) {
+    existingBanner.remove();
+  }
+  
+  const banner = document.createElement('div');
+  banner.className = 'at-data-timestamp-banner';
+  banner.style.cssText = `
+    padding: 10px 18px;
+    background: ${isStale ? 'var(--gold-bg)' : 'var(--green-bg)'};
+    border-left: 3px solid ${isStale ? 'var(--gold)' : 'var(--green)'};
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border);
+  `;
+  
+  const statusText = document.createElement('div');
+  statusText.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+  statusText.innerHTML = `
+    <span style="font-weight: 600; color: ${isStale ? 'var(--gold)' : 'var(--green)'};">
+      ${isStale ? '⚠️ Data may be outdated' : '✓ Data current'}
+    </span>
+    <span style="color: var(--text-3);">
+      Generated ${timeAgo}
+    </span>
+  `;
+  
+  const refreshBtn = document.createElement('button');
+  refreshBtn.textContent = isStale ? '🔄 Refresh Data' : '🔄 Refresh';
+  refreshBtn.className = 'at-btn secondary';
+  refreshBtn.style.cssText = `
+    font-size: 11px;
+    padding: 4px 10px;
+    ${isStale ? 'background: var(--gold); color: white; border: none;' : ''}
+  `;
+  refreshBtn.onclick = function() {
+    eval(refreshFn);
+  };
+  
+  banner.appendChild(statusText);
+  banner.appendChild(refreshBtn);
+  
+  // Insert at the top of the body
+  bodyEl.insertBefore(banner, bodyEl.firstChild);
+}
+
+/**
+ * Clear market analysis data for current prospect
+ */
+window.clearMarketAnalysis = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  delete p.marketIntelligence;
+  delete p.marketIntelLastUpdated;
+  delete p.socialListening;
+  delete p.socialListenLastUpdated;
+  
+  // Clear UI
+  const intelBody = document.getElementById('at-intel-body');
+  const socialBody = document.getElementById('at-social-body');
+  
+  if (intelBody) intelBody.innerHTML = '';
+  if (socialBody) socialBody.innerHTML = '';
+  
+  // Mark as unsaved
+  if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+  
+  showToast('✓ Market analysis cleared');
+};
+
+console.log('✓ Market Analysis persistence functions loaded');
+console.log('  • Agent data now auto-saves to prospect');
+console.log('  • Call restoreMarketAnalysis() after loading prospect');
+console.log('  • Call clearMarketAnalysis() to reset data');
