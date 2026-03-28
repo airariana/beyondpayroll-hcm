@@ -13020,3 +13020,755 @@ console.log('  • Sales HQ card will appear on command center');
 console.log('  • Nurture button added to pipeline');
 console.log('  • Move to Nurture buttons on prospect cards');
 console.log('  • Agent status in topbar');
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  🔍 MARKET & COMPETITIVE INTELLIGENCE ENHANCEMENT (Chrome-Optimized)
+//  Screenshot-based Gong transcript analysis with real-time competitive signals
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Global state for Market Intelligence
+ */
+let uploadedGongScreenshots = [];
+let selectedMITrack = 'TotalSource';
+let selectedMICadence = 'Consultative';
+
+// Competitor data knowledge base
+const COMP_DATA = {
+  'Paychex PEO': {
+    strengths: ['Established brand', 'Large client base'],
+    weaknesses: ['Platform stability issues', 'Limited compliance automation', 'Lower retention rates']
+  },
+  'Justworks': {
+    strengths: ['Modern UI', 'Easy onboarding'],
+    weaknesses: ['Limited enterprise features', 'Smaller PEO network']
+  },
+  'TriNet': {
+    strengths: ['Industry-specific solutions', 'Good benefits'],
+    weaknesses: ['Higher cost', 'Complex platform']
+  },
+  'Insperity': {
+    strengths: ['Full-service HR', 'Good support'],
+    weaknesses: ['Recent earnings challenges', 'Retention issues']
+  },
+  'Rippling': {
+    strengths: ['All-in-one platform', 'Modern tech'],
+    weaknesses: ['Rapid growth concerns', 'Support challenges']
+  },
+  'Dayforce': {
+    strengths: ['Comprehensive HCM', 'Global capabilities'],
+    weaknesses: ['PE buyout uncertainty', 'Client concerns about roadmap']
+  }
+};
+
+/**
+ * Open Market Intelligence Panel
+ */
+function openMarketIntel() {
+  document.getElementById('market-intel-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Close Market Intelligence Panel
+ */
+function closeMarketIntel() {
+  document.getElementById('market-intel-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/**
+ * Select Product Track
+ */
+function selectMITrack(track) {
+  selectedMITrack = track;
+  document.querySelectorAll('.mi-track-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.track === track) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+/**
+ * Select Cadence Tone
+ */
+function selectMICadence(cadence) {
+  selectedMICadence = cadence;
+  document.querySelectorAll('.mi-cadence-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.cadence === cadence) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+/**
+ * Handle Gong screenshot uploads (Chrome-optimized)
+ */
+async function handleGongScreenshots(event) {
+  const files = Array.from(event.target.files);
+  
+  if (files.length === 0) return;
+  
+  // Add to global state
+  uploadedGongScreenshots.push(...files);
+  
+  // Display thumbnails
+  displayScreenshotPreviews();
+  
+  // Update count
+  updateScreenshotCount();
+  
+  // Show preview container
+  document.getElementById('screenshot-previews').style.display = 'block';
+  
+  // Reset file input
+  event.target.value = '';
+}
+
+/**
+ * Display thumbnail previews
+ */
+function displayScreenshotPreviews() {
+  const container = document.getElementById('screenshot-thumbnails');
+  container.innerHTML = '';
+  
+  uploadedGongScreenshots.forEach((file, index) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden;';
+    
+    const img = document.createElement('img');
+    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border: 0.5px solid var(--border);';
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = '×';
+    removeBtn.style.cssText = `
+      position: absolute; top: 4px; right: 4px; width: 20px; height: 20px;
+      border-radius: 50%; background: rgba(0,0,0,0.7); color: white; border: none;
+      font-size: 16px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; padding: 0; line-height: 1;
+    `;
+    removeBtn.onclick = (e) => {
+      e.stopPropagation();
+      removeScreenshot(index);
+    };
+    
+    wrapper.onclick = () => viewScreenshot(index);
+    wrapper.style.cursor = 'pointer';
+    
+    wrapper.appendChild(img);
+    wrapper.appendChild(removeBtn);
+    container.appendChild(wrapper);
+  });
+}
+
+/**
+ * Update screenshot count
+ */
+function updateScreenshotCount() {
+  const countEl = document.getElementById('screenshot-count');
+  const count = uploadedGongScreenshots.length;
+  
+  if (count === 0) {
+    countEl.textContent = '';
+  } else {
+    countEl.textContent = `✓ ${count} screenshot${count > 1 ? 's' : ''} ready for analysis`;
+  }
+}
+
+/**
+ * Remove screenshot
+ */
+function removeScreenshot(index) {
+  uploadedGongScreenshots.splice(index, 1);
+  
+  if (uploadedGongScreenshots.length === 0) {
+    document.getElementById('screenshot-previews').style.display = 'none';
+  }
+  
+  displayScreenshotPreviews();
+  updateScreenshotCount();
+}
+
+/**
+ * View screenshot full size
+ */
+function viewScreenshot(index) {
+  const file = uploadedGongScreenshots[index];
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10002;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    `;
+    
+    const img = document.createElement('img');
+    img.src = e.target.result;
+    img.style.cssText = 'max-width: 100%; max-height: 100%; object-fit: contain;';
+    
+    modal.onclick = () => document.body.removeChild(modal);
+    modal.appendChild(img);
+    document.body.appendChild(modal);
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Extract text from screenshots using Vision API
+ */
+async function extractTextFromGongScreenshots() {
+  if (uploadedGongScreenshots.length === 0) {
+    return [];
+  }
+  
+  const extractedTexts = [];
+  
+  for (let i = 0; i < uploadedGongScreenshots.length; i++) {
+    const file = uploadedGongScreenshots[i];
+    
+    try {
+      const base64 = await fileToBase64(file);
+      
+      const response = await fetch(API_ENDPOINTS.vision, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64.split(',')[1]
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Vision API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.responses?.[0]?.textAnnotations?.[0]?.description) {
+        const fullText = data.responses[0].textAnnotations[0].description;
+        extractedTexts.push({
+          text: fullText,
+          fileName: file.name,
+          index: i
+        });
+      }
+      
+    } catch (error) {
+      console.error(`Screenshot ${i + 1} OCR error:`, error);
+      showMIToast(`⚠️ Failed to extract text from screenshot ${i + 1}`);
+    }
+  }
+  
+  return extractedTexts;
+}
+
+/**
+ * Convert File to base64
+ */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Analyze transcripts to extract pain points
+ */
+async function analyzePainPointsFromTranscripts(extractedData) {
+  if (extractedData.length === 0) {
+    return [];
+  }
+  
+  const allPainPoints = [];
+  
+  for (const data of extractedData) {
+    try {
+      const analysisPrompt = `
+Analyze this sales call transcript and extract ONLY the customer pain points.
+Focus on problems, challenges, frustrations, and needs they express.
+
+Transcript:
+${data.text}
+
+Return ONLY a JSON array of pain points in this exact format:
+[
+  {
+    "painPoint": "Brief description of the pain point",
+    "severity": "High" | "Medium" | "Low",
+    "currentSolution": "What they're using now (if mentioned)",
+    "quote": "Relevant quote from transcript (if available)"
+  }
+]
+
+NO other text. ONLY the JSON array.
+`;
+      
+      const geminiResponse = await bpGeminiFetch({
+        messages: [{
+          role: 'user',
+          content: analysisPrompt
+        }]
+      });
+      
+      try {
+        const responseText = geminiResponse.content[0].text
+          .replace(/```json/g, '')
+          .replace(/```/g, '')
+          .trim();
+        
+        const extracted = JSON.parse(responseText);
+        
+        extracted.forEach(pp => {
+          pp.source = data.fileName;
+          pp.sourceIndex = data.index;
+        });
+        
+        allPainPoints.push(...extracted);
+        
+      } catch (e) {
+        console.error('Failed to parse pain point analysis:', e);
+        showMIToast(`⚠️ Could not analyze screenshot ${data.index + 1}`);
+      }
+      
+    } catch (error) {
+      console.error('Pain point extraction error:', error);
+    }
+  }
+  
+  return allPainPoints;
+}
+
+/**
+ * Enhanced Market Intelligence Analysis
+ */
+async function runEnhancedMarketIntel() {
+  const dashboardEl = document.getElementById('market-intel-dashboard');
+  const runBtn = document.getElementById('run-market-intel-btn');
+  
+  if (uploadedGongScreenshots.length === 0) {
+    showMIToast('⚠️ Please upload at least one transcript screenshot');
+    return;
+  }
+  
+  runBtn.disabled = true;
+  runBtn.textContent = '⏳ Processing...';
+  
+  const startTime = Date.now();
+  dashboardEl.innerHTML = `
+    <div style="text-align: center; padding: 2rem;">
+      <div style="width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--blue); border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite;"></div>
+      <p style="font-size: 14px; color: var(--text-2); margin: 0 0 1rem 0; font-weight: 500;">
+        Processing ${uploadedGongScreenshots.length} screenshot${uploadedGongScreenshots.length > 1 ? 's' : ''}...
+      </p>
+      <div id="progress-steps" style="font-size: 12px; color: var(--text-3); line-height: 2;">
+        <p style="margin: 0;">→ Extracting text with OCR...</p>
+      </div>
+    </div>
+    <style>
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  `;
+  
+  try {
+    updateProgress('→ Analyzing pain points...');
+    const extractedTranscripts = await extractTextFromGongScreenshots();
+    
+    if (extractedTranscripts.length === 0) {
+      throw new Error('No text could be extracted from screenshots');
+    }
+    
+    updateProgress('→ Gathering competitive signals...');
+    const gongPainPoints = await analyzePainPointsFromTranscripts(extractedTranscripts);
+    
+    updateProgress('→ Generating battle cards...');
+    const competitiveSignals = await getRecentCompetitiveSignals();
+    
+    updateProgress('→ Creating email talking points...');
+    const analysisPrompt = `
+You are an expert sales intelligence analyst for ADP ${selectedMITrack}.
+
+CONTEXT:
+- Product Track: ${selectedMITrack}
+- Cadence Tone: ${selectedMICadence}
+- Competitor Data: ${JSON.stringify(COMP_DATA)}
+- Analysis Date: ${new Date().toLocaleDateString()}
+
+GONG PAIN POINTS (from ${uploadedGongScreenshots.length} call transcript screenshot${uploadedGongScreenshots.length > 1 ? 's' : ''}):
+${JSON.stringify(gongPainPoints, null, 2)}
+
+REAL-TIME COMPETITIVE SIGNALS:
+${JSON.stringify(competitiveSignals, null, 2)}
+
+ANALYSIS TASKS:
+1. Map each Gong pain point to specific ${selectedMITrack} value propositions
+2. Generate prospect-specific battle cards addressing top pain points
+3. Create email-ready talking points (3-4 max, ${selectedMICadence} tone, mobile-optimized)
+4. Build competitive comparison vs primary competitor (based on signals)
+5. Provide executive summary with actionable metrics
+
+OUTPUT FORMAT (strict JSON, no markdown):
+{
+  "executiveSummary": {
+    "activeSignals": number,
+    "painPointsFound": number,
+    "primaryCompetitor": "name based on signals and pain points",
+    "winRate": "estimated percentage (e.g., '67%')"
+  },
+  "painPointMapping": [
+    {
+      "painPoint": "customer pain point description",
+      "severity": "High|Medium|Low",
+      "adpSolution": "How ${selectedMITrack} specifically addresses this",
+      "talkingPoint": "email-ready ${selectedMICadence} messaging (1-2 sentences)"
+    }
+  ],
+  "competitiveComparison": {
+    "competitor": "primary competitor name",
+    "features": [
+      {
+        "feature": "feature name",
+        "adp": "✓ or specific value",
+        "competitor": "✗ or specific value",
+        "advantage": "brief why ADP wins"
+      }
+    ]
+  },
+  "emailTalkingPoints": [
+    "${selectedMICadence} messaging for pain point 1",
+    "${selectedMICadence} messaging for pain point 2",
+    "${selectedMICadence} messaging for pain point 3"
+  ]
+}
+
+Focus on actionable insights. Keep talking points concise and ready to paste into email.
+`;
+    
+    const geminiResponse = await bpGeminiFetch({
+      messages: [{
+        role: 'user',
+        content: analysisPrompt
+      }]
+    });
+    
+    const intelligence = JSON.parse(
+      geminiResponse.content[0].text
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim()
+    );
+    
+    const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    
+    renderIntelligenceDashboard(intelligence, gongPainPoints, competitiveSignals, processingTime);
+    
+    saveIntelligenceToCache(intelligence);
+    await saveIntelligenceToFirebase(intelligence);
+    
+    showMIToast(`✓ Analysis complete in ${processingTime}s`);
+    
+  } catch (error) {
+    console.error('Enhanced market intel error:', error);
+    dashboardEl.innerHTML = `
+      <div style="text-align: center; padding: 2rem;">
+        <p style="color: var(--err); font-size: 14px; margin: 0 0 8px 0; font-weight: 500;">
+          ⚠️ Analysis Failed
+        </p>
+        <p style="font-size: 12px; color: var(--text-3); margin: 0;">
+          ${error.message}
+        </p>
+        <button 
+          onclick="runEnhancedMarketIntel()" 
+          style="margin-top: 1rem; padding: 8px 16px; background: var(--blue); color: var(--white); border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px;"
+        >
+          Try Again
+        </button>
+      </div>
+    `;
+    showMIToast('⚠️ Analysis failed - see dashboard for details');
+  } finally {
+    runBtn.disabled = false;
+    runBtn.textContent = '🚀 Run Enhanced Analysis';
+  }
+}
+
+/**
+ * Update progress message
+ */
+function updateProgress(message) {
+  const progressEl = document.getElementById('progress-steps');
+  if (progressEl) {
+    progressEl.innerHTML += `<p style="margin: 0;">${message}</p>`;
+  }
+}
+
+/**
+ * Render Intelligence Dashboard
+ */
+function renderIntelligenceDashboard(intelligence, painPoints, signals, processingTime) {
+  const dashboardEl = document.getElementById('market-intel-dashboard');
+  
+  const html = `
+    <div style="margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+        <h2 style="font-size: 18px; font-weight: 600; margin: 0;">Intelligence Report</h2>
+        <span style="font-size: 12px; color: var(--green); background: var(--green-bg); padding: 4px 10px; border-radius: 12px;">● Live</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-3);">
+        <span>${selectedMITrack}</span>
+        <span>•</span>
+        <span>${selectedMICadence} Cadence</span>
+        <span>•</span>
+        <span>${processingTime}s processing</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 1.5rem;">
+      <div style="background: var(--off-white); border-radius: var(--radius-sm); padding: 1rem;">
+        <p style="font-size: 13px; color: var(--text-3); margin: 0 0 8px 0;">Active Signals</p>
+        <p style="font-size: 24px; font-weight: 600; margin: 0;">${intelligence.executiveSummary.activeSignals}</p>
+        <p style="font-size: 11px; color: var(--blue); margin: 4px 0 0 0;">Real-time</p>
+      </div>
+      <div style="background: var(--off-white); border-radius: var(--radius-sm); padding: 1rem;">
+        <p style="font-size: 13px; color: var(--text-3); margin: 0 0 8px 0;">Pain Points</p>
+        <p style="font-size: 24px; font-weight: 600; margin: 0;">${intelligence.executiveSummary.painPointsFound}</p>
+        <p style="font-size: 11px; color: var(--text-3); margin: 4px 0 0 0;">From ${uploadedGongScreenshots.length} call${uploadedGongScreenshots.length > 1 ? 's' : ''}</p>
+      </div>
+      <div style="background: var(--off-white); border-radius: var(--radius-sm); padding: 1rem;">
+        <p style="font-size: 13px; color: var(--text-3); margin: 0 0 8px 0;">Est. Win Rate</p>
+        <p style="font-size: 24px; font-weight: 600; margin: 0;">${intelligence.executiveSummary.winRate}</p>
+        <p style="font-size: 11px; color: var(--green); margin: 4px 0 0 0;">vs ${intelligence.executiveSummary.primaryCompetitor}</p>
+      </div>
+    </div>
+
+    ${signals.length > 0 ? `
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 15px; font-weight: 600; margin: 0 0 1rem 0;">🔔 Real-Time Competitive Signals</h3>
+      ${signals.slice(0, 5).map(signal => `
+        <div style="border-left: 2px solid var(--${signal.severity === 'high' ? 'err' : signal.severity === 'medium' ? 'gold' : 'blue'}); padding-left: 12px; margin-bottom: 12px;">
+          <p style="font-size: 13px; font-weight: 500; margin: 0 0 4px 0;">${signal.title}</p>
+          <p style="font-size: 12px; color: var(--text-3); margin: 0;">${signal.description}</p>
+          <p style="font-size: 11px; color: var(--text-3); margin: 4px 0 0 0; opacity: 0.7;">${signal.timestamp} • ${signal.source}</p>
+        </div>
+      `).join('')}
+    </div>
+    ` : ''}
+
+    ${intelligence.painPointMapping.length > 0 ? `
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 15px; font-weight: 600; margin: 0 0 1rem 0;">🎯 Pain Points & Solutions</h3>
+      ${intelligence.painPointMapping.slice(0, 5).map(pp => `
+        <div style="background: var(--off-white); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+            <p style="font-size: 13px; font-weight: 500; margin: 0; flex: 1;">${pp.painPoint}</p>
+            <span style="font-size: 11px; background: var(--${pp.severity === 'High' ? 'err-bg' : pp.severity === 'Medium' ? 'gold-bg' : 'blue-bg'}); color: var(--${pp.severity === 'High' ? 'err' : pp.severity === 'Medium' ? 'gold' : 'blue'}); padding: 2px 8px; border-radius: 10px; white-space: nowrap; margin-left: 8px;">${pp.severity}</span>
+          </div>
+          <p style="font-size: 12px; color: var(--text-2); margin: 0 0 8px 0; line-height: 1.5;">${pp.adpSolution}</p>
+          <div style="background: var(--white); border-left: 2px solid var(--blue); padding: 8px 10px; border-radius: 4px;">
+            <p style="font-size: 11px; color: var(--text-3); margin: 0 0 4px 0;">Talking Point:</p>
+            <p style="font-size: 12px; color: var(--text); margin: 0; font-style: italic;">"${pp.talkingPoint}"</p>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    ` : ''}
+
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 15px; font-weight: 600; margin: 0 0 1rem 0;">⚔️ Competitive Comparison</h3>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <th style="text-align: left; padding: 8px 12px; font-weight: 500;">Feature</th>
+              <th style="text-align: center; padding: 8px 12px; font-weight: 500; color: var(--blue);">ADP ${selectedMITrack}</th>
+              <th style="text-align: center; padding: 8px 12px; font-weight: 500;">${intelligence.competitiveComparison.competitor}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${intelligence.competitiveComparison.features.map((feature, idx) => `
+              <tr style="border-bottom: ${idx === intelligence.competitiveComparison.features.length - 1 ? 'none' : '1px solid var(--border)'};">
+                <td style="padding: 10px 12px;">${feature.feature}</td>
+                <td style="padding: 10px 12px; text-align: center; font-weight: 500; color: var(--green);">${feature.adp}</td>
+                <td style="padding: 10px 12px; text-align: center; color: var(--text-3);">${feature.competitor}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 15px; font-weight: 600; margin: 0;">📧 Email-Ready Talking Points</h3>
+        <button onclick="copyTalkingPoints()" style="font-size: 12px; padding: 6px 12px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; transition: all 0.2s; font-weight: 500;">
+          📋 Copy All
+        </button>
+      </div>
+      <div id="talking-points-content" style="background: var(--off-white); border-radius: var(--radius-sm); padding: 12px; font-family: var(--fm); font-size: 12px; line-height: 1.7;">
+        ${intelligence.emailTalkingPoints.map((tp, i) => `
+          <p style="margin: ${i > 0 ? '12px' : '0'} 0 0 0;">${tp}</p>
+        `).join('')}
+      </div>
+      <p style="font-size: 11px; color: var(--text-3); margin: 8px 0 0 0; text-align: center;">
+        Optimized for ${selectedMICadence} tone • Ready to paste into Gmail
+      </p>
+    </div>
+  `;
+  
+  dashboardEl.innerHTML = html;
+}
+
+/**
+ * Copy talking points to clipboard (Chrome-optimized)
+ */
+async function copyTalkingPoints() {
+  const content = document.getElementById('talking-points-content').innerText;
+  
+  try {
+    await navigator.clipboard.writeText(content);
+    showMIToast('✓ Talking points copied to clipboard!');
+    
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.background = 'var(--green-bg)';
+    btn.style.color = 'var(--green)';
+    
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = 'var(--white)';
+      btn.style.color = '';
+    }, 2000);
+    
+  } catch (err) {
+    console.error('Copy failed:', err);
+    showMIToast('⚠️ Copy failed - please try again');
+  }
+}
+
+/**
+ * Show toast notification
+ */
+function showMIToast(message) {
+  const existingToast = document.getElementById('mi-toast');
+  if (existingToast) {
+    document.body.removeChild(existingToast);
+  }
+  
+  const toast = document.createElement('div');
+  toast.id = 'mi-toast';
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed; top: 20px; right: 20px; background: var(--white);
+    color: var(--text); padding: 12px 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-2); font-size: 13px; z-index: 10003;
+    box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease-out;
+  `;
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  `;
+  if (!document.getElementById('mi-toast-style')) {
+    style.id = 'mi-toast-style';
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.3s ease-out';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
+}
+
+/**
+ * Get competitive signals from existing agents
+ */
+async function getRecentCompetitiveSignals() {
+  try {
+    // Placeholder - integrate with your existing Marketing Research & Social Media agents
+    // For now, return sample data
+    return [
+      {
+        title: 'Insperity Q4 earnings miss',
+        description: 'Client retention down 4% — outreach opportunity',
+        severity: 'high',
+        timestamp: '2 hours ago',
+        source: 'Marketing Research Agent'
+      },
+      {
+        title: 'Dayforce PE privatization',
+        description: 'Client uncertainty around roadmap and support',
+        severity: 'medium',
+        timestamp: '5 hours ago',
+        source: 'Social Media Agent'
+      },
+      {
+        title: 'Rippling #1 mid-market position',
+        description: 'Growing competitive pressure — need differentiation',
+        severity: 'high',
+        timestamp: '1 day ago',
+        source: 'Social Media Agent'
+      }
+    ];
+  } catch (error) {
+    console.error('Competitive signals error:', error);
+    return [];
+  }
+}
+
+/**
+ * Storage functions
+ */
+function saveIntelligenceToCache(intelligence) {
+  try {
+    const key = `market-intel-${selectedMITrack}-${Date.now()}`;
+    localStorage.setItem(key, JSON.stringify({
+      timestamp: new Date().toISOString(),
+      track: selectedMITrack,
+      cadence: selectedMICadence,
+      screenshotCount: uploadedGongScreenshots.length,
+      intelligence
+    }));
+    localStorage.setItem('market-intel-latest', key);
+  } catch (e) {
+    console.error('Cache save error:', e);
+  }
+}
+
+async function saveIntelligenceToFirebase(intelligence) {
+  try {
+    // Placeholder - integrate with your Firebase setup
+    console.log('Intelligence saved to Firebase:', intelligence);
+  } catch (e) {
+    console.error('Firebase save error:', e);
+  }
+}
+
+// Add Market Intelligence option to your navigation/menu
+// You can call openMarketIntel() from anywhere in your app to open the panel
+
+console.log('✓ Market & Competitive Intelligence module loaded');
+console.log('  Call openMarketIntel() to launch the panel');

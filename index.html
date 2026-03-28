@@ -9258,6 +9258,151 @@ console.log('✅ Navigation ready');
 })();
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════
+     MARKET & COMPETITIVE INTELLIGENCE ENHANCEMENT
+     Chrome-Optimized Screenshot-Based Analysis
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- Market Intelligence Modal/Panel -->
+<div id="market-intel-overlay" style="display: none; position: fixed; inset: 0; background: rgba(13, 21, 53, 0.85); backdrop-filter: blur(4px); z-index: 10001; overflow-y: auto;">
+  <div style="min-height: 100vh; padding: 20px; display: flex; align-items: flex-start; justify-content: center;">
+    <div style="background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 1200px; width: 100%; margin: 40px auto;">
+      
+      <!-- Panel Header -->
+      <div style="padding: 20px 24px; border-bottom: 2px solid var(--border); background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); border-radius: var(--radius-lg) var(--radius-lg) 0 0; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h2 style="font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--white); margin: 0; letter-spacing: -0.5px;">🔍 Market & Competitive Intelligence</h2>
+          <p style="font-size: 13px; color: rgba(255,255,255,0.7); margin: 4px 0 0 0;">Chrome-optimized screenshot analysis with real-time competitive signals</p>
+        </div>
+        <button onclick="closeMarketIntel()" style="background: rgba(255,255,255,0.15); border: none; color: var(--white); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 20px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1;">×</button>
+      </div>
+
+      <!-- Panel Body -->
+      <div style="padding: 24px;">
+        
+        <!-- Track & Cadence Selection -->
+        <div id="track-cadence-selection" style="margin-bottom: 24px;">
+          <div style="background: var(--light); border-radius: var(--radius); padding: 20px; margin-bottom: 16px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--text-2);">Select Product Track</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <button class="mi-track-btn active" data-track="TotalSource" onclick="selectMITrack('TotalSource')" style="padding: 12px; background: var(--white); border: 2px solid var(--gold-border); border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--gold); transition: all 0.2s;">
+                🤝 TotalSource PEO
+              </button>
+              <button class="mi-track-btn" data-track="WorkforceNow" onclick="selectMITrack('WorkforceNow')" style="padding: 12px; background: var(--white); border: 2px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-2); transition: all 0.2s;">
+                💼 WorkforceNow
+              </button>
+            </div>
+          </div>
+
+          <div style="background: var(--light); border-radius: var(--radius); padding: 20px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--text-2);">Select Cadence Tone</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+              <button class="mi-cadence-btn" data-cadence="Aggressive" onclick="selectMICadence('Aggressive')" style="padding: 12px 8px; background: var(--white); border: 2px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-2); transition: all 0.2s;">
+                ⚡ Aggressive
+              </button>
+              <button class="mi-cadence-btn active" data-cadence="Consultative" onclick="selectMICadence('Consultative')" style="padding: 12px 8px; background: var(--white); border: 2px solid var(--blue-border); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--blue); transition: all 0.2s;">
+                🤝 Consultative
+              </button>
+              <button class="mi-cadence-btn" data-cadence="Nurture" onclick="selectMICadence('Nurture')" style="padding: 12px 8px; background: var(--white); border: 2px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-2); transition: all 0.2s;">
+                🌱 Nurture
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gong Screenshot Upload (Chrome Camera Support) -->
+        <div style="background: var(--off-white); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
+          <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text);">
+            📸 Gong Transcript Screenshots
+          </label>
+          <p style="font-size: 12px; color: var(--text-3); margin: 0 0 12px 0;">
+            Capture or upload Gong call transcripts to extract pain points
+          </p>
+          
+          <!-- Hidden file inputs for Chrome -->
+          <input 
+            type="file" 
+            id="gong-camera-input" 
+            accept="image/*" 
+            capture="environment"
+            multiple
+            style="display: none;"
+            onchange="handleGongScreenshots(event)"
+          />
+          
+          <input 
+            type="file" 
+            id="gong-file-input" 
+            accept="image/*" 
+            multiple
+            style="display: none;"
+            onchange="handleGongScreenshots(event)"
+          />
+          
+          <!-- Upload Buttons -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button 
+              onclick="document.getElementById('gong-camera-input').click()"
+              style="padding: 12px; background: var(--white); border: 1px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;"
+            >
+              <span>📷</span> Take Photo
+            </button>
+            
+            <button 
+              onclick="document.getElementById('gong-file-input').click()"
+              style="padding: 12px; background: var(--white); border: 1px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;"
+            >
+              <span>🖼️</span> Upload File
+            </button>
+          </div>
+          
+          <!-- Uploaded Screenshots Preview -->
+          <div id="screenshot-previews" style="margin-top: 12px; display: none;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;" id="screenshot-thumbnails"></div>
+            <p style="font-size: 11px; color: var(--green); margin: 8px 0 0 0; font-weight: 500;" id="screenshot-count"></p>
+          </div>
+        </div>
+
+        <!-- Run Analysis Button -->
+        <button 
+          id="run-market-intel-btn"
+          onclick="runEnhancedMarketIntel()"
+          style="width: 100%; padding: 14px; background: var(--blue); color: var(--white); border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; margin-bottom: 24px; font-size: 14px; transition: all 0.2s;"
+        >
+          🚀 Run Enhanced Analysis
+        </button>
+        
+        <!-- Intelligence Dashboard (rendered dynamically) -->
+        <div id="market-intel-dashboard">
+          <div style="text-align: center; padding: 3rem 1rem; color: var(--text-3);">
+            <p style="font-size: 14px; margin: 0 0 8px 0;">📊 Ready to analyze</p>
+            <p style="font-size: 12px; margin: 0;">Upload transcript screenshots and click Run Analysis</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Market Intelligence Styles -->
+<style>
+.mi-track-btn:hover, .mi-cadence-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.mi-track-btn.active {
+  border-color: var(--gold) !important;
+  background: var(--gold-bg) !important;
+  color: var(--gold) !important;
+}
+.mi-cadence-btn.active {
+  border-color: var(--blue) !important;
+  background: var(--blue-bg) !important;
+  color: var(--blue) !important;
+}
+</style>
+
 
 </body>
 
