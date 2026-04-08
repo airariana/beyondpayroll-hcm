@@ -14350,6 +14350,12 @@ function notifRenderAlertsTabEnhanced(listEl){
       overdue  = touches.filter((t,i) => t.day<todayNum  && (statuses[i]||'Pending')==='Pending');
       console.log('[Alerts Tab] Due today:', dueToday.length, dueToday.map(t => `Day ${t.day}`));
       console.log('[Alerts Tab] Overdue:', overdue.length, overdue.map(t => `Day ${t.day}`));
+      
+      // CRITICAL: Check if we're BEFORE first touch day (e.g., Day 1 but first touch is Day 2)
+      if(todayNum < firstTouch.day && firstTouchPending){
+        console.log('[Alerts Tab] AUTO-START MODE - Before first touch day (Day ' + todayNum + ' < Day ' + firstTouch.day + ')');
+        firstTouchAlert = firstTouch;
+      }
     } else if(firstTouchPending){
       // AUTO-START: Cadence not started but first touch is pending
       console.log('[Alerts Tab] AUTO-START MODE - First touch will appear immediately');
@@ -14364,16 +14370,31 @@ function notifRenderAlertsTabEnhanced(listEl){
       
       // AUTO-START: First touch alert (appears immediately when prospect is created)
       if(firstTouchAlert){
+        // Calculate when first touch will be due
+        let dueMessage = 'First touch';
+        if(data.startISO && start && todayNum){
+          const daysUntil = firstTouchAlert.day - todayNum;
+          if(daysUntil === 1){
+            dueMessage = 'Due tomorrow (Day ' + firstTouchAlert.day + ')';
+          } else if(daysUntil > 1){
+            dueMessage = 'Due in ' + daysUntil + ' days (Day ' + firstTouchAlert.day + ')';
+          } else {
+            dueMessage = 'First touch · Day ' + firstTouchAlert.day;
+          }
+        } else {
+          dueMessage = 'First touch · Day ' + firstTouchAlert.day;
+        }
+        
         html += `<div style="background:#dbeafe;border-bottom:2px solid #93c5fd;padding:12px 14px">
-          <div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:10px;letter-spacing:.5px">🚀 READY TO START (AUTO-START)</div>`;
+          <div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:10px;letter-spacing:.5px">🚀 READY TO START</div>`;
         
         const i = touches.indexOf(firstTouchAlert);
         html += `<div style="background:#fff;border-left:4px solid #3b82f6;padding:12px;border-radius:6px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Day ${firstTouchAlert.day} — ${firstTouchAlert.label}</div>
-          <div style="font-size:10px;color:var(--text-3);margin-bottom:4px">First touch · Start your cadence</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">${firstTouchAlert.label}</div>
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:4px">${dueMessage}</div>
           <div style="font-size:10px;color:var(--text-3);margin-bottom:8px">${firstTouchAlert.subject.substring(0,80)}${firstTouchAlert.subject.length>80?'…':''}</div>
           <div style="display:flex;gap:6px">
-            <button onclick="cdtSetStartDate('today');notifRenderList()" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">📅 Start Today</button>
+            <button onclick="cdtSetStartDate('today');notifRenderList()" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)" title="Set start date to today">📅 Start Today</button>
             <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-family:var(--fb)">📧 Send Now</button>
           </div>
         </div>`;
