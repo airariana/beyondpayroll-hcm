@@ -6565,10 +6565,21 @@ window.ecInjectGongInsights = function(){
   // Build personalized email using insights
   let personalizedBody = '';
   
+  // Extract first name from primary contact
+  let firstName = '[Name]';
+  if (p.contacts && p.contacts.length > 0) {
+    const primaryContact = p.contacts.find(c => c.isPrimary) || p.contacts[0];
+    firstName = primaryContact.firstName || (p.contact || '').split(' ')[0] || '[Name]';
+  } else if (p.firstName) {
+    firstName = p.firstName;
+  } else if (p.contact) {
+    firstName = p.contact.split(' ')[0];
+  }
+  
   // Start with a personalized opening based on pain points
   if(insights.painPoints && insights.painPoints.length > 0){
     const topPain = insights.painPoints[0];
-    personalizedBody += `Hi ${(p.contact || '').split(' ')[0] || '[Name]'},\n\n`;
+    personalizedBody += `Hi ${firstName},\n\n`;
     personalizedBody += `I noticed in our recent conversation that ${topPain.toLowerCase()}. This is exactly the kind of challenge that ${p.track === 'WFN' ? 'WorkforceNow' : 'TotalSource'} is designed to solve.\n\n`;
   } else {
     personalizedBody += touch._baseBody.split('\n\n')[0] + '\n\n';
@@ -6826,11 +6837,22 @@ window.injectDrawerGong = function(touchIdx){
   const p = window._hqProspect;
   const touch = buildTouches(p)[touchIdx];
   
+  // Extract first name from primary contact
+  let firstName = '[Name]';
+  if (p.contacts && p.contacts.length > 0) {
+    const primaryContact = p.contacts.find(c => c.isPrimary) || p.contacts[0];
+    firstName = primaryContact.firstName || (p.contact || '').split(' ')[0] || '[Name]';
+  } else if (p.firstName) {
+    firstName = p.firstName;
+  } else if (p.contact) {
+    firstName = p.contact.split(' ')[0];
+  }
+  
   // Build personalized email
   let personalizedBody = '';
   
   if(insights.painPoints && insights.painPoints.length > 0){
-    personalizedBody += `Hi ${(p.contact || '').split(' ')[0] || '[Name]'},\n\n`;
+    personalizedBody += `Hi ${firstName},\n\n`;
     personalizedBody += `Following up on our conversation where you mentioned ${insights.painPoints[0].toLowerCase()}. `;
   } else {
     personalizedBody += touch._baseBody.split('\n\n')[0] + '\n\n';
@@ -13571,20 +13593,38 @@ window.atPullFromProspect = function() {
     ? sre.sreRecommendation + ' (' + sre.sreConfidence + '% confidence)'
     : '— (run Smart Routing Engine first)';
 
+  // Extract primary contact info
+  var primaryContact = null;
+  if (p.contacts && p.contacts.length > 0) {
+    primaryContact = p.contacts.find(function(c){ return c.isPrimary; }) || p.contacts[0];
+  }
+  var contactName = primaryContact 
+    ? [primaryContact.firstName, primaryContact.lastName].filter(Boolean).join(' ')
+    : (p.contact || p.firstName && p.lastName ? [p.firstName, p.lastName].filter(Boolean).join(' ') : '');
+  var contactEmail = primaryContact ? primaryContact.email : (p.email || '');
+  var contactPhone = primaryContact ? primaryContact.phone : (p.phone || '');
+  var contactTitle = primaryContact ? primaryContact.title : (p.persona || '');
+  
+  // Build full address
+  var fullAddress = [p.streetAddress, p.city, p.state, p.zip].filter(Boolean).join(', ');
+  
   var fields = [
     ['Company', p.company, 'co'],
-    ['Contact', p.contact, ''],
+    ['Primary Contact', contactName, ''],
+    ['Title', contactTitle, ''],
+    ['Email', contactEmail, ''],
+    ['Phone', contactPhone, ''],
+    ['Address', fullAddress, ''],
     ['Industry', p.industry, ''],
     ['State', p.state, ''],
     ['Headcount', p.headcount ? p.headcount + ' employees' : '', ''],
     ['Track', p.track, ''],
-    ['Persona', p.persona, ''],
+    ['Additional Contacts', p.contacts && p.contacts.length > 1 ? (p.contacts.length - 1) + ' more contact(s)' : '', ''],
     ['Client Type', sre.clientType || (p.track || 'new'), ''],
     ['Current ADP Products', adpStr, ''],
     ['SRE Recommendation', sreStr, ''],
     ['Pain Points', painStr, ''],
-    ['Transcript', transcriptStr, ''],
-    ['Email', p.email, '']
+    ['Transcript', transcriptStr, '']
   ];
   if (gridEl) {
     gridEl.innerHTML = fields.filter(function(f){return f[1] && f[1] !== '—';}).map(function(f) {
@@ -13635,17 +13675,42 @@ function atCollectSreContext() {
   };
 }
 
-// ── Confirm data for analysis ─────────────────────────────────────
 window.atConfirmData = function() {
   var p = window._hqProspect;
   if (!p) { showToast('No prospect loaded', true); return; }
   var sre = atCollectSreContext();
+  
+  // Extract primary contact info
+  var primaryContact = null;
+  if (p.contacts && p.contacts.length > 0) {
+    primaryContact = p.contacts.find(function(c){ return c.isPrimary; }) || p.contacts[0];
+  }
+  var contactName = primaryContact 
+    ? [primaryContact.firstName, primaryContact.lastName].filter(Boolean).join(' ')
+    : (p.contact || '');
+  var contactEmail = primaryContact ? primaryContact.email : (p.email || '');
+  var contactPhone = primaryContact ? primaryContact.phone : (p.phone || '');
+  
   _atData = {
     // ── Firmographic ──
-    company: p.company, contact: p.contact, industry: p.industry || '',
-    state: p.state || '', headcount: p.headcount || '',
-    email: p.email || '', persona: p.persona || '', phone: p.phone || '',
-    linkedin: p.linkedin || '', platform: p.platform || '', notes: p.notes || '',
+    company: p.company, 
+    contact: contactName, 
+    firstName: primaryContact ? primaryContact.firstName : (p.firstName || ''),
+    lastName: primaryContact ? primaryContact.lastName : (p.lastName || ''),
+    contacts: p.contacts || [],
+    industry: p.industry || '',
+    state: p.state || '', 
+    headcount: p.headcount || '',
+    email: contactEmail, 
+    persona: primaryContact ? primaryContact.title : (p.persona || ''), 
+    phone: contactPhone,
+    // ── Address ──
+    streetAddress: p.streetAddress || '',
+    city: p.city || '',
+    zip: p.zip || '',
+    linkedin: p.linkedin || '', 
+    platform: p.platform || '', 
+    notes: p.notes || '',
     track: p.track || '',
     // ── SRE context ──
     clientType: sre.clientType || (p.track === 'TS' ? 'existing' : 'new'),
@@ -18583,11 +18648,37 @@ function generateEmailFromIntelligence(intelligence, painPoints, researchBehavio
   // Get prospect context
   const prospect = window._hqProspect || {};
   
+  // Extract primary contact info from contacts array
+  let primaryContact = null;
+  if (prospect.contacts && prospect.contacts.length > 0) {
+    primaryContact = prospect.contacts.find(c => c.isPrimary) || prospect.contacts[0];
+  }
+  
+  // Build contact name from primary contact or fallback to legacy fields
+  const contactFirstName = primaryContact ? primaryContact.firstName : (prospect.firstName || '');
+  const contactLastName = primaryContact ? primaryContact.lastName : (prospect.lastName || '');
+  const contactFullName = [contactFirstName, contactLastName].filter(Boolean).join(' ') || prospect.contact || 'there';
+  const contactEmail = primaryContact ? primaryContact.email : (prospect.email || '');
+  const contactPhone = primaryContact ? primaryContact.phone : (prospect.phone || '');
+  
+  // Build full address
+  const fullAddress = [prospect.streetAddress, prospect.city, prospect.state, prospect.zip].filter(Boolean).join(', ');
+  
   // Build token replacements
   const tokens = {
-    contact_name: prospect.firstName || 'there',
-    company: prospect.companyName || 'your organization',
-    company_size: prospect.employeeCount ? `${prospect.employeeCount}-employee` : '',
+    contact_name: contactFirstName || contactFullName,
+    first_name: contactFirstName,
+    last_name: contactLastName,
+    full_name: contactFullName,
+    email: contactEmail,
+    phone: contactPhone,
+    address: fullAddress,
+    street_address: prospect.streetAddress || '',
+    city: prospect.city || '',
+    state: prospect.state || '',
+    zip: prospect.zip || '',
+    company: prospect.company || prospect.companyName || 'your organization',
+    company_size: prospect.headcount ? `${prospect.headcount}-employee` : '',
     industry: prospect.industry || 'your industry',
     product: selectedMITrack || 'TotalSource',
     current_system: getCurrentSystem(intelligence),
