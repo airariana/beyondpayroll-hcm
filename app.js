@@ -5722,51 +5722,205 @@ function buildTouches(p){
   // Helper: use prose-formatted body if available, otherwise use base template
   const body = (touch) => touch._proseBody || touch._baseBody;
 
+  // 15-Touch Multi-Channel Sequence for WFN
   const wfn=[
-    {day:2,label:'Insight Hook',
+    // DAY 1 - EMAIL: First Touch Insight Hook
+    {day:1, channel:'email', label:'First Touch - Insight Hook',
       subject:`Quick thought on ${co}'s ADP setup`,
       get body(){ return this._proseBody || this._baseBody; },
       _baseBody:`Hi ${nm},\n\nMost ADP WorkforceNow clients at ${co}'s size are only actively using about 60% of what they're paying for — the rest sits idle. I ran your feature profile and there are a few modules that could either be activated to save time or negotiated out of your renewal to cut costs.\n\nI can pull the full breakdown if helpful — takes about 10 minutes to walk through.\n\nAre you open later this week?${sig}`},
-    {day:8,label:'Cost Benchmark',
-      subject:`What ${co} is actually spending on HR tech vs. the benchmark`,
+    
+    // DAY 2 - PHONE: Follow-up Call
+    {day:2, channel:'phone', label:'Follow-up Call',
+      subject:`Call Script: ${co} Follow-up`,
       get body(){ return this._proseBody || this._baseBody; },
-      _baseBody:`Hi ${nm},\n\n${ind} organizations at ${co}'s size in ${st} are typically spending between $85–$110 per employee annually on HR tech — I ran your profile against our benchmark and the gap was worth flagging.\n\nI put together a quick cost comparison specific to your headcount and state if you'd like to take a look — no strings, just data.\n\nWhat does your calendar look like this week?${sig}`},
-    {day:15,label:'Compliance Trigger',
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, this is AJ from ADP. I sent you a quick note yesterday about ${co}'s WorkforceNow setup — I noticed a few modules you're paying for but not using. Do you have 2 minutes?\n\n[IF YES] Great! I ran your profile and found about ${hc} employees worth of unused features. Can we set 10 minutes this week to walk through what you could either activate or negotiate out?\n\n[IF NO] No problem — when's a better time? I can send my calendar link.\n\n[VOICEMAIL] Hi ${nm}, AJ from ADP. Quick voicemail — I noticed ${co} is paying for WorkforceNow modules you're not using. Worth a 10-minute conversation. My calendar link is in my email. Talk soon."`},
+    
+    // DAY 3 - LINKEDIN: Connection Request
+    {day:3, channel:'linkedin', label:'LinkedIn Connection',
+      subject:`LinkedIn Connection Request`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`💼 LINKEDIN CONNECTION NOTE:\n\n"Hi ${nm} — I work with ${ind} companies in ${st} on ADP optimization. I've been reaching out about ${co}'s WorkforceNow setup and thought it'd be worth connecting here as well. I share regular benchmarking data for HR leaders in your space."`},
+    
+    // DAY 5 - EMAIL: Case Study / Value Add
+    {day:5, channel:'email', label:'Case Study / Value',
+      subject:`How a ${ind} company cut 22% off their ADP bill`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nI worked with a ${ind} company in ${st} at ${hc} employees last quarter — same WFN setup as ${co}. We found they were paying for 8 modules they hadn't logged into in over a year.\n\nAfter a 20-minute walkthrough, they negotiated those modules out of their renewal and cut 22% off their annual ADP bill. The breakdown is surprisingly common for companies at your size.\n\nI can run the same analysis for ${co} if you're curious — no obligation, just data.\n\nWorth 15 minutes this week?${sig}`},
+    
+    // DAY 6 - PHONE: Check-in Call
+    {day:6, channel:'phone', label:'Check-in Call',
+      subject:`Call Script: ${co} Check-in`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, AJ from ADP again. I sent over that case study about the ${ind} company that cut 22% off their bill — wanted to make sure you saw it.\n\n[IF YES] Great — does anything in there resonate with ${co}'s situation?\n\n[IF NO] No worries — quick version: most companies your size are paying for modules they don't use. I can audit ${co}'s setup in 15 minutes. Want me to send my calendar?\n\n[VOICEMAIL] ${nm}, AJ from ADP. Following up on the case study I sent about cutting ADP costs. If you're interested in a free audit for ${co}, my calendar link is in the email. Thanks."`},
+    
+    // DAY 8 - LINKEDIN: Direct Message
+    {day:8, channel:'linkedin', label:'LinkedIn DM',
+      subject:`LinkedIn Direct Message`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`💼 LINKEDIN MESSAGE (after connection):\n\n"Thanks for connecting, ${nm}! I've been doing some research on ${ind} companies in ${st} and noticed ${co} is on WorkforceNow. Quick question — are you actively using all the modules you're being billed for? I've found most companies your size have 3-5 idle modules worth negotiating out at renewal. Happy to run a quick audit if helpful."`},
+    
+    // DAY 10 - EMAIL: Industry Insight / Thought Leadership
+    {day:10, channel:'email', label:'Industry Insight',
       subject:`${st} compliance update relevant to ${co}`,
       get body(){ return this._proseBody || this._baseBody; },
-      _baseBody:`Hi ${nm},\n\n${st} updated its leave tracking and reporting requirements for ${ind} organizations this quarter, and a number of ADP WorkforceNow clients in your category have had to adjust their configurations to stay current. There's a specific module in WFN that handles this automatically — most clients at your size don't have it enabled by default.\n\nI can walk you through the update in about 15 minutes if you want to make sure ${co} is covered.\n\nI have time Thursday or Friday — does either work?${sig}`},
-    {day:22,label:'Breakup Email',
+      _baseBody:`Hi ${nm},\n\n${st} updated its leave tracking and reporting requirements for ${ind} organizations this quarter, and a number of ADP WorkforceNow clients in your category have had to adjust their configurations to stay current.\n\nThere's a specific module in WFN that handles this automatically — most clients at your size don't have it enabled by default. The noncompliance risk isn't huge, but it's not zero either.\n\nI can walk you through the update in about 15 minutes if you want to make sure ${co} is covered.\n\nI have time Thursday or Friday — does either work?${sig}`},
+    
+    // DAY 12 - PHONE: Mid-Cadence Call
+    {day:12, channel:'phone', label:'Mid-Cadence Call',
+      subject:`Call Script: ${co} Compliance Check`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, AJ from ADP. I wanted to follow up on that ${st} compliance update I sent over — have you had a chance to check if ${co} is covered?\n\n[IF YES] Perfect — did you find the module enabled or did you need to activate it?\n\n[IF NO] No problem — it's a quick fix. The leave tracking module handles this automatically. Want me to walk you through it? Takes 10 minutes.\n\n[VOICEMAIL] ${nm}, AJ with ADP. Quick compliance check for ${co} — ${st} just updated leave tracking requirements. I sent the details via email. Let me know if you need help confirming you're covered. Calendar link is in my signature."`},
+    
+    // DAY 14 - VIDEO: Personal Video Message
+    {day:14, channel:'video', label:'Personal Video',
+      subject:`Personal video for ${nm} at ${co}`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`🎥 VIDEO MESSAGE SCRIPT:\n\n[Record 30-60 second personal video using Loom or similar]\n\n"Hi ${nm} — AJ from ADP here. I wanted to put a face to the emails and calls. I've been researching ${co}'s WorkforceNow setup and found a few optimization opportunities I think are worth discussing.\n\nI know you're busy, so I kept this quick. Bottom line: most ${ind} companies in ${st} at your size are either overpaying for unused modules or missing configurations that could save time.\n\nI'd love 15 minutes to walk through what I found for ${co}. My calendar link is below. Looking forward to connecting."\n\n📧 EMAIL BODY:\nHi ${nm},\n\nI recorded a quick personal video for you (link above) — wanted to put a face to all the emails and calls.\n\nShort version: I've found some optimization opportunities for ${co}'s ADP setup that are worth discussing. Calendar link below if you're interested.\n\nThanks for your time.${sig}`},
+    
+    // DAY 16 - EMAIL: Competitive Intelligence
+    {day:16, channel:'email', label:'Competitive Intel',
+      subject:`What ${co} is actually spending on HR tech vs. the benchmark`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\n${ind} organizations at ${co}'s size in ${st} are typically spending between $85–$110 per employee annually on HR tech — I ran your profile against our benchmark and the gap was worth flagging.\n\nBased on ${hc} employees, you're likely in the $${Math.round(hc * 95)}-$${Math.round(hc * 110)} range annually. If that number feels high, it's probably the unused modules I mentioned earlier.\n\nI put together a quick cost comparison specific to your headcount and state if you'd like to take a look — no strings, just data.\n\nWhat does your calendar look like this week?${sig}`},
+    
+    // DAY 18 - DIRECT MAIL: Canva Mailer
+    {day:18, channel:'direct_mail', label:'Direct Mail (Canva)',
+      subject:`Send Direct Mail via Canva`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📬 DIRECT MAIL PIECE:\n\nCreate a professional mailer using Canva:\n\n1. Open Canva and select "Postcard" template\n2. Headline: "${co}'s ADP Optimization Report"\n3. Include:\n   - Estimated annual ADP spend: $${Math.round(hc * 95)}-$${Math.round(hc * 110)}\n   - Average unused modules: 3-5\n   - Potential savings: 15-25%\n   - QR code to calendar link\n4. Personalize with ${nm}'s name\n5. Mail to ${co} address\n\n💡 Include handwritten note: "${nm} — Thought this data might be useful for your next ADP renewal. — AJ"\n\n[CLICK HERE TO CREATE IN CANVA]`},
+    
+    // DAY 21 - PHONE: Final Call Attempt
+    {day:21, channel:'phone', label:'Final Call',
+      subject:`Call Script: ${co} Final Check`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, AJ from ADP. Last call from me — I've shared the cost benchmark, compliance update, and even sent a report in the mail. I don't want to be a pest, but I do think there's value here for ${co}.\n\n[IF ANSWER] Are you seeing any of this as relevant to your situation?\n\n[IF NO] I understand — not the right time. If anything changes, you have my info. Good luck with everything.\n\n[VOICEMAIL] ${nm}, AJ with ADP. This'll be my last outreach. I've sent over a lot of data on ${co}'s ADP setup — cost benchmarks, compliance updates, optimization opportunities. If any of it becomes relevant, my calendar link is always open. Otherwise, I'll get out of your way. Take care."`},
+    
+    // DAY 24 - EMAIL: Breakup Email
+    {day:24, channel:'email', label:'Breakup Email',
       subject:`Last note from me, ${nm}`,
       get body(){ return this._proseBody || this._baseBody; },
       _baseBody:`Hi ${nm},\n\nI've reached out a few times over the past few weeks — between the cost benchmark, the compliance update, and the competitive intel on ${ind} — and I don't want to keep showing up in your inbox if the timing isn't right.\n\nI'll get out of your way for now, but if anything I flagged becomes relevant down the road, you know where to find me.\n\nHope the data was useful either way.${sig}`},
-    {day:30,label:'Community Invite',
+    
+    // DAY 27 - LINKEDIN: Final Touch
+    {day:27, channel:'linkedin', label:'LinkedIn Final Touch',
+      subject:`LinkedIn Final Message`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`💼 LINKEDIN MESSAGE:\n\n"${nm} — This'll be my last message. I've shared a lot of ADP optimization data for ${co} over the past few weeks. If none of it resonated, no worries — not everything is a fit. But if any of it becomes relevant down the road (renewal time, budget review, compliance audit), feel free to reach out. Good luck with everything!"`},
+    
+    // DAY 30 - EMAIL: Community Invite
+    {day:30, channel:'email', label:'Community Invite',
       subject:`${co} HCM Scorecard + your spot in our quarterly briefing`,
       get body(){ return this._proseBody || this._baseBody; },
       _baseBody:`Hi ${nm},\n\nI put together an HCM Scorecard for ${co} based on everything I've pulled this month — it benchmarks your current setup against comparable ${ind} organizations in ${st} and flags a few areas worth watching.\n\nI'm also hosting a small quarterly briefing for HR leaders in your space next week — no pitch, just data and a conversation. I'd love to hold a seat for you.\n\nReply here and I'll send over both.${sig}`},
   ];
+
+  // 15-Touch Multi-Channel Sequence for TotalSource
   const ts=[
-    {day:2,label:'PEO Reality Check',
+    // DAY 1 - EMAIL: First Touch
+    {day:1, channel:'email', label:'First Touch - PEO Reality',
       subject:`Is ADP TotalSource still the right model for ${co} at ${hc} employees?`,
       get body(){ return this._proseBody || this._baseBody; },
       _baseBody:`Hi ${nm},\n\nMost PEO clients start evaluating alternatives somewhere around ${hc} employees — not because TotalSource isn't working, but because the PEPM math shifts in a way that surprises most CFOs at that threshold, and the co-employment structure looks different than it did at signing.\n\nI'd love to run a side-by-side comparison for ${co}'s specific profile — 15 minutes, no commitment, just the numbers.\n\nDo you have any time this week?${sig}`},
-    {day:8,label:'Cost Comparison',
+    
+    // DAY 2 - PHONE: Follow-up Call
+    {day:2, channel:'phone', label:'Follow-up Call',
+      subject:`Call Script: ${co} PEO Follow-up`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, this is AJ from ADP. I sent you a note yesterday about ${co}'s TotalSource setup — wanted to make sure it landed. Do you have 2 minutes?\n\n[IF YES] Perfect. The PEPM math changes pretty dramatically at ${hc} employees. Have you run the numbers on what TotalSource is actually costing you vs. an HCM platform?\n\n[IF NO] No problem — when's better? I can send my calendar.\n\n[VOICEMAIL] Hi ${nm}, AJ from ADP. Quick voicemail about ${co}'s TotalSource costs. Most companies your size see significant savings switching to HCM. Calendar link in my email if you want to explore. Thanks."`},
+    
+    // DAY 3 - LINKEDIN: Connection Request
+    {day:3, channel:'linkedin', label:'LinkedIn Connection',
+      subject:`LinkedIn Connection Request`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`💼 LINKEDIN CONNECTION NOTE:\n\n"Hi ${nm} — I work with ${ind} companies in ${st} on PEO cost optimization. I've been reaching out about ${co}'s TotalSource setup and thought we should connect. I share regular benchmarking data for HR leaders evaluating PEO vs. HCM models."`},
+    
+    // DAY 5 - EMAIL: Case Study
+    {day:5, channel:'email', label:'Case Study',
+      subject:`How a ${ind} company at ${hc} employees saved $${Math.round(hc * 45)}/year switching from TotalSource`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`Hi ${nm},\n\nI worked with a ${ind} company in ${st} at ${hc} employees last quarter — they were on TotalSource and the PEPM was climbing every year. We ran the numbers on switching to WorkforceNow and the annual savings was $${Math.round(hc * 45)}.\n\nThe transition was smoother than they expected, and they kept all the core functionality they needed. The case study breaks down the cost comparison and timeline if you're curious.\n\nI can run the same analysis for ${co} — no pressure, just data.\n\nWorth 15 minutes?${sig}`},
+    
+    // DAY 6 - PHONE: Check-in Call
+    {day:6, channel:'phone', label:'Check-in Call',
+      subject:`Call Script: ${co} Check-in`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, AJ from ADP. Following up on that case study I sent about the ${ind} company that saved $${Math.round(hc * 45)}/year switching from TotalSource. Did you get a chance to look at it?\n\n[IF YES] Great — does the cost structure resonate with ${co}'s situation?\n\n[IF NO] Quick version: most companies at ${hc} employees find TotalSource is more expensive than HCM. I can run ${co}'s numbers in 15 minutes if you're interested.\n\n[VOICEMAIL] ${nm}, AJ from ADP. Following up on the TotalSource cost comparison. If you want to see what ${co}'s numbers look like, calendar link is in the email. Thanks."`},
+    
+    // DAY 8 - LINKEDIN: Direct Message
+    {day:8, channel:'linkedin', label:'LinkedIn DM',
+      subject:`LinkedIn Direct Message`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`💼 LINKEDIN MESSAGE (after connection):\n\n"Thanks for connecting, ${nm}! Quick question on ${co}'s TotalSource setup — are you tracking what your effective PEPM is at ${hc} employees? Most companies your size are surprised when they run the actual math vs. a comparable HCM platform. Happy to share a cost comparison if helpful."`},
+    
+    // DAY 10 - EMAIL: Cost Comparison
+    {day:10, channel:'email', label:'Cost Comparison',
       subject:`The math on TotalSource at ${hc} employees — what the data shows for ${co}`,
       get body(){ return this._proseBody || this._baseBody; },
-      _baseBody:`Hi ${nm},\n\nI ran a PEO vs. HCM cost comparison specific to ${co}'s profile — ${hc} employees in ${ind} — and the annual delta between TotalSource and a comparable HCM platform was meaningful enough to flag.\n\nI'd rather show you the real numbers than estimate. Can you share your current PEPM so I can build an accurate comparison?${sig}`},
-    {day:15,label:'Case Study',
+      _baseBody:`Hi ${nm},\n\nI ran a PEO vs. HCM cost comparison specific to ${co}'s profile — ${hc} employees in ${ind} — and the annual delta between TotalSource and a comparable HCM platform was meaningful enough to flag.\n\nBased on industry benchmarks, you're likely spending $${Math.round(hc * 95)}-$${Math.round(hc * 110)}/employee annually with the PEO model. An HCM platform would be closer to $${Math.round(hc * 55)}-$${Math.round(hc * 70)}/employee.\n\nI'd rather show you ${co}'s real numbers than estimate. Can you share your current PEPM so I can build an accurate comparison?${sig}`},
+    
+    // DAY 12 - PHONE: Mid-Cadence Call
+    {day:12, channel:'phone', label:'Mid-Cadence Call',
+      subject:`Call Script: ${co} Cost Discussion`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, AJ from ADP. I sent over that cost comparison for ${co} — wanted to see if the numbers aligned with what you're seeing internally.\n\n[IF YES] Great — is the delta significant enough to explore alternatives?\n\n[IF NO] The industry benchmark for TotalSource at ${hc} employees is typically $${Math.round(hc * 95)}-$${Math.round(hc * 110)}/employee. Does that match your PEPM?\n\n[VOICEMAIL] ${nm}, AJ with ADP. Following up on the TotalSource cost comparison I sent for ${co}. If you want to discuss the numbers, my calendar link is in the email. Thanks."`},
+    
+    // DAY 14 - VIDEO: Personal Video
+    {day:14, channel:'video', label:'Personal Video',
+      subject:`Personal video for ${nm} at ${co}`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`🎥 VIDEO MESSAGE SCRIPT:\n\n[Record 30-60 second personal video]\n\n"Hi ${nm} — AJ from ADP. I wanted to put a face to all the emails and calls about ${co}'s TotalSource setup.\n\nI've been researching your profile — ${hc} employees in ${ind} — and the cost comparison between PEO and HCM is pretty significant at your size. I think it's worth a conversation.\n\nI know you're busy, so I'll keep this short. If you're curious about what switching to WorkforceNow would look like for ${co}, I'd love 15 minutes to walk through the numbers. Calendar link below."\n\n📧 EMAIL:\nHi ${nm},\n\nQuick personal video for you (link above). I've been analyzing ${co}'s TotalSource costs and think there's a meaningful conversation to be had. Calendar link below if you're interested.${sig}`},
+    
+    // DAY 16 - EMAIL: Restructuring Intel
+    {day:16, channel:'email', label:'Restructuring Data',
       subject:`How a ${ind} company at ${hc} employees restructured HCM — and what it meant for their bottom line`,
       get body(){ return this._proseBody || this._baseBody; },
-      _baseBody:`Hi ${nm},\n\nI worked with a company in ${ind} at a similar headcount to ${co} that was on TotalSource — the PEO model was adding significant cost per year once we ran the actual numbers against a comparable HCM platform.\n\nI can run the same analysis for ${co} in about 20 minutes. Want to take a look together?${sig}`},
-    {day:22,label:'Breakup Email',
+      _baseBody:`Hi ${nm},\n\nI worked with a company in ${ind} at a similar headcount to ${co} that was on TotalSource — the PEO model was adding $${Math.round(hc * 45)}/year in excess costs once we ran the actual numbers against a comparable HCM platform.\n\nThe restructuring process took about 60 days, and they kept all the core HR functionality they needed. The savings went straight to their bottom line.\n\nI can run the same analysis for ${co} in about 20 minutes. Want to take a look together?${sig}`},
+    
+    // DAY 18 - DIRECT MAIL: Canva Mailer
+    {day:18, channel:'direct_mail', label:'Direct Mail (Canva)',
+      subject:`Send Direct Mail via Canva`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📬 DIRECT MAIL PIECE:\n\nCreate a professional mailer using Canva:\n\n1. Open Canva and select "Postcard" template\n2. Headline: "${co}'s TotalSource Cost Analysis"\n3. Include:\n   - Current estimated PEPM: $${Math.round((hc * 95) / hc)}-$${Math.round((hc * 110) / hc)}\n   - Potential HCM savings: $${Math.round(hc * 35)}-$${Math.round(hc * 50)}/year\n   - Benchmark comparison for ${ind} industry\n   - QR code to calendar link\n4. Personalize with ${nm}'s name\n5. Mail to ${co} address\n\n💡 Include handwritten note: "${nm} — Thought this PEO cost analysis might be useful for your planning. — AJ"\n\n[CLICK HERE TO CREATE IN CANVA]`},
+    
+    // DAY 21 - PHONE: Final Call
+    {day:21, channel:'phone', label:'Final Call',
+      subject:`Call Script: ${co} Final Check`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`📞 PHONE SCRIPT:\n\n"Hi ${nm}, AJ from ADP. Last call from me — I've shared cost comparisons, case studies, and even mailed a report. I don't want to be a nuisance, but I do think the savings opportunity for ${co} is real.\n\n[IF ANSWER] Is any of this resonating with what you're seeing internally?\n\n[IF NO] I understand — timing isn't right. If things change, you have my info. Best of luck.\n\n[VOICEMAIL] ${nm}, AJ with ADP. Final outreach on ${co}'s TotalSource costs. I've sent a lot of data showing potential savings. If it becomes relevant, my calendar is always open. Otherwise, I'll step back. Take care."`},
+    
+    // DAY 24 - EMAIL: Breakup
+    {day:24, channel:'email', label:'Breakup Email',
       subject:`Last email from me, ${nm}`,
       get body(){ return this._proseBody || this._baseBody; },
       _baseBody:`Hi ${nm},\n\nI've shared cost comparisons and restructuring data on ${co}'s TotalSource setup over the past few weeks — whether you act now or revisit at renewal, I hope it gave you a useful baseline.\n\nMy calendar is always open if the timing changes: [calendar link]. Either way, thanks for your time.${sig}`},
-    {day:30,label:'Community Invite',
+    
+    // DAY 27 - LINKEDIN: Final Touch
+    {day:27, channel:'linkedin', label:'LinkedIn Final Touch',
+      subject:`LinkedIn Final Message`,
+      get body(){ return this._proseBody || this._baseBody; },
+      _baseBody:`💼 LINKEDIN MESSAGE:\n\n"${nm} — Last message from me. I've shared a lot of TotalSource cost data for ${co} over the past few weeks. If it wasn't relevant, no problem — not every solution is a fit. But if any of it becomes useful down the road (renewal time, budget planning), feel free to reach out. Best of luck!"`},
+    
+    // DAY 30 - EMAIL: Community Invite
+    {day:30, channel:'email', label:'Community Invite',
       subject:`${co}'s PEO Scorecard + an invitation to our HCM briefing`,
       get body(){ return this._proseBody || this._baseBody; },
       _baseBody:`Hi ${nm},\n\nWrapping up my outreach — I put together a TotalSource Renewal Scorecard for ${co} that's yours to keep regardless of next steps. It benchmarks your current PEO cost structure against comparable ${ind} organizations.\n\nI'm also hosting a quarterly PEO & HCM Benchmarking Briefing for HR leaders in your space — no sales pitch, easy to unsubscribe, just data. I'd love to include you.\n\nReply here and I'll send both over.${sig}`},
   ];
+  
   return p.track==='WFN'?wfn:ts;
+}
+
+// Helper: Get channel icon and color for multi-channel touches
+function getChannelIcon(channel){
+  const icons = {
+    'email': {icon: '📧', color: '#3b82f6', label: 'Email'},
+    'phone': {icon: '☎️', color: '#10b981', label: 'Phone'},
+    'linkedin': {icon: '💼', color: '#0077b5', label: 'LinkedIn'},
+    'video': {icon: '🎥', color: '#ef4444', label: 'Video'},
+    'direct_mail': {icon: '📬', color: '#f59e0b', label: 'Direct Mail'}
+  };
+  return icons[channel] || {icon: '📧', color: '#3b82f6', label: 'Email'};
 }
 
 function ecRenderAll(){
@@ -5787,7 +5941,8 @@ function ecRenderAll(){
   tabsEl.innerHTML=touches.map((t,i)=>{
     const sent=window._ecStatuses[i]==='Sent'||window._ecStatuses[i]==='Meeting Booked';
     let cls='ec-t'+(i===window._ecActiveIdx?' active':sent?' sent':'');
-    return `<button class="${cls}" onclick="ecSwitch(${i})"><span class="ec-t-day">${t.day}</span>${t.label}${sent?' ✓':''}</button>`;
+    const ch = getChannelIcon(t.channel);
+    return `<button class="${cls}" onclick="ecSwitch(${i})"><span class="ec-t-day">${t.day}</span><span style="margin-right:4px">${ch.icon}</span>${t.label}${sent?' ✓':''}</button>`;
   }).join('');
   if(!document.getElementById('ec-to-inp').value&&p.email)document.getElementById('ec-to-inp').value=p.email;
   ecRenderTouch();ecRenderTokens();ecRenderChecklist();
@@ -5893,8 +6048,9 @@ window.ecSetSt=function(val){
       const btns=tabs.querySelectorAll('.ec-t');
       if(btns[i]){
         const sent=window._ecStatuses[i]==='Sent'||window._ecStatuses[i]==='Meeting Booked';
+        const ch = getChannelIcon(t.channel);
         btns[i].className='ec-t'+(i===window._ecActiveIdx?' active':sent?' sent':'');
-        btns[i].innerHTML=`<span class="ec-t-day">${t.day}</span>${t.label}${sent?' ✓':''}`;
+        btns[i].innerHTML=`<span class="ec-t-day">${t.day}</span><span style="margin-right:4px">${ch.icon}</span>${t.label}${sent?' ✓':''}`;
       }
     });
   }
@@ -5946,10 +6102,10 @@ var _cdtStartDate = null;        // ISO date when cadence was kicked off (localS
 
 // Intel/research days interspersed in the 30-day calendar
 const CDT_INTEL_DAYS = [
-  { day: 1,  label: 'Research Brief',        desc: 'Run WFN/TS Analyzer + Competitive Intel before first touch' },
-  { day: 8,  label: 'Mid-Cadence Intel',     desc: 'Refresh competitor landscape before education week' },
-  { day: 15, label: 'Competitive Intel Pull',desc: 'Surface new competitor positioning before urgency week' },
-  { day: 22, label: 'Final Push Intel',      desc: 'Last refresh before close week. Confirm renewal timing.' },
+  { day: 0,  label: 'Pre-Start Research',   desc: 'Run WFN/TS Analyzer + Competitive Intel before first touch (Day 0 = prep before cadence starts)' },
+  { day: 7,  label: 'Mid-Cadence Intel',    desc: 'Refresh competitor landscape + market intelligence update' },
+  { day: 15, label: 'Competitive Intel Pull',desc: 'Surface new competitor positioning + renewal timing research' },
+  { day: 22, label: 'Final Push Intel',     desc: 'Last intelligence refresh before close week + confirm decision timeline' },
 ];
 
 // Get/set start date in localStorage keyed to company
@@ -5961,10 +6117,15 @@ function cdtGetStart(){
 function cdtSetStart(iso){ const k=cdtGetKey(); if(k) localStorage.setItem(k, iso); }
 function cdtResetStart(){ const k=cdtGetKey(); if(k) localStorage.removeItem(k); }
 
-// Helper: Set start date (used by auto-start "Start Today" button)
+// Helper: Set start date (used by auto-start date picker and buttons)
 window.cdtSetStartDate = function(when){
-  const today = new Date();
-  const iso = today.toISOString().split('T')[0];
+  let iso;
+  if(when === 'today' || !when){
+    iso = new Date().toISOString().split('T')[0];
+  } else {
+    // when is already an ISO date string from the date picker
+    iso = when;
+  }
   console.log('[Auto-Start] Setting cadence start date to:', iso);
   cdtSetStart(iso);
   
@@ -5973,6 +6134,7 @@ window.cdtSetStartDate = function(when){
   if(input) input.value = iso;
   
   console.log('[Auto-Start] Start date set - cadence is now active');
+  showToast('Cadence start date set to ' + iso);
 };
 
 // Compute today's day-in-cadence (1-based; null if not started)
@@ -6161,7 +6323,7 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
           <div class="cdt-rs-hint" style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;color:var(--gold);letter-spacing:.4px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none">✎ EDIT</div>
         </div>
         <div class="cdt-day-mid">
-          <div class="cdt-touch-label">${touch.label}</div>
+          <div class="cdt-touch-label"><span style="margin-right:6px">${getChannelIcon(touch.channel).icon}</span>${touch.label}</div>
           <div class="cdt-touch-sub">${touch.subject}</div>
           ${(()=>{ try{ const s=cdtGetStart(); if(!s) return ''; const d=new Date(s); d.setHours(0,0,0,0); d.setDate(d.getDate()+(day-1)); return '<div style="font-size:10px;color:var(--text-3);margin-top:3px">📅 '+d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+'</div>'; }catch(e){return '';} })()}
           ${isSentStatus && sentAtLabel ? `<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:2px">✓ Sent ${sentAtLabel}</div>` : ''}
@@ -6213,7 +6375,7 @@ function cdtRenderGrid(touches, touchDays, intelDays, todayNum){
 
     html += `<div class="${cls}" onclick="cdtJumpTo(${idx})">
       <div class="cdt-gc-day">${touch.day}</div>
-      <div class="cdt-gc-label">${touch.label}</div>
+      <div class="cdt-gc-label"><span style="margin-right:4px">${getChannelIcon(touch.channel).icon}</span>${touch.label}</div>
       ${isToday ? '<div style="font-size:9px;font-weight:700;color:#c2410c;margin-bottom:4px">TODAY</div>' : ''}
       ${intelDays.has(touch.day) ? '<div style="font-size:8px;color:var(--gold);font-weight:700;margin-bottom:3px">📊 INTEL DAY</div>' : ''}
       <div class="cdt-gc-status" style="background:${pillBg};color:${pillColor}">${pillLabel}</div>
@@ -14611,8 +14773,11 @@ function notifRenderAlertsTabEnhanced(listEl){
           <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">${firstTouchAlert.label}</div>
           <div style="font-size:10px;color:var(--text-3);margin-bottom:4px">${dueMessage}</div>
           <div style="font-size:10px;color:var(--text-3);margin-bottom:8px">${firstTouchAlert.subject.substring(0,80)}${firstTouchAlert.subject.length>80?'…':''}</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+            <input type="date" id="auto-start-date-picker" style="font-size:10px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-family:var(--fb);color:var(--text);flex:1;min-width:0" value="${new Date().toISOString().split('T')[0]}" />
+          </div>
           <div style="display:flex;gap:6px">
-            <button onclick="cdtSetStartDate('today');notifRenderList()" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)" title="Set start date to today">📅 Start Today</button>
+            <button onclick="cdtSetStartDate(document.getElementById('auto-start-date-picker').value);notifRenderList()" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)" title="Start cadence on selected date">📅 Start on Date</button>
             <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-family:var(--fb)">📧 Send Now</button>
           </div>
         </div>`;
