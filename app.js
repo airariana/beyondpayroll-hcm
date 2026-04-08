@@ -4126,31 +4126,42 @@ window.saveProspect=function(){
   const dynFields = typeof dynCollectFields==='function' ? dynCollectFields() : {};
   const aiResult  = window._mfAIResult||null;
   
-  // Get contacts array (NEW: from _atData if available, or construct from form fields)
+  // Get contacts array (NEW: from htmlCollectAllContacts or _atData)
   let contacts = [];
   let primaryContact = null;
   
-  if (window._atData && window._atData.contacts && Array.isArray(window._atData.contacts)) {
-    // Use contacts from _atData (loaded from Agent Tools form)
+  // Priority 1: Try to collect from HTML modal multi-contact form
+  if (typeof htmlCollectAllContacts === 'function') {
+    try {
+      contacts = htmlCollectAllContacts();
+      if (contacts && contacts.length > 0) {
+        primaryContact = contacts.find(function(c){ return c.isPrimary; }) || contacts[0];
+      }
+    } catch (e) {
+      console.warn('htmlCollectAllContacts failed:', e);
+    }
+  }
+  
+  // Priority 2: Use contacts from _atData (loaded from Agent Tools form)
+  if (contacts.length === 0 && window._atData && window._atData.contacts && Array.isArray(window._atData.contacts)) {
     contacts = window._atData.contacts;
     primaryContact = contacts.find(function(c){ return c.isPrimary; }) || contacts[0];
-  } else {
-    // Fallback: construct single contact from legacy form fields
-    const firstName = document.getElementById('f-firstName') ? document.getElementById('f-firstName').value.trim() : '';
-    const lastName = document.getElementById('f-lastName') ? document.getElementById('f-lastName').value.trim() : '';
+  }
+  
+  // Priority 3: Fallback to legacy single-field form (old index.html without multi-contact)
+  if (contacts.length === 0) {
     const legacyContact = document.getElementById('f-contact') ? document.getElementById('f-contact').value.trim() : '';
-    const email = document.getElementById('f-email') ? document.getElementById('f-email').value.trim() : '';
-    const phone = document.getElementById('f-phone') ? document.getElementById('f-phone').value.trim() : '';
+    const legacyEmail = document.getElementById('f-email') ? document.getElementById('f-email').value.trim() : '';
+    const legacyPhone = document.getElementById('f-phone') ? document.getElementById('f-phone').value.trim() : '';
     
-    if (firstName || lastName || email || legacyContact) {
-      const fullName = [firstName, lastName].filter(Boolean).join(' ') || legacyContact;
+    if (legacyContact || legacyEmail) {
       primaryContact = {
         id: 'contact-' + Date.now(),
-        firstName: firstName,
-        lastName: lastName,
-        fullName: fullName,
-        email: email,
-        phone: phone,
+        firstName: '',
+        lastName: '',
+        fullName: legacyContact,
+        email: legacyEmail,
+        phone: legacyPhone,
         title: document.getElementById('f-persona') ? document.getElementById('f-persona').value : '',
         isPrimary: true
       };
