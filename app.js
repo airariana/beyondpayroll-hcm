@@ -349,7 +349,8 @@ function getHQHTML(session){
   <!-- Nav -->
   <div class="hq-nav">
     <button class="hq-tab active" id="htab-cmd" onclick="hqTab('cmd')">🏠 Command Center <span class="tab-badge">HQ</span></button>
-    <button class="hq-tab" id="htab-composer" onclick="hqTab('composer')">📅 30-Day Cadence <span class="tab-badge">STEP 3</span></button>
+    <!-- HIDDEN: 30-Day Cadence tab - User works from Alerts & Activity drawer instead -->
+    <button class="hq-tab" id="htab-composer" onclick="hqTab('composer')" style="display:none">📅 30-Day Cadence <span class="tab-badge">STEP 3</span></button>
     <button class="hq-tab" id="htab-agent" onclick="hqTab('agent')">🤖 Sales Agent <span class="tab-badge" style="background:rgba(34,197,94,.15);color:#16a34a">LIVE</span></button>
     <button class="hq-tab" id="htab-analysis" onclick="hqTab('analysis')">📊 Analysis Tools <span class="tab-badge" style="background:rgba(184,146,10,.15);color:var(--gold)">NEW</span></button>
   </div>
@@ -1392,17 +1393,73 @@ function getHQHTML(session){
               <label class="at-fl">Company Name *</label>
               <input class="at-fi" id="at-f-company" placeholder="Acme Corp">
             </div>
-            <div class="at-fg">
-              <label class="at-fl">Contact Name</label>
-              <input class="at-fi" id="at-f-contact" placeholder="Jane Smith">
+            
+            <!-- CONTACT MANAGEMENT SECTION -->
+            <div class="at-fg" style="grid-column:1/-1;background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="font-size:11px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:1px">👥 Company Contacts</div>
+                <button type="button" onclick="atAddContact()" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:5px;border:1px solid #3b82f6;background:#fff;color:#3b82f6;cursor:pointer;font-family:var(--fb)">+ Add Contact</button>
+              </div>
+              
+              <!-- Primary Contact Form -->
+              <div id="at-contact-form-0" class="at-contact-form" style="background:#fff;border:2px solid #3b82f6;border-radius:6px;padding:12px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:10px;font-weight:700;color:#3b82f6;background:rgba(59,130,246,.1);padding:3px 8px;border-radius:4px">PRIMARY</span>
+                    <span style="font-size:11px;font-weight:600;color:var(--text-2)">Contact #1</span>
+                  </div>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">First Name</label>
+                    <input class="at-fi" id="at-contact-0-firstName" placeholder="Jane" style="font-size:12px;padding:7px 10px">
+                  </div>
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Last Name</label>
+                    <input class="at-fi" id="at-contact-0-lastName" placeholder="Smith" style="font-size:12px;padding:7px 10px">
+                  </div>
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Email</label>
+                    <input class="at-fi" type="email" id="at-contact-0-email" placeholder="jane@company.com" style="font-size:12px;padding:7px 10px">
+                  </div>
+                  <div>
+                    <label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Phone</label>
+                    <input class="at-fi" id="at-contact-0-phone" placeholder="(703) 555-0100" style="font-size:12px;padding:7px 10px">
+                  </div>
+                  <div style="grid-column:1/-1">
+                    <label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Title / Role</label>
+                    <input class="at-fi" id="at-contact-0-title" placeholder="HR Director" style="font-size:12px;padding:7px 10px">
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Additional Contacts Container -->
+              <div id="at-additional-contacts"></div>
+              
+              <div style="font-size:10px;color:var(--text-3);font-style:italic;margin-top:8px">💡 Add multiple decision-makers to this company profile</div>
+            </div>
+            
+            <!-- BILLING ADDRESS SECTION -->
+            <div class="at-fg" style="grid-column:1/-1">
+              <label class="at-fl">Street Address</label>
+              <input class="at-fi" id="at-f-streetAddress" placeholder="123 Main Street, Suite 200">
             </div>
             <div class="at-fg">
-              <label class="at-fl">Industry</label>
-              <input class="at-fi" id="at-f-industry" placeholder="Healthcare, Staffing, Manufacturing…">
+              <label class="at-fl">City</label>
+              <input class="at-fi" id="at-f-city" placeholder="McLean">
             </div>
             <div class="at-fg">
               <label class="at-fl">State (HQ)</label>
               <input class="at-fi" id="at-f-state" placeholder="VA" maxlength="2">
+            </div>
+            <div class="at-fg">
+              <label class="at-fl">Zip Code</label>
+              <input class="at-fi" id="at-f-zip" placeholder="22102" maxlength="10">
+            </div>
+            <div class="at-fg">
+              <label class="at-fl">Industry</label>
+              <input class="at-fi" id="at-f-industry" placeholder="Healthcare, Staffing, Manufacturing…">
             </div>
             <div class="at-fg">
               <label class="at-fl">Employee Count</label>
@@ -4013,16 +4070,89 @@ window.saveProspect=function(){
   // Collect any dynamic AI-generated fields from the form
   const dynFields = typeof dynCollectFields==='function' ? dynCollectFields() : {};
   const aiResult  = window._mfAIResult||null;
+  
+  // Get contacts array (NEW: from _atData if available, or construct from form fields)
+  let contacts = [];
+  let primaryContact = null;
+  
+  if (window._atData && window._atData.contacts && Array.isArray(window._atData.contacts)) {
+    // Use contacts from _atData (loaded from Agent Tools form)
+    contacts = window._atData.contacts;
+    primaryContact = contacts.find(function(c){ return c.isPrimary; }) || contacts[0];
+  } else {
+    // Fallback: construct single contact from legacy form fields
+    const firstName = document.getElementById('f-firstName') ? document.getElementById('f-firstName').value.trim() : '';
+    const lastName = document.getElementById('f-lastName') ? document.getElementById('f-lastName').value.trim() : '';
+    const legacyContact = document.getElementById('f-contact') ? document.getElementById('f-contact').value.trim() : '';
+    const email = document.getElementById('f-email') ? document.getElementById('f-email').value.trim() : '';
+    const phone = document.getElementById('f-phone') ? document.getElementById('f-phone').value.trim() : '';
+    
+    if (firstName || lastName || email || legacyContact) {
+      const fullName = [firstName, lastName].filter(Boolean).join(' ') || legacyContact;
+      primaryContact = {
+        id: 'contact-' + Date.now(),
+        firstName: firstName,
+        lastName: lastName,
+        fullName: fullName,
+        email: email,
+        phone: phone,
+        title: document.getElementById('f-persona') ? document.getElementById('f-persona').value : '',
+        isPrimary: true
+      };
+      contacts = [primaryContact];
+    }
+  }
+  
+  // Ensure we have at least one contact
+  if (!primaryContact && contacts.length === 0) {
+    primaryContact = {
+      id: 'contact-' + Date.now(),
+      firstName: '',
+      lastName: '',
+      fullName: '',
+      email: '',
+      phone: '',
+      title: '',
+      isPrimary: true
+    };
+    contacts = [primaryContact];
+  } else if (!primaryContact) {
+    primaryContact = contacts[0];
+    primaryContact.isPrimary = true;
+  }
+  
+  // Get address fields (company-level, not contact-specific)
+  const streetAddress = document.getElementById('f-streetAddress') ? document.getElementById('f-streetAddress').value.trim() : 
+                        (window._atData ? window._atData.streetAddress || '' : '');
+  const city = document.getElementById('f-city') ? document.getElementById('f-city').value.trim() : 
+               (window._atData ? window._atData.city || '' : '');
+  const state = document.getElementById('f-state') ? document.getElementById('f-state').value.trim() : 
+                (window._atData ? window._atData.state || '' : '');
+  const zip = document.getElementById('f-zip') ? document.getElementById('f-zip').value.trim() : 
+              (window._atData ? window._atData.zip || '' : '');
+  
   window._hqProspect={
     company,
-    contact:  document.getElementById('f-contact').value.trim(),
-    persona:  document.getElementById('f-persona').value,
-    industry: document.getElementById('f-industry').value.trim(),
-    state:    document.getElementById('f-state').value.trim(),
-    headcount:document.getElementById('f-headcount').value.trim(),
-    email:    document.getElementById('f-email').value.trim(),
-    phone:    document.getElementById('f-phone').value.trim(),
-    linkedin: document.getElementById('f-linkedin').value.trim(),
+    // NEW: Contacts array (properly isolated per contact)
+    contacts: contacts,
+    // Legacy fields (primary contact only - for backward compatibility)
+    firstName: primaryContact.firstName,
+    lastName: primaryContact.lastName,
+    contact: primaryContact.fullName,
+    email: primaryContact.email,
+    phone: primaryContact.phone,
+    title: primaryContact.title,
+    persona: primaryContact.title || (document.getElementById('f-persona') ? document.getElementById('f-persona').value : ''),
+    // Company-level fields (shared across all contacts - NO cross-contamination)
+    industry: document.getElementById('f-industry') ? document.getElementById('f-industry').value.trim() : 
+              (window._atData ? window._atData.industry || '' : ''),
+    streetAddress,
+    city,
+    state,
+    zip,
+    headcount:document.getElementById('f-headcount') ? document.getElementById('f-headcount').value.trim() : 
+              (window._atData ? window._atData.headcount || '' : ''),
+    linkedin: document.getElementById('f-linkedin') ? document.getElementById('f-linkedin').value.trim() : '',
     track:    selectedRole||'WFN',
     // SRE data
     painPoints:      sreCtx.painPoints||[],
@@ -4034,7 +4164,7 @@ window.saveProspect=function(){
     srePeoScore:     sreCtx.srePeoScore||'',
     transcript:      transcriptEl?transcriptEl.value.trim():'',
     notes:           aiNotes,
-    // AI-discovered extra fields merged flat (e.g. "Current Vendor", "Contract End Date")
+    // AI-discovered extra fields merged flat (e.g., "Current Vendor", "Contract End Date")
     aiFields:   dynFields,
     aiInsights: aiResult ? (aiResult.insights||[]) : [],
     aiSources:  (window._mfFiles||[]).map(function(f){return f.name;}).concat((window._mfUrls||[]).map(function(u){return u.label;})),
@@ -4075,15 +4205,15 @@ window.saveProspect=function(){
   // Reset dynamic AI extras grid
   const grid=document.getElementById('dyn-fields-grid');
   if(grid){grid.innerHTML='';grid.style.display='none';}
-  // Clear standard fields
-  ['f-company','f-contact','f-email','f-phone','f-industry','f-state','f-headcount','f-linkedin','f-cadence-start'].forEach(function(id){
+  // Clear standard fields (updated to include new fields)
+  ['f-company','f-firstName','f-lastName','f-contact','f-email','f-phone','f-industry','f-streetAddress','f-city','f-state','f-zip','f-headcount','f-linkedin','f-cadence-start'].forEach(function(id){
     const el=document.getElementById(id); if(el) el.value='';
   });
   const ps=document.getElementById('f-persona'); if(ps) ps.selectedIndex=0;
   closeModal();hqRenderBanner();hqAdvancePipeline(1);
   setTimeout(sreRefresh,80);
   renderSavedProspects();
-  showToast('Pipeline initialized for '+company);
+  showToast('Pipeline initialized for '+company + ' (' + contacts.length + ' contact' + (contacts.length !== 1 ? 's' : '') + ')');
 };
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -6423,6 +6553,261 @@ window.ecInjectGongInsights = function(){
   // Collapse the Gong panel
   document.getElementById('gong-panel-content').style.display = 'none';
   document.getElementById('gong-panel-toggle').style.transform = 'rotate(0deg)';
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+//  GONG INTELLIGENCE - DRAWER VERSION (Alerts & Activity)
+// ═══════════════════════════════════════════════════════════════════════
+
+// Store Gong data per touch for drawer
+window._drawerGongData = {};
+window._drawerGongFiles = {};
+
+// Toggle drawer Gong panel
+window.toggleDrawerGong = function(touchIdx){
+  const content = document.getElementById(`gong-content-${touchIdx}`);
+  const toggle = document.getElementById(`gong-toggle-${touchIdx}`);
+  if(content && toggle){
+    if(content.style.display === 'none'){
+      content.style.display = 'block';
+      toggle.textContent = '▲';
+    } else {
+      content.style.display = 'none';
+      toggle.textContent = '▼';
+    }
+  }
+};
+
+// Handle Gong uploads in drawer
+window.handleDrawerGongUpload = function(event, touchIdx){
+  const files = Array.from(event.target.files);
+  if(!files.length) return;
+  
+  if(!window._drawerGongFiles[touchIdx]) window._drawerGongFiles[touchIdx] = [];
+  window._drawerGongFiles[touchIdx].push(...files);
+  
+  // Render file chips
+  const container = document.getElementById(`gong-files-${touchIdx}`);
+  if(!container) return;
+  
+  container.innerHTML = window._drawerGongFiles[touchIdx].map((f, i) => `
+    <div style="display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #e9d5ff;border-radius:4px;padding:4px 8px;margin-right:4px;margin-bottom:4px;font-size:9px">
+      <span>📸</span>
+      <span style="color:var(--text-2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+      <button onclick="removeDrawerGongFile(${touchIdx},${i})" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:11px;padding:0;margin-left:2px">×</button>
+    </div>
+  `).join('');
+  
+  // Show analyze button
+  const analyzeBtn = document.getElementById(`gong-analyze-${touchIdx}`);
+  if(analyzeBtn) analyzeBtn.style.display = 'block';
+  
+  showToast(`${files.length} file(s) uploaded`);
+};
+
+// Remove drawer Gong file
+window.removeDrawerGongFile = function(touchIdx, fileIdx){
+  if(window._drawerGongFiles[touchIdx]){
+    window._drawerGongFiles[touchIdx].splice(fileIdx, 1);
+    
+    const container = document.getElementById(`gong-files-${touchIdx}`);
+    const analyzeBtn = document.getElementById(`gong-analyze-${touchIdx}`);
+    
+    if(window._drawerGongFiles[touchIdx].length === 0){
+      if(container) container.innerHTML = '';
+      if(analyzeBtn) analyzeBtn.style.display = 'none';
+    } else {
+      // Re-render chips
+      if(container){
+        container.innerHTML = window._drawerGongFiles[touchIdx].map((f, i) => `
+          <div style="display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #e9d5ff;border-radius:4px;padding:4px 8px;margin-right:4px;margin-bottom:4px;font-size:9px">
+            <span>📸</span>
+            <span style="color:var(--text-2);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+            <button onclick="removeDrawerGongFile(${touchIdx},${i})" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:11px;padding:0;margin-left:2px">×</button>
+          </div>
+        `).join('');
+      }
+    }
+  }
+};
+
+// Analyze Gong in drawer
+window.analyzeDrawerGong = async function(touchIdx){
+  const files = window._drawerGongFiles[touchIdx];
+  if(!files || files.length === 0){
+    showToast('Upload screenshots first', true);
+    return;
+  }
+  
+  const btn = document.getElementById(`gong-analyze-${touchIdx}`);
+  if(btn){
+    btn.textContent = '🔄 Analyzing...';
+    btn.disabled = true;
+  }
+  
+  try {
+    // Convert images to base64
+    const images = await Promise.all(files.map(async (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }));
+    
+    const p = window._hqProspect;
+    const touch = buildTouches(p)[touchIdx];
+    
+    // Build analysis prompt
+    const prompt = `Analyze this Gong call transcript for Day ${touch.day} - ${touch.label}.
+
+Company: ${p.company}
+Contact: ${p.contact}
+Industry: ${p.industry}
+
+Extract:
+1. Pain Points (challenges they're facing)
+2. Objections (concerns they raised)
+3. Timeline (when do they need to decide)
+4. Buying Signals (signs they're ready to move forward)
+5. Key Quotes (memorable statements showing intent)
+
+Return as JSON:
+{
+  "painPoints": ["pain 1", "pain 2"],
+  "objections": ["objection 1"],
+  "timeline": "Q2 2026",
+  "buyingSignals": ["signal 1"],
+  "keyQuotes": ["quote 1"]
+}`;
+
+    // Call Gemini API
+    const response = await fetch(API_ENDPOINTS.gemini, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: prompt,
+        images: images
+      })
+    });
+    
+    if(!response.ok) throw new Error('Analysis failed');
+    
+    const data = await response.json();
+    let extracted;
+    
+    try {
+      const jsonMatch = data.text.match(/\{[\s\S]*\}/);
+      if(jsonMatch){
+        extracted = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found');
+      }
+    } catch(e) {
+      extracted = {
+        painPoints: [],
+        objections: [],
+        timeline: 'Not specified',
+        buyingSignals: [],
+        keyQuotes: [],
+        rawText: data.text.substring(0, 200)
+      };
+    }
+    
+    // Store the data
+    window._drawerGongData[touchIdx] = extracted;
+    
+    // Display results (compact format for drawer)
+    const resultsDiv = document.getElementById(`gong-results-${touchIdx}`);
+    if(resultsDiv){
+      let html = '<div style="font-size:9px;font-weight:700;color:#7c3aed;margin-bottom:6px">✓ AI Analysis Complete</div>';
+      
+      if(extracted.painPoints && extracted.painPoints.length > 0){
+        html += `<div style="margin-bottom:4px"><strong style="color:#ef4444">Pain:</strong> ${extracted.painPoints[0]}</div>`;
+      }
+      if(extracted.objections && extracted.objections.length > 0){
+        html += `<div style="margin-bottom:4px"><strong style="color:#f59e0b">Objection:</strong> ${extracted.objections[0]}</div>`;
+      }
+      if(extracted.timeline && extracted.timeline !== 'Not specified'){
+        html += `<div style="margin-bottom:4px"><strong style="color:#3b82f6">Timeline:</strong> ${extracted.timeline}</div>`;
+      }
+      if(extracted.keyQuotes && extracted.keyQuotes.length > 0){
+        html += `<div style="font-style:italic;color:var(--text-2);">"${extracted.keyQuotes[0]}"</div>`;
+      }
+      
+      resultsDiv.innerHTML = html;
+      resultsDiv.style.display = 'block';
+    }
+    
+    // Show inject button
+    const injectBtn = document.getElementById(`gong-inject-${touchIdx}`);
+    if(injectBtn) injectBtn.style.display = 'block';
+    
+    if(btn){
+      btn.textContent = '✓ Done';
+      btn.disabled = false;
+    }
+    
+    showToast('✓ Analysis complete!');
+    
+  } catch(err) {
+    console.error('[Drawer Gong Error]', err);
+    showToast('Analysis failed', true);
+    if(btn){
+      btn.textContent = '🤖 Analyze';
+      btn.disabled = false;
+    }
+  }
+};
+
+// Inject Gong insights in drawer
+window.injectDrawerGong = function(touchIdx){
+  const insights = window._drawerGongData[touchIdx];
+  if(!insights){
+    showToast('Analyze first', true);
+    return;
+  }
+  
+  const p = window._hqProspect;
+  const touch = buildTouches(p)[touchIdx];
+  
+  // Build personalized email
+  let personalizedBody = '';
+  
+  if(insights.painPoints && insights.painPoints.length > 0){
+    personalizedBody += `Hi ${(p.contact || '').split(' ')[0] || '[Name]'},\n\n`;
+    personalizedBody += `Following up on our conversation where you mentioned ${insights.painPoints[0].toLowerCase()}. `;
+  } else {
+    personalizedBody += touch._baseBody.split('\n\n')[0] + '\n\n';
+  }
+  
+  if(insights.keyQuotes && insights.keyQuotes.length > 0){
+    personalizedBody += `You said: "${insights.keyQuotes[0]}"\n\n`;
+  }
+  
+  if(insights.timeline && insights.timeline !== 'Not specified'){
+    personalizedBody += `Given your ${insights.timeline} timeline, I wanted to prioritize this.\n\n`;
+  }
+  
+  // Add CTA from original template
+  const originalLines = touch._baseBody.split('\n\n');
+  const cta = originalLines[originalLines.length - 2] || 'Can we discuss this further?';
+  personalizedBody += cta + '\n\n';
+  personalizedBody += '—\nAJ\nADP\nbeyondpayroll.net';
+  
+  // Update touch
+  touch._proseBody = personalizedBody;
+  
+  showToast('✨ Email personalized!');
+  
+  // Refresh the outreach tab to show updated email
+  notifRenderList();
+  
+  // Collapse panel
+  const content = document.getElementById(`gong-content-${touchIdx}`);
+  const toggle = document.getElementById(`gong-toggle-${touchIdx}`);
+  if(content) content.style.display = 'none';
+  if(toggle) toggle.textContent = '▼';
 };
 
 window.ecExportCSV=function(){
@@ -13242,20 +13627,195 @@ window.atConfirmData = function() {
 window.atLoadManual = function() {
   var co = (document.getElementById('at-f-company').value || '').trim();
   if (!co) { showToast('Company name required', true); return; }
+  
+  // Collect all contacts
+  var contacts = atCollectAllContacts();
+  if (contacts.length === 0) {
+    showToast('At least one contact required', true);
+    return;
+  }
+  
+  // Get primary contact (first contact or marked primary)
+  var primaryContact = contacts.find(function(c){ return c.isPrimary; }) || contacts[0];
+  
+  // Get address fields
+  var streetAddress = (document.getElementById('at-f-streetAddress') ? document.getElementById('at-f-streetAddress').value : '').trim();
+  var city = (document.getElementById('at-f-city') ? document.getElementById('at-f-city').value : '').trim();
+  var state = (document.getElementById('at-f-state') ? document.getElementById('at-f-state').value : '').trim().toUpperCase();
+  var zip = (document.getElementById('at-f-zip') ? document.getElementById('at-f-zip').value : '').trim();
+  
   _atData = {
     company: co,
-    contact: document.getElementById('at-f-contact').value.trim(),
-    industry: document.getElementById('at-f-industry').value.trim(),
-    state: document.getElementById('at-f-state').value.trim().toUpperCase(),
-    headcount: document.getElementById('at-f-headcount').value.trim(),
-    clientType: document.getElementById('at-f-clienttype').value,
-    platform: document.getElementById('at-f-platform').value.trim(),
-    notes: document.getElementById('at-f-notes').value.trim()
+    // Contacts array (NEW)
+    contacts: contacts,
+    // Primary contact fields (for backward compatibility)
+    firstName: primaryContact.firstName,
+    lastName: primaryContact.lastName,
+    contact: primaryContact.fullName,
+    email: primaryContact.email,
+    phone: primaryContact.phone,
+    title: primaryContact.title,
+    // Address fields (company-level)
+    streetAddress: streetAddress,
+    city: city,
+    state: state,
+    zip: zip,
+    // Other company fields
+    industry: (document.getElementById('at-f-industry') ? document.getElementById('at-f-industry').value : '').trim(),
+    headcount: (document.getElementById('at-f-headcount') ? document.getElementById('at-f-headcount').value : '').trim(),
+    clientType: (document.getElementById('at-f-clienttype') ? document.getElementById('at-f-clienttype').value : ''),
+    platform: (document.getElementById('at-f-platform') ? document.getElementById('at-f-platform').value : '').trim(),
+    notes: (document.getElementById('at-f-notes') ? document.getElementById('at-f-notes').value : '').trim()
   };
   document.getElementById('at-data-badge').style.display = '';
   atUpdateStatusBar('data');
-  showToast('✓ Manual data loaded — select a tool');
+  showToast('✓ Manual data loaded — ' + contacts.length + ' contact(s)');
   atScrollToTool();
+};
+
+// ── Multi-Contact Management ──────────────────────────────────────
+// Track contact counter for unique IDs
+window._atContactCounter = 1;
+
+// Add new contact form
+window.atAddContact = function() {
+  var container = document.getElementById('at-additional-contacts');
+  if (!container) return;
+  
+  var contactNum = window._atContactCounter;
+  var contactId = 'contact-' + Date.now();
+  
+  var contactHtml = '<div id="at-contact-form-' + contactNum + '" class="at-contact-form" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;gap:6px">' +
+        '<span style="font-size:11px;font-weight:600;color:var(--text-2)">Contact #' + (contactNum + 1) + '</span>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px">' +
+        '<button type="button" onclick="atSetPrimaryContact(' + contactNum + ')" style="font-size:9px;font-weight:700;padding:4px 10px;border-radius:4px;border:1px solid #3b82f6;background:#fff;color:#3b82f6;cursor:pointer;font-family:var(--fb)">Set Primary</button>' +
+        '<button type="button" onclick="atRemoveContact(' + contactNum + ')" style="font-size:9px;font-weight:700;padding:4px 10px;border-radius:4px;border:1px solid #ef4444;background:#fff;color:#ef4444;cursor:pointer;font-family:var(--fb)">Remove</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+      '<div>' +
+        '<label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">First Name</label>' +
+        '<input class="at-fi" id="at-contact-' + contactNum + '-firstName" placeholder="John" style="font-size:12px;padding:7px 10px">' +
+      '</div>' +
+      '<div>' +
+        '<label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Last Name</label>' +
+        '<input class="at-fi" id="at-contact-' + contactNum + '-lastName" placeholder="Doe" style="font-size:12px;padding:7px 10px">' +
+      '</div>' +
+      '<div>' +
+        '<label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Email</label>' +
+        '<input class="at-fi" type="email" id="at-contact-' + contactNum + '-email" placeholder="john@company.com" style="font-size:12px;padding:7px 10px">' +
+      '</div>' +
+      '<div>' +
+        '<label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Phone</label>' +
+        '<input class="at-fi" id="at-contact-' + contactNum + '-phone" placeholder="(703) 555-0101" style="font-size:12px;padding:7px 10px">' +
+      '</div>' +
+      '<div style="grid-column:1/-1">' +
+        '<label style="font-size:10px;font-weight:600;color:var(--text-3);display:block;margin-bottom:4px">Title / Role</label>' +
+        '<input class="at-fi" id="at-contact-' + contactNum + '-title" placeholder="CFO" style="font-size:12px;padding:7px 10px">' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  
+  container.insertAdjacentHTML('beforeend', contactHtml);
+  window._atContactCounter++;
+  showToast('Contact #' + (contactNum + 1) + ' added');
+};
+
+// Remove contact
+window.atRemoveContact = function(contactNum) {
+  if (contactNum === 0) {
+    showToast('Cannot remove primary contact', true);
+    return;
+  }
+  
+  var form = document.getElementById('at-contact-form-' + contactNum);
+  if (form) {
+    form.remove();
+    showToast('Contact removed');
+  }
+};
+
+// Set contact as primary
+window.atSetPrimaryContact = function(contactNum) {
+  // Remove primary badge from all contacts
+  var allForms = document.querySelectorAll('.at-contact-form');
+  allForms.forEach(function(form) {
+    form.style.border = '1px solid var(--border)';
+    var badge = form.querySelector('[style*="PRIMARY"]');
+    if (badge && badge.parentElement) {
+      badge.parentElement.style.display = 'none';
+    }
+  });
+  
+  // Add primary badge to selected contact
+  var selectedForm = document.getElementById('at-contact-form-' + contactNum);
+  if (selectedForm) {
+    selectedForm.style.border = '2px solid #3b82f6';
+    
+    // Add primary badge if it doesn't exist
+    var header = selectedForm.querySelector('div:first-child > div:first-child');
+    if (header) {
+      var existingBadge = header.querySelector('[style*="PRIMARY"]');
+      if (!existingBadge) {
+        header.insertAdjacentHTML('afterbegin', 
+          '<span style="font-size:10px;font-weight:700;color:#3b82f6;background:rgba(59,130,246,.1);padding:3px 8px;border-radius:4px;margin-right:6px">PRIMARY</span>'
+        );
+      } else {
+        existingBadge.parentElement.style.display = 'flex';
+      }
+    }
+    
+    // Store primary contact number
+    selectedForm.setAttribute('data-is-primary', 'true');
+    showToast('Primary contact updated');
+  }
+};
+
+// Collect all contacts from form
+window.atCollectAllContacts = function() {
+  var contacts = [];
+  var contactForms = document.querySelectorAll('.at-contact-form');
+  
+  contactForms.forEach(function(form, index) {
+    var formId = form.id.replace('at-contact-form-', '');
+    var isPrimary = form.getAttribute('data-is-primary') === 'true' || formId === '0';
+    
+    var firstName = (document.getElementById('at-contact-' + formId + '-firstName') || {}).value || '';
+    var lastName = (document.getElementById('at-contact-' + formId + '-lastName') || {}).value || '';
+    var email = (document.getElementById('at-contact-' + formId + '-email') || {}).value || '';
+    var phone = (document.getElementById('at-contact-' + formId + '-phone') || {}).value || '';
+    var title = (document.getElementById('at-contact-' + formId + '-title') || {}).value || '';
+    
+    firstName = firstName.trim();
+    lastName = lastName.trim();
+    email = email.trim();
+    phone = phone.trim();
+    title = title.trim();
+    
+    // Only include if at least name or email is provided
+    if (firstName || lastName || email) {
+      contacts.push({
+        id: 'contact-' + Date.now() + '-' + index,
+        firstName: firstName,
+        lastName: lastName,
+        fullName: [firstName, lastName].filter(Boolean).join(' '),
+        email: email,
+        phone: phone,
+        title: title,
+        isPrimary: isPrimary
+      });
+    }
+  });
+  
+  // Ensure first contact is primary if none marked
+  if (contacts.length > 0 && !contacts.some(function(c){ return c.isPrimary; })) {
+    contacts[0].isPrimary = true;
+  }
+  
+  return contacts;
 };
 
 function atScrollToTool() {
@@ -14952,6 +15512,38 @@ function notifRenderOutreachTabEnhanced(listEl){
           ` : ''}
         </div>
         ` : ''}
+        
+        <!-- GONG INTELLIGENCE (Compact for Drawer) -->
+        <div style="padding:10px 12px;background:linear-gradient(135deg,#faf5ff 0%,#fff 100%);border-top:1px solid #f0f0f0;border-bottom:1px solid #e9d5ff">
+          <div onclick="toggleDrawerGong(${i})" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:8px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:14px">🎙</span>
+              <span style="font-size:10px;font-weight:700;color:#7c3aed">Gong Intelligence</span>
+            </div>
+            <span id="gong-toggle-${i}" style="font-size:10px;color:var(--text-3)">▼</span>
+          </div>
+          
+          <div id="gong-content-${i}" style="display:none">
+            <!-- Upload Area -->
+            <div style="background:#fff;border:1px dashed #e9d5ff;border-radius:4px;padding:10px;text-align:center;margin-bottom:8px">
+              <input type="file" id="gong-upload-${i}" multiple accept="image/*" style="display:none" onchange="handleDrawerGongUpload(event, ${i})">
+              <div style="font-size:10px;color:var(--text-2);margin-bottom:6px">Upload Gong screenshots</div>
+              <button onclick="document.getElementById('gong-upload-${i}').click()" style="font-size:9px;font-weight:700;padding:5px 12px;border-radius:4px;border:1px solid #e9d5ff;background:#fff;color:#7c3aed;cursor:pointer;font-family:var(--fb)">📁 Choose Files</button>
+            </div>
+
+            <!-- Files Preview -->
+            <div id="gong-files-${i}" style="margin-bottom:8px"></div>
+
+            <!-- Results -->
+            <div id="gong-results-${i}" style="display:none;background:#f5f3ff;border:1px solid #e9d5ff;border-radius:4px;padding:8px;margin-bottom:8px;font-size:10px;line-height:1.5"></div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:6px">
+              <button id="gong-analyze-${i}" onclick="analyzeDrawerGong(${i})" style="display:none;flex:1;font-size:9px;font-weight:700;padding:6px 10px;border-radius:4px;border:none;background:#7c3aed;color:#fff;cursor:pointer;font-family:var(--fb)">🤖 Analyze</button>
+              <button id="gong-inject-${i}" onclick="injectDrawerGong(${i})" style="display:none;flex:1;font-size:9px;font-weight:700;padding:6px 10px;border-radius:4px;border:1px solid #10b981;background:#f0fdf4;color:#10b981;cursor:pointer;font-family:var(--fb)">✨ Inject</button>
+            </div>
+          </div>
+        </div>
         
         <!-- Action Buttons -->
         <div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;background:#fff">
