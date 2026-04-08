@@ -3497,17 +3497,61 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
         </div>
         <div class="pm-field-grid g2" style="margin-bottom:8px">
           <div><label class="fl">Company Name *</label><input class="fi" id="f-company" placeholder="Acme Corp"></div>
-          <div><label class="fl">Contact Name</label><input class="fi" id="f-contact" placeholder="Jane Smith"></div>
         </div>
-        <div class="pm-field-grid g2" style="margin-bottom:8px">
-          <div><label class="fl">Email</label><input class="fi" id="f-email" type="email" placeholder="jane@acme.com"></div>
-          <div><label class="fl">Phone</label><input class="fi" id="f-phone" placeholder="(555) 000-0000"></div>
+        
+        <!-- MULTI-CONTACT MANAGEMENT -->
+        <div style="background:rgba(59,130,246,.05);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:11px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:1px">👥 Company Contacts</div>
+            <button type="button" onclick="htmlAddContact()" style="font-size:10px;font-weight:700;padding:5px 12px;border-radius:5px;border:1px solid #3b82f6;background:#fff;color:#3b82f6;cursor:pointer;font-family:var(--fb)">+ Add Contact</button>
+          </div>
+          
+          <!-- Primary Contact Form -->
+          <div id="html-contact-form-0" class="html-contact-form" style="background:#fff;border:2px solid #3b82f6;border-radius:6px;padding:12px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:10px;font-weight:700;color:#3b82f6;background:rgba(59,130,246,.1);padding:3px 8px;border-radius:4px">PRIMARY</span>
+                <span style="font-size:11px;font-weight:600;color:var(--text-2)">Contact #1</span>
+              </div>
+            </div>
+            
+            <div class="pm-field-grid g2" style="margin-bottom:8px">
+              <div><label class="fl">First Name</label><input class="fi" id="f-firstName-0" placeholder="Jane"></div>
+              <div><label class="fl">Last Name</label><input class="fi" id="f-lastName-0" placeholder="Smith"></div>
+            </div>
+            <div class="pm-field-grid g2" style="margin-bottom:8px">
+              <div><label class="fl">Email</label><input class="fi" id="f-email-0" type="email" placeholder="jane@acme.com"></div>
+              <div><label class="fl">Phone</label><input class="fi" id="f-phone-0" placeholder="(555) 000-0000"></div>
+            </div>
+            <div>
+              <label class="fl">Title / Role</label>
+              <input class="fi" id="f-title-0" placeholder="HR Director">
+            </div>
+          </div>
+          
+          <!-- Additional Contacts Container -->
+          <div id="html-additional-contacts"></div>
+          
+          <div style="font-size:10px;color:var(--text-3);font-style:italic;margin-top:8px">💡 Add multiple decision-makers to this company profile</div>
         </div>
+        
         <div>
           <label class="fl">LinkedIn URL</label>
           <div style="display:flex;gap:6px;align-items:center">
             <input class="fi" id="f-linkedin" placeholder="linkedin.com/in/janesmith" style="flex:1;margin-bottom:0">
             <button onclick="openLinkedIn()" title="Open LinkedIn" style="flex-shrink:0;padding:8px 12px;background:#0077B5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--fb)">in</button>
+          </div>
+        </div>
+        
+        <!-- CADENCE START DATE -->
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <label class="fl">Cadence Start Date</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input class="fi" id="f-cadence-start" type="date" style="flex:1;margin-bottom:0">
+            <button onclick="setStartDateToday()" title="Start Today" style="flex-shrink:0;padding:8px 12px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;font-family:var(--fb)">Today</button>
+          </div>
+          <div style="font-size:10px;color:var(--text-3);margin-top:4px">
+            Leave blank to auto-calculate (first touch will be due today)
           </div>
         </div>
       </div>
@@ -3518,11 +3562,22 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
           <div class="pm-section-dot navy"></div>
           <span class="pm-section-lbl">Company Profile</span>
         </div>
-        <div class="pm-field-grid g3" style="margin-bottom:8px">
+        <div class="pm-field-grid g2" style="margin-bottom:8px">
           <div><label class="fl">Industry</label><input class="fi" id="f-industry" placeholder="Manufacturing"></div>
-          <div><label class="fl">State</label><input class="fi" id="f-state" placeholder="TX" maxlength="2"></div>
           <div><label class="fl">Headcount</label><input class="fi" id="f-headcount" placeholder="75" type="number"></div>
         </div>
+        
+        <!-- BILLING ADDRESS -->
+        <div style="margin-bottom:8px">
+          <label class="fl">Street Address</label>
+          <input class="fi" id="f-streetAddress" placeholder="123 Main Street, Suite 200">
+        </div>
+        <div class="pm-field-grid g3" style="margin-bottom:8px">
+          <div><label class="fl">City</label><input class="fi" id="f-city" placeholder="McLean"></div>
+          <div><label class="fl">State</label><input class="fi" id="f-state" placeholder="VA" maxlength="2"></div>
+          <div><label class="fl">Zip Code</label><input class="fi" id="f-zip" placeholder="22102" maxlength="10"></div>
+        </div>
+        
         <div>
           <label class="fl">Persona / Decision Maker</label>
           <select class="fi" id="f-persona">
@@ -5678,9 +5733,19 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
         window._editingOriginalProspect = null;
         setModalMode('new');
         // Clear all form fields for a fresh start
-        ['f-company','f-contact','f-email','f-phone','f-linkedin','f-industry','f-state','f-headcount'].forEach(function(id){
+        ['f-company','f-email','f-phone','f-linkedin','f-industry','f-state','f-headcount'].forEach(function(id){
           const el = document.getElementById(id); if(el) el.value = '';
         });
+        // Clear multi-contact forms
+        document.getElementById('f-firstName-0').value = '';
+        document.getElementById('f-lastName-0').value = '';
+        document.getElementById('f-email-0').value = '';
+        document.getElementById('f-phone-0').value = '';
+        document.getElementById('f-title-0').value = '';
+        // Reset contact counter and clear additional contacts
+        window._htmlContactCounter = 1;
+        const addlContainer = document.getElementById('html-additional-contacts');
+        if (addlContainer) addlContainer.innerHTML = '';
         const pEl = document.getElementById('f-persona'); if(pEl) pEl.value = '';
         return;
       }
@@ -5728,7 +5793,6 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
       // Map field IDs to prospect properties
       const fieldMap = {
         'f-company':   ['company', 'companyName', 'co', 'firm', 'org', 'account'],
-        'f-contact':   ['contact', 'contactName', 'name', 'firstName', 'fullName', 'first_name', 'fname'],
         'f-email':     ['email', 'emailAddress', 'email_address', 'contactEmail', 'mail', 'workEmail'],
         'f-phone':     ['phone', 'phoneNumber', 'phone_number', 'contactPhone', 'mobile', 'cell', 'tel', 'direct', 'workPhone'],
         'f-linkedin':  ['linkedin', 'linkedinUrl', 'linkedin_url', 'linkedIn', 'liUrl'],
@@ -5736,6 +5800,9 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
         'f-state':     ['state', 'hqState', 'st', 'hq_state', 'stateCode'],
         'f-headcount': ['headcount', 'numEE', 'employees', 'ee', 'employeeCount', 'headCount', 'size', 'numEmployees'],
         'f-persona':   ['persona', 'title', 'role', 'jobTitle', 'job_title', 'contactTitle', 'decisionMaker', 'buyerType'],
+        'f-streetAddress': ['streetAddress', 'address', 'street', 'streetAddr'],
+        'f-city':      ['city', 'cityName'],
+        'f-zip':       ['zip', 'zipCode', 'postalCode', 'postal'],
       };
 
       for (const [fieldId, keys] of Object.entries(fieldMap)) {
@@ -5761,6 +5828,59 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
           if (el && !el.value && p[k]) el.value = p[k];
         });
       });
+
+      // Populate multi-contact fields when editing
+      if (p.contacts && Array.isArray(p.contacts) && p.contacts.length > 0) {
+        // Reset contacts UI
+        window._htmlContactCounter = 1;
+        const addlContainer = document.getElementById('html-additional-contacts');
+        if (addlContainer) addlContainer.innerHTML = '';
+        
+        // Populate each contact
+        p.contacts.forEach(function(contact, index) {
+          if (index === 0) {
+            // Primary contact (always exists)
+            const fn0 = document.getElementById('f-firstName-0');
+            const ln0 = document.getElementById('f-lastName-0');
+            const em0 = document.getElementById('f-email-0');
+            const ph0 = document.getElementById('f-phone-0');
+            const ti0 = document.getElementById('f-title-0');
+            if (fn0) fn0.value = contact.firstName || '';
+            if (ln0) ln0.value = contact.lastName || '';
+            if (em0) em0.value = contact.email || '';
+            if (ph0) ph0.value = contact.phone || '';
+            if (ti0) ti0.value = contact.title || '';
+          } else {
+            // Additional contacts - create new forms
+            htmlAddContact();
+            const fn = document.getElementById('f-firstName-' + index);
+            const ln = document.getElementById('f-lastName-' + index);
+            const em = document.getElementById('f-email-' + index);
+            const ph = document.getElementById('f-phone-' + index);
+            const ti = document.getElementById('f-title-' + index);
+            if (fn) fn.value = contact.firstName || '';
+            if (ln) ln.value = contact.lastName || '';
+            if (em) em.value = contact.email || '';
+            if (ph) ph.value = contact.phone || '';
+            if (ti) ti.value = contact.title || '';
+            
+            // Set primary if needed
+            if (contact.isPrimary) {
+              setTimeout(function() { htmlSetPrimaryContact(index); }, 100);
+            }
+          }
+        });
+      } else {
+        // Fallback to legacy single contact fields
+        const fn0 = document.getElementById('f-firstName-0');
+        const ln0 = document.getElementById('f-lastName-0');
+        const em0 = document.getElementById('f-email-0');
+        const ph0 = document.getElementById('f-phone-0');
+        if (fn0) fn0.value = p.firstName || '';
+        if (ln0) ln0.value = p.lastName || '';
+        if (em0 && !em0.value) em0.value = p.email || '';
+        if (ph0 && !ph0.value) ph0.value = p.phone || '';
+      }
 
       // Track selection in cadence track selector if present
       if (p.track) {
@@ -7802,8 +7922,8 @@ console.log('[Email Enhancements] Integration loaded');
       });
     });
     
-    // Also fix template buttons
-    const templateButtons = document.querySelectorAll('button[onclick*="template" i], .template-btn, button:contains("Use Template")');
+    // Also fix template buttons - using valid selectors only
+    const templateButtons = document.querySelectorAll('.template-btn, button.use-template, [data-template]');
     
     templateButtons.forEach(btn => {
       console.log('[Template Fix] Found button:', btn.textContent);
@@ -9256,6 +9376,287 @@ console.log('✅ Navigation ready');
   
   console.log('✅ Enhanced Canva hotfix complete - ready to create and open panel');
 })();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MARKET & COMPETITIVE INTELLIGENCE ENHANCEMENT
+     Chrome-Optimized Screenshot-Based Analysis
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- Market Intelligence Modal/Panel -->
+<div id="market-intel-overlay" style="display: none; position: fixed; inset: 0; background: rgba(13, 21, 53, 0.85); backdrop-filter: blur(4px); z-index: 10001; overflow-y: auto;">
+  <div style="min-height: 100vh; padding: 20px; display: flex; align-items: flex-start; justify-content: center;">
+    <div style="background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); max-width: 1200px; width: 100%; margin: 40px auto;">
+      
+      <!-- Panel Header -->
+      <div style="padding: 20px 24px; border-bottom: 2px solid var(--border); background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); border-radius: var(--radius-lg) var(--radius-lg) 0 0; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h2 style="font-family: var(--fd); font-size: 20px; font-weight: 700; color: var(--white); margin: 0; letter-spacing: -0.5px;">🔍 Market & Competitive Intelligence</h2>
+          <p style="font-size: 13px; color: rgba(255,255,255,0.7); margin: 4px 0 0 0;">Chrome-optimized screenshot analysis with real-time competitive signals</p>
+        </div>
+        <button onclick="closeMarketIntel()" style="background: rgba(255,255,255,0.15); border: none; color: var(--white); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 20px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; line-height: 1;">×</button>
+      </div>
+
+      <!-- Panel Body -->
+      <div style="padding: 24px;">
+        
+        <!-- Track & Cadence Selection -->
+        <div id="track-cadence-selection" style="margin-bottom: 24px;">
+          <div style="background: var(--light); border-radius: var(--radius); padding: 20px; margin-bottom: 16px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--text-2);">Select Product Track</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <button class="mi-track-btn active" data-track="TotalSource" onclick="selectMITrack('TotalSource')" style="padding: 12px; background: var(--white); border: 2px solid var(--gold-border); border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--gold); transition: all 0.2s;">
+                🤝 TotalSource PEO
+              </button>
+              <button class="mi-track-btn" data-track="WorkforceNow" onclick="selectMITrack('WorkforceNow')" style="padding: 12px; background: var(--white); border: 2px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-2); transition: all 0.2s;">
+                💼 WorkforceNow
+              </button>
+            </div>
+          </div>
+
+          <div style="background: var(--light); border-radius: var(--radius); padding: 20px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0 0 12px 0; color: var(--text-2);">Select Cadence Tone</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+              <button class="mi-cadence-btn" data-cadence="Aggressive" onclick="selectMICadence('Aggressive')" style="padding: 12px 8px; background: var(--white); border: 2px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-2); transition: all 0.2s;">
+                ⚡ Aggressive
+              </button>
+              <button class="mi-cadence-btn active" data-cadence="Consultative" onclick="selectMICadence('Consultative')" style="padding: 12px 8px; background: var(--white); border: 2px solid var(--blue-border); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--blue); transition: all 0.2s;">
+                🤝 Consultative
+              </button>
+              <button class="mi-cadence-btn" data-cadence="Nurture" onclick="selectMICadence('Nurture')" style="padding: 12px 8px; background: var(--white); border: 2px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-2); transition: all 0.2s;">
+                🌱 Nurture
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gong Screenshot Upload (Chrome Camera Support) -->
+        <div style="background: var(--off-white); border-radius: var(--radius); padding: 16px; margin-bottom: 16px;">
+          <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text);">
+            📸 Gong Transcript Screenshots
+          </label>
+          <p style="font-size: 12px; color: var(--text-3); margin: 0 0 12px 0;">
+            Capture or upload Gong call transcripts to extract pain points
+          </p>
+          
+          <!-- Hidden file inputs for Chrome -->
+          <input 
+            type="file" 
+            id="gong-camera-input" 
+            accept="image/*" 
+            capture="environment"
+            multiple
+            style="display: none;"
+            onchange="handleGongScreenshots(event)"
+          />
+          
+          <input 
+            type="file" 
+            id="gong-file-input" 
+            accept="image/*" 
+            multiple
+            style="display: none;"
+            onchange="handleGongScreenshots(event)"
+          />
+          
+          <!-- Upload Buttons -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button 
+              onclick="document.getElementById('gong-camera-input').click()"
+              style="padding: 12px; background: var(--white); border: 1px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;"
+            >
+              <span>📷</span> Take Photo
+            </button>
+            
+            <button 
+              onclick="document.getElementById('gong-file-input').click()"
+              style="padding: 12px; background: var(--white); border: 1px solid var(--border-2); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;"
+            >
+              <span>🖼️</span> Upload File
+            </button>
+          </div>
+          
+          <!-- Uploaded Screenshots Preview -->
+          <div id="screenshot-previews" style="margin-top: 12px; display: none;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;" id="screenshot-thumbnails"></div>
+            <p style="font-size: 11px; color: var(--green); margin: 8px 0 0 0; font-weight: 500;" id="screenshot-count"></p>
+          </div>
+        </div>
+
+        <!-- Run Analysis Button -->
+        <button 
+          id="run-market-intel-btn"
+          onclick="runEnhancedMarketIntel()"
+          style="width: 100%; padding: 14px; background: var(--blue); color: var(--white); border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; margin-bottom: 24px; font-size: 14px; transition: all 0.2s;"
+        >
+          🚀 Run Enhanced Analysis
+        </button>
+        
+        <!-- Intelligence Dashboard (rendered dynamically) -->
+        <div id="market-intel-dashboard">
+          <div style="text-align: center; padding: 3rem 1rem; color: var(--text-3);">
+            <p style="font-size: 14px; margin: 0 0 8px 0;">📊 Ready to analyze</p>
+            <p style="font-size: 12px; margin: 0;">Upload transcript screenshots and click Run Analysis</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Market Intelligence Styles -->
+<style>
+.mi-track-btn:hover, .mi-cadence-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.mi-track-btn.active {
+  border-color: var(--gold) !important;
+  background: var(--gold-bg) !important;
+  color: var(--gold) !important;
+}
+.mi-cadence-btn.active {
+  border-color: var(--blue) !important;
+  background: var(--blue-bg) !important;
+  color: var(--blue) !important;
+}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MULTI-CONTACT MANAGEMENT JAVASCRIPT
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+// Track contact counter for HTML modal
+window._htmlContactCounter = 1;
+
+// Add new contact form in HTML modal
+window.htmlAddContact = function() {
+  const container = document.getElementById('html-additional-contacts');
+  if (!container) return;
+  
+  const contactNum = window._htmlContactCounter;
+  
+  const contactHtml = `
+    <div id="html-contact-form-${contactNum}" class="html-contact-form" style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;font-weight:600;color:var(--text-2)">Contact #${contactNum + 1}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button type="button" onclick="htmlSetPrimaryContact(${contactNum})" style="font-size:9px;font-weight:700;padding:4px 10px;border-radius:4px;border:1px solid #3b82f6;background:#fff;color:#3b82f6;cursor:pointer;font-family:var(--fb)">Set Primary</button>
+          <button type="button" onclick="htmlRemoveContact(${contactNum})" style="font-size:9px;font-weight:700;padding:4px 10px;border-radius:4px;border:1px solid #ef4444;background:#fff;color:#ef4444;cursor:pointer;font-family:var(--fb)">Remove</button>
+        </div>
+      </div>
+      <div class="pm-field-grid g2" style="margin-bottom:8px">
+        <div><label class="fl">First Name</label><input class="fi" id="f-firstName-${contactNum}" placeholder="John"></div>
+        <div><label class="fl">Last Name</label><input class="fi" id="f-lastName-${contactNum}" placeholder="Doe"></div>
+      </div>
+      <div class="pm-field-grid g2" style="margin-bottom:8px">
+        <div><label class="fl">Email</label><input class="fi" type="email" id="f-email-${contactNum}" placeholder="john@acme.com"></div>
+        <div><label class="fl">Phone</label><input class="fi" id="f-phone-${contactNum}" placeholder="(555) 000-0000"></div>
+      </div>
+      <div>
+        <label class="fl">Title / Role</label>
+        <input class="fi" id="f-title-${contactNum}" placeholder="CFO">
+      </div>
+    </div>
+  `;
+  
+  container.insertAdjacentHTML('beforeend', contactHtml);
+  window._htmlContactCounter++;
+  showToast('Contact #' + (contactNum + 1) + ' added');
+};
+
+// Remove contact
+window.htmlRemoveContact = function(contactNum) {
+  if (contactNum === 0) {
+    showToast('Cannot remove primary contact', true);
+    return;
+  }
+  
+  const form = document.getElementById('html-contact-form-' + contactNum);
+  if (form) {
+    form.remove();
+    showToast('Contact removed');
+  }
+};
+
+// Set contact as primary
+window.htmlSetPrimaryContact = function(contactNum) {
+  // Remove primary badge from all contacts
+  const allForms = document.querySelectorAll('.html-contact-form');
+  allForms.forEach(function(form) {
+    form.style.border = '1px solid var(--border)';
+    const badge = form.querySelector('[style*="PRIMARY"]');
+    if (badge && badge.parentElement) {
+      badge.parentElement.style.display = 'none';
+    }
+  });
+  
+  // Add primary badge to selected contact
+  const selectedForm = document.getElementById('html-contact-form-' + contactNum);
+  if (selectedForm) {
+    selectedForm.style.border = '2px solid #3b82f6';
+    
+    const header = selectedForm.querySelector('div:first-child > div:first-child');
+    if (header) {
+      const existingBadge = header.querySelector('[style*="PRIMARY"]');
+      if (!existingBadge) {
+        header.insertAdjacentHTML('afterbegin', 
+          '<span style="font-size:10px;font-weight:700;color:#3b82f6;background:rgba(59,130,246,.1);padding:3px 8px;border-radius:4px;margin-right:6px">PRIMARY</span>'
+        );
+      } else {
+        existingBadge.parentElement.style.display = 'flex';
+      }
+    }
+    
+    selectedForm.setAttribute('data-is-primary', 'true');
+    showToast('Primary contact updated');
+  }
+};
+
+// Collect all contacts from HTML modal
+window.htmlCollectAllContacts = function() {
+  const contacts = [];
+  const contactForms = document.querySelectorAll('.html-contact-form');
+  
+  contactForms.forEach(function(form, index) {
+    const formId = form.id.replace('html-contact-form-', '');
+    const isPrimary = form.getAttribute('data-is-primary') === 'true' || formId === '0';
+    
+    const firstName = (document.getElementById('f-firstName-' + formId) || {}).value || '';
+    const lastName = (document.getElementById('f-lastName-' + formId) || {}).value || '';
+    const email = (document.getElementById('f-email-' + formId) || {}).value || '';
+    const phone = (document.getElementById('f-phone-' + formId) || {}).value || '';
+    const title = (document.getElementById('f-title-' + formId) || {}).value || '';
+    
+    const firstNameTrimmed = firstName.trim();
+    const lastNameTrimmed = lastName.trim();
+    const emailTrimmed = email.trim();
+    const phoneTrimmed = phone.trim();
+    const titleTrimmed = title.trim();
+    
+    if (firstNameTrimmed || lastNameTrimmed || emailTrimmed) {
+      contacts.push({
+        id: 'contact-' + Date.now() + '-' + index,
+        firstName: firstNameTrimmed,
+        lastName: lastNameTrimmed,
+        fullName: [firstNameTrimmed, lastNameTrimmed].filter(Boolean).join(' '),
+        email: emailTrimmed,
+        phone: phoneTrimmed,
+        title: titleTrimmed,
+        isPrimary: isPrimary
+      });
+    }
+  });
+  
+  if (contacts.length > 0 && !contacts.some(function(c){ return c.isPrimary; })) {
+    contacts[0].isPrimary = true;
+  }
+  
+  return contacts;
+};
 </script>
 
 

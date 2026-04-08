@@ -2204,11 +2204,46 @@ INSTRUCTIONS:
       return;
     }
 
-    // ── Populate core hidden fields (SRE compatibility) ───────
+    // ── Populate core fields (Multi-contact compatible) ───────
     document.getElementById('f-company').value  = c.company||'';
-    document.getElementById('f-contact').value  = c.contact||'';
-    document.getElementById('f-email').value    = c.email||'';
-    document.getElementById('f-phone').value    = c.phone||'';
+    
+    // Populate multi-contact fields if they exist, otherwise use legacy single fields
+    if (c.contacts && c.contacts.length > 0) {
+      // NEW: Multi-contact system
+      const primary = c.contacts.find(function(ct) { return ct.isPrimary; }) || c.contacts[0];
+      const firstNameField = document.getElementById('f-firstName-0');
+      const lastNameField = document.getElementById('f-lastName-0');
+      const emailField = document.getElementById('f-email-0');
+      const phoneField = document.getElementById('f-phone-0');
+      
+      if (firstNameField) firstNameField.value = primary.firstName || '';
+      if (lastNameField) lastNameField.value = primary.lastName || '';
+      if (emailField) emailField.value = primary.email || '';
+      if (phoneField) phoneField.value = primary.phone || '';
+    } else {
+      // LEGACY: Single contact fallback
+      const legacyContact = document.getElementById('f-contact');
+      const legacyEmail = document.getElementById('f-email');
+      const legacyPhone = document.getElementById('f-phone');
+      const firstNameField = document.getElementById('f-firstName-0');
+      const lastNameField = document.getElementById('f-lastName-0');
+      const emailField0 = document.getElementById('f-email-0');
+      const phoneField0 = document.getElementById('f-phone-0');
+      
+      if (legacyContact) legacyContact.value = c.contact || '';
+      if (legacyEmail) legacyEmail.value = c.email || '';
+      if (legacyPhone) legacyPhone.value = c.phone || '';
+      
+      // Also populate new fields if they exist
+      if (c.contact && firstNameField && lastNameField) {
+        const nameParts = (c.contact || '').split(' ');
+        firstNameField.value = nameParts[0] || '';
+        lastNameField.value = nameParts.slice(1).join(' ') || '';
+      }
+      if (emailField0) emailField0.value = c.email || '';
+      if (phoneField0) phoneField0.value = c.phone || '';
+    }
+    
     // Auto-construct LinkedIn URL if AI didn't find one explicitly
     let _liVal = c.linkedin || '';
     if (!_liVal && c.contact) {
@@ -3639,12 +3674,32 @@ function mfApplyAnalysis(parsed) {
   
   window._mfAIResult = parsed;
   
-  // Populate core hidden fields (SRE compatibility)
+  // Populate core fields (Multi-contact compatible)
   const c = parsed.core||{};
   document.getElementById('f-company').value  = c.company||'';
-  document.getElementById('f-contact').value  = c.contact||'';
-  document.getElementById('f-email').value    = c.email||'';
-  document.getElementById('f-phone').value    = c.phone||'';
+  
+  // Populate multi-contact fields with safety checks
+  const firstNameField = document.getElementById('f-firstName-0');
+  const lastNameField = document.getElementById('f-lastName-0');
+  const emailField = document.getElementById('f-email-0');
+  const phoneField = document.getElementById('f-phone-0');
+  const legacyContact = document.getElementById('f-contact');
+  const legacyEmail = document.getElementById('f-email');
+  const legacyPhone = document.getElementById('f-phone');
+  
+  // Split contact name if present
+  if (c.contact) {
+    const nameParts = c.contact.split(' ');
+    if (firstNameField) firstNameField.value = nameParts[0] || '';
+    if (lastNameField) lastNameField.value = nameParts.slice(1).join(' ') || '';
+    if (legacyContact) legacyContact.value = c.contact;
+  }
+  
+  if (emailField) emailField.value = c.email || '';
+  if (legacyEmail) legacyEmail.value = c.email || '';
+  
+  if (phoneField) phoneField.value = c.phone || '';
+  if (legacyPhone) legacyPhone.value = c.phone || '';
   
   // Auto-construct LinkedIn URL if AI didn't find one explicitly
   let _liVal = c.linkedin || '';
