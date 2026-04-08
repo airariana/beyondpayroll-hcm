@@ -2019,8 +2019,89 @@ INSTRUCTIONS:
     // ── Store full AI result for saveProspect ─────────────────
     window._mfAIResult = parsed;
 
-    // ── Populate core hidden fields (SRE compatibility) ───────
+    // ── PROSPECT VALIDATION: Check if transcript matches loaded prospect ──
     const c = parsed.core||{};
+    const extractedCompany = (c.company || '').trim();
+    const currentCompany = (window._hqProspect && window._hqProspect.company || '').trim();
+    
+    // Normalize company names for comparison (remove LLC, Inc, etc.)
+    const normalize = (name) => {
+      return name.toLowerCase()
+        .replace(/\b(llc|inc|corp|corporation|ltd|limited|co\.?)\b/g, '')
+        .replace(/[^a-z0-9]/g, '')
+        .trim();
+    };
+    
+    const extractedNorm = normalize(extractedCompany);
+    const currentNorm = normalize(currentCompany);
+    
+    // If company names don't match, show validation modal
+    if (extractedCompany && currentCompany && extractedNorm !== currentNorm) {
+      console.warn('[Prospect Validation] Mismatch detected:');
+      console.warn('  Transcript company:', extractedCompany);
+      console.warn('  Loaded prospect:', currentCompany);
+      
+      // Store parsed data for later use
+      window._mfPendingAnalysis = parsed;
+      
+      // Show mismatch modal
+      const modalHTML = `
+        <div class="bp-modal-overlay" id="prospect-mismatch-modal" style="display:flex">
+          <div class="bp-modal" style="max-width:600px">
+            <div class="bp-modal-header" style="background:linear-gradient(135deg,#dc3545,#c82333);color:#fff">
+              <div style="font-size:16px;font-weight:700">⚠️ Prospect Mismatch Detected</div>
+              <button onclick="closeMismatchModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px">✕</button>
+            </div>
+            <div class="bp-modal-body">
+              <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;border-radius:6px;margin-bottom:16px">
+                <div style="font-size:13px;font-weight:600;color:#856404;margin-bottom:6px">Company Name Mismatch</div>
+                <div style="font-size:12px;color:#856404;line-height:1.6">
+                  The transcript/file you uploaded is for <strong>${extractedCompany}</strong>, 
+                  but you currently have <strong>${currentCompany}</strong> loaded.
+                </div>
+              </div>
+              
+              <div style="margin-bottom:20px">
+                <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">What would you like to do?</div>
+                
+                <button onclick="mismatchCreateNew()" class="bp-btn bp-btn-primary" style="width:100%;margin-bottom:10px;text-align:left;padding:12px;background:#28a745;border:2px solid #28a745">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:2px">✨ Create New Prospect</div>
+                  <div style="font-size:11px;opacity:.9">Save as "${extractedCompany}" (recommended)</div>
+                </button>
+                
+                <button onclick="mismatchUpdateCurrent()" class="bp-btn bp-btn-secondary" style="width:100%;margin-bottom:10px;text-align:left;padding:12px;background:#ffc107;border:2px solid #ffc107;color:#000">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:2px">🔄 Update Current Prospect</div>
+                  <div style="font-size:11px;opacity:.8">Rename "${currentCompany}" to "${extractedCompany}"</div>
+                </button>
+                
+                <button onclick="closeMismatchModal()" class="bp-btn bp-btn-outline" style="width:100%;text-align:left;padding:12px;border:2px solid var(--border);background:var(--white);color:var(--text-2)">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:2px">❌ Cancel</div>
+                  <div style="font-size:11px;opacity:.7">Discard this analysis</div>
+                </button>
+              </div>
+              
+              <div style="background:var(--off-white);padding:10px;border-radius:6px;font-size:11px;color:var(--text-3)">
+                <strong>💡 Tip:</strong> Always load the correct prospect before analyzing transcripts to avoid data cross-contamination.
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Inject modal into page
+      const existingModal = document.getElementById('prospect-mismatch-modal');
+      if (existingModal) existingModal.remove();
+      
+      document.body.insertAdjacentHTML('beforeend', modalHTML);
+      
+      // Stop here - don't populate form until user decides
+      bar.classList.remove('show');
+      btn.disabled = false;
+      btn.textContent = '⚡ Build Profile from Files →';
+      return;
+    }
+
+    // ── Populate core hidden fields (SRE compatibility) ───────
     document.getElementById('f-company').value  = c.company||'';
     document.getElementById('f-contact').value  = c.contact||'';
     document.getElementById('f-email').value    = c.email||'';
@@ -3378,6 +3459,143 @@ function sreProceed(){
   showToast('Track confirmed: '+trackName+toneName+' — select analysis tool below');
   // ── Background Email Engine: begin pre-generating emails on track confirm ──
   if(typeof window.bpEngineTrigger==='function') setTimeout(window.bpEngineTrigger, 800);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// PROSPECT VALIDATION: Mismatch modal handlers
+// ══════════════════════════════════════════════════════════════════════
+window.closeMismatchModal = function() {
+  const modal = document.getElementById('prospect-mismatch-modal');
+  if (modal) modal.remove();
+  window._mfPendingAnalysis = null;
+  showToast('Analysis discarded — load correct prospect and try again', true);
+};
+
+window.mismatchCreateNew = function() {
+  const parsed = window._mfPendingAnalysis;
+  if (!parsed) return;
+  
+  console.log('[Prospect Validation] Creating new prospect from transcript');
+  
+  // Close modal
+  const modal = document.getElementById('prospect-mismatch-modal');
+  if (modal) modal.remove();
+  
+  // Create new empty prospect
+  window._hqProspect = {
+    company: '',
+    contact: '',
+    email: '',
+    phone: '',
+    linkedin: '',
+    persona: '',
+    industry: '',
+    state: '',
+    headcount: '',
+    painPoints: [],
+    notes: '',
+    createdAt: new Date().toISOString(),
+    pipelineStep: 0,
+    approved: false
+  };
+  
+  // Now apply the analysis to this new prospect
+  mfApplyAnalysis(parsed);
+  
+  showToast('✓ New prospect created from transcript');
+};
+
+window.mismatchUpdateCurrent = function() {
+  const parsed = window._mfPendingAnalysis;
+  if (!parsed) return;
+  
+  const oldCompany = window._hqProspect ? window._hqProspect.company : '';
+  const newCompany = (parsed.core && parsed.core.company) || '';
+  
+  console.log('[Prospect Validation] Updating prospect name:', oldCompany, '→', newCompany);
+  
+  // Close modal
+  const modal = document.getElementById('prospect-mismatch-modal');
+  if (modal) modal.remove();
+  
+  // Apply the analysis (which includes updating company name)
+  mfApplyAnalysis(parsed);
+  
+  showToast(`✓ Prospect updated: ${oldCompany} → ${newCompany}`);
+};
+
+// Helper function to apply analysis to current prospect
+function mfApplyAnalysis(parsed) {
+  const fill = document.getElementById('mfProgressFill');
+  const bar = document.getElementById('mfProgressBar');
+  const btn = document.getElementById('mfAnalyzeBtn');
+  const lbl = document.getElementById('imgScanLbl');
+  const badge = document.getElementById('imgScanBadge');
+  
+  if (fill) fill.style.width = '80%';
+  
+  window._mfAIResult = parsed;
+  
+  // Populate core hidden fields (SRE compatibility)
+  const c = parsed.core||{};
+  document.getElementById('f-company').value  = c.company||'';
+  document.getElementById('f-contact').value  = c.contact||'';
+  document.getElementById('f-email').value    = c.email||'';
+  document.getElementById('f-phone').value    = c.phone||'';
+  
+  // Auto-construct LinkedIn URL if AI didn't find one explicitly
+  let _liVal = c.linkedin || '';
+  if (!_liVal && c.contact) {
+    const _liParts = c.contact.trim().toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .split(/\s+/)
+      .filter(Boolean);
+    if (_liParts.length >= 2) {
+      _liVal = 'linkedin.com/in/' + _liParts.join('-');
+    } else if (_liParts.length === 1) {
+      const _coSlug = (c.company||'').toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,10);
+      _liVal = 'linkedin.com/in/' + _liParts[0] + (_coSlug ? '-' + _coSlug : '');
+    }
+  }
+  document.getElementById('f-linkedin').value = _liVal;
+
+  // Map standard fields to hidden legacy inputs
+  const fields = parsed.fields||[];
+  fields.forEach(function(f){
+    const lc = (f.label||'').toLowerCase();
+    if(lc==='industry')  document.getElementById('f-industry').value  = f.value||'';
+    if(lc==='state')     document.getElementById('f-state').value     = (f.value||'').toUpperCase().substring(0,2);
+    if(lc==='headcount') document.getElementById('f-headcount').value = (f.value||'').replace(/\D/g,'');
+    if(lc.includes('persona')||lc.includes('title')||lc.includes('decision'))
+      dynSetPersona(c.title||f.value||'');
+  });
+  if(c.title) dynSetPersona(c.title);
+
+  // Render the dynamic form
+  dynRenderForm(parsed);
+
+  // Apply SRE data
+  if(parsed.sre) sreApplyFromScan(parsed.sre);
+  if(parsed.sre&&parsed.sre.transcript_text){
+    const ta=document.getElementById('sre-transcript');
+    if(ta&&!ta.value) ta.value=parsed.sre.transcript_text;
+  }
+
+  // Build notes from summary
+  const srcLine = 'Sources: '+_mfFiles.map(function(f){return f.name;}).join(', ');
+  window._mfProfileSummary = srcLine+'\n\n'+(parsed.summary||'');
+
+  if (fill) fill.style.width = '100%';
+  const fieldCount = fields.filter(function(f){return f.value;}).length;
+  const painCount  = (parsed.sre&&parsed.sre.pain_points||[]).length;
+
+  setTimeout(function(){
+    if (bar) bar.classList.remove('show');
+    if (badge) badge.classList.add('show');
+    if (lbl) lbl.textContent = '✓ '+(fieldCount+Object.keys(c).filter(function(k){return c[k];}).length)+' fields built, '+painCount+' pain point'+(painCount!==1?'s':'')+' identified';
+    if (btn) { btn.textContent = '⟳ Re-analyze'; btn.disabled = false; }
+    showToast('✓ Prospect profile built from '+_mfFiles.length+' file'+(_mfFiles.length!==1?'s':''));
+  },400);
 }
 
 // Legacy stubs — kept so existing callers don't throw
