@@ -13644,6 +13644,14 @@ window.atPullFromProspect = function() {
       return '<div class="at-pg-item"><div class="at-pg-lbl">' + f[0] + '</div>'
         + '<div class="at-pg-val' + (f[2] ? ' ' + f[2] : '') + '"' + style + '>' + escHtml(f[1]) + '</div></div>';
     }).join('');
+    
+    // Add full contacts list if multiple contacts exist
+    if (typeof renderAllContactsList === 'function') {
+      var contactsListHtml = renderAllContactsList();
+      if (contactsListHtml) {
+        gridEl.innerHTML += contactsListHtml;
+      }
+    }
   }
 };
 
@@ -19511,3 +19519,160 @@ console.log('✓ Market Analysis persistence functions loaded');
 console.log('  • Agent data now auto-saves to prospect');
 console.log('  • Call restoreMarketAnalysis() after loading prospect');
 console.log('  • Call clearMarketAnalysis() to reset data');
+
+// ═══════════════════════════════════════════════════════════════════
+// MULTI-CONTACT NAVIGATION SYSTEM
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Get currently selected contact index (defaults to primary)
+ */
+window._selectedContactIdx = 0;
+
+/**
+ * Switch to a different contact
+ */
+window.switchToContact = function(contactIdx) {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || !p.contacts[contactIdx]) return;
+  
+  window._selectedContactIdx = contactIdx;
+  
+  // Update UI
+  updateContactDisplay();
+  
+  showToast('Switched to ' + p.contacts[contactIdx].fullName);
+};
+
+/**
+ * Update contact display in UI
+ */
+window.updateContactDisplay = function() {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || p.contacts.length === 0) return;
+  
+  const currentContact = p.contacts[window._selectedContactIdx] || p.contacts[0];
+  
+  // Update any displayed contact info (this is a hook for future UI elements)
+  console.log('[Contact Display] Showing:', currentContact.fullName);
+};
+
+/**
+ * Render contact selector dropdown HTML
+ */
+window.renderContactSelector = function() {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || p.contacts.length <= 1) {
+    return ''; // No selector needed for single contact
+  }
+  
+  const currentIdx = window._selectedContactIdx || 0;
+  const currentContact = p.contacts[currentIdx];
+  
+  let html = `
+    <div style="position:relative;margin-top:8px">
+      <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+        👥 Contact ${currentIdx + 1} of ${p.contacts.length}
+      </div>
+      <div class="contact-selector-dropdown" style="position:relative">
+        <button onclick="toggleContactDropdown()" style="width:100%;padding:10px 12px;background:var(--white);border:1.5px solid var(--border);border-radius:6px;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--fb);font-size:13px;transition:all .2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-weight:600;color:var(--text)">${currentContact.fullName || 'Unknown'}</span>
+          <span style="color:var(--text-3);font-size:11px">▼</span>
+        </button>
+        <div id="contact-dropdown-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1.5px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);z-index:1000;max-height:250px;overflow-y:auto">
+          ${p.contacts.map((contact, idx) => `
+            <div onclick="switchToContact(${idx});toggleContactDropdown()" style="padding:12px;border-bottom:1px solid var(--border-2);cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='transparent'">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                ${contact.isPrimary ? '<span style="font-size:10px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.1);padding:2px 6px;border-radius:3px">PRIMARY</span>' : ''}
+                <span style="font-weight:600;font-size:13px;color:var(--text)">${contact.fullName || 'Unknown'}</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-3)">${contact.title || ''}</div>
+              <div style="font-size:11px;color:var(--text-3)">${contact.email || ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return html;
+};
+
+/**
+ * Toggle contact dropdown menu
+ */
+window.toggleContactDropdown = function() {
+  const menu = document.getElementById('contact-dropdown-menu');
+  if (!menu) return;
+  
+  if (menu.style.display === 'none') {
+    menu.style.display = 'block';
+    // Close when clicking outside
+    setTimeout(() => {
+      document.addEventListener('click', closeContactDropdownOutside, true);
+    }, 100);
+  } else {
+    menu.style.display = 'none';
+    document.removeEventListener('click', closeContactDropdownOutside, true);
+  }
+};
+
+function closeContactDropdownOutside(e) {
+  const menu = document.getElementById('contact-dropdown-menu');
+  if (!menu) return;
+  
+  if (!menu.contains(e.target) && !e.target.closest('.contact-selector-dropdown')) {
+    menu.style.display = 'none';
+    document.removeEventListener('click', closeContactDropdownOutside, true);
+  }
+}
+
+/**
+ * Render all contacts list for Agent Tools
+ */
+window.renderAllContactsList = function() {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || p.contacts.length === 0) return '';
+  
+  const primaryContact = p.contacts.find(c => c.isPrimary) || p.contacts[0];
+  const otherContacts = p.contacts.filter(c => !c.isPrimary);
+  
+  let html = `
+    <div style="background:var(--off-white);border-radius:8px;padding:12px;margin-top:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">
+        👥 ALL CONTACTS (${p.contacts.length})
+      </div>
+      
+      <!-- Primary Contact -->
+      <div style="background:var(--white);border:2px solid var(--blue);border-radius:6px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="font-size:10px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.1);padding:2px 6px;border-radius:3px">PRIMARY</span>
+          <span style="font-weight:600;font-size:13px">${primaryContact.fullName || 'Unknown'}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-2);line-height:1.6">
+          ${primaryContact.title ? `<div>📋 ${primaryContact.title}</div>` : ''}
+          ${primaryContact.email ? `<div>📧 ${primaryContact.email}</div>` : ''}
+          ${primaryContact.phone ? `<div>📞 ${primaryContact.phone}</div>` : ''}
+        </div>
+      </div>
+      
+      ${otherContacts.length > 0 ? `
+        <!-- Additional Contacts -->
+        ${otherContacts.map(contact => `
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:6px">
+            <div style="font-weight:600;font-size:13px;margin-bottom:4px">${contact.fullName || 'Unknown'}</div>
+            <div style="font-size:11px;color:var(--text-2);line-height:1.6">
+              ${contact.title ? `<div>📋 ${contact.title}</div>` : ''}
+              ${contact.email ? `<div>📧 ${contact.email}</div>` : ''}
+              ${contact.phone ? `<div>📞 ${contact.phone}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      ` : ''}
+    </div>
+  `;
+  
+  return html;
+};
+
+console.log('✓ Multi-contact navigation system loaded');
