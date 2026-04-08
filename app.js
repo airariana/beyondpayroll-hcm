@@ -1144,7 +1144,7 @@ function getHQHTML(session){
 
     <div class="ec-strip" id="ec-strip">
       <div class="ec-si"><div class="ec-sl">Company</div><div class="ec-sv co" id="ecs-co">—</div></div>
-      <div class="ec-si"><div class="ec-sl">Contact</div><div class="ec-sv" id="ecs-contact">—</div></div>
+      <div class="ec-si" id="ecs-contact-wrapper"><div class="ec-sl">Contact</div><div class="ec-sv" id="ecs-contact-container">—</div></div>
       <div class="ec-si"><div class="ec-sl">Email</div><div class="ec-sv" id="ecs-email" style="font-size:10px">—</div></div>
       <div class="ec-si"><div class="ec-sl">Profile</div><div class="ec-sv" id="ecs-profile" style="font-size:10px">—</div></div>
     </div>
@@ -6175,7 +6175,45 @@ function ecRenderAll(){
   
   const touches=buildTouches(p);
   document.getElementById('ecs-co').textContent=p.company;
-  document.getElementById('ecs-contact').textContent=p.contact||'—';
+  
+  // Update contact display with dropdown if multiple contacts exist
+  const contactContainer = document.getElementById('ecs-contact-container');
+  if (contactContainer) {
+    if (p.contacts && p.contacts.length > 1) {
+      // Multiple contacts - show dropdown
+      const primaryContact = p.contacts.find(c => c.isPrimary) || p.contacts[0];
+      const currentIdx = window._selectedContactIdx || 0;
+      const currentContact = p.contacts[currentIdx];
+      
+      contactContainer.innerHTML = `
+        <div style="position:relative;width:100%">
+          <button onclick="toggleProspectCardContactDropdown()" style="width:100%;padding:6px 10px;background:var(--white);border:1.5px solid var(--border);border-radius:4px;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--fb);font-size:11px;transition:all .2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+            <span style="font-weight:600;color:var(--text)">${currentContact.fullName || currentContact.firstName || currentContact.lastName || 'Unknown'}</span>
+            <span style="color:var(--text-3);font-size:10px;margin-left:8px">${currentIdx + 1}/${p.contacts.length} ▼</span>
+          </button>
+          <div id="prospect-card-contact-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1.5px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);z-index:1000;max-height:200px;overflow-y:auto">
+            ${p.contacts.map((contact, idx) => `
+              <div onclick="switchProspectCardContact(${idx})" style="padding:10px;border-bottom:1px solid var(--border-2);cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='transparent'">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                  ${contact.isPrimary ? '<span style="font-size:9px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.1);padding:2px 4px;border-radius:2px">PRIMARY</span>' : ''}
+                  <span style="font-weight:600;font-size:11px;color:var(--text)">${contact.fullName || contact.firstName || contact.lastName || 'Unknown'}</span>
+                </div>
+                <div style="font-size:10px;color:var(--text-3)">${contact.title || ''}</div>
+                <div style="font-size:10px;color:var(--text-3)">${contact.email || ''}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      // Single contact - show name only
+      const contactName = p.contacts && p.contacts[0] 
+        ? (p.contacts[0].fullName || [p.contacts[0].firstName, p.contacts[0].lastName].filter(Boolean).join(' '))
+        : (p.contact || '—');
+      contactContainer.textContent = contactName;
+    }
+  }
+  
   document.getElementById('ecs-email').textContent=p.email||'—';
   document.getElementById('ecs-profile').textContent=`${p.industry||'—'} · ${p.state||'—'} · ${p.headcount||'—'} EEs`;
   const tabsEl=document.getElementById('ec-tabs');
@@ -19676,3 +19714,82 @@ window.renderAllContactsList = function() {
 };
 
 console.log('✓ Multi-contact navigation system loaded');
+
+/**
+ * Toggle prospect card contact dropdown
+ */
+window.toggleProspectCardContactDropdown = function() {
+  const menu = document.getElementById('prospect-card-contact-dropdown');
+  if (!menu) return;
+  
+  if (menu.style.display === 'none') {
+    menu.style.display = 'block';
+    // Close when clicking outside
+    setTimeout(() => {
+      document.addEventListener('click', closeProspectCardDropdownOutside, true);
+    }, 100);
+  } else {
+    menu.style.display = 'none';
+    document.removeEventListener('click', closeProspectCardDropdownOutside, true);
+  }
+};
+
+function closeProspectCardDropdownOutside(e) {
+  const menu = document.getElementById('prospect-card-contact-dropdown');
+  if (!menu) return;
+  
+  if (!menu.contains(e.target) && !e.target.closest('#ecs-contact-container')) {
+    menu.style.display = 'none';
+    document.removeEventListener('click', closeProspectCardDropdownOutside, true);
+  }
+}
+
+/**
+ * Switch contact in prospect card and refresh entire card
+ */
+window.switchProspectCardContact = function(contactIdx) {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || !p.contacts[contactIdx]) return;
+  
+  window._selectedContactIdx = contactIdx;
+  const contact = p.contacts[contactIdx];
+  
+  // Update email field to show selected contact's email
+  const emailEl = document.getElementById('ecs-email');
+  if (emailEl && contact.email) {
+    emailEl.textContent = contact.email;
+  }
+  
+  // Close dropdown and refresh the display
+  toggleProspectCardContactDropdown();
+  
+  // Refresh the contact dropdown button to show new selection
+  const contactContainer = document.getElementById('ecs-contact-container');
+  if (contactContainer && p.contacts.length > 1) {
+    const currentContact = p.contacts[contactIdx];
+    contactContainer.innerHTML = `
+      <div style="position:relative;width:100%">
+        <button onclick="toggleProspectCardContactDropdown()" style="width:100%;padding:6px 10px;background:var(--white);border:1.5px solid var(--border);border-radius:4px;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--fb);font-size:11px;transition:all .2s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-weight:600;color:var(--text)">${currentContact.fullName || currentContact.firstName || currentContact.lastName || 'Unknown'}</span>
+          <span style="color:var(--text-3);font-size:10px;margin-left:8px">${contactIdx + 1}/${p.contacts.length} ▼</span>
+        </button>
+        <div id="prospect-card-contact-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--white);border:1.5px solid var(--border);border-radius:6px;box-shadow:var(--shadow-lg);z-index:1000;max-height:200px;overflow-y:auto">
+          ${p.contacts.map((c, idx) => `
+            <div onclick="switchProspectCardContact(${idx})" style="padding:10px;border-bottom:1px solid var(--border-2);cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='transparent'">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                ${c.isPrimary ? '<span style="font-size:9px;font-weight:700;color:var(--blue);background:rgba(59,130,246,.1);padding:2px 4px;border-radius:2px">PRIMARY</span>' : ''}
+                <span style="font-weight:600;font-size:11px;color:var(--text)">${c.fullName || c.firstName || c.lastName || 'Unknown'}</span>
+              </div>
+              <div style="font-size:10px;color:var(--text-3)">${c.title || ''}</div>
+              <div style="font-size:10px;color:var(--text-3)">${c.email || ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  showToast('Switched to ' + contact.fullName);
+};
+
+console.log('✓ Prospect card contact dropdown loaded');
