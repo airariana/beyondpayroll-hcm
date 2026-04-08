@@ -1177,6 +1177,52 @@ function getHQHTML(session){
           </div>
         </div>
 
+        <!-- GONG INTELLIGENCE PANEL -->
+        <div class="ec-gong-panel" id="ec-gong-panel" style="background:var(--off-white);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:16px">
+          <div onclick="toggleGongPanel()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:18px">🎙</span>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text)">Gong Intelligence Extractor</div>
+                <div style="font-size:10px;color:var(--text-3)">Upload screenshots → AI extracts insights → Personalize email</div>
+              </div>
+            </div>
+            <div id="gong-panel-toggle" style="font-size:16px;color:var(--text-3);transition:transform .2s">▼</div>
+          </div>
+          
+          <div id="gong-panel-content" style="display:none">
+            <!-- Upload Area -->
+            <div style="background:var(--white);border:2px dashed var(--border);border-radius:6px;padding:16px;text-align:center;margin-bottom:12px">
+              <input type="file" id="ec-gong-upload" multiple accept="image/*" style="display:none" onchange="ecHandleGongUpload(event)">
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">📸 Upload Gong Screenshots</div>
+              <div style="font-size:10px;color:var(--text-3);margin-bottom:10px">AI will extract pain points, objections, timeline, tech stack</div>
+              <button onclick="document.getElementById('ec-gong-upload').click()" style="font-size:11px;font-weight:700;padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;font-family:var(--fb)">
+                📁 Choose Files
+              </button>
+            </div>
+
+            <!-- Uploaded Files Preview -->
+            <div id="ec-gong-files" style="margin-bottom:12px"></div>
+
+            <!-- Analysis Results -->
+            <div id="ec-gong-results" style="display:none;background:var(--white);border:1px solid var(--green-border);border-radius:6px;padding:12px;margin-bottom:12px">
+              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:8px">✓ AI Analysis Complete</div>
+              <div id="ec-gong-insights" style="font-size:11px;color:var(--text-2);line-height:1.6"></div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:8px">
+              <button id="ec-gong-analyze-btn" onclick="ecAnalyzeGong()" style="display:none;font-size:11px;font-weight:700;padding:8px 16px;border-radius:6px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-family:var(--fb);flex:1">
+                🤖 Analyze with AI
+              </button>
+              <button id="ec-gong-inject-btn" onclick="ecInjectGongInsights()" style="display:none;font-size:11px;font-weight:700;padding:8px 16px;border-radius:6px;border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);cursor:pointer;font-family:var(--fb);flex:1">
+                ✨ Inject into Email
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- /GONG INTELLIGENCE PANEL -->
+
         <div class="ec-mto">
           <div class="ec-mto-hdr">
             <span style="font-size:22px;flex-shrink:0">📧</span>
@@ -5973,7 +6019,38 @@ window.ecRenderTouch=function(){
   mkb.classList.toggle('done',isSent);
 };
 
-window.ecSwitch=function(i){window._ecActiveIdx=i;ecRenderAll()};
+window.ecSwitch=function(i){
+  window._ecActiveIdx=i;
+  
+  // Reset Gong panel for new touch
+  const gongContent = document.getElementById('gong-panel-content');
+  if(gongContent) gongContent.style.display = 'none';
+  const gongToggle = document.getElementById('gong-panel-toggle');
+  if(gongToggle) gongToggle.style.transform = 'rotate(0deg)';
+  
+  // Show existing Gong data if available for this touch
+  const idx = window._ecActiveIdx;
+  if(window._ecGongData && window._ecGongData[idx]){
+    // Has existing analysis - show results
+    document.getElementById('ec-gong-results').style.display = 'block';
+    document.getElementById('ec-gong-inject-btn').style.display = 'block';
+  } else {
+    // No existing analysis - hide results
+    if(document.getElementById('ec-gong-results')) document.getElementById('ec-gong-results').style.display = 'none';
+    if(document.getElementById('ec-gong-inject-btn')) document.getElementById('ec-gong-inject-btn').style.display = 'none';
+  }
+  
+  // Show existing files if available
+  if(window._ecGongFiles && window._ecGongFiles[idx] && window._ecGongFiles[idx].length > 0){
+    const event = { target: { files: window._ecGongFiles[idx] } };
+    if(typeof ecHandleGongUpload === 'function') ecHandleGongUpload(event);
+  } else {
+    if(document.getElementById('ec-gong-files')) document.getElementById('ec-gong-files').innerHTML = '';
+    if(document.getElementById('ec-gong-analyze-btn')) document.getElementById('ec-gong-analyze-btn').style.display = 'none';
+  }
+  
+  ecRenderAll();
+};
 
 function ecGetBody(){
   const p=window._hqProspect;const touches=buildTouches(p);const touch=touches[window._ecActiveIdx];
@@ -6084,6 +6161,269 @@ function ecRenderChecklist(){
 
 window.ecCheck=function(k,val){window._ecChecks[k]=val;ecRenderChecklist()};
 window.ecResetCk=function(){CHECKS.forEach((_,i)=>delete window._ecChecks[`${window._ecActiveIdx}-${i}`]);ecRenderChecklist()};
+
+// ═══════════════════════════════════════════════════════════════════════
+//  GONG INTELLIGENCE EXTRACTOR (Per-Touch)
+// ═══════════════════════════════════════════════════════════════════════
+
+// Store Gong data per touch index
+window._ecGongData = {};
+window._ecGongFiles = {};
+
+// Toggle Gong panel visibility
+window.toggleGongPanel = function(){
+  const content = document.getElementById('gong-panel-content');
+  const toggle = document.getElementById('gong-panel-toggle');
+  if(content.style.display === 'none'){
+    content.style.display = 'block';
+    toggle.style.transform = 'rotate(180deg)';
+  } else {
+    content.style.display = 'none';
+    toggle.style.transform = 'rotate(0deg)';
+  }
+};
+
+// Handle Gong screenshot uploads
+window.ecHandleGongUpload = function(event){
+  const files = Array.from(event.target.files);
+  if(!files.length) return;
+  
+  const idx = window._ecActiveIdx;
+  if(!window._ecGongFiles[idx]) window._ecGongFiles[idx] = [];
+  window._ecGongFiles[idx].push(...files);
+  
+  // Render file chips
+  const container = document.getElementById('ec-gong-files');
+  container.innerHTML = window._ecGongFiles[idx].map((f, i) => `
+    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-right:6px;margin-bottom:6px;font-size:10px">
+      <span>📸</span>
+      <span style="color:var(--text-2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+      <button onclick="ecRemoveGongFile(${i})" style="background:none;border:none;color:var(--text-3);cursor:pointer;font-size:12px;padding:0;margin-left:4px">×</button>
+    </div>
+  `).join('');
+  
+  // Show analyze button
+  document.getElementById('ec-gong-analyze-btn').style.display = 'block';
+  showToast(`${files.length} file(s) uploaded`);
+};
+
+// Remove a Gong file
+window.ecRemoveGongFile = function(fileIdx){
+  const idx = window._ecActiveIdx;
+  window._ecGongFiles[idx].splice(fileIdx, 1);
+  
+  if(window._ecGongFiles[idx].length === 0){
+    document.getElementById('ec-gong-files').innerHTML = '';
+    document.getElementById('ec-gong-analyze-btn').style.display = 'none';
+  } else {
+    // Re-render
+    const event = { target: { files: [] } };
+    ecHandleGongUpload(event);
+  }
+};
+
+// Analyze Gong screenshots with AI
+window.ecAnalyzeGong = async function(){
+  const idx = window._ecActiveIdx;
+  const files = window._ecGongFiles[idx];
+  if(!files || files.length === 0){
+    showToast('Upload screenshots first', true);
+    return;
+  }
+  
+  const btn = document.getElementById('ec-gong-analyze-btn');
+  btn.textContent = '🔄 Analyzing...';
+  btn.disabled = true;
+  
+  try {
+    // Convert images to base64
+    const images = await Promise.all(files.map(async (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+      });
+    }));
+    
+    const p = window._hqProspect;
+    const touch = buildTouches(p)[idx];
+    
+    // Build analysis prompt
+    const prompt = `You are analyzing a Gong call transcript screenshot for Day ${touch.day} of a sales cadence.
+
+CONTEXT:
+- Company: ${p.company}
+- Contact: ${p.contact}
+- Industry: ${p.industry}
+- Current Touch: ${touch.label}
+- Email Subject: ${touch.subject}
+
+EXTRACT THE FOLLOWING from the call transcript:
+1. **Pain Points**: What challenges are they facing? What keeps them up at night?
+2. **Objections**: What concerns or pushback did they raise?
+3. **Timeline**: When are they looking to make a decision?
+4. **Tech Stack**: What systems are they currently using?
+5. **Buying Signals**: What indicates they're ready to move forward?
+6. **Key Quotes**: Any memorable quotes that show intent or pain?
+
+Format your response as JSON:
+{
+  "painPoints": ["pain 1", "pain 2"],
+  "objections": ["objection 1"],
+  "timeline": "Q2 2026",
+  "techStack": ["System 1", "System 2"],
+  "buyingSignals": ["signal 1"],
+  "keyQuotes": ["quote 1"]
+}`;
+
+    // Call Gemini API
+    const response = await fetch(API_ENDPOINTS.gemini, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: prompt,
+        images: images
+      })
+    });
+    
+    if(!response.ok) throw new Error('Analysis failed');
+    
+    const data = await response.json();
+    let extracted;
+    
+    try {
+      // Try to parse JSON from response
+      const jsonMatch = data.text.match(/\{[\s\S]*\}/);
+      if(jsonMatch){
+        extracted = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found');
+      }
+    } catch(e) {
+      // Fallback: create structured data from text
+      extracted = {
+        painPoints: [],
+        objections: [],
+        timeline: 'Not specified',
+        techStack: [],
+        buyingSignals: [],
+        keyQuotes: [],
+        rawText: data.text
+      };
+    }
+    
+    // Store the extracted data
+    window._ecGongData[idx] = extracted;
+    
+    // Display results
+    const resultsDiv = document.getElementById('ec-gong-results');
+    const insightsDiv = document.getElementById('ec-gong-insights');
+    
+    let html = '';
+    if(extracted.painPoints && extracted.painPoints.length > 0){
+      html += '<div style="margin-bottom:8px"><strong style="color:var(--red)">🔥 Pain Points:</strong><ul style="margin:4px 0;padding-left:20px">';
+      extracted.painPoints.forEach(p => html += `<li>${p}</li>`);
+      html += '</ul></div>';
+    }
+    if(extracted.objections && extracted.objections.length > 0){
+      html += '<div style="margin-bottom:8px"><strong style="color:var(--gold)">⚠️ Objections:</strong><ul style="margin:4px 0;padding-left:20px">';
+      extracted.objections.forEach(o => html += `<li>${o}</li>`);
+      html += '</ul></div>';
+    }
+    if(extracted.timeline && extracted.timeline !== 'Not specified'){
+      html += `<div style="margin-bottom:8px"><strong style="color:var(--blue)">📅 Timeline:</strong> ${extracted.timeline}</div>`;
+    }
+    if(extracted.buyingSignals && extracted.buyingSignals.length > 0){
+      html += '<div style="margin-bottom:8px"><strong style="color:var(--green)">✅ Buying Signals:</strong><ul style="margin:4px 0;padding-left:20px">';
+      extracted.buyingSignals.forEach(s => html += `<li>${s}</li>`);
+      html += '</ul></div>';
+    }
+    if(extracted.keyQuotes && extracted.keyQuotes.length > 0){
+      html += '<div><strong>💬 Key Quotes:</strong><ul style="margin:4px 0;padding-left:20px">';
+      extracted.keyQuotes.forEach(q => html += `<li style="font-style:italic">"${q}"</li>`);
+      html += '</ul></div>';
+    }
+    
+    if(!html && extracted.rawText){
+      html = `<div style="color:var(--text-2)">${extracted.rawText.substring(0, 300)}...</div>`;
+    }
+    
+    insightsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+    
+    // Show inject button
+    document.getElementById('ec-gong-inject-btn').style.display = 'block';
+    
+    btn.textContent = '✓ Analysis Complete';
+    showToast('AI extraction complete!');
+    
+  } catch(err) {
+    console.error('[Gong Analysis Error]', err);
+    showToast('Analysis failed - try again', true);
+    btn.textContent = '🤖 Analyze with AI';
+    btn.disabled = false;
+  }
+};
+
+// Inject Gong insights into email template
+window.ecInjectGongInsights = function(){
+  const idx = window._ecActiveIdx;
+  const insights = window._ecGongData[idx];
+  if(!insights){
+    showToast('Analyze screenshots first', true);
+    return;
+  }
+  
+  const p = window._hqProspect;
+  const touch = buildTouches(p)[idx];
+  
+  // Build personalized email using insights
+  let personalizedBody = '';
+  
+  // Start with a personalized opening based on pain points
+  if(insights.painPoints && insights.painPoints.length > 0){
+    const topPain = insights.painPoints[0];
+    personalizedBody += `Hi ${(p.contact || '').split(' ')[0] || '[Name]'},\n\n`;
+    personalizedBody += `I noticed in our recent conversation that ${topPain.toLowerCase()}. This is exactly the kind of challenge that ${p.track === 'WFN' ? 'WorkforceNow' : 'TotalSource'} is designed to solve.\n\n`;
+  } else {
+    personalizedBody += touch._baseBody.split('\n\n')[0] + '\n\n';
+  }
+  
+  // Add context from the call
+  if(insights.keyQuotes && insights.keyQuotes.length > 0){
+    personalizedBody += `You mentioned: "${insights.keyQuotes[0]}"\n\n`;
+  }
+  
+  // Address objections if any
+  if(insights.objections && insights.objections.length > 0){
+    personalizedBody += `I understand your concern about ${insights.objections[0].toLowerCase()}. Let me address that:\n\n`;
+  }
+  
+  // Add timeline urgency if available
+  if(insights.timeline && insights.timeline !== 'Not specified'){
+    personalizedBody += `Given your ${insights.timeline} timeline, I wanted to prioritize getting you this information.\n\n`;
+  }
+  
+  // Use the original CTA from template
+  const originalLines = touch._baseBody.split('\n\n');
+  const cta = originalLines[originalLines.length - 2] || 'Are you open to discussing this further?';
+  personalizedBody += cta + '\n\n';
+  
+  // Add signature
+  personalizedBody += '—\nAJ\nADP\nbeyondpayroll.net';
+  
+  // Update the touch with personalized body
+  touch._proseBody = personalizedBody;
+  
+  // Re-render the email preview
+  ecRenderTouch();
+  
+  showToast('✨ Email personalized with Gong insights!');
+  
+  // Collapse the Gong panel
+  document.getElementById('gong-panel-content').style.display = 'none';
+  document.getElementById('gong-panel-toggle').style.transform = 'rotate(0deg)';
+};
 
 window.ecExportCSV=function(){
   const p=window._hqProspect;const touches=buildTouches(p);
