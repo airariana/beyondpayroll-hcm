@@ -424,6 +424,92 @@ function getHQHTML(session){
           </div>
         </div>
 
+        <!-- DETECTED COMPETITORS FROM TECH INTELLIGENCE -->
+        <style>
+          .sre-detected-comp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+          }
+          .sre-comp-btn {
+            position: relative;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+          }
+          .sre-comp-btn.primary {
+            background: linear-gradient(135deg, rgba(220,53,69,0.08) 0%, rgba(220,53,69,0.04) 100%);
+            border: 2px solid rgba(220,53,69,0.3);
+          }
+          .sre-comp-btn.secondary {
+            background: rgba(0,112,243,0.04);
+            border: 2px solid rgba(0,112,243,0.2);
+          }
+          .sre-comp-btn.manual {
+            background: rgba(128,128,128,0.04);
+            border: 2px dashed rgba(128,128,128,0.3);
+          }
+          .sre-comp-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+          .sre-comp-btn.selected {
+            box-shadow: 0 0 0 3px rgba(0,112,243,0.2);
+          }
+          .sre-comp-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+          }
+          .sre-comp-track {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .sre-comp-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-3);
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
+          .sre-comp-btn:hover .sre-comp-remove {
+            opacity: 1;
+          }
+          .sre-comp-remove:hover {
+            background: rgba(220,53,69,0.15);
+            color: var(--err);
+          }
+        </style>
+        <div class="sre-subtrack" id="sre-detected-competitors" style="display:none;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px">⚔️ Detected Competitors — From Tech Stack</div>
+            <div style="font-size:9px;color:var(--text-3);font-style:italic">Auto-populated from Market Intelligence</div>
+          </div>
+          <div id="sre-detected-comp-grid" class="sre-detected-comp-grid">
+            <!-- Competitor buttons dynamically inserted here -->
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <button class="btn btn-outline" style="font-size:11px;padding:6px 12px" onclick="sreManualAddCompetitor()">+ Add Competitor</button>
+            <button class="btn btn-outline" style="font-size:11px;padding:6px 12px" onclick="sreClearDetectedCompetitors()">Clear All</button>
+          </div>
+        </div>
+
         <!-- PROSPECT DATA DISPLAY -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px">Prospect Overview</div>
@@ -2206,7 +2292,256 @@ function sreSilo(type){
 function sreAdpToggle(key,el){
   if(_sreAdpProducts.has(key)){_sreAdpProducts.delete(key);el.classList.remove('active');}
   else{_sreAdpProducts.add(key);el.classList.add('active');}
+  
+  // AUTO-SYNC PRIMARY INCUMBENT FIELD
+  syncPrimaryIncumbentFromADPProducts();
 }
+
+/**
+ * Sync the Primary Incumbent dropdown based on selected ADP products
+ * Automatically updates when user toggles ADP product checkboxes
+ */
+function syncPrimaryIncumbentFromADPProducts() {
+  const competitorField = document.getElementById('sre-competitor');
+  if (!competitorField) return;
+  
+  // Get current ADP products
+  const products = Array.from(_sreAdpProducts);
+  
+  if (products.length === 0) {
+    // No products selected - do nothing or clear if it was an ADP value
+    const currentValue = competitorField.value;
+    if (currentValue && currentValue.startsWith('adp_')) {
+      competitorField.value = '';
+      sreCompetitorChanged();
+    }
+    return;
+  }
+  
+  // Determine primary ADP product based on priority
+  // Priority: WFN > TotalSource > RUN > Classic > Others
+  let primaryIncumbent = '';
+  
+  if (products.includes('wfn')) {
+    primaryIncumbent = 'adp_workforce_now';
+  } else if (products.includes('ts')) {
+    primaryIncumbent = 'adp_totalsource';
+  } else if (products.includes('run')) {
+    primaryIncumbent = 'adp_run';
+  } else if (products.includes('classic')) {
+    primaryIncumbent = 'adp_run'; // Classic maps to RUN in dropdown
+  } else if (products.includes('etime')) {
+    primaryIncumbent = 'adp_time';
+  } else if (products.includes('benefits')) {
+    primaryIncumbent = 'adp_benefits';
+  } else if (products.includes('wc')) {
+    primaryIncumbent = 'adp_wc';
+  } else if (products.includes('401k')) {
+    primaryIncumbent = 'adp_401k';
+  } else if (products.includes('other')) {
+    primaryIncumbent = 'adp_other';
+  }
+  
+  // Only update if we determined a primary incumbent
+  if (primaryIncumbent) {
+    competitorField.value = primaryIncumbent;
+    
+    // Trigger the competitor changed handler to update the banner
+    sreCompetitorChanged();
+    
+    console.log(`✓ Auto-synced Primary Incumbent to: ${primaryIncumbent}`);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// DETECTED COMPETITORS FROM TECH INTELLIGENCE
+// ══════════════════════════════════════════════════════════════════════════
+
+// Global state for detected competitors
+let _sreDetectedCompetitors = {
+  detected: [],      // Auto-detected from tech intelligence
+  manual: [],        // Manually added by user
+  primary: null      // Primary competitor name
+};
+
+/**
+ * Populate detected competitors from tech intelligence analysis
+ * Called automatically after runEnhancedMarketIntel() completes
+ */
+function srePopulateDetectedCompetitors(techIntelligence) {
+  if (!techIntelligence || !techIntelligence.competitive) return;
+  
+  const comp = techIntelligence.competitive;
+  const container = document.getElementById('sre-detected-comp-grid');
+  const section = document.getElementById('sre-detected-competitors');
+  
+  if (!container || !section) return;
+  
+  // Clear existing
+  container.innerHTML = '';
+  _sreDetectedCompetitors.detected = [];
+  _sreDetectedCompetitors.primary = comp.primaryCompetitor?.name || null;
+  
+  if (comp.allCompetitors.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  // Show section
+  section.style.display = 'block';
+  
+  // Render competitor buttons
+  comp.allCompetitors.forEach(competitor => {
+    const isPrimary = competitor.name === _sreDetectedCompetitors.primary;
+    _sreDetectedCompetitors.detected.push(competitor.name);
+    
+    const btn = document.createElement('div');
+    btn.className = 'sre-comp-btn' + (isPrimary ? ' primary' : ' secondary');
+    btn.setAttribute('data-competitor', competitor.name);
+    btn.setAttribute('data-track', competitor.track);
+    btn.setAttribute('data-source', 'detected');
+    btn.onclick = function() { sreToggleDetectedCompetitor(this); };
+    
+    btn.innerHTML = `
+      <div class="sre-comp-name">${competitor.name}</div>
+      <div class="sre-comp-track">${competitor.track}${isPrimary ? ' • PRIMARY' : ''}</div>
+      <div class="sre-comp-remove" onclick="event.stopPropagation(); sreRemoveCompetitor(this)">×</div>
+    `;
+    
+    container.appendChild(btn);
+  });
+  
+  // Sync to prospect object
+  if (window._hqProspect) {
+    window._hqProspect.detectedCompetitors = _sreDetectedCompetitors;
+    if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+  }
+  
+  console.log(`✓ Populated ${comp.allCompetitors.length} detected competitors`);
+}
+
+/**
+ * Toggle competitor selection (for visual state only)
+ */
+function sreToggleDetectedCompetitor(btn) {
+  btn.classList.toggle('selected');
+}
+
+/**
+ * Remove a specific competitor
+ */
+function sreRemoveCompetitor(removeBtn) {
+  const btn = removeBtn.closest('.sre-comp-btn');
+  const competitorName = btn.getAttribute('data-competitor');
+  const source = btn.getAttribute('data-source');
+  
+  // Remove from state
+  if (source === 'detected') {
+    _sreDetectedCompetitors.detected = _sreDetectedCompetitors.detected.filter(c => c !== competitorName);
+  } else {
+    _sreDetectedCompetitors.manual = _sreDetectedCompetitors.manual.filter(c => c !== competitorName);
+  }
+  
+  // Remove from DOM
+  btn.remove();
+  
+  // Hide section if empty
+  const container = document.getElementById('sre-detected-comp-grid');
+  if (container && container.children.length === 0) {
+    document.getElementById('sre-detected-competitors').style.display = 'none';
+  }
+  
+  // Sync to prospect
+  if (window._hqProspect) {
+    window._hqProspect.detectedCompetitors = _sreDetectedCompetitors;
+    if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+  }
+}
+
+/**
+ * Manually add a competitor
+ */
+function sreManualAddCompetitor() {
+  const competitorName = prompt('Enter competitor name:');
+  if (!competitorName || !competitorName.trim()) return;
+  
+  const track = prompt('Track (WFN or PEO):');
+  if (!track || !track.trim()) return;
+  
+  const name = competitorName.trim();
+  const trackValue = track.trim().toUpperCase();
+  
+  // Check if already exists
+  if (_sreDetectedCompetitors.detected.includes(name) || _sreDetectedCompetitors.manual.includes(name)) {
+    alert('Competitor already added');
+    return;
+  }
+  
+  // Add to manual list
+  _sreDetectedCompetitors.manual.push(name);
+  
+  // Create button
+  const container = document.getElementById('sre-detected-comp-grid');
+  const section = document.getElementById('sre-detected-competitors');
+  
+  if (!container || !section) return;
+  
+  section.style.display = 'block';
+  
+  const btn = document.createElement('div');
+  btn.className = 'sre-comp-btn manual';
+  btn.setAttribute('data-competitor', name);
+  btn.setAttribute('data-track', trackValue);
+  btn.setAttribute('data-source', 'manual');
+  btn.onclick = function() { sreToggleDetectedCompetitor(this); };
+  
+  btn.innerHTML = `
+    <div class="sre-comp-name">${name}</div>
+    <div class="sre-comp-track">${trackValue} • MANUAL</div>
+    <div class="sre-comp-remove" onclick="event.stopPropagation(); sreRemoveCompetitor(this)">×</div>
+  `;
+  
+  container.appendChild(btn);
+  
+  // Sync to prospect
+  if (window._hqProspect) {
+    window._hqProspect.detectedCompetitors = _sreDetectedCompetitors;
+    if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+  }
+  
+  console.log(`✓ Manually added competitor: ${name}`);
+}
+
+/**
+ * Clear all detected competitors
+ */
+function sreClearDetectedCompetitors() {
+  if (!confirm('Clear all detected competitors?')) return;
+  
+  _sreDetectedCompetitors = {
+    detected: [],
+    manual: [],
+    primary: null
+  };
+  
+  const container = document.getElementById('sre-detected-comp-grid');
+  if (container) container.innerHTML = '';
+  
+  const section = document.getElementById('sre-detected-competitors');
+  if (section) section.style.display = 'none';
+  
+  // Sync to prospect
+  if (window._hqProspect) {
+    window._hqProspect.detectedCompetitors = _sreDetectedCompetitors;
+    if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+  }
+  
+  console.log('✓ Cleared all detected competitors');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// END DETECTED COMPETITORS
+// ══════════════════════════════════════════════════════════════════════════
 
 function sreRefresh(){
   const p=window._hqProspect;
@@ -2243,8 +2578,17 @@ function sreRefresh(){
   }
   status.innerHTML='<span class="sre-dot"></span><span>Loaded</span>';
   status.classList.add('loaded');
-  // Also auto-select existing if prospect has ADP track
-  if(p.track==='WFN'||p.track==='TS') sreSilo('existing');
+  
+  // ── RESTORE CLIENT TYPE (NEW PROSPECT vs EXISTING ADP CLIENT) ──
+  // Explicitly restore saved clientType to global variable and UI
+  if (p.clientType) {
+    _sreClientType = p.clientType;
+    sreSilo(p.clientType); // Update UI to show correct selection
+  } else {
+    // Legacy fallback: auto-select existing if prospect has ADP track
+    if(p.track==='WFN'||p.track==='TS') sreSilo('existing');
+  }
+  
   // Restore competitor if previously saved
   const compEl=document.getElementById('sre-competitor');
   if(compEl&&p.competitor){compEl.value=p.competitor;sreCompetitorChanged();}
@@ -2258,8 +2602,15 @@ function sreRefresh(){
       const el=document.getElementById('sre-adp-'+key.toLowerCase());
       if(el){ _sreAdpProducts.add(key.toLowerCase()); el.classList.add('active'); }
     });
-    // If any products selected, switch to existing client silo
-    if(_sreAdpProducts.size>0) sreSilo('existing');
+    // Show ADP subtrack if products are selected (clientType already restored above)
+    if(_sreAdpProducts.size>0 && _sreClientType === 'existing') {
+      document.getElementById('sre-adp-subtrack').classList.add('show');
+    }
+    
+    // AUTO-SYNC: If no competitor is saved, sync from ADP products
+    if(!p.competitor){
+      syncPrimaryIncumbentFromADPProducts();
+    }
   }
   const rdEl=document.getElementById('sre-renewal-date');
   if(rdEl&&p.renewalDate) rdEl.value=p.renewalDate;
@@ -2312,10 +2663,114 @@ function sreRefresh(){
       radios.forEach(function(r){ if(r.value===p.cadenceTone) r.checked=true; });
     },60);
   }
-  // Restore MCA panel if result exists
+  // Restore MCA panel if result exists with content and timestamp
   if(p.mcaResult){
     const mcaPanel=document.getElementById('sre-mca-panel');
-    if(mcaPanel) mcaPanel.style.display='block';
+    const mcaBody=document.getElementById('sre-mca-body');
+    const mcaBadge=document.getElementById('sre-mca-badge');
+    const mcaLabel=document.getElementById('sre-mca-lbl');
+    
+    if(mcaPanel) {
+      mcaPanel.style.display='block';
+      
+      // Update badge and label
+      const isWFN = p.mcaTrack === 'WFN';
+      if (mcaBadge) { 
+        mcaBadge.textContent = isWFN ? 'WorkforceNow' : 'TotalSource PEO'; 
+        mcaBadge.className = 'mia-hdr-badge ' + (isWFN ? 'wfn' : 'ts'); 
+      }
+      if (mcaLabel) {
+        mcaLabel.textContent = p.company + ' · ' + (p.industry||'?') + ' · ' + (p.headcount||'?') + ' EEs · ' + (p.mcaTone||'Consultative');
+      }
+      
+      // Calculate age of analysis
+      let freshnessHTML = '';
+      if (p.mcaLastRun) {
+        const lastRunDate = new Date(p.mcaLastRun);
+        const now = new Date();
+        const ageInDays = Math.floor((now - lastRunDate) / (1000 * 60 * 60 * 24));
+        const isStale = ageInDays > 7;
+        const timeAgo = ageInDays === 0 ? 'today' : 
+                        ageInDays === 1 ? 'yesterday' : 
+                        ageInDays + ' days ago';
+        
+        freshnessHTML = '<div style="padding:10px 14px;background:' + (isStale ? 'rgba(234,179,8,0.08)' : 'rgba(34,197,94,0.08)') + ';border-left:3px solid ' + (isStale ? 'var(--gold)' : 'var(--green)') + ';border-radius:6px;margin-bottom:12px;font-size:11px;color:var(--text-2)">';
+        freshnessHTML += '<div style="font-weight:600;margin-bottom:2px">' + (isStale ? '⚠️ Analysis is ' + timeAgo : '✓ Analysis from ' + timeAgo) + '</div>';
+        freshnessHTML += '<div style="font-size:10px;color:var(--text-3)">Generated: ' + lastRunDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'}) + '</div>';
+        if (isStale) {
+          freshnessHTML += '<div style="font-size:10px;color:var(--gold);margin-top:4px">Consider regenerating for latest competitive intel</div>';
+        }
+        freshnessHTML += '</div>';
+      }
+      
+      // Restore content
+      if(mcaBody && p.mcaResult) {
+        const d = p.mcaResult;
+        const track = isWFN ? 'ADP WorkforceNow' : 'ADP TotalSource PEO';
+        const competitor = p.competitor || 'Unknown';
+        const tone = p.mcaTone || 'Consultative';
+        
+        let html = freshnessHTML;
+        
+        // Executive summary
+        html += '<div class="mia-insight"><div class="mia-insight-lbl">Executive Summary</div>';
+        html += '<div class="mia-insight-val">' + mdHtml(d.executive_summary||'') + '</div></div>';
+
+        // Track fit
+        if (d.track_fit) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Why ' + track + ' For This Prospect</div><ul style="margin:6px 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
+          (d.track_fit.why_this_track||[]).forEach(function(f){ html += '<li>' + mdHtml(f) + '</li>'; });
+          html += '</ul></div>';
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Key Differentiators vs ' + escHtml(competitor) + '</div><ul style="margin:6px 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
+          (d.track_fit.key_differentiators||[]).forEach(function(f){ html += '<li>' + mdHtml(f) + '</li>'; });
+          html += '</ul></div>';
+        }
+
+        // Competitive intel
+        if (d.competitive_intel && d.competitive_intel.length) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Competitive Threats</div>';
+          d.competitive_intel.forEach(function(c) {
+            const color = c.threat_level==='High' ? 'var(--red)' : c.threat_level==='Medium' ? 'var(--gold)' : 'var(--green)';
+            html += '<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start">';
+            html += '<div style="min-width:90px;font-size:11px;font-weight:700;color:var(--text-2)">' + escHtml(c.competitor||'') + '</div>';
+            html += '<div style="font-size:10px;padding:2px 7px;border-radius:3px;background:rgba(0,0,0,.05);color:'+color+';font-weight:700;white-space:nowrap">' + escHtml(c.threat_level||'') + '</div>';
+            html += '<div style="font-size:12px;color:var(--text-2);flex:1">' + mdHtml(c.counter||'') + '</div>';
+            html += '</div>';
+          });
+          html += '</div>';
+        }
+
+        // Tone strategy
+        if (d.tone_strategy) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">' + escHtml(tone) + ' Tone Strategy</div>';
+          html += '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Opening Hook</div>';
+          html += '<div style="font-size:12px;color:var(--text);font-style:italic;padding:8px 10px;background:var(--off-white);border-radius:6px;border-left:3px solid var(--navy)">' + escHtml(d.tone_strategy.opening_hook||'') + '</div></div>';
+          html += '<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Primary Message</div>';
+          html += '<div style="font-size:12px;color:var(--text-2)">' + escHtml(d.tone_strategy.primary_message||'') + '</div></div>';
+          if (d.tone_strategy.objection_prep && d.tone_strategy.objection_prep.length) {
+            html += '<div><div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Objection Prep</div><ul style="margin:0 0 0 16px;font-size:12px;line-height:1.7;color:var(--text-2)">';
+            d.tone_strategy.objection_prep.forEach(function(o){ html += '<li>' + mdHtml(o) + '</li>'; });
+            html += '</ul></div>';
+          }
+          html += '</div>';
+        }
+
+        // Talk track
+        if (d.talk_track) {
+          html += '<div class="mia-insight"><div class="mia-insight-lbl">Discovery Talk Track</div>';
+          html += '<div style="font-size:12px;color:var(--text);line-height:1.7;padding:10px 12px;background:var(--off-white);border-radius:6px;border-left:3px solid var(--gold)">' + escHtml(d.talk_track) + '</div></div>';
+        }
+
+        // Action buttons
+        html += '<div class="mia-acts">';
+        html += '<button class="mia-act-btn primary" onclick="sreProceed()">&#10003; Confirm Track &amp; Continue &#8594;</button>';
+        html += '<button class="mia-act-btn outline" onclick="sreRunMCA()">&#8635; Regenerate</button>';
+        html += '</div>';
+
+        mcaBody.innerHTML = html;
+        console.log('✓ Restored Market & Competitive Analysis from saved data');
+      }
+    }
   }
   // Restore PEO profile fields if TS track
   if(p.track==='TS' && p.peoProfile){
@@ -2383,6 +2838,280 @@ const ADP_PRODUCT_LABELS={
   adp_wc:"Workers' Comp", adp_other:'Other ADP'
 };
 function adpLabel(key){ return ADP_PRODUCT_LABELS[key] || key.toUpperCase().replace(/_/g,' '); }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROSPECT RESEARCH BEHAVIOR INTELLIGENCE
+// Detects vendor evaluation patterns to tailor sales approach
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PROSPECT_RESEARCH_PATTERNS = {
+  vendor_evaluation: {
+    outsail: {
+      name: 'OutSail',
+      type: 'HCM Consulting Firm',
+      keywords: ['outsail', 'out sail', 'consultant helping us', 'advisor selecting'],
+      signal_strength: 'VERY_HIGH',
+      urgency: 'VERY_HIGH',
+      implication: 'Formal RFP process with consultant driving vendor selection. Budget approved.',
+      red_flag: 'OutSail has vendor partnerships - may favor certain HCM vendors',
+      likely_competitors: ['Paylocity', 'Dayforce', 'UKG', 'Workday', 'Paychex Flex'],
+      sales_actions: [
+        'Request joint call with OutSail consultant + prospect',
+        'Position ADP as Gartner Leader with strongest compliance/payroll',
+        'Share Forrester TEI study and ROI calculator',
+        'Provide 3 references from OutSail-led deals ADP won',
+        'Engage VP-level sponsor for executive alignment'
+      ],
+      talk_track: 'I see you\'re working with OutSail - smart move. We have a strong relationship with them and have won several competitive evaluations they\'ve led.'
+    },
+    comparehris: {
+      name: 'CompareHRIS.com',
+      type: 'HCM Comparison Platform',
+      keywords: ['comparehris', 'compare hris', 'comparison site'],
+      signal_strength: 'HIGH',
+      urgency: 'HIGH',
+      implication: 'Active vendor comparison with 3-5 shortlisted vendors.',
+      likely_competitors: ['Paylocity', 'UKG', 'Dayforce', 'Rippling'],
+      sales_actions: [
+        'Offer side-by-side comparison highlighting ADP differentiators',
+        'Share ROI calculator and implementation timeline',
+        'Provide 3 customer references in same industry/size'
+      ],
+      talk_track: 'Great research on CompareHRIS. Let me help you understand our differentiators versus Paylocity and UKG.'
+    },
+    g2: {
+      name: 'G2',
+      type: 'Review Platform',
+      keywords: ['g2', 'g2 crowd', 'read reviews'],
+      signal_strength: 'MEDIUM',
+      urgency: 'MEDIUM',
+      implication: 'Early research phase. Reading reviews and comparing features.',
+      sales_actions: [
+        'Address any negative review themes directly',
+        'Share detailed customer success stories',
+        'Offer personalized demo ASAP'
+      ],
+      talk_track: 'Reviews are helpful, but every company\'s needs are unique. Let me show you how ADP solves your specific challenges.'
+    }
+  },
+  
+  analyst_influence: {
+    gartner: {
+      name: 'Gartner',
+      type: 'Industry Analyst',
+      keywords: ['gartner', 'magic quadrant', 'gartner report'],
+      adp_position: 'Leader (Workforce Now)',
+      signal_strength: 'VERY_HIGH',
+      urgency: 'HIGH',
+      implication: 'Executive involvement. Formal procurement process.',
+      likely_competitors: ['Workday', 'Oracle HCM', 'UKG', 'Dayforce'],
+      sales_actions: [
+        'Share Gartner MQ report highlighting ADP Leader position',
+        'Executive-level demo with VP sponsor',
+        'Position against Workday: Workday payroll often needs ADP'
+      ],
+      talk_track: 'ADP is a Leader in Gartner\'s Magic Quadrant for mid-market HCM. Gartner highlights our compliance depth and payroll accuracy.'
+    },
+    forrester: {
+      name: 'Forrester',
+      type: 'Industry Analyst',
+      keywords: ['forrester', 'forrester wave', 'tei study'],
+      signal_strength: 'VERY_HIGH',
+      urgency: 'HIGH',
+      implication: 'ROI-focused buyer. Finance-driven decision.',
+      sales_actions: [
+        'Share Forrester TEI study showing ADP ROI',
+        'Provide TCO model and payback period analysis',
+        'CFO-level business case presentation'
+      ],
+      talk_track: 'Our Forrester TEI study shows strong ROI. Let me walk you through the business case for your situation.'
+    },
+    hro_today: {
+      name: 'HRO Today',
+      type: 'PEO Analyst',
+      keywords: ['hro today', 'baker\'s dozen', 'peo rankings'],
+      adp_position: 'TotalSource Top 5',
+      signal_strength: 'HIGH',
+      urgency: 'HIGH',
+      implication: 'Evaluating PEO vs in-house HCM.',
+      likely_competitors: ['Insperity', 'TriNet', 'Paychex PEO'],
+      sales_actions: [
+        'Position TotalSource Baker\'s Dozen ranking',
+        'Emphasize workers\' comp rates and benefits buying power',
+        'Show ADP technology integration'
+      ],
+      talk_track: 'TotalSource ranks highly in HRO Today\'s Baker\'s Dozen because we combine PEO scale with ADP technology.'
+    }
+  },
+  
+  trade_shows: {
+    hr_tech: {
+      name: 'HR Technology Conference',
+      type: 'Conference',
+      keywords: ['hr tech', 'hr technology conference', 'visited your booth'],
+      timing: 'October',
+      signal_strength: 'VERY_HIGH',
+      urgency: 'VERY_HIGH',
+      implication: 'Q4 buying season. Spoke with multiple vendors.',
+      sales_actions: [
+        'Ask which other vendors they met',
+        'Offer Q4 fast-track implementation',
+        'Schedule follow-up within 1 week'
+      ],
+      talk_track: 'Great to connect post-HR Tech! Let me help you compare what you saw. We offer fast-track Q4 implementations.'
+    },
+    shrm: {
+      name: 'SHRM Annual Conference',
+      type: 'Conference',
+      keywords: ['shrm conference', 'shrm annual', 'visited shrm booth'],
+      timing: 'June',
+      signal_strength: 'HIGH',
+      urgency: 'MEDIUM',
+      implication: 'Mid-year planning. Researching for next budget cycle.',
+      sales_actions: [
+        'Leverage ADP SHRM partnership',
+        'Offer SHRM member references',
+        'Longer nurture cycle'
+      ],
+      talk_track: 'ADP is a SHRM Strategic Partner. Let me connect you with other SHRM members using ADP.'
+    }
+  },
+  
+  peer_networks: {
+    shrm: {
+      name: 'SHRM Chapter',
+      type: 'Professional Association',
+      keywords: ['shrm chapter', 'shrm member', 'shrm group'],
+      signal_strength: 'VERY_HIGH',
+      urgency: 'MEDIUM_HIGH',
+      implication: 'Peer validation critical. Wants SHRM member references.',
+      sales_actions: [
+        'Offer local SHRM chapter member references',
+        'Share case studies from SHRM companies',
+        'Invite to SHRM + ADP event'
+      ],
+      talk_track: 'SHRM members are great advocates. I can connect you with SHRM members using ADP in your area or industry.'
+    },
+    linkedin_groups: {
+      name: 'LinkedIn HR Communities',
+      type: 'Professional Network',
+      keywords: ['linkedin group', 'linkedin recommendation', 'saw on linkedin'],
+      signal_strength: 'HIGH',
+      urgency: 'MEDIUM',
+      implication: 'Crowd-sourcing vendor opinions.',
+      sales_actions: [
+        'Offer LinkedIn connections to ADP clients',
+        'Share case studies from their connections',
+        'Provide user community access'
+      ],
+      talk_track: 'I can connect you with ADP users in your industry on LinkedIn. Would you like to speak with a few directly?'
+    },
+    industry_associations: {
+      name: 'Industry HR Groups',
+      type: 'Vertical Community',
+      keywords: ['healthcare hr', 'manufacturing hr', 'retail hr', 'industry association'],
+      signal_strength: 'VERY_HIGH',
+      urgency: 'HIGH',
+      implication: 'Industry-specific compliance needs. Vertical references critical.',
+      sales_actions: [
+        'Industry-specific demo',
+        'Compliance deep-dive for their sector',
+        '3 vertical references from similar companies'
+      ],
+      talk_track: 'ADP serves many companies in your industry. Let me show you industry-specific compliance and connect you with similar clients.'
+    }
+  }
+};
+
+/**
+ * Render research patterns in Market Intelligence dashboard
+ */
+function renderResearchPatterns(patterns) {
+  if (!patterns || patterns.length === 0) return '';
+  
+  const urgencyOrder = { 'VERY_HIGH': 4, 'HIGH': 3, 'MEDIUM_HIGH': 2, 'MEDIUM': 1 };
+  patterns.sort((a, b) => (urgencyOrder[b.urgency] || 0) - (urgencyOrder[a.urgency] || 0));
+  
+  const urgencyColors = {
+    'VERY_HIGH': { bg: 'var(--err-bg)', color: 'var(--err)', border: 'var(--err)' },
+    'HIGH': { bg: 'var(--gold-bg)', color: 'var(--gold)', border: 'var(--gold)' },
+    'MEDIUM_HIGH': { bg: 'var(--blue-bg)', color: 'var(--blue)', border: 'var(--blue)' },
+    'MEDIUM': { bg: 'var(--off-white)', color: 'var(--text-2)', border: 'var(--border)' }
+  };
+  
+  return `
+    <div style="background: var(--blue-bg); border: 2px solid var(--blue); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 15px; font-weight: 600; margin: 0 0 1rem 0; color: var(--blue);">
+        🔍 Research Pattern${patterns.length > 1 ? 's' : ''} Detected (${patterns.length})
+      </h3>
+      
+      ${patterns.map(p => {
+        const colors = urgencyColors[p.urgency] || urgencyColors['MEDIUM'];
+        return `
+          <div style="background: white; padding: 14px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid ${colors.border};">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+              <div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px;">
+                  ${p.name} <span style="font-size: 11px; color: var(--text-3); font-weight: 400;">(${p.type})</span>
+                </div>
+                <div style="font-size: 11px; color: var(--text-2);">
+                  ${p.implication}
+                </div>
+              </div>
+              <div style="background: ${colors.bg}; color: ${colors.color}; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; margin-left: 10px;">
+                ${p.urgency.replace('_', ' ')}
+              </div>
+            </div>
+            
+            ${p.red_flag ? `
+              <div style="background: var(--err-bg); border-left: 3px solid var(--err); padding: 8px 10px; border-radius: 4px; margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 600; color: var(--err); margin-bottom: 2px;">
+                  ⚠️ RED FLAG
+                </div>
+                <div style="font-size: 11px; color: var(--text-2);">
+                  ${p.red_flag}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${p.likely_competitors && p.likely_competitors.length > 0 ? `
+              <div style="background: var(--off-white); padding: 8px 10px; border-radius: 4px; margin-bottom: 10px;">
+                <div style="font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 4px;">
+                  🎯 Likely Also Evaluating:
+                </div>
+                <div style="font-size: 11px; color: var(--text-2);">
+                  ${p.likely_competitors.join(', ')}
+                </div>
+              </div>
+            ` : ''}
+            
+            ${p.sales_actions && p.sales_actions.length > 0 ? `
+              <div style="background: var(--green-bg); padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                <div style="font-size: 11px; font-weight: 600; color: var(--green); margin-bottom: 6px;">
+                  📋 Recommended Actions:
+                </div>
+                <ul style="margin: 0; padding-left: 18px; font-size: 11px; color: var(--text); line-height: 1.6;">
+                  ${p.sales_actions.map(action => `<li>${action}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            ${p.talk_track ? `
+              <div style="background: var(--off-white); padding: 10px; border-radius: 4px; border-left: 3px solid var(--blue);">
+                <div style="font-size: 11px; font-weight: 600; color: var(--text-2); margin-bottom: 4px;">
+                  💬 Talk Track:
+                </div>
+                <div style="font-size: 11px; color: var(--text); font-style: italic; line-height: 1.5;">
+                  "${p.talk_track}"
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
 
 function sreCompetitorChanged(){
   const val=document.getElementById('sre-competitor').value;
@@ -2511,6 +3240,12 @@ function sreSave(){
 window.tbSaveProspect = function() {
   const p = window._hqProspect;
   if (!p) { showToast('No prospect loaded — load a prospect first', true); return; }
+  
+  // SAVE CADENCE STEP DATA BEFORE PERSISTING PROSPECT
+  if (typeof saveCadenceStepData === 'function') {
+    saveCadenceStepData();
+  }
+  
   // If on Command Center tab, run sreSave to collect all SRE form data
   if (typeof sreSave === 'function') sreSave();
   else {
@@ -2962,16 +3697,24 @@ window.sreRunMCA = async function() {
 
         body.innerHTML = html;
 
-        // Persist MCA result to prospect
+        // Persist MCA result to prospect with timestamp
         if (window._hqProspect) {
           window._hqProspect.mcaResult = d;
           window._hqProspect.mcaTrack  = _sreSelectedTrack;
           window._hqProspect.mcaTone   = _sreCadenceTone;
+          window._hqProspect.mcaLastRun = new Date().toISOString(); // ADD TIMESTAMP
           try {
             const arr = getProspects();
             const idx = arr.findIndex(function(x){ return x.company === window._hqProspect.company; });
-            if (idx >= 0) { arr[idx].mcaResult = d; arr[idx].mcaTrack = _sreSelectedTrack; arr[idx].mcaTone = _sreCadenceTone; saveProspectsLocal(arr); }
+            if (idx >= 0) { 
+              arr[idx].mcaResult = d; 
+              arr[idx].mcaTrack = _sreSelectedTrack; 
+              arr[idx].mcaTone = _sreCadenceTone; 
+              arr[idx].mcaLastRun = window._hqProspect.mcaLastRun;  // SAVE TIMESTAMP
+              saveProspectsLocal(arr); 
+            }
             localStorage.setItem('activeProspect', JSON.stringify(window._hqProspect));
+            console.log('✓ Market & Competitive Analysis saved with timestamp:', window._hqProspect.mcaLastRun);
           } catch(e) {}
         }
       } catch(e) {
@@ -3043,6 +3786,23 @@ window.saveProspect=function(){
   if(existing>=0){arr[existing]=Object.assign(arr[existing],window._hqProspect);}
   else{arr.unshift(window._hqProspect);}
   saveProspectsLocal(arr);
+  
+  // ── AUTO-START CADENCE ────────────────────────────────────────────────
+  // Set cadence start date so first touch is due today (or use custom date)
+  const customStartDate = document.getElementById('f-cadence-start');
+  const startKey = 'cdt_start_' + company.replace(/\s+/g, '_');
+  
+  if (customStartDate && customStartDate.value) {
+    // Use custom date if provided
+    localStorage.setItem(startKey, customStartDate.value);
+    console.log('[Cadence] Set custom start date:', customStartDate.value);
+  } else {
+    // Auto-calculate start date so first touch is due today
+    const autoStartDate = calculateAutoStartDate(company);
+    localStorage.setItem(startKey, autoStartDate);
+    console.log('[Cadence] Auto-set start date:', autoStartDate, '(first touch due today)');
+  }
+  
   // Push to Firestore
   if(typeof fbSaveProspect==='function') fbSaveProspect(window._hqProspect);
   // Reset multi-file import state
@@ -3052,7 +3812,7 @@ window.saveProspect=function(){
   const grid=document.getElementById('dyn-fields-grid');
   if(grid){grid.innerHTML='';grid.style.display='none';}
   // Clear standard fields
-  ['f-company','f-contact','f-email','f-phone','f-industry','f-state','f-headcount','f-linkedin'].forEach(function(id){
+  ['f-company','f-contact','f-email','f-phone','f-industry','f-state','f-headcount','f-linkedin','f-cadence-start'].forEach(function(id){
     const el=document.getElementById(id); if(el) el.value='';
   });
   const ps=document.getElementById('f-persona'); if(ps) ps.selectedIndex=0;
@@ -3061,6 +3821,62 @@ window.saveProspect=function(){
   renderSavedProspects();
   showToast('Pipeline initialized for '+company);
 };
+
+// ══════════════════════════════════════════════════════════════════════════
+//  CADENCE START DATE HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+
+// Set start date to today (called by "Start Today" button)
+window.setStartDateToday = function() {
+  const input = document.getElementById('f-cadence-start');
+  if (input) {
+    const today = new Date();
+    input.value = today.toISOString().split('T')[0];
+  }
+};
+
+// Calculate start date so that the first touch (lowest day number) is due today
+function calculateAutoStartDate(company) {
+  // Get the prospect to check which touches exist
+  const prospects = getProspects();
+  const prospect = prospects.find(p => p.company === company);
+  
+  if (!prospect || !prospect.cadenceSteps) {
+    // No cadence steps yet - default to starting today
+    return new Date().toISOString().split('T')[0];
+  }
+  
+  // Find the smallest day number from cadence steps
+  const days = Object.keys(prospect.cadenceSteps)
+    .map(k => parseInt(k.replace('day_', '')))
+    .filter(d => !isNaN(d))
+    .sort((a, b) => a - b);
+  
+  if (days.length === 0) {
+    // No valid days - start today
+    return new Date().toISOString().split('T')[0];
+  }
+  
+  const firstTouchDay = days[0];
+  
+  // Calculate start date: today minus (firstTouchDay - 1) days
+  // Example: If first touch is Day 2, we need to start 1 day ago
+  const today = new Date();
+  today.setDate(today.getDate() - (firstTouchDay - 1));
+  
+  return today.toISOString().split('T')[0];
+}
+
+// Load cadence start date into form when editing (call this when loading a prospect for editing)
+function loadCadenceStartDate(company) {
+  const startKey = 'cdt_start_' + company.replace(/\s+/g, '_');
+  const startDate = localStorage.getItem(startKey);
+  const input = document.getElementById('f-cadence-start');
+  
+  if (input && startDate) {
+    input.value = startDate;
+  }
+}
 
 // ══════════════════════════════════════════════════════════
 //  ANALYSIS TOOLS — DATA PULL + MARKET INTEL
@@ -4532,6 +5348,14 @@ window.bpApplyIntelToEmail = async function(day, intelText) {
   if (matchTouch) {
     matchTouch._proseBody = fullBody;
   }
+  
+  // Save cadence step data immediately after applying intel
+  if (typeof saveCadenceStepData === 'function') {
+    saveCadenceStepData();
+    if (typeof window.tbMarkUnsaved === 'function') {
+      window.tbMarkUnsaved(); // Trigger auto-save
+    }
+  }
 
   // Update composer if this touch is currently active
   if (window._ecActiveIdx !== undefined) {
@@ -4544,6 +5368,133 @@ window.bpApplyIntelToEmail = async function(day, intelText) {
     }
   }
 };
+
+// ══════════════════════════════════════════════════════════════════════════
+// CADENCE STEP PERSISTENCE
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Save cadence step data to prospect object
+ * Captures: intel briefs, formatted emails, statuses, notes, timestamps
+ */
+function saveCadenceStepData() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  // Initialize cadence data structure if doesn't exist
+  if (!p.cadenceSteps) p.cadenceSteps = {};
+  
+  // Get current touches to access _proseBody
+  const touches = buildTouches(p);
+  
+  // Save each touch's data
+  touches.forEach((touch, index) => {
+    const stepKey = `day_${touch.day}`;
+    
+    // Initialize step if doesn't exist
+    if (!p.cadenceSteps[stepKey]) {
+      p.cadenceSteps[stepKey] = {
+        day: touch.day,
+        label: touch.label,
+        createdAt: new Date().toISOString()
+      };
+    }
+    
+    // Update step data
+    const step = p.cadenceSteps[stepKey];
+    
+    // Save formatted email body if it exists
+    if (touch._proseBody) {
+      step.formattedEmail = touch._proseBody;
+      step.lastUpdated = new Date().toISOString();
+    }
+    
+    // Save subject
+    step.subject = touch.subject;
+    
+    // Save status from global state
+    if (window._ecStatuses && window._ecStatuses[index]) {
+      step.status = window._ecStatuses[index];
+    }
+    
+    // Save notes from global state
+    if (window._ecNotes && window._ecNotes[index]) {
+      step.notes = window._ecNotes[index];
+    }
+    
+    // Save launched timestamp if exists
+    if (window._ecLaunched && window._ecLaunched[index]) {
+      step.launchedAt = window._ecLaunched[index];
+    }
+    
+    // Save checklist state if exists
+    if (window._ecChecks && window._ecChecks[index]) {
+      step.checklistCompleted = window._ecChecks[index];
+    }
+  });
+  
+  // Save timestamp of last cadence update
+  p.cadenceLastSaved = new Date().toISOString();
+  
+  console.log(`✓ Saved cadence data for ${Object.keys(p.cadenceSteps).length} steps`);
+}
+
+/**
+ * Restore cadence step data from prospect object
+ * Restores: formatted emails, statuses, notes, timestamps
+ */
+function restoreCadenceStepData() {
+  const p = window._hqProspect;
+  if (!p || !p.cadenceSteps) return;
+  
+  // Initialize global state objects if they don't exist
+  if (!window._ecStatuses) window._ecStatuses = {};
+  if (!window._ecNotes) window._ecNotes = {};
+  if (!window._ecLaunched) window._ecLaunched = {};
+  if (!window._ecChecks) window._ecChecks = {};
+  
+  // Get touches to map day to index
+  const touches = buildTouches(p);
+  
+  // Restore each step's data
+  touches.forEach((touch, index) => {
+    const stepKey = `day_${touch.day}`;
+    const savedStep = p.cadenceSteps[stepKey];
+    
+    if (savedStep) {
+      // Restore formatted email body
+      if (savedStep.formattedEmail) {
+        touch._proseBody = savedStep.formattedEmail;
+      }
+      
+      // Restore status
+      if (savedStep.status) {
+        window._ecStatuses[index] = savedStep.status;
+      }
+      
+      // Restore notes
+      if (savedStep.notes) {
+        window._ecNotes[index] = savedStep.notes;
+      }
+      
+      // Restore launched timestamp
+      if (savedStep.launchedAt) {
+        window._ecLaunched[index] = savedStep.launchedAt;
+      }
+      
+      // Restore checklist
+      if (savedStep.checklistCompleted) {
+        window._ecChecks[index] = savedStep.checklistCompleted;
+      }
+    }
+  });
+  
+  console.log(`✓ Restored cadence data for ${Object.keys(p.cadenceSteps).length} steps`);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// END CADENCE STEP PERSISTENCE
+// ══════════════════════════════════════════════════════════════════════════
 
 function buildTouches(p){
   const co=p.company||'[Company]',nm=(p.contact||'').split(' ')[0]||'[Name]';
@@ -4602,6 +5553,12 @@ function buildTouches(p){
 
 function ecRenderAll(){
   const p=window._hqProspect;if(!p)return;
+  
+  // Restore cadence step data from prospect object
+  if (typeof restoreCadenceStepData === 'function') {
+    restoreCadenceStepData();
+  }
+  
   const touches=buildTouches(p);
   document.getElementById('ecs-co').textContent=p.company;
   document.getElementById('ecs-contact').textContent=p.contact||'—';
@@ -4702,6 +5659,15 @@ window.ecMarkSent=function(){
 window.ecSetSt=function(val){
   window._ecStatuses[window._ecActiveIdx]=val;
   if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
+  
+  // Save cadence step data when status changes
+  if (typeof saveCadenceStepData === 'function') {
+    saveCadenceStepData();
+    if (typeof window.tbMarkUnsaved === 'function') {
+      window.tbMarkUnsaved(); // Trigger auto-save
+    }
+  }
+  
   document.getElementById('ec-ssel').style.color=ecStColor(val);
   const tabs=document.getElementById('ec-tabs');
   if(tabs&&window._hqProspect){
@@ -4776,6 +5742,20 @@ function cdtGetStart(){
 }
 function cdtSetStart(iso){ const k=cdtGetKey(); if(k) localStorage.setItem(k, iso); }
 function cdtResetStart(){ const k=cdtGetKey(); if(k) localStorage.removeItem(k); }
+
+// Helper: Set start date (used by auto-start "Start Today" button)
+window.cdtSetStartDate = function(when){
+  const today = new Date();
+  const iso = today.toISOString().split('T')[0];
+  console.log('[Auto-Start] Setting cadence start date to:', iso);
+  cdtSetStart(iso);
+  
+  // Update the form input if visible
+  const input = document.getElementById('f-cadence-start');
+  if(input) input.value = iso;
+  
+  console.log('[Auto-Start] Start date set - cadence is now active');
+};
 
 // Compute today's day-in-cadence (1-based; null if not started)
 function cdtTodayNum(){
@@ -5035,6 +6015,74 @@ window.cdtJumpTo = function(idx){
   showToast('Opened Day '+buildTouches(window._hqProspect)[idx].day+' — '+buildTouches(window._hqProspect)[idx].label);
 };
 
+// ══════════════════════════════════════════════════════════════════════════
+//  ENHANCED ALERT CARD HELPER FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════════
+
+// Toggle email preview expand/collapse
+window.toggleEmailPreview = function(touchId) {
+  const preview = document.getElementById(touchId + '-preview');
+  const full = document.getElementById(touchId + '-full');
+  const toggle = document.getElementById(touchId + '-toggle');
+  
+  if (!preview || !full || !toggle) return;
+  
+  if (full.style.display === 'none') {
+    // Show full
+    preview.style.display = 'none';
+    full.style.display = 'block';
+    toggle.textContent = '▲ Show Less';
+  } else {
+    // Show preview
+    preview.style.display = 'block';
+    full.style.display = 'none';
+    toggle.textContent = '▼ Show Full Email';
+  }
+};
+
+// Copy touch content for LinkedIn
+window.cdtCopyLinkedIn = function(idx) {
+  const touches = cdtGetProspectData().touches;
+  if (!touches || !touches[idx]) return;
+  
+  const touch = touches[idx];
+  const content = touch.body ? touch.body.replace(/\n\n—[\s\S]*$/, '') : '';
+  
+  // Format for LinkedIn (remove email-specific formatting)
+  const linkedInContent = content
+    .replace(/^Hi .+?,?\n\n/, '') // Remove greeting
+    .replace(/Best regards,[\s\S]*$/, '') // Remove signature
+    .trim();
+  
+  navigator.clipboard.writeText(linkedInContent).then(() => {
+    showToast('✓ Copied for LinkedIn — paste into your post');
+  }).catch(() => {
+    showToast('Copy failed — please try again', true);
+  });
+};
+
+// Copy touch content for SMS
+window.cdtCopySMS = function(idx) {
+  const touches = cdtGetProspectData().touches;
+  if (!touches || !touches[idx]) return;
+  
+  const touch = touches[idx];
+  const content = touch.body ? touch.body.replace(/\n\n—[\s\S]*$/, '') : '';
+  
+  // Format for SMS (shorter, no greeting/signature)
+  const smsContent = content
+    .replace(/^Hi .+?,?\n\n/, '')
+    .replace(/Best regards,[\s\S]*$/, '')
+    .substring(0, 300) // SMS length limit
+    .trim();
+  
+  navigator.clipboard.writeText(smsContent).then(() => {
+    showToast('✓ Copied for SMS — paste into Messages');
+  }).catch(() => {
+    showToast('Copy failed — please try again', true);
+  });
+};
+
 // Toggle view
 window.cdtSetView = function(view){
   _cdtView = view;
@@ -5228,11 +6276,39 @@ function notifSave(arr){ localStorage.setItem(NOTIF_KEY, JSON.stringify(arr.slic
 // type: 'outreach' | 'intel' | 'meeting' | 'alerts'
 function notifAdd(type, msg, sub, label){
   const arr = notifGetAll();
-  arr.unshift({ id: Date.now(), type, msg, sub, label, time: new Date().toISOString(), read: false });
+  
+  // ── DEDUPLICATION: Check if identical alert exists within last 24 hours ──
+  const now = new Date();
+  const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+  
+  const isDuplicate = arr.some(n => {
+    if (n.type !== type) return false;
+    if (n.msg !== msg) return false;
+    const nTime = new Date(n.time);
+    return nTime > oneDayAgo; // Same alert within 24 hours
+  });
+  
+  if (isDuplicate) {
+    console.log('[Notif] Skipping duplicate:', msg);
+    return; // Don't add duplicate
+  }
+  
+  // Add new notification with snooze support
+  arr.unshift({ 
+    id: Date.now(), 
+    type, 
+    msg, 
+    sub, 
+    label, 
+    time: new Date().toISOString(), 
+    read: false,
+    snoozedUntil: null // For snooze functionality
+  });
+  
   notifSave(arr);
   notifUpdateBadge();
   notifRenderList();
-  // Browser notification
+  // Browser notification (throttled)
   notifBrowserPush(msg, sub);
 }
 
@@ -5297,7 +6373,11 @@ const _STATUS_ICON = {
   'No Response':'—','Pending':'○'
 };
 
-function notifRenderList(){
+// ══════════════════════════════════════════════════════════════════════
+// OLD notifRenderList - REPLACED by enhanced version at line ~14019
+// This function is deprecated and will be removed in cleanup
+// ══════════════════════════════════════════════════════════════════════
+function notifRenderList_OLD_DEPRECATED(){
   const listEl = document.getElementById('notif-list');
   if(!listEl) return;
   if(_notifTab === 'outreach') { notifRenderOutreachTab(listEl); return; }
@@ -5390,39 +6470,161 @@ function notifRenderAlertsTab(listEl){
 
   if(data && data.startISO && data.touches.length){
     const {p, start, todayNum, statuses, touches} = data;
-    const dueToday = touches.filter((t,i) => t.day===todayNum && (statuses[i]||'Pending')==='Pending');
-    const overdue  = touches.filter((t,i) => t.day<todayNum  && (statuses[i]||'Pending')==='Pending');
+    const dueToday = touches.filter((t,i) => {
+      if (isTouchSnoozed(p, i)) return false; // Filter out snoozed
+      return t.day===todayNum && (statuses[i]||'Pending')==='Pending';
+    });
+    const overdue  = touches.filter((t,i) => {
+      if (isTouchSnoozed(p, i)) return false; // Filter out snoozed
+      return t.day<todayNum && (statuses[i]||'Pending')==='Pending';
+    });
 
     if(dueToday.length || overdue.length){
       html += `<div style="padding:10px 14px 8px;border-bottom:1px solid var(--border);background:var(--off-white)">
         <div style="font-size:9px;font-weight:800;letter-spacing:.8px;color:var(--text-3);text-transform:uppercase;margin-bottom:6px">${p.company} · Action Items</div>`;
 
+      // DUE TODAY - Expandable Cards
       dueToday.forEach(function(touch){
         const i = touches.indexOf(touch);
         const tDate = _notifTouchDate(start, touch.day);
-        html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#c2410c">🔔 Due Today · Day ${touch.day} — ${touch.label}</div>
-            <div style="font-size:10px;color:var(--text-3);margin-top:1px">📅 ${_notifFmtDate(tDate)} · ${touch.subject.substring(0,45)}${touch.subject.length>45?'…':''}</div>
+        const cardId = `alert-card-${i}`;
+        
+        // Get activity data for this touch
+        const dayKey = `day_${touch.day}`;
+        const activity = (p.touchActivity && p.touchActivity[dayKey]) || {
+          emails: [],
+          calls: [],
+          linkedin: [],
+          meetings: [],
+          notes: []
+        };
+        
+        // Calculate engagement score (simple version)
+        let engagementScore = 0;
+        if (activity.emails.some(e => e.openedAt)) engagementScore += 20;
+        if (activity.emails.some(e => e.clickedAt)) engagementScore += 20;
+        if (activity.emails.some(e => e.repliedAt)) engagementScore += 30;
+        if (activity.calls.length > 0) engagementScore += 15;
+        if (activity.linkedin.some(l => l.acceptedAt)) engagementScore += 15;
+        
+        const scoreColor = engagementScore >= 60 ? '#22c55e' : engagementScore >= 30 ? '#f59e0b' : '#94a3b8';
+        const scoreLabel = engagementScore >= 60 ? 'High' : engagementScore >= 30 ? 'Medium' : 'Low';
+        
+        html += `
+        <!-- Collapsed State -->
+        <div id="${cardId}" class="alert-card" style="border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:var(--white);overflow:hidden">
+          <div class="alert-card-header" onclick="toggleAlertCard('${cardId}')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;cursor:pointer;background:linear-gradient(to right, #fff5f5, #ffffff)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11px;font-weight:700;color:#c2410c;margin-bottom:2px">🔔 Due Today · Day ${touch.day} — ${touch.label}</div>
+              <div style="font-size:10px;color:var(--text-3)">📅 ${_notifFmtDate(tDate)} · Last: ${activity.calls.length ? 'Call '+formatTimeAgo(activity.calls[activity.calls.length-1].date) : activity.emails.length ? 'Email '+formatTimeAgo(activity.emails[activity.emails.length-1].sentAt) : 'No activity'}</div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:#f0f9ff;color:#0369a1;font-weight:600">Score: ${engagementScore}/100</span>
+                <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${scoreColor}20;color:${scoreColor};font-weight:600">${scoreLabel}</span>
+              </div>
+            </div>
+            <div style="font-size:14px;color:var(--text-3)">▼</div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
-            <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">📧 Outlook</button>
+          
+          <!-- Expanded State (hidden by default) -->
+          <div class="alert-card-body" style="display:none;padding:12px;border-top:1px solid var(--border)">
+            <!-- Activity Tracking Grid -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:12px">
+              <div style="text-align:center;padding:8px;background:var(--off-white);border-radius:6px;border:1px solid var(--border)">
+                <div style="font-size:18px">📧</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:2px">Emails</div>
+                <div style="font-size:12px;font-weight:700;margin-top:2px">${activity.emails.length}</div>
+                ${activity.emails.some(e => e.openedAt) ? '<div style="font-size:9px;color:var(--green);margin-top:2px">✓ Opened</div>' : ''}
+              </div>
+              <div style="text-align:center;padding:8px;background:var(--off-white);border-radius:6px;border:1px solid var(--border)">
+                <div style="font-size:18px">📞</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:2px">Calls</div>
+                <div style="font-size:12px;font-weight:700;margin-top:2px">${activity.calls.length}</div>
+              </div>
+              <div style="text-align:center;padding:8px;background:var(--off-white);border-radius:6px;border:1px solid var(--border)">
+                <div style="font-size:18px">💼</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:2px">LinkedIn</div>
+                <div style="font-size:12px;font-weight:700;margin-top:2px">${activity.linkedin.length ? '✓' : '—'}</div>
+              </div>
+              <div style="text-align:center;padding:8px;background:var(--off-white);border-radius:6px;border:1px solid var(--border)">
+                <div style="font-size:18px">🎯</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:2px">Meeting</div>
+                <div style="font-size:12px;font-weight:700;margin-top:2px">${activity.meetings.length ? '✓' : '—'}</div>
+              </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">⚡ Quick Actions</div>
+              <div style="display:flex;flex-wrap:wrap;gap:4px">
+                <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="flex:1;min-width:80px;font-size:10px;font-weight:700;padding:6px 8px;border-radius:5px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb)">📧 Email</button>
+                <button onclick="openCallLogModal(${i})" style="flex:1;min-width:80px;font-size:10px;font-weight:700;padding:6px 8px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;font-family:var(--fb)">📞 Log Call</button>
+                <button onclick="openLinkedInModal(${i}, ${touch.day})" style="flex:1;min-width:80px;font-size:10px;font-weight:700;padding:6px 8px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;font-family:var(--fb)">💼 LinkedIn</button>
+                <button onclick="addQuickNote(${i}, ${touch.day})" style="flex:1;min-width:80px;font-size:10px;font-weight:700;padding:6px 8px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text);cursor:pointer;font-family:var(--fb)">📝 Note</button>
+              </div>
+            </div>
+            
+            <!-- Activity Timeline -->
+            ${activity.calls.length || activity.emails.length || activity.linkedin.length ? `
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📋 Activity Timeline</div>
+              <div style="font-size:11px;line-height:1.6">
+                ${activity.emails.map(e => `
+                  <div style="padding:4px 0;border-bottom:1px solid var(--border)">
+                    📧 Email sent ${formatTimeAgo(e.sentAt)}
+                    ${e.openedAt ? `<span style="color:var(--green);margin-left:6px">✓ Opened ${formatTimeAgo(e.openedAt)}</span>` : ''}
+                  </div>
+                `).join('')}
+                ${activity.calls.map(c => `
+                  <div style="padding:4px 0;border-bottom:1px solid var(--border)">
+                    📞 ${c.outcome} ${formatTimeAgo(c.date)} (${c.duration.toFixed(1)} min)
+                    ${c.notes ? `<div style="font-size:10px;color:var(--text-3);margin-top:2px">${c.notes.substring(0,60)}${c.notes.length>60?'…':''}</div>` : ''}
+                  </div>
+                `).join('')}
+                ${activity.linkedin.map(l => `
+                  <div style="padding:4px 0;border-bottom:1px solid var(--border)">
+                    💼 ${l.action} ${formatTimeAgo(l.date)}
+                    ${l.acceptedAt ? `<span style="color:var(--green);margin-left:6px">✓ Accepted</span>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            ` : ''}
+            
+            <!-- Snooze & Reschedule -->
+            <div style="display:flex;gap:6px">
+              <button onclick="cdtSnoozeTouch(${i}, 1)" style="flex:1;font-size:10px;font-weight:700;padding:6px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--gold);cursor:pointer;font-family:var(--fb)">😴 1h</button>
+              <button onclick="cdtSnoozeTouch(${i}, 24)" style="flex:1;font-size:10px;font-weight:700;padding:6px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--gold);cursor:pointer;font-family:var(--fb)">😴 1d</button>
+              <button onclick="cdtOpenReschedule(${i},${touch.day})" style="flex:2;font-size:10px;font-weight:700;padding:6px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">📅 Reschedule</button>
+            </div>
           </div>
         </div>`;
       });
 
+      // OVERDUE - Similar expandable cards
       overdue.forEach(function(touch){
         const i = touches.indexOf(touch);
         const tDate = _notifTouchDate(start, touch.day);
-        html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:var(--red)">⚠ Overdue · Day ${touch.day} — ${touch.label}</div>
-            <div style="font-size:10px;color:var(--text-3);margin-top:1px">📅 Was ${_notifFmtDate(tDate)} · ${touch.subject.substring(0,45)}${touch.subject.length>45?'…':''}</div>
+        const cardId = `alert-card-overdue-${i}`;
+        
+        html += `
+        <div id="${cardId}" class="alert-card" style="border:1px solid var(--red);border-radius:8px;margin-bottom:8px;background:var(--white);overflow:hidden">
+          <div class="alert-card-header" onclick="toggleAlertCard('${cardId}')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;cursor:pointer;background:linear-gradient(to right, #fef2f2, #ffffff)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:2px">⚠ Overdue · Day ${touch.day} — ${touch.label}</div>
+              <div style="font-size:10px;color:var(--text-3)">📅 Was ${_notifFmtDate(tDate)}</div>
+            </div>
+            <div style="font-size:14px;color:var(--text-3)">▼</div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>
-            <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">📧 Outlook</button>
+          
+          <div class="alert-card-body" style="display:none;padding:12px;border-top:1px solid var(--border)">
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+              <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="flex:1;font-size:10px;font-weight:700;padding:6px;border-radius:5px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb)">📧 Email</button>
+              <button onclick="openCallLogModal(${i})" style="flex:1;font-size:10px;font-weight:700;padding:6px;border-radius:5px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--fb)">📞 Call</button>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button onclick="cdtSnoozeTouch(${i}, 1)" style="flex:1;font-size:10px;padding:6px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--gold);cursor:pointer;font-family:var(--fb)">😴 1h</button>
+              <button onclick="cdtOpenReschedule(${i},${touch.day})" style="flex:2;font-size:10px;padding:6px;border-radius:5px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:var(--fb)">📅 Reschedule</button>
+            </div>
           </div>
         </div>`;
       });
@@ -5433,7 +6635,6 @@ function notifRenderAlertsTab(listEl){
 
   // Alert log: meetings + opt-outs
   const alertArr = notifGetAll().filter(n => n.type==='meeting'||n.type==='alerts');
-  // Filter OUT the generic "Touch Due Today" / "overdue task" system entries — those are shown above from live data
   const filteredAlerts = alertArr.filter(n => !n.msg.includes('Touch Due Today') && !n.msg.includes('overdue task') && !n.msg.includes('tasks due today') && !n.msg.includes('Overdue Task'));
 
   if(filteredAlerts.length){
@@ -5460,6 +6661,37 @@ function notifRenderAlertsTab(listEl){
     return;
   }
   listEl.innerHTML = html;
+}
+
+// Helper: Toggle expandable card
+function toggleAlertCard(cardId) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  
+  const body = card.querySelector('.alert-card-body');
+  const arrow = card.querySelector('.alert-card-header > div:last-child');
+  
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    if (arrow) arrow.textContent = '▲';
+  } else {
+    body.style.display = 'none';
+    if (arrow) arrow.textContent = '▼';
+  }
+}
+
+// Helper: Format time ago
+function formatTimeAgo(isoString) {
+  if (!isoString) return '';
+  const now = new Date();
+  const then = new Date(isoString);
+  const seconds = Math.floor((now - then) / 1000);
+  
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+  if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+  if (seconds < 604800) return Math.floor(seconds / 86400) + 'd ago';
+  return then.toLocaleDateString('en-US', {month:'short', day:'numeric'});
 }
 
 // ── INTEL TAB ────────────────────────────────────────────────────────────
@@ -5577,11 +6809,46 @@ window.notifClearAll = function(){
 };
 
 // Browser push notification
+// ── Throttled Browser Notification System ──
+// Prevents popup spam by delivering notifications 1 every 2 seconds
+const _browserNotifQueue = [];
+let _browserNotifTimer = null;
+
 function notifBrowserPush(title, body){
   if(!('Notification' in window)) return;
-  if(Notification.permission === 'granted'){
-    try{ new Notification(title, { body, icon:'https://beyondpayroll.net/favicon.ico', badge:'https://beyondpayroll.net/favicon.ico' }); }catch(e){}
+  if(Notification.permission !== 'granted') return;
+  
+  // Add to queue instead of firing immediately
+  _browserNotifQueue.push({ title, body, time: Date.now() });
+  
+  // If timer not running, start throttled delivery
+  if (!_browserNotifTimer) {
+    deliverNextBrowserNotif();
   }
+}
+
+function deliverNextBrowserNotif() {
+  if (_browserNotifQueue.length === 0) {
+    _browserNotifTimer = null;
+    return;
+  }
+  
+  const notif = _browserNotifQueue.shift();
+  
+  try {
+    new Notification(notif.title, {
+      body: notif.body,
+      icon: 'https://beyondpayroll.net/favicon.ico',
+      badge: 'https://beyondpayroll.net/favicon.ico',
+      tag: 'bp-' + Date.now(),
+      requireInteraction: false
+    });
+  } catch(e) {
+    console.error('[Notif] Browser notification failed:', e);
+  }
+  
+  // Deliver next notification after 2-second delay
+  _browserNotifTimer = setTimeout(deliverNextBrowserNotif, 2000);
 }
 
 // Request browser notification permission on first use
@@ -5592,6 +6859,617 @@ function notifRequestPermission(){
       if(p==='granted') notifAdd('alerts','🔔 Notifications enabled','You\'ll receive alerts for outreach, intel refreshes, and meetings','SYSTEM');
     });
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SNOOZE FUNCTIONALITY — Temporarily hide alerts
+// ═══════════════════════════════════════════════════════════════════════
+
+function notifSnooze(notifId, hours) {
+  const arr = notifGetAll();
+  const notif = arr.find(n => n.id === notifId);
+  
+  if (!notif) return;
+  
+  const now = new Date();
+  const snoozeUntil = new Date(now.getTime() + (hours * 60 * 60 * 1000));
+  
+  notif.snoozedUntil = snoozeUntil.toISOString();
+  notifSave(arr);
+  
+  showToast(`😴 Snoozed until ${snoozeUntil.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'})}`);
+  
+  notifRenderList();
+  notifUpdateBadge();
+}
+
+function isNotifSnoozed(notif) {
+  if (!notif.snoozedUntil) return false;
+  return new Date(notif.snoozedUntil) > new Date();
+}
+
+function notifGetActive() {
+  return notifGetAll().filter(n => !isNotifSnoozed(n));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  RESCHEDULE MODAL — Date/time picker for alerts
+// ═══════════════════════════════════════════════════════════════════════
+
+function cdtOpenReschedule(touchIndex, originalDay) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const touches = buildTouches(p);
+  const touch = touches[touchIndex];
+  if (!touch) return;
+  
+  // Calculate current scheduled date
+  const startISO = cdtGetStart();
+  if (!startISO) {
+    showToast('⚠️ Cadence not started yet', true);
+    return;
+  }
+  
+  const start = new Date(startISO + 'T00:00:00');
+  const currentDate = new Date(start);
+  currentDate.setDate(currentDate.getDate() + (originalDay - 1));
+  
+  // Format for datetime-local input
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  const dateValue = `${year}-${month}-${day}`;
+  
+  // Create modal
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = function(e) { if(e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div style="background:var(--white);border-radius:12px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)" onclick="event.stopPropagation()">
+      <div style="background:var(--navy);color:#fff;padding:18px 20px;border-radius:12px 12px 0 0">
+        <div style="font-size:16px;font-weight:700;font-family:var(--fb)">📅 Reschedule Alert</div>
+        <div style="font-size:12px;opacity:.7;margin-top:4px;font-family:var(--fb)">Day ${originalDay} — ${touch.label}</div>
+      </div>
+      
+      <div style="padding:24px 20px">
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">New Date</label>
+          <input type="date" id="reschedule-date" value="${dateValue}" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--fb)">
+        </div>
+        
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Reminder Time</label>
+          <input type="time" id="reschedule-time" value="09:00" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--fb)">
+        </div>
+        
+        <div style="background:var(--off-white);padding:12px;border-radius:8px;border-left:3px solid var(--blue);margin-bottom:20px">
+          <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px;font-family:var(--fb)">⚡ Quick Reschedule</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="cdtQuickReschedule(1)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">+1 Day</button>
+            <button onclick="cdtQuickReschedule(2)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">+2 Days</button>
+            <button onclick="cdtQuickReschedule(7)" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">+1 Week</button>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:10px">
+          <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--white);color:var(--text-2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">Cancel</button>
+          <button onclick="cdtSaveReschedule(${touchIndex}, ${originalDay})" style="flex:1;padding:12px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">✓ Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function cdtQuickReschedule(daysToAdd) {
+  const dateInput = document.getElementById('reschedule-date');
+  if (!dateInput) return;
+  
+  const current = new Date(dateInput.value + 'T00:00:00');
+  current.setDate(current.getDate() + daysToAdd);
+  
+  const year = current.getFullYear();
+  const month = String(current.getMonth() + 1).padStart(2, '0');
+  const day = String(current.getDate()).padStart(2, '0');
+  dateInput.value = `${year}-${month}-${day}`;
+}
+
+function cdtSaveReschedule(touchIndex, originalDay) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const dateInput = document.getElementById('reschedule-date');
+  const timeInput = document.getElementById('reschedule-time');
+  
+  if (!dateInput || !timeInput) return;
+  
+  const newDate = dateInput.value; // YYYY-MM-DD
+  const newTime = timeInput.value; // HH:MM
+  
+  // Save to prospect's rescheduled alerts
+  if (!p.rescheduledAlerts) p.rescheduledAlerts = {};
+  
+  p.rescheduledAlerts[`touch_${touchIndex}`] = {
+    originalDay: originalDay,
+    newDate: newDate,
+    newTime: newTime,
+    rescheduledAt: new Date().toISOString()
+  };
+  
+  // Save prospect
+  tbSaveProspect();
+  
+  // Close modal
+  document.querySelectorAll('[style*="position:fixed"]').forEach(el => {
+    if (el.innerHTML.includes('Reschedule Alert')) el.remove();
+  });
+  
+  showToast(`✓ Alert rescheduled to ${newDate} at ${newTime}`);
+  
+  // Refresh alerts panel
+  notifRenderList();
+}
+
+// Snooze a specific touch alert
+function cdtSnoozeTouch(touchIndex, hours) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  if (!p.snoozedTouches) p.snoozedTouches = {};
+  
+  const snoozeUntil = new Date(Date.now() + (hours * 60 * 60 * 1000));
+  p.snoozedTouches[`touch_${touchIndex}`] = snoozeUntil.toISOString();
+  
+  tbSaveProspect();
+  
+  const timeStr = hours === 1 ? '1 hour' : `${hours} hours`;
+  showToast(`😴 Snoozed for ${timeStr}`);
+  
+  notifRenderList();
+}
+
+function isTouchSnoozed(prospect, touchIndex) {
+  if (!prospect.snoozedTouches) return false;
+  const snoozeUntil = prospect.snoozedTouches[`touch_${touchIndex}`];
+  if (!snoozeUntil) return false;
+  return new Date(snoozeUntil) > new Date();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  CALL LOGGING MODAL — Track phone call outcomes, notes, and next steps
+// ═══════════════════════════════════════════════════════════════════════
+
+let _callTimer = null;
+let _callStartTime = null;
+
+function openCallLogModal(touchIndex) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const touches = buildTouches(p);
+  const touch = touches[touchIndex];
+  if (!touch) return;
+  
+  const data = cdtGetProspectData();
+  const touchDay = touch.day;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+  modal.onclick = function(e) { if(e.target === modal) { stopCallTimer(); modal.remove(); } };
+  
+  modal.innerHTML = `
+    <div style="background:var(--white);border-radius:12px;max-width:600px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);margin:20px 0" onclick="event.stopPropagation()">
+      <div style="background:var(--navy);color:#fff;padding:18px 20px;border-radius:12px 12px 0 0">
+        <div style="font-size:16px;font-weight:700;font-family:var(--fb)">📞 Log Phone Call</div>
+        <div style="font-size:12px;opacity:.7;margin-top:4px;font-family:var(--fb)">Day ${touchDay} — ${touch.label} · ${p.company}</div>
+      </div>
+      
+      <div style="padding:24px 20px;max-height:70vh;overflow-y:auto">
+        <!-- Call Outcome -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Call Outcome</label>
+          <select id="call-outcome" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--fb)">
+            <option value="Connected">✓ Connected & Spoke</option>
+            <option value="Voicemail">📞 Left Voicemail</option>
+            <option value="No Answer">⊘ No Answer</option>
+            <option value="Gatekeeper">🚪 Spoke to Gatekeeper</option>
+            <option value="Busy">⊗ Busy Signal</option>
+            <option value="Wrong Number">❌ Wrong Number</option>
+          </select>
+        </div>
+        
+        <!-- Duration with Timer -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Duration (minutes)</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="call-duration" placeholder="0.0" step="0.1" min="0" style="flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--fb)">
+            <button id="call-timer-btn" onclick="toggleCallTimer()" style="padding:10px 16px;border:1px solid var(--border);border-radius:8px;background:var(--white);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fb);white-space:nowrap">⏱️ Start Timer</button>
+          </div>
+        </div>
+        
+        <!-- Topics Discussed -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Topics Discussed</label>
+          <div id="call-topics" style="display:flex;flex-wrap:wrap;gap:6px">
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="Pricing"> Pricing
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="Compliance"> Compliance
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="Integration"> Integration
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="ROI"> ROI
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="Timeline"> Timeline
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="Competition"> Competition
+            </label>
+          </div>
+        </div>
+        
+        <!-- Objections -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Objections Raised</label>
+          <textarea id="call-objections" placeholder="What concerns did they mention?" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--fb);min-height:60px;resize:vertical"></textarea>
+        </div>
+        
+        <!-- Call Notes -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Call Notes</label>
+          <textarea id="call-notes" placeholder="What happened on this call? Key takeaways?" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--fb);min-height:100px;resize:vertical"></textarea>
+        </div>
+        
+        <!-- Next Action -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Next Action</label>
+          <select id="call-next-action" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--fb)">
+            <option value="Email">📧 Send Follow-up Email</option>
+            <option value="Call">📞 Schedule Another Call</option>
+            <option value="Meeting">🎯 Book Meeting</option>
+            <option value="Resources">📄 Send Resources</option>
+            <option value="None">— No Follow-up Needed</option>
+          </select>
+        </div>
+        
+        <!-- Sentiment -->
+        <div style="margin-bottom:20px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Call Sentiment</label>
+          <div id="call-sentiment" style="display:flex;gap:8px">
+            <button onclick="selectSentiment('positive')" data-sentiment="positive" style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--white);font-size:14px;cursor:pointer;font-family:var(--fb);transition:all .2s">😊 Positive</button>
+            <button onclick="selectSentiment('neutral')" data-sentiment="neutral" style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--white);font-size:14px;cursor:pointer;font-family:var(--fb);transition:all .2s">😐 Neutral</button>
+            <button onclick="selectSentiment('negative')" data-sentiment="negative" style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;background:var(--white);font-size:14px;cursor:pointer;font-family:var(--fb);transition:all .2s">😞 Negative</button>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:10px">
+          <button onclick="stopCallTimer();this.closest('[style*=fixed]').remove()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--white);color:var(--text-2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">Cancel</button>
+          <button onclick="saveCallLog(${touchIndex}, ${touchDay})" style="flex:1;padding:12px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">💾 Save Call Log</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function toggleCallTimer() {
+  const btn = document.getElementById('call-timer-btn');
+  const durationInput = document.getElementById('call-duration');
+  
+  if (!_callTimer) {
+    // Start timer
+    _callStartTime = Date.now();
+    _callTimer = setInterval(function() {
+      const elapsed = (Date.now() - _callStartTime) / 1000 / 60; // minutes
+      durationInput.value = elapsed.toFixed(1);
+    }, 100);
+    btn.textContent = '⏹️ Stop Timer';
+    btn.style.background = 'var(--red)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--red)';
+  } else {
+    stopCallTimer();
+  }
+}
+
+function stopCallTimer() {
+  if (_callTimer) {
+    clearInterval(_callTimer);
+    _callTimer = null;
+    _callStartTime = null;
+    const btn = document.getElementById('call-timer-btn');
+    if (btn) {
+      btn.textContent = '⏱️ Start Timer';
+      btn.style.background = 'var(--white)';
+      btn.style.color = 'var(--text)';
+      btn.style.borderColor = 'var(--border)';
+    }
+  }
+}
+
+function selectSentiment(sentiment) {
+  document.querySelectorAll('#call-sentiment button').forEach(btn => {
+    btn.style.borderColor = 'var(--border)';
+    btn.style.background = 'var(--white)';
+  });
+  const selected = document.querySelector(`#call-sentiment button[data-sentiment="${sentiment}"]`);
+  if (selected) {
+    selected.style.borderColor = 'var(--blue)';
+    selected.style.background = '#eff6ff';
+  }
+}
+
+function saveCallLog(touchIndex, touchDay) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  stopCallTimer();
+  
+  // Collect form data
+  const outcome = document.getElementById('call-outcome')?.value || '';
+  const duration = parseFloat(document.getElementById('call-duration')?.value || 0);
+  const objections = document.getElementById('call-objections')?.value || '';
+  const notes = document.getElementById('call-notes')?.value || '';
+  const nextAction = document.getElementById('call-next-action')?.value || '';
+  
+  // Get selected topics
+  const topics = Array.from(document.querySelectorAll('#call-topics input:checked'))
+    .map(cb => cb.value);
+  
+  // Get selected sentiment
+  const sentimentBtn = document.querySelector('#call-sentiment button[style*="background: rgb(239, 246, 255)"]');
+  const sentiment = sentimentBtn ? sentimentBtn.dataset.sentiment : 'neutral';
+  
+  // Initialize touch activity structure
+  if (!p.touchActivity) p.touchActivity = {};
+  const dayKey = `day_${touchDay}`;
+  if (!p.touchActivity[dayKey]) {
+    p.touchActivity[dayKey] = {
+      emails: [],
+      calls: [],
+      linkedin: [],
+      meetings: [],
+      notes: []
+    };
+  }
+  
+  // Add call log
+  p.touchActivity[dayKey].calls.push({
+    date: new Date().toISOString(),
+    outcome: outcome,
+    duration: duration,
+    topics: topics,
+    objections: objections,
+    notes: notes,
+    nextAction: nextAction,
+    sentiment: sentiment
+  });
+  
+  // Save prospect
+  tbSaveProspect();
+  
+  // Close modal
+  document.querySelectorAll('[style*="position:fixed"]').forEach(el => {
+    if (el.innerHTML.includes('Log Phone Call')) el.remove();
+  });
+  
+  showToast(`✓ Call logged: ${outcome} (${duration.toFixed(1)} min)`);
+  
+  // Refresh alerts panel
+  notifRenderList();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  LINKEDIN TRACKING MODAL
+// ═══════════════════════════════════════════════════════════════════════
+
+function openLinkedInModal(touchIndex, touchDay) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const touches = buildTouches(p);
+  const touch = touches[touchIndex];
+  if (!touch) return;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = function(e) { if(e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div style="background:var(--white);border-radius:12px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)" onclick="event.stopPropagation()">
+      <div style="background:#0a66c2;color:#fff;padding:18px 20px;border-radius:12px 12px 0 0">
+        <div style="font-size:16px;font-weight:700;font-family:var(--fb)">💼 LinkedIn Outreach</div>
+        <div style="font-size:12px;opacity:.7;margin-top:4px;font-family:var(--fb)">Day ${touchDay} — ${touch.label} · ${p.contact || p.company}</div>
+      </div>
+      
+      <div style="padding:24px 20px">
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">LinkedIn Status</label>
+          <select id="linkedin-status" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--fb)">
+            <option value="Not Connected">○ Not Connected Yet</option>
+            <option value="Request Sent">📤 Connection Request Sent</option>
+            <option value="Connected">✓ Connected</option>
+            <option value="Message Sent">💬 Message Sent</option>
+            <option value="Message Replied">💬 Message Replied</option>
+          </select>
+        </div>
+        
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Notes</label>
+          <textarea id="linkedin-notes" placeholder="Any notes about this LinkedIn interaction?" style="width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--fb);min-height:80px;resize:vertical"></textarea>
+        </div>
+        
+        <div style="background:#f0f9ff;padding:12px;border-radius:8px;border-left:3px solid #0a66c2;margin-bottom:16px">
+          <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px">💡 Quick Actions</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="window.open('https://linkedin.com/search/results/people/?keywords=${encodeURIComponent((p.contact || '') + ' ' + p.company)}', '_blank')" style="flex:1;padding:6px 10px;border:1px solid #0a66c2;border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">🔍 Search</button>
+            <button onclick="window.open('https://linkedin.com', '_blank')" style="flex:1;padding:6px 10px;border:1px solid #0a66c2;border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">🔗 Open LinkedIn</button>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:10px">
+          <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--white);color:var(--text-2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">Cancel</button>
+          <button onclick="saveLinkedInActivity(${touchIndex}, ${touchDay})" style="flex:1;padding:12px;border:none;border-radius:8px;background:#0a66c2;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">💾 Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function saveLinkedInActivity(touchIndex, touchDay) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const status = document.getElementById('linkedin-status')?.value || '';
+  const notes = document.getElementById('linkedin-notes')?.value || '';
+  
+  // Initialize touch activity structure
+  if (!p.touchActivity) p.touchActivity = {};
+  const dayKey = `day_${touchDay}`;
+  if (!p.touchActivity[dayKey]) {
+    p.touchActivity[dayKey] = {
+      emails: [],
+      calls: [],
+      linkedin: [],
+      meetings: [],
+      notes: []
+    };
+  }
+  
+  // Add LinkedIn activity
+  p.touchActivity[dayKey].linkedin.push({
+    date: new Date().toISOString(),
+    action: status,
+    notes: notes,
+    acceptedAt: status === 'Connected' ? new Date().toISOString() : null
+  });
+  
+  // Save prospect
+  tbSaveProspect();
+  
+  // Close modal
+  document.querySelectorAll('[style*="position:fixed"]').forEach(el => {
+    if (el.innerHTML.includes('LinkedIn Outreach')) el.remove();
+  });
+  
+  showToast(`✓ LinkedIn: ${status}`);
+  
+  // Refresh alerts panel
+  notifRenderList();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  QUICK NOTES
+// ═══════════════════════════════════════════════════════════════════════
+
+function addQuickNote(touchIndex, touchDay) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.onclick = function(e) { if(e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div style="background:var(--white);border-radius:12px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)" onclick="event.stopPropagation()">
+      <div style="background:var(--navy);color:#fff;padding:18px 20px;border-radius:12px 12px 0 0">
+        <div style="font-size:16px;font-weight:700;font-family:var(--fb)">📝 Quick Note</div>
+        <div style="font-size:12px;opacity:.7;margin-top:4px;font-family:var(--fb)">Day ${touchDay} · ${p.company}</div>
+      </div>
+      
+      <div style="padding:24px 20px">
+        <div style="margin-bottom:16px">
+          <textarea id="quick-note-text" placeholder="Capture anything important - gatekeeper info, best times to call, pain points, budget details, next steps..." style="width:100%;padding:12px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--fb);min-height:120px;resize:vertical" autofocus></textarea>
+        </div>
+        
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--fb)">Quick Tags (optional)</label>
+          <div id="note-tags" style="display:flex;flex-wrap:wrap;gap:4px">
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--white);font-size:11px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="gatekeeper"> 🚪 Gatekeeper
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--white);font-size:11px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="pain"> 💢 Pain Point
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--white);font-size:11px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="budget"> 💰 Budget
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--white);font-size:11px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="timeline"> ⏰ Timeline
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border:1px solid var(--border);border-radius:5px;background:var(--white);font-size:11px;cursor:pointer;font-family:var(--fb)">
+              <input type="checkbox" value="competition"> ⚔️ Competition
+            </label>
+          </div>
+        </div>
+        
+        <div style="display:flex;gap:10px">
+          <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--white);color:var(--text-2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">Cancel</button>
+          <button onclick="saveQuickNote(${touchIndex}, ${touchDay})" style="flex:1;padding:12px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fb)">💾 Save Note</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function saveQuickNote(touchIndex, touchDay) {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const noteText = document.getElementById('quick-note-text')?.value || '';
+  if (!noteText.trim()) {
+    showToast('⚠️ Please enter a note', true);
+    return;
+  }
+  
+  // Get selected tags
+  const tags = Array.from(document.querySelectorAll('#note-tags input:checked'))
+    .map(cb => cb.value);
+  
+  // Initialize touch activity structure
+  if (!p.touchActivity) p.touchActivity = {};
+  const dayKey = `day_${touchDay}`;
+  if (!p.touchActivity[dayKey]) {
+    p.touchActivity[dayKey] = {
+      emails: [],
+      calls: [],
+      linkedin: [],
+      meetings: [],
+      notes: []
+    };
+  }
+  
+  // Add note
+  p.touchActivity[dayKey].notes.push({
+    text: noteText,
+    tags: tags,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Save prospect
+  tbSaveProspect();
+  
+  // Close modal
+  document.querySelectorAll('[style*="position:fixed"]').forEach(el => {
+    if (el.innerHTML.includes('Quick Note')) el.remove();
+  });
+  
+  showToast(`✓ Note saved`);
+  
+  // Refresh alerts panel
+  notifRenderList();
 }
 
 // ── Push notification: check ALL prospects for due/overdue tasks on login ──
@@ -5844,10 +7722,30 @@ function cdtGetIntelResult(day){
 }
 function cdtSaveIntelResult(day, result){
   const p = window._hqProspect; if(!p) return;
+  
+  // Save to legacy localStorage system (keyed by company_dayN)
   const store = cdtGetIntelResults();
   const k = p.company.replace(/\s+/g,'_')+'_day'+day;
   store[k] = { result, ts: new Date().toISOString(), day, company: p.company };
   localStorage.setItem(CDT_INTEL_STORE_KEY, JSON.stringify(store));
+  
+  // ALSO save intel brief to prospect's cadenceSteps for full persistence
+  if (!p.cadenceSteps) p.cadenceSteps = {};
+  const stepKey = `day_${day}`;
+  if (!p.cadenceSteps[stepKey]) {
+    p.cadenceSteps[stepKey] = {
+      day: day,
+      label: (CDT_INTEL_DAYS.find(d => d.day === day) || {}).label || 'Intel Touch',
+      createdAt: new Date().toISOString()
+    };
+  }
+  p.cadenceSteps[stepKey].intelBrief = result;
+  p.cadenceSteps[stepKey].intelTimestamp = new Date().toISOString();
+  
+  // Trigger auto-save
+  if (typeof window.tbMarkUnsaved === 'function') {
+    window.tbMarkUnsaved();
+  }
 }
 
 function cdtRenderIntelResult(data){
@@ -6539,6 +8437,17 @@ function pdLoadProspect(idx){
   if(typeof window.tbShowSaveBtn==='function') window.tbShowSaveBtn();
   // Fire day trigger check for the newly loaded prospect
   setTimeout(cdtCheckTriggers, 400);
+  // Refresh cadence display for the new prospect
+  if(typeof cdtRender==='function') setTimeout(cdtRender, 100);
+  // Refresh alerts for the new prospect (with proper element reference)
+  setTimeout(function(){
+    const listEl = document.getElementById('notif-list');
+    if(listEl && typeof notifRenderAlertsTabEnhanced==='function') {
+      notifRenderAlertsTabEnhanced(listEl);
+    }
+  }, 200);
+  // RESTORE SAVED MARKET ANALYSIS DATA
+  if(typeof window.restoreMarketAnalysis==='function') setTimeout(window.restoreMarketAnalysis, 500);
 }
 
 function pdAddToCadence(idx){
@@ -6553,6 +8462,8 @@ function pdAddToCadence(idx){
   // Route directly to 30-Day Cadence tab if approved, else Command Center
   if(typeof hqTab==='function') hqTab(window._hqApproved?'composer':'cmd');
   showToast(p.company+' loaded — opening 30-Day Cadence');
+  // RESTORE SAVED MARKET ANALYSIS DATA
+  if(typeof window.restoreMarketAnalysis==='function') setTimeout(window.restoreMarketAnalysis, 500);
 }
 
 function exportProspects(){
@@ -11161,6 +13072,15 @@ window.atRunWeeklyIntel = function() {
     var raw=bpGeminiText(resp);
     var clean=raw.replace(/```json|```/g,'').trim();
     var d=JSON.parse(clean);
+    
+    // SAVE TO PROSPECT OBJECT
+    if (window._hqProspect) {
+      window._hqProspect.marketIntelligence = d;
+      window._hqProspect.marketIntelLastUpdated = new Date().toISOString();
+      // Auto-save to persist the data
+      if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+    }
+    
     atRenderWeeklyIntel(bodyEl,d);
     showToast('✓ Competitor Intel report complete');
   })
@@ -11348,6 +13268,15 @@ window.atRunSocialAgent = function() {
     var raw=bpGeminiText(resp);
     var clean=raw.replace(/```json|```/g,'').trim();
     var d=JSON.parse(clean);
+    
+    // SAVE TO PROSPECT OBJECT
+    if (window._hqProspect) {
+      window._hqProspect.socialListening = d;
+      window._hqProspect.socialListenLastUpdated = new Date().toISOString();
+      // Auto-save to persist the data
+      if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+    }
+    
     atRenderSocialAgent(bodyEl,d);
     showToast('✓ Social Listening scan complete');
   })
@@ -12268,16 +14197,50 @@ function notifRenderOutreachTabEnhanced(listEl){
     html += '</div>';
   }
 
-  // Render due today section
+  // Render due today section (ENHANCED with email content & action buttons)
   if(dueTodayTouches.length > 0){
-    html += `<div style="background:#fffbeb;border-bottom:2px solid #fde68a">
-      <div style="padding:10px 14px;border-bottom:1px solid #fde68a">
-        <div style="font-size:10px;font-weight:800;color:#92400e;letter-spacing:.8px;text-transform:uppercase">🔔 Due Today (${dueTodayTouches.length})</div>
-      </div>`;
+    html += `<div style="background:#fffbeb;border-bottom:2px solid #fde68a;padding:12px 14px">
+      <div style="font-size:11px;font-weight:800;color:#92400e;margin-bottom:10px;letter-spacing:.5px">🔔 DUE TODAY (${dueTodayTouches.length})</div>`;
     
     dueTodayTouches.forEach(({touch, i, status}) => {
       const tDate = _notifTouchDate(start, touch.day);
-      html += renderTouchRow(touch, i, status, tDate, todayNum, sentAt, false, true, false);
+      const touchId = 'alert-touch-' + i;
+      
+      // Get email body (remove signature for preview)
+      const bodyPreview = touch.body ? touch.body.replace(/\n\n—[\s\S]*$/, '').substring(0, 200) : '';
+      const hasMoreContent = touch.body && touch.body.replace(/\n\n—[\s\S]*$/, '').length > 200;
+      
+      html += `<div style="background:#fff;border-left:4px solid #f59e0b;padding:0;border-radius:6px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,.08);overflow:hidden">
+        <!-- Header -->
+        <div style="padding:12px;background:linear-gradient(135deg,#fffbeb 0%,#fff 100%)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-size:13px;font-weight:700;color:var(--text)">Day ${touch.day} — ${touch.label}</div>
+            <div style="font-size:9px;font-weight:700;color:#f59e0b;background:#fff;padding:3px 8px;border-radius:12px;border:1px solid #fde68a">DUE TODAY</div>
+          </div>
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:4px">📅 ${_notifFmtDate(tDate)}</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px">📧 ${touch.subject}</div>
+        </div>
+        
+        <!-- Email Preview -->
+        ${touch.body ? `
+        <div style="padding:12px;background:#fafafa;border-top:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0">
+          <div style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--text-3);margin-bottom:6px;text-transform:uppercase">Email Preview</div>
+          <div id="${touchId}-preview" style="font-size:11px;color:var(--text);line-height:1.6;white-space:pre-wrap;max-height:120px;overflow:hidden">${bodyPreview}${hasMoreContent ? '...' : ''}</div>
+          ${hasMoreContent ? `
+          <div id="${touchId}-full" style="display:none;font-size:11px;color:var(--text);line-height:1.6;white-space:pre-wrap">${touch.body.replace(/\n\n—[\s\S]*$/, '')}</div>
+          <button onclick="toggleEmailPreview('${touchId}')" id="${touchId}-toggle" style="margin-top:8px;font-size:10px;font-weight:600;color:#1e40af;background:none;border:none;padding:0;cursor:pointer;font-family:var(--fb)">▼ Show Full Email</button>
+          ` : ''}
+        </div>
+        ` : ''}
+        
+        <!-- Action Buttons -->
+        <div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;background:#fff">
+          <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);box-shadow:0 1px 2px rgba(0,0,0,.1)">📧 Outlook</button>
+          <button onclick="notifCloseDrawer();cdtCopyLinkedIn(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:1px solid #0077b5;background:#fff;color:#0077b5;cursor:pointer;font-family:var(--fb)">💼 LinkedIn</button>
+          <button onclick="notifCloseDrawer();cdtCopySMS(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:1px solid #10b981;background:#fff;color:#10b981;cursor:pointer;font-family:var(--fb)">📱 SMS</button>
+          <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:600;padding:8px 12px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">📅 Reschedule</button>
+        </div>
+      </div>`;
     });
     
     html += '</div>';
@@ -12356,19 +14319,68 @@ function renderTouchRow(touch, i, status, tDate, todayNum, sentAt, isOverdue, is
 // ENHANCED: Alerts tab - cleaner action items
 // ══════════════════════════════════════════════════════════════════════
 function notifRenderAlertsTabEnhanced(listEl){
+  console.log('[Alerts Tab] Rendering enhanced alerts...');
   const data = cdtGetProspectData();
+  console.log('[Alerts Tab] Prospect data:', data);
   let html = '';
 
-  if(data && data.startISO && data.touches.length){
+  if(data && data.touches && data.touches.length){
     const {p, start, todayNum, statuses, touches} = data;
-    const dueToday = touches.filter((t,i) => t.day===todayNum && (statuses[i]||'Pending')==='Pending');
-    const overdue  = touches.filter((t,i) => t.day<todayNum  && (statuses[i]||'Pending')==='Pending');
+    console.log('[Alerts Tab] Prospect loaded - checking touches...');
+    console.log('[Alerts Tab] Start date:', data.startISO || 'Not set');
+    console.log('[Alerts Tab] Total touches:', touches.length);
+    console.log('[Alerts Tab] Touch days:', touches.map(t => t.day));
+    
+    // CRITICAL: Auto-start logic - First touch ALWAYS appears if pending
+    const firstTouch = touches[0];
+    const firstTouchStatus = statuses && statuses[0] ? statuses[0] : 'Pending';
+    const firstTouchPending = firstTouch && firstTouchStatus === 'Pending';
+    
+    console.log('[Alerts Tab] First touch (Day 1):', firstTouchPending ? 'PENDING - will show' : 'Completed');
+    
+    // Build alert lists
+    let dueToday = [];
+    let overdue = [];
+    let firstTouchAlert = null;
+    
+    if(data.startISO && todayNum){
+      // Normal cadence logic - calculate due/overdue based on dates
+      console.log('[Alerts Tab] Cadence started - Today is day:', todayNum);
+      dueToday = touches.filter((t,i) => t.day===todayNum && (statuses[i]||'Pending')==='Pending');
+      overdue  = touches.filter((t,i) => t.day<todayNum  && (statuses[i]||'Pending')==='Pending');
+      console.log('[Alerts Tab] Due today:', dueToday.length, dueToday.map(t => `Day ${t.day}`));
+      console.log('[Alerts Tab] Overdue:', overdue.length, overdue.map(t => `Day ${t.day}`));
+    } else if(firstTouchPending){
+      // AUTO-START: Cadence not started but first touch is pending
+      console.log('[Alerts Tab] AUTO-START MODE - First touch will appear immediately');
+      firstTouchAlert = firstTouch;
+    }
 
-    if(dueToday.length || overdue.length){
+    if(dueToday.length || overdue.length || firstTouchAlert){
       html += `<div style="padding:14px;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;border-bottom:2px solid var(--border)">
         <div style="font-size:14px;font-weight:700;font-family:var(--fd);margin-bottom:4px">${p.company}</div>
-        <div style="font-size:10px;opacity:.7">Action Items · ${dueToday.length + overdue.length} pending</div>
+        <div style="font-size:10px;opacity:.7">Action Items · ${(dueToday.length + overdue.length + (firstTouchAlert ? 1 : 0))} pending</div>
       </div>`;
+      
+      // AUTO-START: First touch alert (appears immediately when prospect is created)
+      if(firstTouchAlert){
+        html += `<div style="background:#dbeafe;border-bottom:2px solid #93c5fd;padding:12px 14px">
+          <div style="font-size:11px;font-weight:800;color:#1e40af;margin-bottom:10px;letter-spacing:.5px">🚀 READY TO START (AUTO-START)</div>`;
+        
+        const i = touches.indexOf(firstTouchAlert);
+        html += `<div style="background:#fff;border-left:4px solid #3b82f6;padding:12px;border-radius:6px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Day ${firstTouchAlert.day} — ${firstTouchAlert.label}</div>
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:4px">First touch · Start your cadence</div>
+          <div style="font-size:10px;color:var(--text-3);margin-bottom:8px">${firstTouchAlert.subject.substring(0,80)}${firstTouchAlert.subject.length>80?'…':''}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="cdtSetStartDate('today');notifRenderList()" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">📅 Start Today</button>
+            <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:10px;font-weight:700;padding:5px 10px;border-radius:5px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-family:var(--fb)">📧 Send Now</button>
+          </div>
+        </div>`;
+        
+        html += '</div>';
+      }
+
 
       if(overdue.length > 0){
         html += `<div style="background:#fef2f2;border-bottom:2px solid #fecaca;padding:12px 14px">
@@ -12444,7 +14456,21 @@ function notifRenderAlertsTabEnhanced(listEl){
   }
 
   if(!html){
-    listEl.innerHTML='<div class="notif-empty">✅<br><br>All caught up!<br><span style="font-size:11px;opacity:.6">Due touches and alerts will appear here</span></div>';
+    console.log('[Alerts Tab] No cards to display - showing fallback message');
+    
+    // Provide diagnostic message based on data state
+    let emptyMsg = '';
+    if(!data){
+      emptyMsg = '📊<br><br>No prospect loaded<br><span style="font-size:11px;opacity:.6">Load a prospect from the dashboard to see alerts</span>';
+    } else if(!data.startISO){
+      emptyMsg = '📅<br><br>Cadence not started<br><span style="font-size:11px;opacity:.6">Start the cadence to generate alert cards</span>';
+    } else if(!data.touches || data.touches.length === 0){
+      emptyMsg = '📭<br><br>No touches configured<br><span style="font-size:11px;opacity:.6">Configure cadence touches to see alerts</span>';
+    } else {
+      emptyMsg = '✅<br><br>All caught up!<br><span style="font-size:11px;opacity:.6">Due touches and alerts will appear here</span>';
+    }
+    
+    listEl.innerHTML=`<div class="notif-empty">${emptyMsg}</div>`;
     return;
   }
   
@@ -13020,3 +15046,2975 @@ console.log('  • Sales HQ card will appear on command center');
 console.log('  • Nurture button added to pipeline');
 console.log('  • Move to Nurture buttons on prospect cards');
 console.log('  • Agent status in topbar');
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  🔍 MARKET & COMPETITIVE INTELLIGENCE ENHANCEMENT (Chrome-Optimized)
+//  Screenshot-based Gong transcript analysis with real-time competitive signals
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Global state for Market Intelligence
+ */
+let uploadedGongScreenshots = [];
+let selectedMITrack = 'TotalSource';
+let selectedMICadence = 'Consultative';
+
+// Competitor data knowledge base
+const COMP_DATA = {
+  'Paychex PEO': {
+    strengths: ['Established brand', 'Large client base'],
+    weaknesses: ['Platform stability issues', 'Limited compliance automation', 'Lower retention rates']
+  },
+  'Justworks': {
+    strengths: ['Modern UI', 'Easy onboarding'],
+    weaknesses: ['Limited enterprise features', 'Smaller PEO network']
+  },
+  'TriNet': {
+    strengths: ['Industry-specific solutions', 'Good benefits'],
+    weaknesses: ['Higher cost', 'Complex platform']
+  },
+  'Insperity': {
+    strengths: ['Full-service HR', 'Good support'],
+    weaknesses: ['Recent earnings challenges', 'Retention issues']
+  },
+  'Rippling': {
+    strengths: ['All-in-one platform', 'Modern tech'],
+    weaknesses: ['Rapid growth concerns', 'Support challenges']
+  },
+  'Dayforce': {
+    strengths: ['Comprehensive HCM', 'Global capabilities'],
+    weaknesses: ['PE buyout uncertainty', 'Client concerns about roadmap']
+  }
+};
+
+/**
+ * Open Market Intelligence Panel
+ */
+function openMarketIntel() {
+  document.getElementById('market-intel-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  
+  // Check if there's saved Market Intelligence Panel data for this prospect
+  const p = window._hqProspect;
+  
+  // DEBUG LOGGING
+  console.log('=== Market Intelligence Panel Opened ===');
+  console.log('Prospect loaded:', p ? p.company : 'No prospect');
+  console.log('Has saved panel data:', !!(p && p.marketIntelligencePanel));
+  
+  if (p && p.marketIntelligencePanel && p.marketIntelPanelLastUpdated) {
+    const date = new Date(p.marketIntelPanelLastUpdated);
+    const timeAgo = getTimeAgo(date);
+    const isStale = isDataStale(date, 7);
+    
+    console.log('✓ Restoring saved analysis:');
+    console.log('  • Generated:', timeAgo);
+    console.log('  • Track:', p.marketIntelligencePanel.track);
+    console.log('  • Cadence:', p.marketIntelligencePanel.cadence);
+    console.log('  • Screenshots:', p.marketIntelligencePanel.screenshotCount);
+    console.log('  • Stale:', isStale);
+    
+    // Show notification that saved data is available
+    setTimeout(() => {
+      showMIToast(`ℹ️ Saved analysis from ${timeAgo} available. ${isStale ? 'Consider refreshing.' : ''}`);
+    }, 500);
+    
+    // Optionally auto-restore the dashboard
+    const dashboardEl = document.getElementById('market-intel-dashboard');
+    if (dashboardEl && p.marketIntelligencePanel.intelligence) {
+      const data = p.marketIntelligencePanel;
+      
+      // Restore track and cadence selections
+      selectedMITrack = data.track || 'TotalSource';
+      selectedMICadence = data.cadence || 'Consultative';
+      
+      // Update UI buttons
+      document.querySelectorAll('.mi-track-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.track === selectedMITrack);
+      });
+      document.querySelectorAll('.mi-cadence-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cadence === selectedMICadence);
+      });
+      
+      // Show note about processing time from saved data
+      const savedProcessingTime = 'saved';
+      
+      // Render the saved dashboard with freshness indicator
+      renderIntelligenceDashboard(
+        data.intelligence,
+        data.painPoints || [],
+        data.signals || [],
+        savedProcessingTime,
+        data.intelligence?.researchBehavior || null,
+        data.techIntelligence || null
+      );
+      
+      console.log('✓ Dashboard rendered with saved data');
+      
+      // Restore detected competitors if tech intelligence data exists
+      if (data.techIntelligence && data.techIntelligence.competitive) {
+        srePopulateDetectedCompetitors(data.techIntelligence);
+        console.log('✓ Restored detected competitors from saved data');
+      }
+      
+      // Add freshness banner
+      const banner = document.createElement('div');
+      banner.style.cssText = `
+        padding: 12px 16px;
+        background: ${isStale ? 'var(--gold-bg)' : 'var(--blue-bg)'};
+        border-left: 3px solid ${isStale ? 'var(--gold)' : 'var(--blue)'};
+        border-radius: var(--radius-sm);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+      `;
+      banner.innerHTML = `
+        <div>
+          <span style="font-weight: 600; color: ${isStale ? 'var(--gold)' : 'var(--blue)'};">
+            ${isStale ? '⚠️ Saved Analysis (may be outdated)' : 'ℹ️ Saved Analysis'}
+          </span>
+          <span style="color: var(--text-3); margin-left: 8px;">
+            Generated ${timeAgo} with ${data.screenshotCount} screenshot${data.screenshotCount > 1 ? 's' : ''}
+          </span>
+        </div>
+        <button onclick="clearMarketIntelDashboard()" style="font-size: 11px; padding: 6px 12px; border: 1px solid var(--border-2); border-radius: var(--radius-sm); background: var(--white); cursor: pointer; font-weight: 500;">
+          Start Fresh Analysis
+        </button>
+      `;
+      
+      dashboardEl.insertBefore(banner, dashboardEl.firstChild);
+    }
+  } else {
+    console.log('No saved analysis found - showing empty dashboard');
+  }
+}
+
+/**
+ * Close Market Intelligence Panel
+ */
+function closeMarketIntel() {
+  document.getElementById('market-intel-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/**
+ * Clear Market Intelligence Dashboard and reset for fresh analysis
+ */
+function clearMarketIntelDashboard() {
+  const dashboardEl = document.getElementById('market-intel-dashboard');
+  if (dashboardEl) {
+    dashboardEl.innerHTML = `
+      <div style="text-align: center; padding: 3rem 1rem; color: var(--text-3);">
+        📊 Ready to analyze<br>
+        <span style="font-size: 12px; margin-top: 8px; display: block;">
+          Upload transcript screenshots and click Run Analysis
+        </span>
+      </div>
+    `;
+  }
+  uploadedGongScreenshots = [];
+  console.log('✓ Market Intelligence dashboard cleared');
+}
+
+/**
+ * Select Product Track
+ */
+function selectMITrack(track) {
+  selectedMITrack = track;
+  document.querySelectorAll('.mi-track-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.track === track) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+/**
+ * Select Cadence Tone
+ */
+function selectMICadence(cadence) {
+  selectedMICadence = cadence;
+  document.querySelectorAll('.mi-cadence-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.dataset.cadence === cadence) {
+      btn.classList.add('active');
+    }
+  });
+}
+
+/**
+ * Handle Gong screenshot uploads (Chrome-optimized)
+ */
+async function handleGongScreenshots(event) {
+  const files = Array.from(event.target.files);
+  
+  if (files.length === 0) return;
+  
+  // Add to global state
+  uploadedGongScreenshots.push(...files);
+  
+  // Display thumbnails
+  displayScreenshotPreviews();
+  
+  // Update count
+  updateScreenshotCount();
+  
+  // Show preview container
+  document.getElementById('screenshot-previews').style.display = 'block';
+  
+  // Reset file input
+  event.target.value = '';
+}
+
+/**
+ * Display thumbnail previews
+ */
+function displayScreenshotPreviews() {
+  const container = document.getElementById('screenshot-thumbnails');
+  container.innerHTML = '';
+  
+  uploadedGongScreenshots.forEach((file, index) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden;';
+    
+    const img = document.createElement('img');
+    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border: 0.5px solid var(--border);';
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.innerHTML = '×';
+    removeBtn.style.cssText = `
+      position: absolute; top: 4px; right: 4px; width: 20px; height: 20px;
+      border-radius: 50%; background: rgba(0,0,0,0.7); color: white; border: none;
+      font-size: 16px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; padding: 0; line-height: 1;
+    `;
+    removeBtn.onclick = (e) => {
+      e.stopPropagation();
+      removeScreenshot(index);
+    };
+    
+    wrapper.onclick = () => viewScreenshot(index);
+    wrapper.style.cursor = 'pointer';
+    
+    wrapper.appendChild(img);
+    wrapper.appendChild(removeBtn);
+    container.appendChild(wrapper);
+  });
+}
+
+/**
+ * Update screenshot count
+ */
+function updateScreenshotCount() {
+  const countEl = document.getElementById('screenshot-count');
+  const count = uploadedGongScreenshots.length;
+  
+  if (count === 0) {
+    countEl.textContent = '';
+  } else {
+    countEl.textContent = `✓ ${count} screenshot${count > 1 ? 's' : ''} ready for analysis`;
+  }
+}
+
+/**
+ * Remove screenshot
+ */
+function removeScreenshot(index) {
+  uploadedGongScreenshots.splice(index, 1);
+  
+  if (uploadedGongScreenshots.length === 0) {
+    document.getElementById('screenshot-previews').style.display = 'none';
+  }
+  
+  displayScreenshotPreviews();
+  updateScreenshotCount();
+}
+
+/**
+ * View screenshot full size
+ */
+function viewScreenshot(index) {
+  const file = uploadedGongScreenshots[index];
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10002;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    `;
+    
+    const img = document.createElement('img');
+    img.src = e.target.result;
+    img.style.cssText = 'max-width: 100%; max-height: 100%; object-fit: contain;';
+    
+    modal.onclick = () => document.body.removeChild(modal);
+    modal.appendChild(img);
+    document.body.appendChild(modal);
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+/**
+ * Extract text from screenshots using Vision API
+ */
+async function extractTextFromGongScreenshots() {
+  if (uploadedGongScreenshots.length === 0) {
+    return [];
+  }
+  
+  const extractedTexts = [];
+  
+  for (let i = 0; i < uploadedGongScreenshots.length; i++) {
+    const file = uploadedGongScreenshots[i];
+    
+    try {
+      const base64 = await fileToBase64(file);
+      
+      const response = await fetch(API_ENDPOINTS.vision, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64.split(',')[1]
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Vision API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.responses?.[0]?.textAnnotations?.[0]?.description) {
+        const fullText = data.responses[0].textAnnotations[0].description;
+        extractedTexts.push({
+          text: fullText,
+          fileName: file.name,
+          index: i
+        });
+      }
+      
+    } catch (error) {
+      console.error(`Screenshot ${i + 1} OCR error:`, error);
+      showMIToast(`⚠️ Failed to extract text from screenshot ${i + 1}`);
+    }
+  }
+  
+  return extractedTexts;
+}
+
+/**
+ * Convert File to base64
+ */
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Analyze transcripts to extract pain points
+ */
+// ══════════════════════════════════════════════════════════════════════════
+// 🔬 TECH INTELLIGENCE ENHANCEMENTS FOR SALES HQ
+// ══════════════════════════════════════════════════════════════════════════
+// Four-module analysis system: Tech Stack Parser, Competitive Intel,
+// Pain Point Detection, and Benefits Intelligence
+//
+// INTEGRATION POINTS:
+// - Insert after line 13756 (before analyzePainPointsFromTranscripts)
+// - Called from runEnhancedMarketIntel() analysis flow
+// ══════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════
+// MODULE 1: ENHANCED TECH STACK PARSER
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Tech stack categories and vendor patterns
+ */
+const TECH_STACK_CATEGORIES = {
+  'HCM Core': {
+    vendors: ['Workday', 'UKG', 'UKG Pro', 'UKG Ready', 'Dayforce', 'Oracle HCM', 'SAP SuccessFactors', 'ADP Workforce Now', 'ADP WFN'],
+    keywords: ['HRIS', 'HCM', 'system of record', 'core HR', 'employee data']
+  },
+  'Payroll': {
+    vendors: ['ADP', 'Paychex', 'Paylocity', 'Gusto', 'Rippling', 'Xero', 'QuickBooks Payroll', 'Deel', 'Papaya Global'],
+    keywords: ['payroll', 'pay run', 'paycheck', 'wage', 'garnishment', 'tax filing']
+  },
+  'Time & Attendance': {
+    vendors: ['Kronos', 'UKG Dimensions', 'UKG Ready', 'ADP Time', 'TCP', 'TimeClock Plus', 'Deputy', 'When I Work', 'TSheets'],
+    keywords: ['time clock', 'attendance', 'timekeeping', 'punch', 'schedule', 'shift']
+  },
+  'Benefits Administration': {
+    vendors: ['Benefitfocus', 'bswift', 'PlanSource', 'Employee Navigator', 'Ease', 'Maxwell Health', 'Zenefits'],
+    keywords: ['benefits enrollment', 'open enrollment', 'COBRA', 'FSA', 'HSA', 'benefits admin']
+  },
+  'Recruiting/ATS': {
+    vendors: ['Greenhouse', 'Lever', 'iCIMS', 'Jobvite', 'SmartRecruiters', 'BambooHR', 'Workable', 'JazzHR'],
+    keywords: ['applicant tracking', 'ATS', 'recruiting', 'candidate', 'job posting', 'hiring']
+  },
+  'Performance Management': {
+    vendors: ['Lattice', '15Five', 'Culture Amp', 'Betterworks', 'Reflektive', 'PerformYard', 'ClearCompany'],
+    keywords: ['performance review', 'goal setting', 'OKR', '360 review', 'continuous feedback', 'performance management']
+  },
+  'Learning Management': {
+    vendors: ['Cornerstone', 'Docebo', 'TalentLMS', 'Absorb LMS', 'SAP Litmos', 'KnowBe4'],
+    keywords: ['LMS', 'training', 'compliance training', 'learning', 'courses', 'e-learning']
+  },
+  'Accounting/ERP': {
+    vendors: ['NetSuite', 'Sage Intacct', 'QuickBooks', 'Xero', 'Microsoft Dynamics', 'SAP', 'Oracle Financials'],
+    keywords: ['accounting', 'ERP', 'general ledger', 'GL', 'financial system', 'AP', 'AR']
+  },
+  'Background Checks': {
+    vendors: ['Sterling', 'First Check', 'Checkr', 'HireRight', 'GoodHire', 'Accurate Background'],
+    keywords: ['background check', 'screening', 'drug test', 'criminal check', 'employment verification']
+  },
+  'Assessment Tools': {
+    vendors: ['Criteria Corp', 'Curricula Corp', 'Wonderlic', 'Predictive Index', 'Caliper', 'Hogan'],
+    keywords: ['assessment', 'personality test', 'cognitive test', 'aptitude', 'skills test', 'pre-employment']
+  },
+  'e-Signature': {
+    vendors: ['DocuSign', 'Adobe Sign', 'HelloSign', 'SignNow', 'PandaDoc'],
+    keywords: ['e-signature', 'electronic signature', 'document signing', 'esign', 'digital signature']
+  },
+  '401k Provider': {
+    vendors: ['Fidelity', 'Vanguard', 'Empower', 'Principal', 'ADP Retirement', 'Vestwell', 'Guideline', 'Human Interest'],
+    keywords: ['401k', '403b', 'retirement plan', 'retirement provider', 'pension']
+  },
+  'Benefits Broker': {
+    vendors: ['Lockton', 'Marsh McLennan', 'Aon', 'Willis Towers Watson', 'Brown & Brown', 'Hub International', 'Arthur J. Gallagher'],
+    keywords: ['broker', 'benefits broker', 'insurance broker', 'benefits consultant']
+  },
+  'Medical Insurance': {
+    vendors: ['UnitedHealthcare', 'Cigna', 'Aetna', 'Anthem', 'Blue Cross Blue Shield', 'BCBS', 'Humana', 'Kaiser'],
+    keywords: ['medical insurance', 'health insurance', 'medical carrier', 'health plan']
+  },
+  'Dental Insurance': {
+    vendors: ['MetLife', 'Delta Dental', 'Cigna Dental', 'Guardian', 'Principal', 'Ameritas', 'Sun Life'],
+    keywords: ['dental insurance', 'dental carrier', 'dental plan']
+  },
+  'Vision Insurance': {
+    vendors: ['VSP', 'EyeMed', 'Cigna Vision', 'MetLife Vision', 'Guardian Vision', 'Avesis'],
+    keywords: ['vision insurance', 'vision carrier', 'vision plan', 'eye care']
+  },
+  'Disability Insurance': {
+    vendors: ['MetLife', 'Guardian', 'Principal', 'Lincoln Financial', 'Unum', 'The Standard', 'New York Life', 'Sun Life'],
+    keywords: ['disability insurance', 'STD', 'LTD', 'short-term disability', 'long-term disability']
+  },
+  'Life Insurance': {
+    vendors: ['MetLife', 'Principal', 'Guardian', 'Lincoln Financial', 'Unum', 'New York Life', 'Sun Life', 'Prudential'],
+    keywords: ['life insurance', 'group life', 'voluntary life', 'term life']
+  },
+  'FSA/HSA Admin': {
+    vendors: ['WEX', 'HealthEquity', 'Optum Bank', 'PayFlex', 'Fidelity HSA', 'HSA Bank', 'Further'],
+    keywords: ['FSA', 'HSA', 'flexible spending', 'health savings', 'dependent care FSA', 'DCFSA']
+  },
+  'PEO': {
+    vendors: ['ADP TotalSource', 'Insperity', 'TriNet', 'Justworks', 'Paychex PEO', 'G&A Partners', 'CoAdvantage', 'ExtensisHR'],
+    keywords: ['PEO', 'professional employer organization', 'co-employment', 'ASO']
+  }
+};
+
+/**
+ * Parse tech stack from transcript text
+ * Returns structured categorization with counts and detected vendors
+ */
+function parseTechStack(transcriptText) {
+  const detected = {
+    systems: [],
+    categoryBreakdown: {},
+    totalSystemCount: 0,
+    fragmentationScore: 0,
+    multiCountryDetected: false,
+    countries: []
+  };
+  
+  const textLower = transcriptText.toLowerCase();
+  
+  // Detect systems by category
+  Object.keys(TECH_STACK_CATEGORIES).forEach(category => {
+    const config = TECH_STACK_CATEGORIES[category];
+    const foundVendors = [];
+    
+    // Check each vendor pattern
+    config.vendors.forEach(vendor => {
+      const vendorPattern = new RegExp('\\b' + vendor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+      if (vendorPattern.test(transcriptText)) {
+        foundVendors.push(vendor);
+      }
+    });
+    
+    // Check keywords for generic mentions
+    const hasKeywordMention = config.keywords.some(kw => {
+      const kwPattern = new RegExp('\\b' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+      return kwPattern.test(transcriptText);
+    });
+    
+    if (foundVendors.length > 0 || hasKeywordMention) {
+      detected.categoryBreakdown[category] = {
+        vendors: foundVendors,
+        hasGenericMention: hasKeywordMention && foundVendors.length === 0,
+        count: foundVendors.length || (hasKeywordMention ? 1 : 0)
+      };
+      
+      foundVendors.forEach(v => {
+        detected.systems.push({
+          vendor: v,
+          category: category
+        });
+      });
+    }
+  });
+  
+  detected.totalSystemCount = detected.systems.length;
+  
+  // Calculate fragmentation score (0-100)
+  // Based on: number of systems, number of categories, lack of integration
+  const categoryCount = Object.keys(detected.categoryBreakdown).length;
+  detected.fragmentationScore = Math.min(100, 
+    (detected.totalSystemCount * 5) + (categoryCount * 3)
+  );
+  
+  // Detect multi-country operations
+  const countryPatterns = [
+    { name: 'Canada', patterns: [/\bcanada\b/i, /\bcanadian\b/i, /\bqc\b/i, /\bontario\b/i, /\balberta\b/i] },
+    { name: 'Australia', patterns: [/\baustralia\b/i, /\baussie\b/i, /\bsydney\b/i, /\bmelbourne\b/i] },
+    { name: 'UK', patterns: [/\buk\b/i, /\bunited kingdom\b/i, /\blondon\b/i, /\bbritish\b/i] },
+    { name: 'Mexico', patterns: [/\bmexico\b/i, /\bmexican\b/i] }
+  ];
+  
+  countryPatterns.forEach(c => {
+    if (c.patterns.some(p => p.test(transcriptText))) {
+      detected.countries.push(c.name);
+    }
+  });
+  
+  detected.multiCountryDetected = detected.countries.length > 0;
+  
+  return detected;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MODULE 2: COMPETITIVE INTELLIGENCE INJECTION
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Detect competitors from tech stack and transcript text
+ * Returns structured competitive intelligence with COMP_DATA integration
+ */
+function detectCompetitiveIntelligence(techStack, transcriptText, compData) {
+  const intelligence = {
+    primaryCompetitor: null,
+    allCompetitors: [],
+    battleCards: [],
+    displacementOpportunity: null
+  };
+  
+  // Map of competitor mentions (case-insensitive)
+  const competitorMentions = [
+    { name: 'UKG', aliases: ['UKG', 'Ultimate Kronos', 'Kronos', 'UltiPro'], track: 'WFN' },
+    { name: 'Paylocity', aliases: ['Paylocity'], track: 'WFN' },
+    { name: 'Dayforce', aliases: ['Dayforce', 'Ceridian'], track: 'WFN' },
+    { name: 'Workday', aliases: ['Workday'], track: 'WFN' },
+    { name: 'Rippling', aliases: ['Rippling'], track: 'WFN' },
+    { name: 'Paycom', aliases: ['Paycom'], track: 'WFN' },
+    { name: 'Insperity', aliases: ['Insperity'], track: 'PEO' },
+    { name: 'TriNet', aliases: ['TriNet'], track: 'PEO' },
+    { name: 'Justworks', aliases: ['Justworks'], track: 'PEO' },
+    { name: 'Paychex PEO', aliases: ['Paychex PEO', 'Paychex'], track: 'PEO' }
+  ];
+  
+  const textLower = transcriptText.toLowerCase();
+  
+  // Detect all competitor mentions
+  competitorMentions.forEach(comp => {
+    const mentioned = comp.aliases.some(alias => {
+      const pattern = new RegExp('\\b' + alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+      return pattern.test(transcriptText);
+    });
+    
+    if (mentioned) {
+      intelligence.allCompetitors.push({
+        name: comp.name,
+        track: comp.track,
+        hasCompData: !!compData[comp.name]
+      });
+    }
+  });
+  
+  // Also check tech stack for competitors
+  techStack.systems.forEach(sys => {
+    const matchingComp = competitorMentions.find(c => 
+      c.aliases.some(a => a.toLowerCase() === sys.vendor.toLowerCase())
+    );
+    if (matchingComp && !intelligence.allCompetitors.some(c => c.name === matchingComp.name)) {
+      intelligence.allCompetitors.push({
+        name: matchingComp.name,
+        track: matchingComp.track,
+        hasCompData: !!compData[matchingComp.name],
+        detectedFrom: 'tech_stack'
+      });
+    }
+  });
+  
+  // Set primary competitor (first HCM/PEO system detected, or first mentioned)
+  if (intelligence.allCompetitors.length > 0) {
+    // Prioritize HCM Core competitors
+    const hcmComp = intelligence.allCompetitors.find(c => c.track === 'WFN');
+    intelligence.primaryCompetitor = hcmComp || intelligence.allCompetitors[0];
+  }
+  
+  // Generate battle cards using COMP_DATA
+  intelligence.allCompetitors.forEach(comp => {
+    if (compData[comp.name]) {
+      intelligence.battleCards.push({
+        competitor: comp.name,
+        track: comp.track,
+        strengths: compData[comp.name].strengths,
+        weaknesses: compData[comp.name].weaknesses,
+        positioning: generatePositioning(comp.name, compData[comp.name])
+      });
+    }
+  });
+  
+  // Determine displacement opportunity
+  if (intelligence.primaryCompetitor) {
+    const primary = intelligence.primaryCompetitor.name;
+    const isDisplacementTarget = ['UKG', 'Dayforce', 'Insperity', 'Paychex PEO'].includes(primary);
+    
+    intelligence.displacementOpportunity = {
+      isViable: isDisplacementTarget,
+      reasoning: isDisplacementTarget 
+        ? `${primary} displacement opportunity - leverage ${compData[primary]?.weaknesses[0] || 'platform challenges'}`
+        : `${primary} is a strong competitor - focus on differentiation`,
+      recommendedStrategy: isDisplacementTarget ? 'aggressive' : 'consultative'
+    };
+  }
+  
+  return intelligence;
+}
+
+/**
+ * Generate ADP positioning against competitor
+ */
+function generatePositioning(competitorName, compData) {
+  const basePositioning = {
+    'UKG': 'ADP offers superior platform stability and compliance automation vs UKG\'s recent challenges',
+    'Dayforce': 'ADP provides client certainty and roadmap clarity vs Dayforce PE buyout uncertainty',
+    'Insperity': 'ADP TotalSource delivers better retention and earnings stability vs Insperity\'s recent struggles',
+    'Paychex PEO': 'ADP offers stronger compliance automation and platform reliability',
+    'Rippling': 'ADP provides enterprise-grade support and stability vs Rippling\'s rapid-growth challenges',
+    'TriNet': 'ADP delivers better value and simpler platform experience'
+  };
+  
+  return basePositioning[competitorName] || `ADP differentiates through ${compData.weaknesses[0]}`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MODULE 3: PAIN POINT DETECTOR
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Detect specific integration pain patterns and explicit complaints
+ */
+function detectPainPatterns(transcriptText) {
+  const patterns = {
+    integrationPains: [],
+    separationComplaints: [],
+    manualWorkarounds: [],
+    dataQualityIssues: [],
+    vendorFrustrations: []
+  };
+  
+  const text = transcriptText;
+  const textLower = transcriptText.toLowerCase();
+  
+  // Integration pain signals
+  const integrationSignals = [
+    { pattern: /separate(?:d)?.*(?:want|need|like).*integrat/i, type: 'explicit_integration_request' },
+    { pattern: /(?:don't|doesnt|not).*talk to each other/i, type: 'disconnected_systems' },
+    { pattern: /manual(?:ly)? transfer/i, type: 'manual_data_transfer' },
+    { pattern: /(?:re-enter|reenter|double[- ]entry)/i, type: 'duplicate_data_entry' },
+    { pattern: /(?:export.*import|CSV.*upload)/i, type: 'file_transfer_workaround' },
+    { pattern: /(?:three|3|four|4|five|5|multiple).*different systems/i, type: 'system_fragmentation' },
+    { pattern: /wish.*(?:all in one|integrated|single system)/i, type: 'consolidation_desire' }
+  ];
+  
+  integrationSignals.forEach(sig => {
+    const match = text.match(sig.pattern);
+    if (match) {
+      patterns.integrationPains.push({
+        type: sig.type,
+        quote: extractContext(text, match.index, 80),
+        severity: 'High'
+      });
+    }
+  });
+  
+  // Separation complaints (like DocuSign example)
+  const separationSignals = [
+    { pattern: /([\w\s]+)\s+(?:is )?(?:currently )?separate.*(?:want|need|like).*integrat/i, vendor: true },
+    { pattern: /(\w+)\s+(?:doesn't|dont|not).*integrat/i, vendor: true },
+    { pattern: /wish (\w+) was (?:in|part of)/i, vendor: true }
+  ];
+  
+  separationSignals.forEach(sig => {
+    const match = text.match(sig.pattern);
+    if (match) {
+      patterns.separationComplaints.push({
+        vendor: sig.vendor ? match[1] : 'Unknown',
+        quote: extractContext(text, match.index, 100),
+        severity: 'High'
+      });
+    }
+  });
+  
+  // Manual workaround detection
+  const workaroundSignals = [
+    /manual(?:ly)?\s+(?:build|create|update|maintain)/i,
+    /spreadsheet.*track/i,
+    /have to.*(?:remember|check|verify)/i,
+    /admin.*spend.*time.*on/i
+  ];
+  
+  workaroundSignals.forEach(pattern => {
+    const match = text.match(pattern);
+    if (match) {
+      patterns.manualWorkarounds.push({
+        quote: extractContext(text, match.index, 80),
+        severity: 'Medium'
+      });
+    }
+  });
+  
+  // Data quality issues
+  const dataQualitySignals = [
+    /data.*(?:wrong|incorrect|outdated|stale)/i,
+    /(?:can't|cant).*trust.*data/i,
+    /(?:missing|incomplete).*information/i,
+    /sync.*(?:issue|problem|fail)/i
+  ];
+  
+  dataQualitySignals.forEach(pattern => {
+    const match = text.match(pattern);
+    if (match) {
+      patterns.dataQualityIssues.push({
+        quote: extractContext(text, match.index, 80),
+        severity: 'High'
+      });
+    }
+  });
+  
+  // Vendor frustration signals
+  const frustrationSignals = [
+    { pattern: /frustrated with (\w+)/i, hasVendor: true },
+    { pattern: /(\w+).*(?:terrible|awful|horrible|nightmare)/i, hasVendor: true },
+    { pattern: /support.*(?:slow|bad|unresponsive)/i, hasVendor: false },
+    { pattern: /looking to replace (\w+)/i, hasVendor: true }
+  ];
+  
+  frustrationSignals.forEach(sig => {
+    const match = text.match(sig.pattern);
+    if (match) {
+      patterns.vendorFrustrations.push({
+        vendor: sig.hasVendor ? match[1] : 'Unknown',
+        quote: extractContext(text, match.index, 100),
+        severity: 'High'
+      });
+    }
+  });
+  
+  return patterns;
+}
+
+/**
+ * Extract surrounding context from text
+ */
+function extractContext(text, index, length) {
+  const start = Math.max(0, index - 20);
+  const end = Math.min(text.length, index + length);
+  let context = text.substring(start, end).trim();
+  
+  if (start > 0) context = '...' + context;
+  if (end < text.length) context = context + '...';
+  
+  return context;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MODULE 4: BENEFITS INTELLIGENCE
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Parse benefits broker and carrier relationships from tech stack
+ * Critical for TotalSource PEO positioning
+ */
+function parseBenefitsIntelligence(techStack) {
+  const benefits = {
+    hasBroker: false,
+    broker: null,
+    carriers: {
+      medical: [],
+      dental: [],
+      vision: [],
+      life: [],
+      disability: [],
+      retirement: []
+    },
+    carrierCount: 0,
+    multiCarrierComplexity: false,
+    tsOpportunity: null
+  };
+  
+  // Extract broker
+  if (techStack.categoryBreakdown['Benefits Broker']) {
+    benefits.hasBroker = true;
+    benefits.broker = techStack.categoryBreakdown['Benefits Broker'].vendors[0] || 'Unknown Broker';
+  }
+  
+  // Extract carriers by type
+  const carrierMapping = [
+    { category: 'Medical Insurance', key: 'medical' },
+    { category: 'Dental Insurance', key: 'dental' },
+    { category: 'Vision Insurance', key: 'vision' },
+    { category: 'Life Insurance', key: 'life' },
+    { category: 'Disability Insurance', key: 'disability' },
+    { category: '401k Provider', key: 'retirement' }
+  ];
+  
+  carrierMapping.forEach(m => {
+    if (techStack.categoryBreakdown[m.category]) {
+      benefits.carriers[m.key] = techStack.categoryBreakdown[m.category].vendors;
+    }
+  });
+  
+  // Count total carriers
+  Object.values(benefits.carriers).forEach(arr => {
+    benefits.carrierCount += arr.length;
+  });
+  
+  // Determine multi-carrier complexity (4+ different carriers = high complexity)
+  benefits.multiCarrierComplexity = benefits.carrierCount >= 4;
+  
+  // Generate TotalSource opportunity assessment
+  if (benefits.hasBroker || benefits.carrierCount > 0) {
+    benefits.tsOpportunity = {
+      viable: true,
+      score: calculateTSScore(benefits),
+      reasoning: generateTSReasoning(benefits),
+      talkTrack: generateTSTalkTrack(benefits)
+    };
+  }
+  
+  return benefits;
+}
+
+/**
+ * Calculate TotalSource opportunity score (0-100)
+ */
+function calculateTSScore(benefits) {
+  let score = 0;
+  
+  // Base score for having benefits carriers
+  if (benefits.carrierCount > 0) score += 30;
+  
+  // Complexity bonus
+  if (benefits.carrierCount >= 4) score += 20;
+  if (benefits.carrierCount >= 7) score += 15;
+  
+  // Broker relationship bonus (easier entry point)
+  if (benefits.hasBroker) score += 20;
+  
+  // Multi-carrier management complexity
+  if (benefits.multiCarrierComplexity) score += 15;
+  
+  return Math.min(100, score);
+}
+
+/**
+ * Generate TotalSource positioning reasoning
+ */
+function generateTSReasoning(benefits) {
+  if (benefits.multiCarrierComplexity) {
+    return `High carrier complexity (${benefits.carrierCount} carriers) creates admin burden - TotalSource consolidates benefits under single umbrella with Fortune 100 buying power`;
+  } else if (benefits.carrierCount >= 3) {
+    return `Multiple carriers (${benefits.carrierCount}) indicate benefits administration complexity - TotalSource simplifies with integrated platform`;
+  } else if (benefits.hasBroker) {
+    return `Current broker relationship (${benefits.broker}) - TotalSource can work with existing broker or provide full benefits consulting`;
+  } else {
+    return `Benefits administration present - TotalSource can streamline with PEO benefits offering`;
+  }
+}
+
+/**
+ * Generate TotalSource talk track
+ */
+function generateTSTalkTrack(benefits) {
+  if (benefits.carrierCount >= 7) {
+    return `"I noticed you're managing ${benefits.carrierCount} different carriers - how much time does your team spend coordinating benefits enrollment across all of them?"`;
+  } else if (benefits.multiCarrierComplexity) {
+    return `"With ${benefits.carrierCount} carriers, you're essentially running multiple benefit programs. Have you looked at how much you could save with Fortune 100-level buying power?"`;
+  } else if (benefits.hasBroker) {
+    return `"I see you work with ${benefits.broker} - we actually partner with many brokers, or can provide full benefits consulting if you want to consolidate."`;
+  } else {
+    return `"How are you handling benefits administration today? We're seeing companies save 20-30% by moving to our PEO model."`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// INTEGRATED ANALYSIS FUNCTION
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Master function that runs all four intelligence modules
+ * Called from runEnhancedMarketIntel() workflow
+ */
+async function runTechIntelligenceAnalysis(extractedTranscripts) {
+  // Combine all transcript text
+  const fullTranscript = extractedTranscripts.map(t => t.text).join('\n\n');
+  
+  // Run all four modules
+  const techStack = parseTechStack(fullTranscript);
+  const competitive = detectCompetitiveIntelligence(techStack, fullTranscript, COMP_DATA);
+  const painPatterns = detectPainPatterns(fullTranscript);
+  const benefits = parseBenefitsIntelligence(techStack);
+  
+  // Return consolidated intelligence
+  return {
+    techStack: techStack,
+    competitive: competitive,
+    painPatterns: painPatterns,
+    benefits: benefits,
+    summary: {
+      systemCount: techStack.totalSystemCount,
+      fragmentationScore: techStack.fragmentationScore,
+      primaryCompetitor: competitive.primaryCompetitor?.name || 'None detected',
+      integrationPainCount: painPatterns.integrationPains.length,
+      benefitsComplexity: benefits.multiCarrierComplexity ? 'High' : 'Normal',
+      tsOpportunityScore: benefits.tsOpportunity?.score || 0
+    }
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// RENDERING FUNCTIONS
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Render tech stack analysis in dashboard
+ */
+function renderTechStackSection(techIntel) {
+  const ts = techIntel.techStack;
+  
+  let html = `
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <h3 style="font-size: 15px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>🔧</span> Tech Stack Analysis
+        </h3>
+        <div style="display: flex; gap: 12px;">
+          <span style="font-size: 12px; padding: 4px 10px; background: var(--blue-bg); color: var(--blue); border-radius: 12px; font-weight: 600;">
+            ${ts.totalSystemCount} Systems
+          </span>
+          <span style="font-size: 12px; padding: 4px 10px; background: ${ts.fragmentationScore >= 50 ? 'var(--red-bg)' : 'var(--green-bg)'}; color: ${ts.fragmentationScore >= 50 ? 'var(--err)' : 'var(--green)'}; border-radius: 12px; font-weight: 600;">
+            ${ts.fragmentationScore}/100 Fragmentation
+          </span>
+        </div>
+      </div>
+  `;
+  
+  // Category breakdown
+  if (Object.keys(ts.categoryBreakdown).length > 0) {
+    html += `
+      <div style="display: grid; gap: 8px; margin-top: 12px;">
+    `;
+    
+    Object.keys(ts.categoryBreakdown).forEach(category => {
+      const cat = ts.categoryBreakdown[category];
+      const vendorList = cat.vendors.length > 0 
+        ? cat.vendors.join(', ') 
+        : `${category} (generic mention)`;
+      
+      html += `
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--off-white); border-radius: var(--radius-sm);">
+          <div style="font-size: 13px; color: var(--text-2);">${category}</div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text-1);">${vendorList}</div>
+        </div>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+  
+  // Multi-country flag
+  if (ts.multiCountryDetected) {
+    html += `
+      <div style="margin-top: 12px; padding: 10px 12px; background: var(--gold-bg); border-left: 3px solid var(--gold); border-radius: var(--radius-sm);">
+        <div style="font-size: 13px; font-weight: 600; color: var(--text-1); margin-bottom: 4px;">
+          🌍 Multi-Country Operations Detected
+        </div>
+        <div style="font-size: 12px; color: var(--text-2);">
+          Countries: ${ts.countries.join(', ')}
+        </div>
+      </div>
+    `;
+  }
+  
+  html += `</div>`;
+  return html;
+}
+
+/**
+ * Render competitive intelligence section
+ */
+function renderCompetitiveSection(techIntel) {
+  const comp = techIntel.competitive;
+  
+  if (comp.allCompetitors.length === 0) {
+    return '';
+  }
+  
+  let html = `
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 15px; font-weight: 600; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 8px;">
+        <span>⚔️</span> Competitive Intelligence
+      </h3>
+  `;
+  
+  // Primary competitor
+  if (comp.primaryCompetitor) {
+    html += `
+      <div style="padding: 12px; background: var(--red-bg); border-left: 3px solid var(--err); border-radius: var(--radius-sm); margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--err); margin-bottom: 4px;">
+          Primary Competitor: ${comp.primaryCompetitor.name}
+        </div>
+        <div style="font-size: 12px; color: var(--text-2);">
+          Track: ${comp.primaryCompetitor.track}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Battle cards
+  if (comp.battleCards.length > 0) {
+    html += `<div style="margin-top: 12px;">`;
+    
+    comp.battleCards.forEach(card => {
+      html += `
+        <div style="margin-bottom: 12px; padding: 12px; background: var(--off-white); border-radius: var(--radius-sm);">
+          <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">${card.competitor}</div>
+          
+          <div style="margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--text-3); margin-bottom: 4px;">Their Strengths:</div>
+            <div style="font-size: 12px; color: var(--text-2);">
+              ${card.strengths.map(s => `• ${s}`).join('<br>')}
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--text-3); margin-bottom: 4px;">Their Weaknesses:</div>
+            <div style="font-size: 12px; color: var(--err);">
+              ${card.weaknesses.map(w => `• ${w}`).join('<br>')}
+            </div>
+          </div>
+          
+          <div style="padding: 8px; background: var(--blue-bg); border-radius: var(--radius-sm); margin-top: 8px;">
+            <div style="font-size: 12px; font-weight: 600; color: var(--blue);">
+              ADP Positioning: ${card.positioning}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `</div>`;
+  }
+  
+  // Displacement opportunity
+  if (comp.displacementOpportunity) {
+    const opp = comp.displacementOpportunity;
+    html += `
+      <div style="padding: 12px; background: ${opp.isViable ? 'var(--green-bg)' : 'var(--gold-bg)'}; border-left: 3px solid ${opp.isViable ? 'var(--green)' : 'var(--gold)'}; border-radius: var(--radius-sm); margin-top: 12px;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">
+          ${opp.isViable ? '✓' : '⚠️'} Displacement Assessment
+        </div>
+        <div style="font-size: 12px; color: var(--text-2); margin-bottom: 4px;">
+          ${opp.reasoning}
+        </div>
+        <div style="font-size: 12px; font-weight: 600; color: var(--text-1);">
+          Strategy: ${opp.recommendedStrategy}
+        </div>
+      </div>
+    `;
+  }
+  
+  html += `</div>`;
+  return html;
+}
+
+/**
+ * Render pain pattern detection section
+ */
+function renderPainPatternsSection(techIntel) {
+  const pain = techIntel.painPatterns;
+  
+  const totalPains = 
+    pain.integrationPains.length + 
+    pain.separationComplaints.length + 
+    pain.manualWorkarounds.length +
+    pain.dataQualityIssues.length +
+    pain.vendorFrustrations.length;
+  
+  if (totalPains === 0) {
+    return '';
+  }
+  
+  let html = `
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 15px; font-weight: 600; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 8px;">
+        <span>🚨</span> Pain Pattern Detection
+        <span style="font-size: 12px; padding: 4px 10px; background: var(--red-bg); color: var(--err); border-radius: 12px; font-weight: 600; margin-left: 8px;">
+          ${totalPains} Detected
+        </span>
+      </h3>
+  `;
+  
+  // Integration pains
+  if (pain.integrationPains.length > 0) {
+    html += `
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--err); margin-bottom: 8px;">
+          🔗 Integration Pain Points (${pain.integrationPains.length})
+        </div>
+        ${pain.integrationPains.map(p => `
+          <div style="padding: 10px; background: var(--red-bg); border-left: 3px solid var(--err); border-radius: var(--radius-sm); margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--text-2); margin-bottom: 4px;">
+              Type: <strong>${p.type.replace(/_/g, ' ').toUpperCase()}</strong>
+            </div>
+            <div style="font-size: 12px; color: var(--text-1); font-style: italic;">
+              "${p.quote}"
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  // Separation complaints
+  if (pain.separationComplaints.length > 0) {
+    html += `
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--err); margin-bottom: 8px;">
+          💔 Separation Complaints (${pain.separationComplaints.length})
+        </div>
+        ${pain.separationComplaints.map(p => `
+          <div style="padding: 10px; background: var(--red-bg); border-left: 3px solid var(--err); border-radius: var(--radius-sm); margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--text-2); margin-bottom: 4px;">
+              Vendor: <strong>${p.vendor}</strong>
+            </div>
+            <div style="font-size: 12px; color: var(--text-1); font-style: italic;">
+              "${p.quote}"
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  // Manual workarounds
+  if (pain.manualWorkarounds.length > 0) {
+    html += `
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--gold); margin-bottom: 8px;">
+          🛠️ Manual Workarounds (${pain.manualWorkarounds.length})
+        </div>
+        ${pain.manualWorkarounds.map(p => `
+          <div style="padding: 10px; background: var(--gold-bg); border-left: 3px solid var(--gold); border-radius: var(--radius-sm); margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--text-1); font-style: italic;">
+              "${p.quote}"
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  // Vendor frustrations
+  if (pain.vendorFrustrations.length > 0) {
+    html += `
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--err); margin-bottom: 8px;">
+          😤 Vendor Frustrations (${pain.vendorFrustrations.length})
+        </div>
+        ${pain.vendorFrustrations.map(p => `
+          <div style="padding: 10px; background: var(--red-bg); border-left: 3px solid var(--err); border-radius: var(--radius-sm); margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--text-2); margin-bottom: 4px;">
+              Vendor: <strong>${p.vendor}</strong>
+            </div>
+            <div style="font-size: 12px; color: var(--text-1); font-style: italic;">
+              "${p.quote}"
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  html += `</div>`;
+  return html;
+}
+
+/**
+ * Render benefits intelligence section
+ */
+function renderBenefitsSection(techIntel) {
+  const ben = techIntel.benefits;
+  
+  if (!ben.hasBroker && ben.carrierCount === 0) {
+    return '';
+  }
+  
+  let html = `
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+      <h3 style="font-size: 15px; font-weight: 600; margin: 0 0 1rem 0; display: flex; align-items: center; gap: 8px;">
+        <span>💼</span> Benefits Intelligence
+        ${ben.tsOpportunity ? `
+          <span style="font-size: 12px; padding: 4px 10px; background: var(--green-bg); color: var(--green); border-radius: 12px; font-weight: 600; margin-left: 8px;">
+            TS Score: ${ben.tsOpportunity.score}/100
+          </span>
+        ` : ''}
+      </h3>
+  `;
+  
+  // Broker info
+  if (ben.hasBroker) {
+    html += `
+      <div style="padding: 10px 12px; background: var(--blue-bg); border-left: 3px solid var(--blue); border-radius: var(--radius-sm); margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 600; color: var(--blue);">
+          Current Broker: ${ben.broker}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Carrier breakdown
+  if (ben.carrierCount > 0) {
+    html += `
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-1);">
+          Carrier Breakdown (${ben.carrierCount} total)
+        </div>
+        <div style="display: grid; gap: 6px;">
+    `;
+    
+    Object.keys(ben.carriers).forEach(type => {
+      if (ben.carriers[type].length > 0) {
+        html += `
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--off-white); border-radius: var(--radius-sm);">
+            <div style="font-size: 12px; color: var(--text-2); text-transform: capitalize;">${type}</div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-1);">${ben.carriers[type].join(', ')}</div>
+          </div>
+        `;
+      }
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+  }
+  
+  // TotalSource opportunity
+  if (ben.tsOpportunity) {
+    html += `
+      <div style="padding: 12px; background: var(--green-bg); border-left: 3px solid var(--green); border-radius: var(--radius-sm);">
+        <div style="font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 8px;">
+          🎯 TotalSource Opportunity
+        </div>
+        <div style="font-size: 12px; color: var(--text-2); margin-bottom: 8px;">
+          ${ben.tsOpportunity.reasoning}
+        </div>
+        <div style="padding: 8px; background: var(--white); border-radius: var(--radius-sm); margin-top: 8px;">
+          <div style="font-size: 11px; color: var(--text-3); margin-bottom: 4px; text-transform: uppercase; font-weight: 600;">
+            Suggested Talk Track:
+          </div>
+          <div style="font-size: 12px; color: var(--text-1); font-style: italic;">
+            ${ben.tsOpportunity.talkTrack}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  html += `</div>`;
+  return html;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// END OF TECH INTELLIGENCE ENHANCEMENTS
+// ══════════════════════════════════════════════════════════════════════════
+async function analyzePainPointsFromTranscripts(extractedData) {
+  if (extractedData.length === 0) {
+    return [];
+  }
+  
+  const allPainPoints = [];
+  
+  for (const data of extractedData) {
+    try {
+      const analysisPrompt = `
+Analyze this sales call transcript and extract ONLY the customer pain points.
+Focus on problems, challenges, frustrations, and needs they express.
+
+Transcript:
+${data.text}
+
+Return ONLY a JSON array of pain points in this exact format:
+[
+  {
+    "painPoint": "Brief description of the pain point",
+    "severity": "High" | "Medium" | "Low",
+    "currentSolution": "What they're using now (if mentioned)",
+    "quote": "Relevant quote from transcript (if available)"
+  }
+]
+
+NO other text. ONLY the JSON array.
+`;
+      
+      const geminiResponse = await bpGeminiFetch({
+        messages: [{
+          role: 'user',
+          content: analysisPrompt
+        }]
+      });
+      
+      try {
+        const responseText = geminiResponse.content[0].text
+          .replace(/```json/g, '')
+          .replace(/```/g, '')
+          .trim();
+        
+        const extracted = JSON.parse(responseText);
+        
+        extracted.forEach(pp => {
+          pp.source = data.fileName;
+          pp.sourceIndex = data.index;
+        });
+        
+        allPainPoints.push(...extracted);
+        
+      } catch (e) {
+        console.error('Failed to parse pain point analysis:', e);
+        showMIToast(`⚠️ Could not analyze screenshot ${data.index + 1}`);
+      }
+      
+    } catch (error) {
+      console.error('Pain point extraction error:', error);
+    }
+  }
+  
+  return allPainPoints;
+}
+
+/**
+ * Enhanced Market Intelligence Analysis
+ */
+async function runEnhancedMarketIntel() {
+  const dashboardEl = document.getElementById('market-intel-dashboard');
+  const runBtn = document.getElementById('run-market-intel-btn');
+  
+  if (uploadedGongScreenshots.length === 0) {
+    showMIToast('⚠️ Please upload at least one transcript screenshot');
+    return;
+  }
+  
+  runBtn.disabled = true;
+  runBtn.textContent = '⏳ Processing...';
+  
+  const startTime = Date.now();
+  dashboardEl.innerHTML = `
+    <div style="text-align: center; padding: 2rem;">
+      <div style="width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--blue); border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite;"></div>
+      <p style="font-size: 14px; color: var(--text-2); margin: 0 0 1rem 0; font-weight: 500;">
+        Processing ${uploadedGongScreenshots.length} screenshot${uploadedGongScreenshots.length > 1 ? 's' : ''}...
+      </p>
+      <div id="progress-steps" style="font-size: 12px; color: var(--text-3); line-height: 2;">
+        <p style="margin: 0;">→ Extracting text with OCR...</p>
+      </div>
+    </div>
+    <style>
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  `;
+  
+  try {
+    updateProgress('→ Extracting text from screenshots...');
+    const extractedTranscripts = await extractTextFromGongScreenshots();
+    
+    if (extractedTranscripts.length === 0) {
+      throw new Error('No text could be extracted from screenshots');
+    }
+    
+    updateProgress('→ Running tech intelligence analysis...');
+    const techIntelligence = await runTechIntelligenceAnalysis(extractedTranscripts);
+    
+    updateProgress('→ Analyzing pain points...');
+    const gongPainPoints = await analyzePainPointsFromTranscripts(extractedTranscripts);
+    
+    updateProgress('→ Gathering competitive signals...');
+    
+    updateProgress('→ Generating battle cards...');
+    const competitiveSignals = await getRecentCompetitiveSignals();
+    
+    updateProgress('→ Creating email talking points...');
+    const analysisPrompt = `
+You are an expert sales intelligence analyst for ADP ${selectedMITrack}.
+
+CONTEXT:
+- Product Track: ${selectedMITrack}
+- Cadence Tone: ${selectedMICadence}
+- Competitor Data: ${JSON.stringify(COMP_DATA)}
+- Analysis Date: ${new Date().toLocaleDateString()}
+
+GONG PAIN POINTS (from ${uploadedGongScreenshots.length} call transcript screenshot${uploadedGongScreenshots.length > 1 ? 's' : ''}):
+${JSON.stringify(gongPainPoints, null, 2)}
+
+REAL-TIME COMPETITIVE SIGNALS:
+${JSON.stringify(competitiveSignals, null, 2)}
+
+═══════════════════════════════════════════════════════════════════════
+🔍 RESEARCH PATTERN DETECTION (CRITICAL - ANALYZE CAREFULLY)
+═══════════════════════════════════════════════════════════════════════
+
+Analyze the transcript text for mentions of HOW the prospect is researching vendors:
+
+1. VENDOR EVALUATION SITES & CONSULTANTS:
+   Keywords: "OutSail", "CompareHRIS", "G2", "comparison site", "consultant helping"
+   → If found: Note source, urgency VERY_HIGH (if OutSail/consultant) or HIGH
+
+2. ANALYST REPORTS:
+   Keywords: "Gartner", "Magic Quadrant", "Forrester", "HRO Today", "Baker's Dozen"
+   → If found: Note analyst, urgency HIGH, executive involvement likely
+
+3. TRADE SHOWS:
+   Keywords: "HR Tech", "SHRM conference", "visited your booth", "saw you at"
+   → If found: Note event, timing, urgency VERY_HIGH (if recent)
+
+4. PEER NETWORKS:
+   Keywords: "SHRM chapter", "LinkedIn group", "heard from peers", "colleague recommended"
+   → If found: Note network, peer validation critical
+
+For each detected pattern, extract:
+- Exact quote from transcript
+- Which source/platform
+- Urgency level (VERY_HIGH/HIGH/MEDIUM)
+- Recommended actions
+
+═══════════════════════════════════════════════════════════════════════
+
+ANALYSIS TASKS:
+1. Map each Gong pain point to specific ${selectedMITrack} value propositions
+2. Generate prospect-specific battle cards addressing top pain points
+3. Create email-ready talking points (3-4 max, ${selectedMICadence} tone, mobile-optimized)
+4. Build competitive comparison vs primary competitor (based on signals)
+5. Provide executive summary with actionable metrics
+
+OUTPUT FORMAT (strict JSON, no markdown):
+{
+  "executiveSummary": {
+    "activeSignals": number,
+    "painPointsFound": number,
+    "primaryCompetitor": "name based on signals and pain points",
+    "winRate": "estimated percentage (e.g., '67%')"
+  },
+  "painPointMapping": [
+    {
+      "painPoint": "customer pain point description",
+      "severity": "High|Medium|Low",
+      "adpSolution": "How ${selectedMITrack} specifically addresses this",
+      "talkingPoint": "email-ready ${selectedMICadence} messaging (1-2 sentences)"
+    }
+  ],
+  "competitiveComparison": {
+    "competitor": "primary competitor name",
+    "features": [
+      {
+        "feature": "feature name",
+        "adp": "✓ or specific value",
+        "competitor": "✗ or specific value",
+        "advantage": "brief why ADP wins"
+      }
+    ]
+  },
+  "emailTalkingPoints": [
+    "${selectedMICadence} messaging for pain point 1",
+    "${selectedMICadence} messaging for pain point 2",
+    "${selectedMICadence} messaging for pain point 3"
+  ],
+  "researchBehavior": {
+    "detected_patterns": [
+      {
+        "type": "vendor_evaluation | analyst_influence | trade_show | peer_network",
+        "source": "OutSail | Gartner | HR Tech | SHRM Chapter",
+        "signal_strength": "VERY_HIGH | HIGH | MEDIUM",
+        "quote": "exact quote from transcript",
+        "implication": "what this means for sales approach",
+        "urgency": "VERY_HIGH | HIGH | MEDIUM_HIGH | MEDIUM",
+        "likely_competitors": ["Paylocity", "UKG"],
+        "recommended_actions": ["action 1", "action 2", "action 3"],
+        "talk_track": "suggested opening line",
+        "red_flag": "warning if applicable"
+      }
+    ],
+    "overall_urgency": "VERY_HIGH | HIGH | MEDIUM",
+    "sales_intelligence": "1-2 sentence summary of research insights"
+  }
+}
+
+Focus on actionable insights. Always include researchBehavior field (empty array if no patterns detected).
+`;
+    
+    const geminiResponse = await bpGeminiFetch({
+      messages: [{
+        role: 'user',
+        content: analysisPrompt
+      }]
+    });
+    
+    const intelligence = JSON.parse(
+      geminiResponse.content[0].text
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim()
+    );
+    
+    const processingTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    
+    // SAVE TO PROSPECT OBJECT
+    if (window._hqProspect) {
+      window._hqProspect.marketIntelligencePanel = {
+        intelligence: intelligence,
+        painPoints: gongPainPoints,
+        signals: competitiveSignals,
+        track: selectedMITrack,
+        cadence: selectedMICadence,
+        screenshotCount: uploadedGongScreenshots.length,
+        researchBehavior: intelligence.researchBehavior || null,
+        techIntelligence: techIntelligence
+      };
+      window._hqProspect.marketIntelPanelLastUpdated = new Date().toISOString();
+      
+      // IMMEDIATE SAVE - Don't wait for 4-second auto-save debounce
+      if (typeof window.tbSaveProspect === 'function') {
+        window.tbSaveProspect();
+        console.log('✓ Market Intelligence saved immediately to localStorage');
+      } else {
+        // Fallback to auto-save if direct save not available
+        if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+        console.log('✓ Market Intelligence queued for auto-save');
+      }
+      
+      // Debug logging for research patterns
+      if (intelligence.researchBehavior && intelligence.researchBehavior.detected_patterns && intelligence.researchBehavior.detected_patterns.length > 0) {
+        console.log('🔍 Research Patterns Detected:', intelligence.researchBehavior.detected_patterns.length);
+        intelligence.researchBehavior.detected_patterns.forEach(p => {
+          console.log(`  • ${p.source} (${p.type}) - Urgency: ${p.urgency}`);
+        });
+      } else {
+        console.log('🔍 No research patterns detected in transcript');
+      }
+    }
+    
+    renderIntelligenceDashboard(intelligence, gongPainPoints, competitiveSignals, processingTime, intelligence.researchBehavior, techIntelligence);
+    
+    // Populate detected competitors in Smart Routing Engine
+    if (techIntelligence && techIntelligence.competitive) {
+      srePopulateDetectedCompetitors(techIntelligence);
+      console.log('✓ Auto-populated detected competitors in SRE');
+    }
+    
+    saveIntelligenceToCache(intelligence);
+    await saveIntelligenceToFirebase(intelligence);
+    
+    showMIToast(`✓ Analysis complete in ${processingTime}s`);
+    
+  } catch (error) {
+    console.error('Enhanced market intel error:', error);
+    dashboardEl.innerHTML = `
+      <div style="text-align: center; padding: 2rem;">
+        <p style="color: var(--err); font-size: 14px; margin: 0 0 8px 0; font-weight: 500;">
+          ⚠️ Analysis Failed
+        </p>
+        <p style="font-size: 12px; color: var(--text-3); margin: 0;">
+          ${error.message}
+        </p>
+        <button 
+          onclick="runEnhancedMarketIntel()" 
+          style="margin-top: 1rem; padding: 8px 16px; background: var(--blue); color: var(--white); border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px;"
+        >
+          Try Again
+        </button>
+      </div>
+    `;
+    showMIToast('⚠️ Analysis failed - see dashboard for details');
+  } finally {
+    runBtn.disabled = false;
+    runBtn.textContent = '🚀 Run Enhanced Analysis';
+  }
+}
+
+/**
+ * Update progress message
+ */
+function updateProgress(message) {
+  const progressEl = document.getElementById('progress-steps');
+  if (progressEl) {
+    progressEl.innerHTML += `<p style="margin: 0;">${message}</p>`;
+  }
+}
+
+/**
+ * Render Intelligence Dashboard
+ */
+function renderIntelligenceDashboard(intelligence, painPoints, signals, processingTime, researchBehavior, techIntelligence) {
+  const dashboardEl = document.getElementById('market-intel-dashboard');
+  
+  let html = `
+    <!-- HEADER -->
+    <div style="margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+        <h2 style="font-size: 18px; font-weight: 600; margin: 0;">Intelligence Report</h2>
+        <span style="font-size: 12px; color: var(--green); background: var(--green-bg); padding: 4px 10px; border-radius: 12px;">● Live</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-3);">
+        <span>${selectedMITrack}</span>
+        <span>•</span>
+        <span>${selectedMICadence} Cadence</span>
+        <span>•</span>
+        <span>${processingTime}s processing</span>
+      </div>
+    </div>
+  `;
+  
+  // ═══════════════════════════════════════════════════════════════════
+  // RESEARCH PATTERNS SECTION
+  // ═══════════════════════════════════════════════════════════════════
+  if (researchBehavior && researchBehavior.detected_patterns && researchBehavior.detected_patterns.length > 0) {
+    html += renderResearchPatterns(researchBehavior.detected_patterns);
+  }
+  
+  // ═══════════════════════════════════════════════════════════════════
+  // TECH INTELLIGENCE SECTIONS
+  // ═══════════════════════════════════════════════════════════════════
+  if (techIntelligence) {
+    html += renderTechStackSection(techIntelligence);
+    html += renderCompetitiveSection(techIntelligence);
+    html += renderPainPatternsSection(techIntelligence);
+    html += renderBenefitsSection(techIntelligence);
+  }
+  
+  // ═══════════════════════════════════════════════════════════════════
+  // EXECUTIVE SUMMARY - Collapsible
+  // ═══════════════════════════════════════════════════════════════════
+  html += `
+    <div style="background: linear-gradient(135deg, var(--blue-bg) 0%, var(--off-white) 100%); border: 2px solid var(--blue); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; cursor: pointer;" onclick="toggleMISection('exec-summary')">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">🎯</span>
+          <h3 style="font-size: 16px; font-weight: 600; margin: 0; color: var(--blue);">Executive Summary</h3>
+        </div>
+        <svg id="exec-summary-icon" style="width: 20px; height: 20px; transition: transform 0.3s;" fill="none" stroke="var(--blue)" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+      
+      <div id="exec-summary-content" style="display: block;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
+          <div style="background: white; border-radius: 8px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 18px;">📊</span>
+              <p style="font-size: 12px; color: var(--text-3); margin: 0;">Active Signals</p>
+            </div>
+            <p style="font-size: 28px; font-weight: 700; margin: 0; color: var(--blue);">${intelligence.executiveSummary.activeSignals}</p>
+            <p style="font-size: 11px; color: var(--text-3); margin: 6px 0 0 0;">Real-time competitive intel</p>
+          </div>
+          
+          <div style="background: white; border-radius: 8px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 18px;">🎯</span>
+              <p style="font-size: 12px; color: var(--text-3); margin: 0;">Pain Points</p>
+            </div>
+            <p style="font-size: 28px; font-weight: 700; margin: 0; color: var(--gold);">${intelligence.executiveSummary.painPointsFound}</p>
+            <p style="font-size: 11px; color: var(--text-3); margin: 6px 0 0 0;">From ${uploadedGongScreenshots.length} transcript${uploadedGongScreenshots.length > 1 ? 's' : ''}</p>
+          </div>
+          
+          <div style="background: white; border-radius: 8px; padding: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="font-size: 18px;">⚔️</span>
+              <p style="font-size: 12px; color: var(--text-3); margin: 0;">Est. Win Rate</p>
+            </div>
+            <p style="font-size: 28px; font-weight: 700; margin: 0; color: var(--green);">${intelligence.executiveSummary.winRate}</p>
+            <p style="font-size: 11px; color: var(--text-3); margin: 6px 0 0 0;">vs ${intelligence.executiveSummary.primaryCompetitor}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // COMPETITIVE SIGNALS - Collapsible
+  // ═══════════════════════════════════════════════════════════════════
+  if (signals.length > 0) {
+    html += `
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; cursor: pointer;" onclick="toggleMISection('signals')">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">🔔</span>
+            <h3 style="font-size: 15px; font-weight: 600; margin: 0;">Real-Time Competitive Signals</h3>
+            <span style="background: var(--err-bg); color: var(--err); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">${signals.length}</span>
+          </div>
+          <svg id="signals-icon" style="width: 18px; height: 18px; transition: transform 0.3s;" fill="none" stroke="var(--text-2)" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        
+        <div id="signals-content" style="display: block;">
+          ${signals.slice(0, 5).map((signal, idx) => {
+            const severityColors = {
+              high: { border: 'var(--err)', bg: 'var(--err-bg)', color: 'var(--err)' },
+              medium: { border: 'var(--gold)', bg: 'var(--gold-bg)', color: 'var(--gold)' },
+              low: { border: 'var(--blue)', bg: 'var(--blue-bg)', color: 'var(--blue)' }
+            };
+            const colors = severityColors[signal.severity] || severityColors.low;
+            
+            return `
+              <div style="background: ${colors.bg}; border-left: 3px solid ${colors.border}; border-radius: 6px; padding: 12px 14px; margin-bottom: ${idx === signals.length - 1 ? '0' : '10px'};">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                  <p style="font-size: 13px; font-weight: 600; margin: 0; flex: 1; color: var(--text);">${signal.title}</p>
+                  <span style="background: ${colors.border}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; margin-left: 10px;">
+                    ${signal.severity}
+                  </span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-2); margin: 0 0 6px 0; line-height: 1.5;">${signal.description}</p>
+                <p style="font-size: 11px; color: var(--text-3); margin: 0; opacity: 0.8;">
+                  <span style="font-weight: 500;">${signal.timestamp}</span> • ${signal.source}
+                </p>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PAIN POINTS & SOLUTIONS - Enhanced with icons
+  // ═══════════════════════════════════════════════════════════════════
+  if (intelligence.painPointMapping && intelligence.painPointMapping.length > 0) {
+    html += `
+      <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; cursor: pointer;" onclick="toggleMISection('pain-points')">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">💊</span>
+            <h3 style="font-size: 15px; font-weight: 600; margin: 0;">Pain Points & Solutions</h3>
+            <span style="background: var(--blue-bg); color: var(--blue); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">${intelligence.painPointMapping.length}</span>
+          </div>
+          <svg id="pain-points-icon" style="width: 18px; height: 18px; transition: transform 0.3s;" fill="none" stroke="var(--text-2)" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </div>
+        
+        <div id="pain-points-content" style="display: block;">
+          ${intelligence.painPointMapping.slice(0, 5).map((pp, idx) => {
+            const severityIcons = { High: '🔴', Medium: '🟡', Low: '🟢' };
+            const severityColors = {
+              High: { bg: 'var(--err-bg)', color: 'var(--err)' },
+              Medium: { bg: 'var(--gold-bg)', color: 'var(--gold)' },
+              Low: { bg: 'var(--blue-bg)', color: 'var(--blue)' }
+            };
+            const colors = severityColors[pp.severity] || severityColors.Low;
+            
+            return `
+              <div style="background: var(--off-white); border-radius: 8px; padding: 14px; margin-bottom: ${idx === intelligence.painPointMapping.length - 1 ? '0' : '12px'}; border: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                  <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                      <span>${severityIcons[pp.severity]}</span>
+                      <span style="background: ${colors.bg}; color: ${colors.color}; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                        ${pp.severity}
+                      </span>
+                    </div>
+                    <p style="font-size: 14px; font-weight: 600; margin: 0; color: var(--text); line-height: 1.4;">${pp.painPoint}</p>
+                  </div>
+                </div>
+                
+                <div style="background: white; border-left: 3px solid var(--blue); border-radius: 4px; padding: 10px 12px; margin-bottom: 10px;">
+                  <p style="font-size: 11px; color: var(--text-3); margin: 0 0 4px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">ADP Solution</p>
+                  <p style="font-size: 12px; color: var(--text); margin: 0; line-height: 1.6;">${pp.adpSolution}</p>
+                </div>
+                
+                <div style="background: var(--green-bg); border-left: 3px solid var(--green); border-radius: 4px; padding: 10px 12px;">
+                  <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                    <span style="font-size: 14px;">💬</span>
+                    <p style="font-size: 11px; color: var(--green); margin: 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Talk Track</p>
+                  </div>
+                  <p style="font-size: 12px; color: var(--text); margin: 0; font-style: italic; line-height: 1.5;">"${pp.talkingPoint}"</p>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // COMPETITIVE COMPARISON - Enhanced table
+  // ═══════════════════════════════════════════════════════════════════
+  html += `
+    <div style="background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; cursor: pointer;" onclick="toggleMISection('competitive')">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;">⚔️</span>
+          <h3 style="font-size: 15px; font-weight: 600; margin: 0;">Competitive Battle Card</h3>
+        </div>
+        <svg id="competitive-icon" style="width: 18px; height: 18px; transition: transform 0.3s;" fill="none" stroke="var(--text-2)" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+      
+      <div id="competitive-content" style="display: block;">
+        <div style="background: var(--off-white); border-radius: 6px; padding: 10px; margin-bottom: 12px; text-align: center;">
+          <p style="font-size: 12px; color: var(--text-3); margin: 0 0 4px 0;">Primary Competitor</p>
+          <p style="font-size: 16px; font-weight: 600; margin: 0; color: var(--text);">${intelligence.competitiveComparison.competitor}</p>
+        </div>
+        
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; font-size: 13px; border-collapse: separate; border-spacing: 0;">
+            <thead>
+              <tr style="background: var(--off-white);">
+                <th style="text-align: left; padding: 12px; font-weight: 600; border-radius: 6px 0 0 0; color: var(--text);">Feature</th>
+                <th style="text-align: center; padding: 12px; font-weight: 600; color: var(--blue);">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <span>🏆</span>
+                    <span>ADP ${selectedMITrack}</span>
+                  </div>
+                </th>
+                <th style="text-align: center; padding: 12px; font-weight: 600; border-radius: 0 6px 0 0; color: var(--text-2);">${intelligence.competitiveComparison.competitor}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${intelligence.competitiveComparison.features.map((feature, idx) => `
+                <tr style="background: ${idx % 2 === 0 ? 'white' : 'var(--off-white)'};">
+                  <td style="padding: 12px; font-weight: 500; color: var(--text);">${feature.feature}</td>
+                  <td style="padding: 12px; text-align: center;">
+                    <span style="font-size: 15px; font-weight: 600; color: var(--green);">${feature.adp}</span>
+                  </td>
+                  <td style="padding: 12px; text-align: center;">
+                    <span style="font-size: 15px; color: var(--text-3);">${feature.competitor}</span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // EMAIL-READY TALKING POINTS - Enhanced
+  // ═══════════════════════════════════════════════════════════════════
+  html += `
+    <div style="background: linear-gradient(135deg, var(--green-bg) 0%, var(--off-white) 100%); border: 2px solid var(--green); border-radius: var(--radius); padding: 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">📧</span>
+          <h3 style="font-size: 15px; font-weight: 600; margin: 0; color: var(--green);">Email-Ready Talking Points</h3>
+        </div>
+        <button onclick="copyTalkingPoints()" style="font-size: 12px; padding: 8px 14px; border: 1px solid var(--green); border-radius: 6px; background: var(--green); color: white; cursor: pointer; transition: all 0.2s; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+          📋 Copy All
+        </button>
+      </div>
+      
+      <div id="talking-points-content" style="background: white; border-radius: 8px; padding: 14px; font-family: var(--fm); font-size: 13px; line-height: 1.8; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        ${intelligence.emailTalkingPoints.map((tp, i) => `
+          <div style="display: flex; gap: 10px; margin-bottom: ${i === intelligence.emailTalkingPoints.length - 1 ? '0' : '12px'};">
+            <span style="color: var(--green); font-weight: 700; font-size: 14px;">${i + 1}.</span>
+            <p style="margin: 0; flex: 1; color: var(--text);">${tp}</p>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div style="background: white; border-radius: 6px; padding: 10px; margin-top: 12px; text-align: center;">
+        <p style="font-size: 11px; color: var(--text-3); margin: 0;">
+          ✨ Optimized for <strong>${selectedMICadence}</strong> tone • Ready to paste into Gmail/Outlook
+        </p>
+      </div>
+      
+      <!-- Compose Email Button -->
+      <div style="margin-top: 16px; text-align: center;">
+        <button onclick="renderEmailComposer()" style="padding: 14px 28px; background: linear-gradient(135deg, var(--blue) 0%, #4a90e2 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 6px 16px rgba(66, 133, 244, 0.4)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 4px 12px rgba(66, 133, 244, 0.3)'">
+          📧 Compose Email from Intelligence
+        </button>
+        <p style="font-size: 11px; color: var(--text-3); margin: 8px 0 0 0;">
+          Auto-generate personalized email with Gmail/Outlook integration
+        </p>
+      </div>
+    </div>
+  `;
+  
+  dashboardEl.innerHTML = html;
+}
+
+/**
+ * Toggle Market Intelligence section expand/collapse
+ */
+function toggleMISection(sectionId) {
+  const content = document.getElementById(`${sectionId}-content`);
+  const icon = document.getElementById(`${sectionId}-icon`);
+  
+  if (content && icon) {
+    if (content.style.display === 'none') {
+      content.style.display = 'block';
+      icon.style.transform = 'rotate(0deg)';
+    } else {
+      content.style.display = 'none';
+      icon.style.transform = 'rotate(-90deg)';
+    }
+  }
+}
+
+/**
+ * Copy talking points to clipboard (Chrome-optimized)
+ */
+async function copyTalkingPoints() {
+  const content = document.getElementById('talking-points-content').innerText;
+  
+  try {
+    await navigator.clipboard.writeText(content);
+    showMIToast('✓ Talking points copied to clipboard!');
+    
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.background = 'var(--green-bg)';
+    btn.style.color = 'var(--green)';
+    
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = 'var(--white)';
+      btn.style.color = '';
+    }, 2000);
+    
+  } catch (err) {
+    console.error('Copy failed:', err);
+    showMIToast('⚠️ Copy failed - please try again');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMAIL COMPOSER FOR MARKET INTELLIGENCE
+// Smart email generation based on prospect research and competitive intelligence
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// EMAIL TEMPLATES
+const EMAIL_TEMPLATES = {
+  outsail_consultant: {
+    name: 'OutSail Consultant Detected',
+    trigger: 'outsail',
+    subjectLines: [
+      'Following up on our {{product}} evaluation',
+      'Joint call with OutSail - Next steps for {{company}}',
+      'ADP + OutSail: Streamlining your HCM selection'
+    ],
+    body: `Hi {{contact_name}},
+
+I wanted to follow up on our recent conversation about {{company}}'s HCM evaluation with OutSail.
+
+Having worked with OutSail on several successful implementations, I know they value our deep compliance expertise and proven track record. Here's what makes ADP {{product}} the right fit for your evaluation:
+
+{{pain_points_section}}
+
+**Why OutSail clients choose ADP:**
+• Gartner Leader positioning - the validation OutSail consultants look for
+• Forrester TEI study shows clear ROI that satisfies CFO requirements
+• 3 references from OutSail-led deals we've won in your industry
+
+I'd love to schedule a joint call with you and your OutSail consultant to walk through how we address {{company}}'s specific needs.
+
+Would next week work for a 30-minute discussion?
+
+Best,
+{{sender_name}}`
+  },
+  
+  high_pain_point: {
+    name: 'High Pain Point Follow-up',
+    trigger: 'high_severity',
+    subjectLines: [
+      'Solving {{company}}\'s {{pain_category}} challenges',
+      'Addressing your concerns about {{pain_category}}',
+      'Quick win: How we fix {{pain_category}} issues'
+    ],
+    body: `Hi {{contact_name}},
+
+Following up on our conversation about the challenges {{company}} is experiencing with {{current_system}}.
+
+I want to address your most pressing concerns head-on:
+
+{{pain_points_section}}
+
+**These aren't just features - they're solutions we've proven with similar organizations:**
+
+{{company_size}} companies like yours typically see these results within 90 days:
+• {{metric_1}}
+• {{metric_2}}
+• {{metric_3}}
+
+I have 3 clients in {{industry}} facing similar challenges who would be happy to share their experience. Would a reference call be helpful?
+
+Let's schedule 15 minutes this week to discuss your specific situation.
+
+Best,
+{{sender_name}}`
+  },
+  
+  competitive_situation: {
+    name: 'Competitive Battle Card',
+    trigger: 'competitor',
+    subjectLines: [
+      'ADP vs {{competitor}}: What you should know',
+      'Why {{company}} should consider ADP over {{competitor}}',
+      'Head-to-head: ADP {{product}} vs {{competitor}}'
+    ],
+    body: `Hi {{contact_name}},
+
+I know you're evaluating {{competitor}} alongside ADP {{product}} for {{company}}.
+
+Having competed against {{competitor}} many times, I want to share what sets us apart - especially for organizations like yours:
+
+{{competitive_advantages}}
+
+**Where ADP wins specifically for {{company}}:**
+
+{{pain_points_section}}
+
+**Client proof point:**
+{{reference_snippet}}
+
+I'd love to show you a side-by-side comparison tailored to {{company}}'s requirements. Would Thursday or Friday work for a 20-minute call?
+
+Best,
+{{sender_name}}`
+  },
+  
+  research_pattern_detected: {
+    name: 'Research Pattern Follow-up',
+    trigger: 'research_behavior',
+    subjectLines: [
+      'Following up on your {{research_source}} research',
+      'Great that you\'re doing thorough due diligence',
+      'Addressing what you found in your research'
+    ],
+    body: `Hi {{contact_name}},
+
+I noticed you've been researching HCM solutions via {{research_source}} - that's smart due diligence.
+
+{{research_context}}
+
+Based on what prospects typically find during their research, here's what matters most for {{company}}:
+
+{{pain_points_section}}
+
+**Addressing common research questions:**
+
+{{research_qa_section}}
+
+I'd be happy to provide deeper insights beyond what's available publicly. Can we schedule 15 minutes to discuss what you've learned so far?
+
+Best,
+{{sender_name}}`
+  },
+  
+  first_touch: {
+    name: 'First Touch Introduction',
+    trigger: 'default',
+    subjectLines: [
+      'ADP {{product}} for {{company}} - Introduction',
+      'Following up on our conversation',
+      'Next steps for {{company}}\'s HR transformation'
+    ],
+    body: `Hi {{contact_name}},
+
+Thank you for taking the time to discuss {{company}}'s HR needs.
+
+Based on our conversation, I see clear opportunities where ADP {{product}} can help:
+
+{{pain_points_section}}
+
+**What makes sense as a next step:**
+
+I'd like to schedule a focused 30-minute call to:
+1. Show you how we solve these specific challenges
+2. Share 2-3 relevant case studies from {{industry}}
+3. Discuss implementation timeline and ROI
+
+Are you available Thursday afternoon or Friday morning?
+
+Best,
+{{sender_name}}`
+  }
+};
+
+/**
+ * Generate email from Market Intelligence analysis
+ */
+function generateEmailFromIntelligence(intelligence, painPoints, researchBehavior) {
+  // Auto-select template based on intelligence
+  const template = selectBestTemplate(intelligence, researchBehavior);
+  
+  // Get prospect context
+  const prospect = window._hqProspect || {};
+  
+  // Build token replacements
+  const tokens = {
+    contact_name: prospect.firstName || 'there',
+    company: prospect.companyName || 'your organization',
+    company_size: prospect.employeeCount ? `${prospect.employeeCount}-employee` : '',
+    industry: prospect.industry || 'your industry',
+    product: selectedMITrack || 'TotalSource',
+    current_system: getCurrentSystem(intelligence),
+    competitor: intelligence.executiveSummary?.primaryCompetitor || 'competitors',
+    sender_name: 'AJ',
+    pain_category: getPainCategory(painPoints),
+    pain_points_section: buildPainPointsSection(intelligence.painPointMapping),
+    competitive_advantages: buildCompetitiveSection(intelligence.competitiveComparison),
+    research_source: getResearchSource(researchBehavior),
+    research_context: getResearchContext(researchBehavior),
+    research_qa_section: buildResearchQASection(researchBehavior),
+    reference_snippet: buildReferenceSnippet(prospect.industry),
+    metric_1: 'Reduced payroll errors by 40%',
+    metric_2: 'Saved 15 hours/month on compliance tasks',
+    metric_3: 'Improved employee satisfaction scores by 25%'
+  };
+  
+  // Replace tokens in template
+  const emailBody = replaceTokens(template.body, tokens);
+  const subjectLines = template.subjectLines.map(s => replaceTokens(s, tokens));
+  
+  return {
+    template: template.name,
+    subjectLines: subjectLines,
+    body: emailBody,
+    tokens: tokens,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * Select best template based on intelligence
+ */
+function selectBestTemplate(intelligence, researchBehavior) {
+  // Check for research patterns first
+  if (researchBehavior && researchBehavior.detected_patterns && researchBehavior.detected_patterns.length > 0) {
+    const pattern = researchBehavior.detected_patterns[0];
+    if (pattern.source && pattern.source.toLowerCase().includes('outsail')) {
+      return EMAIL_TEMPLATES.outsail_consultant;
+    }
+    return EMAIL_TEMPLATES.research_pattern_detected;
+  }
+  
+  // Check for high pain points
+  if (intelligence.painPointMapping && intelligence.painPointMapping.length > 0) {
+    const highPainPoints = intelligence.painPointMapping.filter(pp => pp.severity === 'High');
+    if (highPainPoints.length > 0) {
+      return EMAIL_TEMPLATES.high_pain_point;
+    }
+  }
+  
+  // Check for competitive situation
+  if (intelligence.executiveSummary?.primaryCompetitor && 
+      intelligence.executiveSummary.primaryCompetitor !== 'None') {
+    return EMAIL_TEMPLATES.competitive_situation;
+  }
+  
+  // Default to first touch
+  return EMAIL_TEMPLATES.first_touch;
+}
+
+/**
+ * Replace tokens in template
+ */
+function replaceTokens(text, tokens) {
+  let result = text;
+  Object.keys(tokens).forEach(key => {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    result = result.replace(regex, tokens[key] || '');
+  });
+  return result;
+}
+
+/**
+ * Build pain points section for email
+ */
+function buildPainPointsSection(painPointMapping) {
+  if (!painPointMapping || painPointMapping.length === 0) {
+    return 'Based on our analysis, here are the key areas where we can help.';
+  }
+  
+  const topPainPoints = painPointMapping.slice(0, 3);
+  let section = '';
+  
+  topPainPoints.forEach((pp, idx) => {
+    const emoji = pp.severity === 'High' ? '🎯' : pp.severity === 'Medium' ? '💡' : '✓';
+    section += `${emoji} **${pp.painPoint}**\n`;
+    section += `${pp.adpSolution}\n\n`;
+  });
+  
+  return section.trim();
+}
+
+/**
+ * Build competitive section
+ */
+function buildCompetitiveSection(competitiveComparison) {
+  if (!competitiveComparison || !competitiveComparison.features) {
+    return 'Our comprehensive platform addresses your needs end-to-end.';
+  }
+  
+  const topFeatures = competitiveComparison.features.slice(0, 3);
+  let section = '';
+  
+  topFeatures.forEach(feature => {
+    if (feature.adp === '✓' && feature.competitor === '✗') {
+      section += `✓ **${feature.feature}**: ${feature.advantage}\n`;
+    }
+  });
+  
+  return section.trim() || 'Our comprehensive platform addresses your needs end-to-end.';
+}
+
+/**
+ * Get current system from intelligence
+ */
+function getCurrentSystem(intelligence) {
+  // Look for incumbent mentions in pain points
+  const prospect = window._hqProspect || {};
+  if (prospect.incumbent) return prospect.incumbent;
+  
+  // Check for mentions in pain point text
+  const incumbents = ['adp_run', 'ADP RUN', 'Paychex', 'Paylocity', 'UKG', 'Workday'];
+  if (intelligence.painPointMapping) {
+    for (const pp of intelligence.painPointMapping) {
+      for (const inc of incumbents) {
+        if (pp.painPoint.includes(inc)) return inc;
+      }
+    }
+  }
+  
+  return 'your current system';
+}
+
+/**
+ * Get pain category
+ */
+function getPainCategory(painPoints) {
+  if (!painPoints || painPoints.length === 0) return 'HR';
+  
+  const categories = {
+    'support': ['support', 'service', 'communication', 'help'],
+    'compliance': ['compliance', 'regulation', 'audit', 'legal'],
+    'payroll': ['payroll', 'payment', 'accuracy', 'error'],
+    'benefits': ['benefits', 'health', 'insurance', 'enrollment']
+  };
+  
+  const firstPainPoint = painPoints[0].toLowerCase();
+  for (const [category, keywords] of Object.entries(categories)) {
+    if (keywords.some(kw => firstPainPoint.includes(kw))) {
+      return category;
+    }
+  }
+  
+  return 'HR';
+}
+
+/**
+ * Get research source
+ */
+function getResearchSource(researchBehavior) {
+  if (!researchBehavior || !researchBehavior.detected_patterns || researchBehavior.detected_patterns.length === 0) {
+    return 'online research';
+  }
+  
+  return researchBehavior.detected_patterns[0].source || 'online research';
+}
+
+/**
+ * Get research context
+ */
+function getResearchContext(researchBehavior) {
+  if (!researchBehavior || !researchBehavior.detected_patterns || researchBehavior.detected_patterns.length === 0) {
+    return 'I appreciate you taking the time to research your options thoroughly.';
+  }
+  
+  const pattern = researchBehavior.detected_patterns[0];
+  
+  const contexts = {
+    'OutSail': 'Working with OutSail shows you\'re taking a structured, consultant-led approach - that\'s the right way to evaluate HCM.',
+    'Gartner': 'Reviewing Gartner\'s research shows you\'re doing executive-level due diligence - exactly what CFOs and boards expect.',
+    'G2': 'Reading G2 reviews is smart - peer feedback matters. I can address any concerns you found and provide live references.',
+    'HR Tech': 'Meeting us at HR Tech put you ahead of the curve - most prospects there are in active buying mode this quarter.'
+  };
+  
+  return contexts[pattern.source] || 'I appreciate you taking the time to research your options thoroughly.';
+}
+
+/**
+ * Build research Q&A section
+ */
+function buildResearchQASection(researchBehavior) {
+  if (!researchBehavior || !researchBehavior.detected_patterns || researchBehavior.detected_patterns.length === 0) {
+    return '';
+  }
+  
+  const pattern = researchBehavior.detected_patterns[0];
+  
+  const qaMap = {
+    'OutSail': '**Q: How does ADP work with OutSail?**\nA: OutSail has guided several of our most successful implementations. They value our compliance depth and proven ROI.\n\n**Q: What makes ADP different in consultant-led evaluations?**\nA: We consistently win when prospects do structured RFPs because our depth beats competitors on paper.',
+    
+    'Gartner': '**Q: Where does ADP rank in Gartner\'s Magic Quadrant?**\nA: We\'re a Leader for mid-market HCM. Gartner specifically highlights our compliance and payroll accuracy.\n\n**Q: What about Workday vs ADP?**\nA: Workday often needs ADP underneath for payroll. We\'re the platform, not the add-on.',
+    
+    'G2': '**Q: How do you address negative reviews?**\nA: Every review teaches us something. I can show you what we\'ve improved and connect you with satisfied clients.\n\n**Q: Are reviews from companies like mine?**\nA: I can provide 3 references from your industry and company size - more valuable than online reviews.'
+  };
+  
+  return qaMap[pattern.source] || '';
+}
+
+/**
+ * Build reference snippet
+ */
+function buildReferenceSnippet(industry) {
+  const references = {
+    'Healthcare': 'A 200-employee healthcare provider in Virginia switched from Insperity and cut HR admin time by 40% in the first quarter.',
+    'Technology': 'A 150-person tech startup moved from Justworks and gained enterprise-grade benefits at half the expected cost.',
+    'Manufacturing': 'A 300-employee manufacturer left Paychex PEO and achieved 99.8% payroll accuracy while reducing workers\' comp costs.',
+    'default': 'Companies your size typically see ROI within 90 days of switching to ADP.'
+  };
+  
+  return references[industry] || references.default;
+}
+
+/**
+ * Generate Gmail compose URL
+ */
+function generateGmailComposeURL(to, subject, body) {
+  const baseUrl = 'https://mail.google.com/mail/?view=cm&fs=1';
+  const params = new URLSearchParams({
+    to: to || '',
+    su: subject || '',
+    body: body || ''
+  });
+  
+  return `${baseUrl}&${params.toString()}`;
+}
+
+/**
+ * Generate Outlook compose URL
+ */
+function generateOutlookComposeURL(to, subject, body) {
+  const baseUrl = 'https://outlook.office.com/mail/deeplink/compose';
+  const params = new URLSearchParams({
+    to: to || '',
+    subject: subject || '',
+    body: body || ''
+  });
+  
+  return `${baseUrl}?${params.toString()}`;
+}
+
+/**
+ * Save email to history
+ */
+function saveEmailToHistory(emailData, prospectEmail, sentVia) {
+  if (!window._hqProspect) window._hqProspect = {};
+  if (!window._hqProspect.emailHistory) window._hqProspect.emailHistory = [];
+  
+  window._hqProspect.emailHistory.push({
+    timestamp: new Date().toISOString(),
+    template: emailData.template,
+    subject: emailData.subjectLines[0],
+    sentVia: sentVia,
+    prospectEmail: prospectEmail,
+    intelligenceSnapshot: {
+      painPoints: window._hqProspect.marketIntelligencePanel?.painPoints || [],
+      competitor: window._hqProspect.marketIntelligencePanel?.intelligence?.executiveSummary?.primaryCompetitor
+    }
+  });
+  
+  // Save to localStorage
+  if (typeof window.tbSaveProspect === 'function') {
+    window.tbSaveProspect();
+  }
+  
+  console.log('✓ Email saved to history');
+}
+
+/**
+ * Render Email Composer UI
+ */
+function renderEmailComposer() {
+  // Get Market Intelligence data
+  const marketIntel = window._hqProspect?.marketIntelligencePanel;
+  if (!marketIntel) {
+    showMIToast('⚠️ Run Market Intelligence analysis first');
+    return;
+  }
+  
+  const intelligence = marketIntel.intelligence;
+  const painPoints = marketIntel.painPoints;
+  const researchBehavior = marketIntel.researchBehavior;
+  
+  // Generate email
+  const emailData = generateEmailFromIntelligence(intelligence, painPoints, researchBehavior);
+  
+  // Get prospect email
+  const prospect = window._hqProspect || {};
+  const prospectEmail = prospect.email || '';
+  
+  // Store current email data globally for button handlers
+  window._currentEmail = {
+    data: emailData,
+    prospectEmail: prospectEmail,
+    selectedSubjectIndex: 0
+  };
+  
+  // Render UI
+  const composerHTML = `
+    <div id="email-composer-panel" style="background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%); border: 2px solid var(--blue); border-radius: var(--radius); padding: 1.5rem; margin-top: 1.5rem;">
+      <!-- Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 24px;">📧</span>
+          <div>
+            <h2 style="font-size: 18px; font-weight: 600; margin: 0; color: var(--blue);">Email Composer</h2>
+            <p style="font-size: 12px; color: var(--text-3); margin: 4px 0 0 0;">Generated from Market Intelligence analysis</p>
+          </div>
+        </div>
+        <button onclick="closeEmailComposer()" style="background: transparent; border: none; color: var(--text-3); cursor: pointer; font-size: 20px; padding: 4px 8px;">×</button>
+      </div>
+      
+      <!-- Template Info -->
+      <div style="background: var(--blue-bg); border-left: 3px solid var(--blue); padding: 12px; border-radius: 6px; margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <span style="font-size: 14px;">🎯</span>
+          <span style="font-size: 12px; font-weight: 600; color: var(--blue);">TEMPLATE SELECTED</span>
+        </div>
+        <p style="font-size: 14px; font-weight: 600; margin: 0; color: var(--text);">${emailData.template}</p>
+        <p style="font-size: 11px; color: var(--text-3); margin: 4px 0 0 0;">Auto-selected based on your Market Intelligence analysis</p>
+      </div>
+      
+      <!-- Prospect Details -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem;">
+        <div>
+          <label style="font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Prospect Email</label>
+          <input type="email" id="email-composer-to" value="${prospectEmail}" placeholder="prospect@company.com" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px;">
+        </div>
+        <div>
+          <label style="font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Your Product</label>
+          <input type="text" value="${selectedMITrack || 'TotalSource'}" disabled style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--off-white); color: var(--text-2);">
+        </div>
+      </div>
+      
+      <!-- Subject Line Selector -->
+      <div style="margin-bottom: 1.5rem;">
+        <label style="font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Subject Line Options (AI-Generated)</label>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${emailData.subjectLines.map((subject, idx) => `
+            <label style="display: flex; align-items: center; background: white; border: 2px solid ${idx === 0 ? 'var(--blue)' : 'var(--border)'}; padding: 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='${idx === 0 ? 'var(--blue)' : 'var(--border)'}'" onclick="selectSubjectLine(${idx})">
+              <input type="radio" name="subject-line" value="${idx}" ${idx === 0 ? 'checked' : ''} style="margin-right: 10px;">
+              <span style="font-size: 13px; color: var(--text); flex: 1;">${subject}</span>
+              ${idx === 0 ? '<span style="background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;">RECOMMENDED</span>' : ''}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+      
+      <!-- Email Preview -->
+      <div style="margin-bottom: 1.5rem;">
+        <label style="font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">Email Preview</label>
+        <div id="email-body-preview" style="background: white; border: 1px solid var(--border); border-radius: 6px; padding: 16px; min-height: 300px; font-family: var(--fm); font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre-wrap;">${emailData.body}</div>
+      </div>
+      
+      <!-- Intelligence Context -->
+      <div style="background: var(--off-white); border-radius: 6px; padding: 12px; margin-bottom: 1.5rem;">
+        <p style="font-size: 11px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 0;">Intelligence Used</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; font-size: 12px; color: var(--text-2);">
+          <div>• Pain Points: <strong>${intelligence.executiveSummary.painPointsFound}</strong></div>
+          <div>• Competitor: <strong>${intelligence.executiveSummary.primaryCompetitor}</strong></div>
+          <div>• Win Rate: <strong>${intelligence.executiveSummary.winRate}</strong></div>
+          ${researchBehavior?.detected_patterns?.length > 0 ? `<div>• Research: <strong>${researchBehavior.detected_patterns[0].source}</strong></div>` : ''}
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button onclick="openInGmail()" style="flex: 1; min-width: 200px; padding: 12px 20px; background: var(--blue); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+          📧 Open in Gmail
+        </button>
+        <button onclick="openInOutlook()" style="flex: 1; min-width: 200px; padding: 12px 20px; background: var(--blue); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+          📧 Open in Outlook
+        </button>
+        <button onclick="copyEmailToClipboard()" style="flex: 1; min-width: 200px; padding: 12px 20px; background: white; color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          📋 Copy Email
+        </button>
+      </div>
+      
+      <!-- Email History -->
+      ${renderEmailHistory()}
+    </div>
+  `;
+  
+  // Find or create container
+  let container = document.getElementById('email-composer-container');
+  if (!container) {
+    const dashboard = document.getElementById('market-intel-dashboard');
+    container = document.createElement('div');
+    container.id = 'email-composer-container';
+    dashboard.parentNode.insertBefore(container, dashboard.nextSibling);
+  }
+  
+  container.innerHTML = composerHTML;
+  
+  // Scroll to composer
+  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/**
+ * Render email history
+ */
+function renderEmailHistory() {
+  const history = window._hqProspect?.emailHistory || [];
+  if (history.length === 0) return '';
+  
+  return `
+    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+      <p style="font-size: 11px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px 0;">Email History</p>
+      ${history.slice(-3).reverse().map(email => `
+        <div style="background: white; border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 4px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
+            <p style="font-size: 12px; font-weight: 600; margin: 0; color: var(--text);">${email.subject}</p>
+            <span style="font-size: 10px; color: var(--text-3);">${new Date(email.timestamp).toLocaleDateString()}</span>
+          </div>
+          <p style="font-size: 11px; color: var(--text-3); margin: 0;">Template: ${email.template} • Sent via ${email.sentVia}</p>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/**
+ * Select subject line
+ */
+function selectSubjectLine(index) {
+  if (window._currentEmail) {
+    window._currentEmail.selectedSubjectIndex = index;
+  }
+}
+
+/**
+ * Open in Gmail
+ */
+function openInGmail() {
+  const email = window._currentEmail;
+  if (!email) return;
+  
+  const to = document.getElementById('email-composer-to').value;
+  const subject = email.data.subjectLines[email.selectedSubjectIndex];
+  const body = email.data.body;
+  
+  const url = generateGmailComposeURL(to, subject, body);
+  window.open(url, '_blank');
+  
+  saveEmailToHistory(email.data, to, 'Gmail');
+  showMIToast('✓ Email opened in Gmail - Review and send!');
+}
+
+/**
+ * Open in Outlook
+ */
+function openInOutlook() {
+  const email = window._currentEmail;
+  if (!email) return;
+  
+  const to = document.getElementById('email-composer-to').value;
+  const subject = email.data.subjectLines[email.selectedSubjectIndex];
+  const body = email.data.body;
+  
+  const url = generateOutlookComposeURL(to, subject, body);
+  window.open(url, '_blank');
+  
+  saveEmailToHistory(email.data, to, 'Outlook');
+  showMIToast('✓ Email opened in Outlook - Review and send!');
+}
+
+/**
+ * Copy email to clipboard
+ */
+async function copyEmailToClipboard() {
+  const email = window._currentEmail;
+  if (!email) return;
+  
+  const subject = email.data.subjectLines[email.selectedSubjectIndex];
+  const body = email.data.body;
+  const fullEmail = `Subject: ${subject}\n\n${body}`;
+  
+  try {
+    await navigator.clipboard.writeText(fullEmail);
+    showMIToast('✓ Email copied to clipboard!');
+  } catch (err) {
+    console.error('Copy failed:', err);
+    showMIToast('⚠️ Copy failed - try again');
+  }
+}
+
+/**
+ * Close email composer
+ */
+function closeEmailComposer() {
+  const container = document.getElementById('email-composer-container');
+  if (container) {
+    container.innerHTML = '';
+  }
+}
+/**
+ * Show toast notification
+ */
+function showMIToast(message) {
+  const existingToast = document.getElementById('mi-toast');
+  if (existingToast) {
+    document.body.removeChild(existingToast);
+  }
+  
+  const toast = document.createElement('div');
+  toast.id = 'mi-toast';
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed; top: 20px; right: 20px; background: var(--white);
+    color: var(--text); padding: 12px 16px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-2); font-size: 13px; z-index: 10003;
+    box-shadow: var(--shadow-lg); animation: slideIn 0.3s ease-out;
+  `;
+  
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  `;
+  if (!document.getElementById('mi-toast-style')) {
+    style.id = 'mi-toast-style';
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100%)';
+    toast.style.transition = 'all 0.3s ease-out';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
+}
+
+/**
+ * Get competitive signals from existing agents
+ */
+async function getRecentCompetitiveSignals() {
+  try {
+    // Placeholder - integrate with your existing Marketing Research & Social Media agents
+    // For now, return sample data
+    return [
+      {
+        title: 'Insperity Q4 earnings miss',
+        description: 'Client retention down 4% — outreach opportunity',
+        severity: 'high',
+        timestamp: '2 hours ago',
+        source: 'Marketing Research Agent'
+      },
+      {
+        title: 'Dayforce PE privatization',
+        description: 'Client uncertainty around roadmap and support',
+        severity: 'medium',
+        timestamp: '5 hours ago',
+        source: 'Social Media Agent'
+      },
+      {
+        title: 'Rippling #1 mid-market position',
+        description: 'Growing competitive pressure — need differentiation',
+        severity: 'high',
+        timestamp: '1 day ago',
+        source: 'Social Media Agent'
+      }
+    ];
+  } catch (error) {
+    console.error('Competitive signals error:', error);
+    return [];
+  }
+}
+
+/**
+ * Storage functions
+ */
+function saveIntelligenceToCache(intelligence) {
+  try {
+    const key = `market-intel-${selectedMITrack}-${Date.now()}`;
+    localStorage.setItem(key, JSON.stringify({
+      timestamp: new Date().toISOString(),
+      track: selectedMITrack,
+      cadence: selectedMICadence,
+      screenshotCount: uploadedGongScreenshots.length,
+      intelligence
+    }));
+    localStorage.setItem('market-intel-latest', key);
+  } catch (e) {
+    console.error('Cache save error:', e);
+  }
+}
+
+async function saveIntelligenceToFirebase(intelligence) {
+  try {
+    // Placeholder - integrate with your Firebase setup
+    console.log('Intelligence saved to Firebase:', intelligence);
+  } catch (e) {
+    console.error('Firebase save error:', e);
+  }
+}
+
+// Add Market Intelligence option to your navigation/menu
+// You can call openMarketIntel() from anywhere in your app to open the panel
+
+console.log('✓ Market & Competitive Intelligence module loaded');
+console.log('  Call openMarketIntel() to launch the panel');
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  RESTORE SAVED MARKET ANALYSIS DATA WHEN LOADING PROSPECTS
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Restore and render saved market intelligence when loading a prospect
+ * Call this after loading a prospect into window._hqProspect
+ */
+window.restoreMarketAnalysis = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  let restoredCount = 0;
+  
+  // Restore Weekly Competitor Intelligence
+  if (p.marketIntelligence) {
+    const bodyEl = document.getElementById('at-intel-body');
+    const resultsEl = document.getElementById('at-intel-results');
+    
+    if (bodyEl && resultsEl) {
+      atRenderWeeklyIntel(bodyEl, p.marketIntelligence);
+      resultsEl.style.display = 'block';
+      
+      // Add timestamp and refresh indicator to header
+      if (p.marketIntelLastUpdated) {
+        const date = new Date(p.marketIntelLastUpdated);
+        const timeAgo = getTimeAgo(date);
+        const isStale = isDataStale(date, 7); // 7 days
+        
+        addDataTimestamp(bodyEl, timeAgo, isStale, 'atRunWeeklyIntel()');
+        console.log(`✓ Restored Competitor Intel (generated ${timeAgo}${isStale ? ' - STALE' : ''})`);
+        restoredCount++;
+      }
+    }
+  }
+  
+  // Restore Social Listening data
+  if (p.socialListening) {
+    const bodyEl = document.getElementById('at-social-body');
+    const resultsEl = document.getElementById('at-social-results');
+    
+    if (bodyEl && resultsEl) {
+      atRenderSocialAgent(bodyEl, p.socialListening);
+      resultsEl.style.display = 'block';
+      
+      // Add timestamp and refresh indicator to header
+      if (p.socialListenLastUpdated) {
+        const date = new Date(p.socialListenLastUpdated);
+        const timeAgo = getTimeAgo(date);
+        const isStale = isDataStale(date, 3); // 3 days for social media
+        
+        addDataTimestamp(bodyEl, timeAgo, isStale, 'atRunSocialAgent()');
+        console.log(`✓ Restored Social Listening (generated ${timeAgo}${isStale ? ' - STALE' : ''})`);
+        restoredCount++;
+      }
+    }
+  }
+  
+  // Restore Market Intelligence Panel data (Gong transcript analysis)
+  if (p.marketIntelligencePanel && p.marketIntelPanelLastUpdated) {
+    const date = new Date(p.marketIntelPanelLastUpdated);
+    const timeAgo = getTimeAgo(date);
+    const isStale = isDataStale(date, 7);
+    
+    console.log(`✓ Market Intelligence Panel data available (generated ${timeAgo}${isStale ? ' - STALE' : ''})`);
+    console.log(`  • Track: ${p.marketIntelligencePanel.track}`);
+    console.log(`  • Cadence: ${p.marketIntelligencePanel.cadence}`);
+    console.log(`  • Screenshots: ${p.marketIntelligencePanel.screenshotCount}`);
+    restoredCount++;
+    
+    // Note: Panel data will be restored when user opens the Market Intelligence modal
+  }
+  
+  // Show notification if data was restored
+  if (restoredCount > 0) {
+    const message = `✓ Restored ${restoredCount} market analysis report${restoredCount > 1 ? 's' : ''}`;
+    setTimeout(() => showToast(message), 600);
+  }
+};
+
+/**
+ * Helper function to get time ago string
+ */
+function getTimeAgo(date) {
+  const now = new Date();
+  const diff = now - date;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+  return date.toLocaleDateString();
+}
+
+/**
+ * Check if data is stale based on age
+ * @param {Date} date - Date when data was generated
+ * @param {number} daysThreshold - Number of days before data is considered stale
+ */
+function isDataStale(date, daysThreshold = 7) {
+  const now = new Date();
+  const diff = now - date;
+  const days = Math.floor(diff / 86400000);
+  return days >= daysThreshold;
+}
+
+/**
+ * Add timestamp banner to agent results
+ * @param {HTMLElement} bodyEl - Container element
+ * @param {string} timeAgo - Time ago string
+ * @param {boolean} isStale - Whether data is stale
+ * @param {string} refreshFn - Function name to call for refresh
+ */
+function addDataTimestamp(bodyEl, timeAgo, isStale, refreshFn) {
+  if (!bodyEl) return;
+  
+  // Check if banner already exists
+  const existingBanner = bodyEl.querySelector('.at-data-timestamp-banner');
+  if (existingBanner) {
+    existingBanner.remove();
+  }
+  
+  const banner = document.createElement('div');
+  banner.className = 'at-data-timestamp-banner';
+  banner.style.cssText = `
+    padding: 10px 18px;
+    background: ${isStale ? 'var(--gold-bg)' : 'var(--green-bg)'};
+    border-left: 3px solid ${isStale ? 'var(--gold)' : 'var(--green)'};
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border);
+  `;
+  
+  const statusText = document.createElement('div');
+  statusText.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+  statusText.innerHTML = `
+    <span style="font-weight: 600; color: ${isStale ? 'var(--gold)' : 'var(--green)'};">
+      ${isStale ? '⚠️ Data may be outdated' : '✓ Data current'}
+    </span>
+    <span style="color: var(--text-3);">
+      Generated ${timeAgo}
+    </span>
+  `;
+  
+  const refreshBtn = document.createElement('button');
+  refreshBtn.textContent = isStale ? '🔄 Refresh Data' : '🔄 Refresh';
+  refreshBtn.className = 'at-btn secondary';
+  refreshBtn.style.cssText = `
+    font-size: 11px;
+    padding: 4px 10px;
+    ${isStale ? 'background: var(--gold); color: white; border: none;' : ''}
+  `;
+  refreshBtn.onclick = function() {
+    eval(refreshFn);
+  };
+  
+  banner.appendChild(statusText);
+  banner.appendChild(refreshBtn);
+  
+  // Insert at the top of the body
+  bodyEl.insertBefore(banner, bodyEl.firstChild);
+}
+
+/**
+ * Clear market analysis data for current prospect
+ */
+window.clearMarketAnalysis = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  delete p.marketIntelligence;
+  delete p.marketIntelLastUpdated;
+  delete p.socialListening;
+  delete p.socialListenLastUpdated;
+  
+  // Clear UI
+  const intelBody = document.getElementById('at-intel-body');
+  const socialBody = document.getElementById('at-social-body');
+  
+  if (intelBody) intelBody.innerHTML = '';
+  if (socialBody) socialBody.innerHTML = '';
+  
+  // Mark as unsaved
+  if (typeof window.tbMarkUnsaved === 'function') window.tbMarkUnsaved();
+  
+  showToast('✓ Market analysis cleared');
+};
+
+console.log('✓ Market Analysis persistence functions loaded');
+console.log('  • Agent data now auto-saves to prospect');
+console.log('  • Call restoreMarketAnalysis() after loading prospect');
+console.log('  • Call clearMarketAnalysis() to reset data');
