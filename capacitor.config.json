@@ -1,0 +1,42 @@
+{
+  "appId": "com.beyondpayroll.saleshq",
+  "appName": "SalesHQ",
+  "webDir": "dist",
+  "server": {
+    "hostname": "beyondpayrollportal.pages.dev",
+    "iosScheme": "ionic"
+  },
+  "ios": {
+    "scheme": "SalesHQ",
+    "contentInset": "automatic",
+    "backgroundColor": "#0d1535",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": true,
+    "preferredContentMode": "mobile"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "backgroundColor": "#0d1535",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": false,
+      "splashImmersive": false
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#0d1535"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

@@ -49,6 +49,51 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
 .eec-modal-body,.ehc-modal-body{padding:24px;overflow-y:auto;flex:1}
 </style>
 
+<!-- AI Sales Agent Styles -->
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   AI SALES AGENT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agent-controls {
+  animation: agentSlideIn 0.3s ease;
+}
+
+@keyframes agentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agent-controls button {
+  transition: all 0.2s ease;
+}
+
+.agent-controls button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.agent-controls button:active {
+  transform: translateY(0);
+}
+
+/* Badge pulse animation */
+#agent-approval-badge {
+  animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+</style>
+
 <!-- Canva Integration Styles -->
 <link rel="stylesheet" href="saleshq-canva-styles.css">
 <link rel="stylesheet" href="saleshq-outlook-canva-styles.css">
@@ -115,7 +160,9 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
   .tb-icon-btn[title="Email Templates"],
   .tb-icon-btn[title="Email History"],
   .tb-icon-btn[title="Email Signatures"],
-  .tb-icon-btn[title="Create with Canva"] {
+  .tb-icon-btn[title="Generate Sales Collateral"],
+  .tb-icon-btn[title="Switch Contacts"],
+  #tb-contacts-btn {
     display: none !important;
   }
 
@@ -1288,6 +1335,16 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
     padding: 8px 12px !important;
     padding-top: calc(env(safe-area-inset-top) + 8px) !important;
     gap: 8px !important;
+    height: auto !important;
+    min-height: 56px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Hide scrollbar but keep functionality */
+  #top-bar::-webkit-scrollbar,
+  .top-bar::-webkit-scrollbar {
+    display: none !important;
   }
 
   /* Brand section - compact */
@@ -1328,6 +1385,7 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
     gap: 6px !important;
     margin-left: auto !important;
     flex-shrink: 0 !important;
+    min-width: min-content !important;
   }
 
   /* ALL buttons become icon-only on mobile */
@@ -1375,10 +1433,13 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
     content: '💾' !important;
   }
 
-  /* Hide template/history/signature buttons completely */
+  /* Hide template/history/signature/contacts buttons completely on mobile */
   .tb-icon-btn[title="Email Templates"],
   .tb-icon-btn[title="Email History"],
-  .tb-icon-btn[title="Email Signatures"] {
+  .tb-icon-btn[title="Email Signatures"],
+  .tb-icon-btn[title="Generate Sales Collateral"],
+  .tb-icon-btn[title="Switch Contacts"],
+  #tb-contacts-btn {
     display: none !important;
   }
 
@@ -1485,6 +1546,39 @@ html,body{margin:0;padding:0;height:100%;background:#0d1535}
 
 
 
+
+/* ═══════════════════════════════════════════════════════════
+   CONTACTS DRAWER - Mobile Responsive
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  
+  /* Contacts drawer - full width on mobile */
+  #contacts-drawer {
+    width: 100vw !important;
+    right: -100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  /* CRITICAL: Override the -100vw when drawer is open */
+  #contacts-drawer.open {
+    right: 0 !important;
+  }
+  
+  /* Add safe area padding for iPhone notch */
+  #contacts-drawer .drawer-header {
+    padding-top: calc(env(safe-area-inset-top) + 20px) !important;
+  }
+  
+  #contacts-drawer .drawer-body {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  
+  /* Adjust contact cards for mobile */
+  #contacts-drawer .contact-card {
+    font-size: 14px !important;
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════
    MOBILE TOPBAR FIX - Resolves overlapping icons
@@ -2341,6 +2435,49 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
 .notif-item-time{font-size:9px;color:var(--text-3);margin-top:5px;font-family:var(--fm)}
 .notif-empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px}
 .notif-actions{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+
+/* ═══════════════════════════════════════
+   CONTACTS DRAWER
+═══════════════════════════════════════ */
+.drawer-overlay{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;
+  background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);
+  z-index:2999;opacity:0;pointer-events:none;
+  transition:opacity .25s;
+}
+.drawer-overlay.active{opacity:1;pointer-events:all}
+
+#contacts-drawer{
+  position:fixed;top:0;right:-400px;width:380px;height:100vh;
+  background:var(--white);border-left:1px solid var(--border);
+  box-shadow:-4px 0 24px rgba(0,0,0,.15);
+  z-index:3000;transition:right .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#contacts-drawer.open{right:0}
+
+.drawer-header{
+  padding:20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  background:var(--navy);color:#fff;
+}
+.drawer-title{
+  font-family:var(--fd);font-size:16px;font-weight:600;
+  display:flex;flex-direction:column;gap:4px;
+}
+.drawer-subtitle{
+  font-size:12px;font-weight:400;opacity:0.8;
+}
+.drawer-close{
+  background:rgba(255,255,255,.15);border:none;color:#fff;
+  width:28px;height:28px;border-radius:50%;cursor:pointer;
+  font-size:14px;display:flex;align-items:center;justify-content:center;
+}
+.drawer-close:hover{background:rgba(255,255,255,.28)}
+
+.drawer-body{
+  flex:1;overflow-y:auto;
+}
 
 /* ═══════════════════════════════════════
    TOP BAR ICON BUTTONS (Profiles + Activity)
@@ -3880,6 +4017,11 @@ code{font-family:var(--fm);font-size:11px;background:var(--light);border:1px sol
       </button>
       <button class="tb-icon-btn" onclick="openCanvaPanel()" title="Generate Sales Collateral">
         🎨 Canva
+      </button>
+      
+      <!-- Contacts drawer button -->
+      <button class="tb-icon-btn" id="tb-contacts-btn" onclick="contactsToggleDrawer()" title="Switch Contacts" style="display:none">
+        👥 Contacts (<span id="tb-contacts-count">1</span>)
       </button>
       
       <!-- Firebase sync status -->
@@ -5707,6 +5849,25 @@ textarea.email-body{min-height:320px;line-height:1.7;font-size:14px;resize:verti
 </div>
 
 
+<!-- ══════════════════════════════════════
+     CONTACTS DRAWER
+     ══════════════════════════════════════ -->
+<div class="drawer-overlay" id="contacts-overlay" onclick="contactsCloseDrawer()"></div>
+<div class="drawer" id="contacts-drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">
+      👥 Contacts
+      <span class="drawer-subtitle" id="contacts-company-name"></span>
+    </div>
+    <button class="drawer-close" onclick="contactsCloseDrawer()">✕</button>
+  </div>
+  
+  <div class="drawer-body" id="contacts-body">
+    <!-- Contacts will be rendered here -->
+  </div>
+</div>
+
+
 <script>
 /* ════════════════════════════════════════════════════════
    PROSPECT MODAL EDIT FIX
@@ -7477,10 +7638,22 @@ console.log('[Email Enhancements] Integration loaded');
       { icon: '✍️', label: 'Signatures', onclick: 'openSignatureManager()' },
       { icon: '🎨', label: 'Canva', onclick: 'openCanvaPanel()' }
     ];
+    
+    // Add Contacts if prospect has multiple contacts
+    const p = window._hqProspect;
+    if (p && p.contacts && p.contacts.length > 1) {
+      menuItems.push({ 
+        icon: '👥', 
+        label: 'Contacts (' + p.contacts.length + ')', 
+        onclick: 'contactsToggleDrawer()',
+        dataAttr: 'contacts'
+      });
+    }
 
     menuItems.forEach(item => {
       const menuItem = document.createElement('div');
       menuItem.className = 'tb-dropdown-item';
+      if (item.dataAttr) menuItem.setAttribute('data-menu-item', item.dataAttr);
       menuItem.onclick = function() {
         eval(item.onclick);
         hideDropdown();
@@ -7521,6 +7694,39 @@ console.log('[Email Enhancements] Integration loaded');
       dropdown.classList.remove('show');
     }
   }
+  
+  // Update hamburger menu when prospect changes
+  window.updateHamburgerMenu = function() {
+    if (window.innerWidth > 768) return; // Only on mobile
+    
+    const dropdown = document.getElementById('tb-dropdown');
+    if (!dropdown) return;
+    
+    const p = window._hqProspect;
+    const existingContactsItem = dropdown.querySelector('[data-menu-item="contacts"]');
+    
+    // If prospect has 2+ contacts and item doesn't exist, add it
+    if (p && p.contacts && p.contacts.length > 1 && !existingContactsItem) {
+      const menuItem = document.createElement('div');
+      menuItem.className = 'tb-dropdown-item';
+      menuItem.setAttribute('data-menu-item', 'contacts');
+      menuItem.onclick = function() {
+        if (typeof contactsToggleDrawer === 'function') contactsToggleDrawer();
+        hideDropdown();
+      };
+      menuItem.innerHTML = '<span class="tb-dropdown-item-icon">👥</span><span>Contacts (' + p.contacts.length + ')</span>';
+      dropdown.appendChild(menuItem);
+    }
+    // If prospect has <2 contacts and item exists, remove it
+    else if ((!p || !p.contacts || p.contacts.length < 2) && existingContactsItem) {
+      existingContactsItem.remove();
+    }
+    // If item exists and count changed, update label
+    else if (existingContactsItem && p && p.contacts && p.contacts.length > 1) {
+      const label = existingContactsItem.querySelector('span:last-child');
+      if (label) label.textContent = 'Contacts (' + p.contacts.length + ')';
+    }
+  };
 
   // ══════════════════════════════════════════════════════
   // EMAIL ENGINE AUTO-FILL FROM PROSPECT DATA
@@ -9240,6 +9446,9 @@ console.log('✅ Navigation ready');
 <script src="saleshq-canva-enriched-integration.js"></script>
 <script src="saleshq-outlook-integration-code.js"></script>
 
+<!-- AI Sales Agent Module -->
+<script src="saleshq-ai-agent.js"></script>
+
 <!-- Signature Manager with Image Upload -->
 <script src="signature-manager-with-images.js"></script>
 
@@ -9659,6 +9868,36 @@ window.htmlCollectAllContacts = function() {
 };
 </script>
 
+<!-- AI Sales Agent - Approval Queue Button -->
+<script>
+(function() {
+  // Create floating approval queue button
+  const queueBtn = document.createElement('button');
+  queueBtn.id = 'agent-queue-btn';
+  queueBtn.onclick = function() { if (typeof showApprovalQueue === 'function') showApprovalQueue(); };
+  queueBtn.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:1000;padding:12px 20px;background:var(--navy);color:var(--gold);border:2px solid var(--gold);border-radius:8px;cursor:pointer;font-weight:700;font-family:var(--fb);font-size:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:all 0.2s ease;display:flex;align-items:center;gap:8px';
+  queueBtn.innerHTML = '📋 Agent Queue <span id="agent-approval-badge" style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;display:none"></span>';
+  
+  // Add hover effect
+  queueBtn.onmouseenter = function() {
+    this.style.transform = 'translateY(-2px)';
+    this.style.boxShadow = '0 6px 24px rgba(0,0,0,0.4)';
+  };
+  queueBtn.onmouseleave = function() {
+    this.style.transform = 'translateY(0)';
+    this.style.boxShadow = '0 4px 20px rgba(0,0,0,0.3)';
+  };
+  
+  // Append to body when DOM is ready
+  if (document.body) {
+    document.body.appendChild(queueBtn);
+  } else {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.appendChild(queueBtn);
+    });
+  }
+})();
+</script>
 
 </body>
 

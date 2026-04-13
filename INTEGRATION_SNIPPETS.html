@@ -1,0 +1,261 @@
+<!-- ══════════════════════════════════════════════════════════════════════════
+     AI SALES AGENT - READY-TO-USE CODE SNIPPETS
+     Copy and paste these directly into your Sales HQ files
+     ══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SNIPPET 1: Add to index.html BEFORE </body>
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- AI Sales Agent Module -->
+<script src="saleshq-ai-agent.js"></script>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SNIPPET 2: Add to your top navigation bar in index.html
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Agent Approval Queue Button -->
+<button onclick="showApprovalQueue()" style="position:relative;font-size:11px;padding:8px 16px;background:var(--navy);color:var(--gold);border:1px solid var(--gold);border-radius:5px;cursor:pointer;font-weight:600;font-family:var(--fb)">
+  📋 Agent Queue
+  <span id="agent-approval-badge" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;display:none"></span>
+</button>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SNIPPET 3: Add to <style> section in index.html
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   AI SALES AGENT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agent-controls {
+  animation: agentSlideIn 0.3s ease;
+}
+
+@keyframes agentSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agent-controls button {
+  transition: all 0.2s ease;
+}
+
+.agent-controls button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.agent-controls button:active {
+  transform: translateY(0);
+}
+
+/* Badge pulse animation */
+#agent-approval-badge {
+  animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+</style>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SNIPPET 4: Add to app.js - Prospect Card Rendering
+     Find your hqRenderBanner() or similar function and add this line
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+// EXAMPLE: Where to add agent controls in your prospect card
+function hqRenderBanner() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  const html = `
+    <div class="prospect-card">
+      <!-- Your existing prospect fields -->
+      <div class="company">${p.company}</div>
+      <div class="contact">${p.contact}</div>
+      <div class="pain-points">...</div>
+      
+      <!-- ★★★ ADD THIS LINE ★★★ -->
+      ${typeof renderAgentControls === 'function' ? renderAgentControls(p) : ''}
+      
+      <!-- Rest of your card -->
+    </div>
+  `;
+  
+  // Your rendering logic
+  document.getElementById('hq-banner').innerHTML = html;
+}
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SNIPPET 5: Alternative - Add to Saved Prospects List
+     If you want agent controls on saved prospect cards too
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+// In your renderSavedProspects() function
+function renderSavedProspects() {
+  const prospects = getProspects();
+  
+  const html = prospects.map(p => `
+    <div class="saved-prospect-card">
+      <div class="company">${p.company}</div>
+      <div class="status">${p.status || 'New'}</div>
+      
+      <!-- ★★★ ADD THIS LINE ★★★ -->
+      ${typeof renderAgentControls === 'function' ? renderAgentControls(p) : ''}
+      
+      <button onclick="loadProspect('${p.company}')">View</button>
+    </div>
+  `).join('');
+  
+  document.getElementById('saved-prospects').innerHTML = html;
+}
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TESTING SNIPPET: Console Commands
+     Paste these into browser console to test agent functionality
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+// 1. Check if agent module loaded
+console.log('Agent loaded:', typeof startAgent === 'function');
+
+// 2. View all agent states
+console.log('Agent states:', JSON.parse(localStorage.getItem('bp_agent_states') || '{}'));
+
+// 3. View approval queue
+console.log('Approval queue:', JSON.parse(localStorage.getItem('bp_agent_approval_queue') || '[]'));
+
+// 4. Start agent for current prospect
+if (window._hqProspect) {
+  startAgent(window._hqProspect.company);
+}
+
+// 5. Clear all agent data (reset)
+localStorage.removeItem('bp_agent_states');
+localStorage.removeItem('bp_agent_approval_queue');
+console.log('Agent data cleared');
+
+// 6. Show agent log for a company
+showAgentLog('YOUR_COMPANY_NAME');
+
+// 7. Show approval queue
+showApprovalQueue();
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     DEPLOYMENT CHECKLIST
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+DEPLOYMENT STEPS:
+─────────────────────────────────────────────────────────────────────────────
+
+1. ✅ Upload saleshq-ai-agent.js to your project folder
+   Location: /Users/amjadjaghori/Desktop/Business/beyondpayroll-hcm/
+
+2. ✅ Add <script> tag to index.html (Snippet 1)
+   
+3. ✅ Add approval queue button to navbar (Snippet 2)
+
+4. ✅ Add CSS styles (Snippet 3)
+
+5. ✅ Add agent controls to prospect card rendering (Snippet 4)
+
+6. ✅ Test locally:
+   - Open Sales HQ in browser
+   - Open console (F12)
+   - Run: console.log('Agent loaded:', typeof startAgent === 'function')
+   - Should see: true
+
+7. ✅ Test with a prospect:
+   - Load a prospect
+   - Click "Start Agent"
+   - Check console for AI decision
+   - Verify action executes
+
+8. ✅ Deploy to Cloudflare Pages:
+   cd "/Users/amjadjaghori/Desktop/Business/beyondpayroll-hcm"
+   wrangler pages deploy . --project-name=beyondpayrollportal
+
+9. ✅ Verify live site:
+   - Visit https://beyondpayrollportal.pages.dev
+   - Test agent on a real prospect
+   - Check approval queue works
+
+10. ✅ Monitor first day:
+    - Check browser console for errors
+    - Review agent logs
+    - Approve/reject drafts in queue
+    - Adjust AI prompt if needed
+
+─────────────────────────────────────────────────────────────────────────────
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TROUBLESHOOTING COMMANDS
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+// If agent seems stuck, check state
+const state = JSON.parse(localStorage.getItem('bp_agent_states') || '{}');
+console.log('Current agent states:', state);
+
+// If AI not responding, test API
+fetch('https://sales-hq-api.ajbb705.workers.dev/api/anthropic', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: [{ role: 'user', content: 'Test' }]
+  })
+}).then(r => r.json()).then(d => console.log('API test:', d));
+
+// If approval badge not showing, manually trigger
+updateApprovalBadge();
+
+// View last error
+const states = JSON.parse(localStorage.getItem('bp_agent_states') || '{}');
+Object.values(states).forEach(s => {
+  if (s.lastError) console.log('Error in', s.company, ':', s.lastError);
+});
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     QUICK START GUIDE
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+QUICK START:
+─────────────────────────────────────────────────────────────────────────────
+
+1. Copy saleshq-ai-agent.js to your project folder
+
+2. Add 3 lines to index.html:
+   - Script tag (Snippet 1)
+   - Queue button (Snippet 2)  
+   - CSS (Snippet 3)
+
+3. Add 1 line to app.js:
+   - Agent controls in prospect card (Snippet 4)
+
+4. Deploy:
+   wrangler pages deploy . --project-name=beyondpayrollportal
+
+5. Test:
+   - Open a prospect
+   - Click "Start Agent"
+   - Watch it work!
+
+That's it! 🚀
+
+─────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,463 @@
+<!-- 
+  ═══════════════════════════════════════════════════════════════════
+  SalesHQ iOS CAPACITOR ADDITIONS
+  Add these sections to your existing index.html
+  ═══════════════════════════════════════════════════════════════════
+-->
+
+<!-- 
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 1: Add to <head> section (after existing meta tags)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+<!-- iOS Capacitor Meta Tags -->
+<meta name="format-detection" content="telephone=no">
+<meta name="msapplication-tap-highlight" content="no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- iOS Safe Area Support -->
+<meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- iOS Capacitor Styles -->
+<style>
+/* iOS Native App Enhancements */
+:root {
+  --ion-safe-area-top: env(safe-area-inset-top, 0);
+  --ion-safe-area-bottom: env(safe-area-inset-bottom, 0);
+  --ion-safe-area-left: env(safe-area-inset-left, 0);
+  --ion-safe-area-right: env(safe-area-inset-right, 0);
+}
+
+/* iOS Safe Area Adjustments */
+body.capacitor-ios {
+  padding-top: var(--ion-safe-area-top);
+  padding-bottom: var(--ion-safe-area-bottom);
+  padding-left: var(--ion-safe-area-left);
+  padding-right: var(--ion-safe-area-right);
+}
+
+/* Keyboard adjustments for iOS */
+body.keyboard-open {
+  --keyboard-offset: 0px;
+}
+
+/* Prevent iOS bounce effect on body */
+body.capacitor-ios {
+  overscroll-behavior-y: none;
+}
+
+/* Better iOS input styling */
+input, textarea, select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* iOS haptic feedback visual */
+.haptic-feedback {
+  transition: transform 0.1s ease;
+}
+
+.haptic-feedback:active {
+  transform: scale(0.95);
+}
+
+/* Offline indicator */
+body.offline::before {
+  content: 'No Internet Connection';
+  position: fixed;
+  top: var(--ion-safe-area-top);
+  left: 0;
+  right: 0;
+  background: #ff3b30;
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 999999;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* iOS Native Loading Spinner */
+.ios-spinner {
+  border: 3px solid rgba(200, 168, 75, 0.2);
+  border-top: 3px solid var(--gold);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* iOS Pull-to-Refresh Indicator */
+.ios-pull-refresh {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ios-pull-refresh.active {
+  opacity: 1;
+}
+
+/* iOS-specific button enhancements */
+.ios-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.ios-btn:active {
+  opacity: 0.7;
+  transform: scale(0.98);
+}
+
+/* iOS Share Sheet styling */
+.ios-share-modal {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* iOS Action Sheet */
+.ios-action-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 14px 14px 0 0;
+  padding: 20px;
+  padding-bottom: calc(20px + var(--ion-safe-area-bottom));
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.ios-action-sheet.visible {
+  transform: translateY(0);
+}
+
+/* iOS Toast Notification */
+.ios-toast {
+  position: fixed;
+  bottom: calc(20px + var(--ion-safe-area-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  max-width: 90%;
+  text-align: center;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  z-index: 999999;
+}
+
+.ios-toast.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+</style>
+
+<!-- 
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 2: Add BEFORE closing </body> tag (BEFORE app.js)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+<!-- Capacitor Core JS (Must be loaded first) -->
+<script type="module" src="capacitor.js"></script>
+
+<!-- iOS Native Integration -->
+<script type="module" src="ios-native-integration.js"></script>
+
+<!-- iOS-Specific Utilities -->
+<script>
+/**
+ * iOS Helper Functions
+ * Add these to make your existing code iOS-aware
+ */
+
+// Detect if running in Capacitor iOS app
+window.isCapacitoriOS = () => {
+  return window.Capacitor?.isNativePlatform() && 
+         window.Capacitor?.getPlatform() === 'ios';
+};
+
+// Add haptic feedback to all buttons
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.isCapacitoriOS()) {
+    // Add iOS class to body
+    document.body.classList.add('capacitor-ios');
+    
+    // Add haptic feedback to buttons
+    document.querySelectorAll('button, .btn, [role="button"]').forEach(btn => {
+      btn.classList.add('ios-btn', 'haptic-feedback');
+      btn.addEventListener('click', () => {
+        if (window.iOSApp) {
+          window.iOSApp.haptic('light');
+        }
+      });
+    });
+    
+    // Enhanced form inputs for iOS
+    document.querySelectorAll('input, textarea, select').forEach(input => {
+      input.addEventListener('focus', () => {
+        if (window.iOSApp) {
+          window.iOSApp.haptic('light');
+        }
+      });
+    });
+  }
+});
+
+// iOS Pull-to-Refresh Implementation
+let touchStartY = 0;
+let isPulling = false;
+
+document.addEventListener('touchstart', (e) => {
+  if (window.scrollY === 0 && window.isCapacitoriOS()) {
+    touchStartY = e.touches[0].clientY;
+  }
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (!isPulling && window.scrollY === 0 && window.isCapacitoriOS()) {
+    const touchY = e.touches[0].clientY;
+    const pullDistance = touchY - touchStartY;
+    
+    if (pullDistance > 80) {
+      isPulling = true;
+      // Trigger refresh
+      if (window.refreshData) {
+        window.refreshData();
+      }
+      setTimeout(() => {
+        isPulling = false;
+      }, 1000);
+    }
+  }
+});
+
+// iOS Share Function (integrates with existing share buttons)
+window.iOSShare = async (title, text, url) => {
+  if (window.isCapacitoriOS() && window.iOSApp) {
+    await window.iOSApp.share(title, text, url);
+  } else if (navigator.share) {
+    await navigator.share({ title, text, url });
+  } else {
+    // Fallback to copy to clipboard
+    navigator.clipboard.writeText(url);
+    alert('Link copied to clipboard!');
+  }
+};
+
+// iOS Photo Capture (for prospect photos, etc.)
+window.iOSTakePhoto = async () => {
+  if (window.isCapacitoriOS() && window.iOSApp) {
+    return await window.iOSApp.takePhoto();
+  }
+  return null;
+};
+
+// iOS Photo Library (choose existing photo)
+window.iOSChoosePhoto = async () => {
+  if (window.isCapacitoriOS() && window.iOSApp) {
+    return await window.iOSApp.choosePhoto();
+  }
+  return null;
+};
+
+// iOS Toast Notification
+window.iOSToast = async (message, type = 'info') => {
+  if (window.isCapacitoriOS() && window.iOSApp) {
+    await window.iOSApp.showToast(message, type);
+  } else {
+    // Fallback toast
+    const toast = document.createElement('div');
+    toast.className = 'ios-toast visible';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
+  }
+};
+
+// iOS Local Notification (for reminders, follow-ups, etc.)
+window.iOSScheduleNotification = async (title, body, date) => {
+  if (window.isCapacitoriOS() && window.iOSApp) {
+    await window.iOSApp.scheduleNotification(title, body, { at: new Date(date) });
+  }
+};
+
+// iOS Save Preference (for user settings)
+window.iOSSavePreference = async (key, value) => {
+  if (window.isCapacitoriOS() && window.iOSApp) {
+    await window.iOSApp.setPreference(key, value);
+  } else {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+};
+
+// iOS Get Preference
+window.iOSGetPreference = async (key) => {
+  if (window.isCapacitoriOS() && window.iOSApp) {
+    return await window.iOSApp.getPreference(key);
+  } else {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : null;
+  }
+};
+
+// Enhance existing app.js functions for iOS
+if (window.isCapacitoriOS()) {
+  console.log('🍎 Running in iOS Native App Mode');
+  
+  // Override any web-specific behavior for native iOS
+  // Example: Disable web-based notifications, use native instead
+  if (window.Notification) {
+    window.Notification = undefined; // Force native notifications
+  }
+}
+</script>
+
+<!-- 
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SECTION 3: Integration Examples for Existing Features
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-->
+
+<script>
+/**
+ * EXAMPLE: Integrate iOS features with existing SalesHQ code
+ * 
+ * Add these snippets to your app.js to enhance with iOS native features
+ */
+
+// Example 1: Add haptic feedback to prospect cards
+function onProspectCardClick(prospectId) {
+  if (window.isCapacitoriOS()) {
+    window.iOSApp?.haptic('medium');
+  }
+  // Your existing code...
+  loadProspectDetails(prospectId);
+}
+
+// Example 2: Native share for prospects
+async function shareProspect(prospect) {
+  const shareText = `Check out ${prospect.company}: ${prospect.name}`;
+  const shareUrl = `https://beyondpayroll.net/prospect/${prospect.id}`;
+  
+  if (window.isCapacitoriOS()) {
+    await window.iOSShare('Prospect', shareText, shareUrl);
+  } else {
+    // Web fallback
+    if (navigator.share) {
+      await navigator.share({ title: 'Prospect', text: shareText, url: shareUrl });
+    }
+  }
+}
+
+// Example 3: Take photo for prospect profile
+async function addProspectPhoto(prospectId) {
+  let photoData;
+  
+  if (window.isCapacitoriOS()) {
+    photoData = await window.iOSTakePhoto();
+  } else {
+    // Web fallback - file input
+    photoData = await webFileUpload();
+  }
+  
+  if (photoData) {
+    await uploadProspectPhoto(prospectId, photoData);
+  }
+}
+
+// Example 4: Schedule follow-up notification
+async function scheduleFollowUp(prospect, date) {
+  const title = `Follow up with ${prospect.company}`;
+  const body = `Contact ${prospect.name} at ${prospect.email}`;
+  
+  if (window.isCapacitoriOS()) {
+    await window.iOSScheduleNotification(title, body, date);
+    await window.iOSToast('Reminder scheduled!');
+  } else {
+    // Web notification fallback
+    if ('Notification' in window && Notification.permission === 'granted') {
+      // Web notification logic
+    }
+  }
+}
+
+// Example 5: Save user preferences natively
+async function saveUserSettings(settings) {
+  if (window.isCapacitoriOS()) {
+    await window.iOSSavePreference('userSettings', settings);
+  } else {
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+  }
+  await window.iOSToast('Settings saved!');
+}
+
+// Example 6: Success feedback with haptic
+async function showSuccess(message) {
+  if (window.isCapacitoriOS()) {
+    await window.iOSApp?.haptic('heavy');
+    await window.iOSToast(message, 'info');
+  } else {
+    // Web toast or alert
+    alert(message);
+  }
+}
+
+// Example 7: Handle app resume (refresh data when app comes to foreground)
+window.addEventListener('app-resumed', () => {
+  console.log('App resumed - refreshing data');
+  refreshDashboardData();
+  refreshProspects();
+});
+
+// Example 8: Offline detection
+window.addEventListener('offline', () => {
+  document.body.classList.add('offline');
+  window.iOSToast('You are offline', 'warning');
+});
+
+window.addEventListener('online', () => {
+  document.body.classList.remove('offline');
+  window.iOSToast('Back online!', 'info');
+  syncOfflineChanges();
+});
+</script>

@@ -58,6 +58,328 @@ function showToast(msg,isErr=false){
   clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',3200);
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+//  LINKEDIN JOB CHANGE MONITOR
+// ══════════════════════════════════════════════════════════════════════════
+
+// Generate likely LinkedIn URL patterns based on name
+function generateLinkedInUrls(firstName, lastName, company) {
+  if (!firstName || !lastName) return [];
+  
+  const first = firstName.toLowerCase().trim().replace(/[^a-z]/g, '');
+  const last = lastName.toLowerCase().trim().replace(/[^a-z]/g, '');
+  
+  // Common LinkedIn URL patterns (in order of likelihood)
+  const patterns = [
+    `linkedin.com/in/${first}-${last}`,           // john-smith (most common)
+    `linkedin.com/in/${first}${last}`,            // johnsmith
+    `linkedin.com/in/${first}-${last}-`,          // john-smith- (with trailing dash)
+    `linkedin.com/in/${first[0]}-${last}`,        // j-smith
+    `linkedin.com/in/${first}-${last[0]}`,        // john-s
+    `linkedin.com/in/${first}${last[0]}`,         // johns
+    `linkedin.com/in/${first[0]}${last}`,         // jsmith
+  ];
+  
+  // Add company-specific variants if company provided
+  if (company) {
+    const co = company.toLowerCase().trim().replace(/[^a-z]/g, '').substring(0, 10);
+    patterns.push(`linkedin.com/in/${first}-${last}-${co}`);
+    patterns.push(`linkedin.com/in/${first}${last}${co}`);
+  }
+  
+  return patterns;
+}
+
+// Auto-find LinkedIn profile URL
+window.autoFindLinkedIn = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  // Get contact info
+  const activeIdx = window._selectedContactIdx || 0;
+  const activeContact = p.contacts && p.contacts[activeIdx] ? p.contacts[activeIdx] : null;
+  
+  let firstName = '';
+  let lastName = '';
+  
+  if (activeContact) {
+    firstName = activeContact.firstName || '';
+    lastName = activeContact.lastName || '';
+    
+    // If no structured name, try parsing fullName
+    if (!firstName && !lastName && activeContact.fullName) {
+      const parts = activeContact.fullName.trim().split(' ');
+      firstName = parts[0] || '';
+      lastName = parts[parts.length - 1] || '';
+    }
+  } else if (p.contact) {
+    // Fallback to legacy contact field
+    const parts = p.contact.trim().split(' ');
+    firstName = parts[0] || '';
+    lastName = parts[parts.length - 1] || '';
+  }
+  
+  if (!firstName || !lastName) {
+    showToast('Need first & last name to guess LinkedIn URL', true);
+    return;
+  }
+  
+  const urls = generateLinkedInUrls(firstName, lastName, p.company);
+  
+  if (urls.length === 0) {
+    showToast('Could not generate LinkedIn URLs', true);
+    return;
+  }
+  
+  // Show modal with URL options
+  const modal = `
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center" onclick="this.remove()">
+      <div style="background:#fff;border-radius:8px;padding:20px;max-width:500px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.15)" onclick="event.stopPropagation()">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">🔍 Predicted LinkedIn URLs</div>
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:4px">Based on: ${firstName} ${lastName}${p.company ? ' @ ' + p.company : ''}</div>
+        <div style="font-size:10px;color:#f59e0b;background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;padding:6px 8px;margin-bottom:12px">💡 Click "Use This" to auto-fill, or "Open" to verify first</div>
+        <div style="max-height:300px;overflow-y:auto;margin-bottom:16px">
+          ${urls.map((url, idx) => `
+            <div style="display:flex;gap:6px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:5px;margin-bottom:6px;background:var(--off-white)">
+              <div style="flex:1;font-size:11px;color:var(--text-2);font-family:var(--fm);word-break:break-all">${url}</div>
+              <button onclick="selectLinkedInUrl('${url}');this.closest('[style*=fixed]').remove()" style="font-size:9px;font-weight:700;padding:5px 10px;border-radius:4px;border:none;background:#10b981;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">Use This</button>
+              <button onclick="window.open('https://${url}', '_blank')" style="font-size:9px;font-weight:700;padding:5px 10px;border-radius:4px;border:1px solid #0077b5;background:#fff;color:#0077b5;cursor:pointer;font-family:var(--fb);white-space:nowrap">Open</button>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;font-size:10px;font-weight:700;padding:8px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--text-2);cursor:pointer;font-family:var(--fb)">Cancel</button>
+          <a href="https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(firstName + ' ' + lastName + (p.company ? ' ' + p.company : ''))}" target="_blank" style="flex:1;font-size:10px;font-weight:700;padding:8px;border-radius:5px;border:none;background:#0077b5;color:#fff;cursor:pointer;font-family:var(--fb);text-align:center;text-decoration:none" onclick="this.closest('[style*=fixed]').remove()">🔍 Search LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modal);
+};
+
+window.selectLinkedInUrl = function(url) {
+  const p = window._hqProspect;
+  if (!p) return;
+  const linkedin = initLinkedInTracking(p);
+  linkedin.profileUrl = url;
+  
+  // Update the input field
+  const input = document.getElementById('li-profile-url');
+  if (input) input.value = url;
+  
+  window.tbMarkUnsaved();
+  showToast('✓ LinkedIn URL set - verify by opening it');
+  if (typeof hqRenderBanner === 'function') hqRenderBanner();
+};
+
+// Auto-find LinkedIn from Day 3 modal
+window.autoFindLinkedInFromModal = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  // Get contact info
+  const activeIdx = window._selectedContactIdx || 0;
+  const activeContact = p.contacts && p.contacts[activeIdx] ? p.contacts[activeIdx] : null;
+  
+  let firstName = '';
+  let lastName = '';
+  
+  if (activeContact) {
+    firstName = activeContact.firstName || '';
+    lastName = activeContact.lastName || '';
+    
+    if (!firstName && !lastName && activeContact.fullName) {
+      const parts = activeContact.fullName.trim().split(' ');
+      firstName = parts[0] || '';
+      lastName = parts[parts.length - 1] || '';
+    }
+  } else if (p.contact) {
+    const parts = p.contact.trim().split(' ');
+    firstName = parts[0] || '';
+    lastName = parts[parts.length - 1] || '';
+  }
+  
+  if (!firstName || !lastName) {
+    showToast('Need first & last name to guess LinkedIn URL', true);
+    return;
+  }
+  
+  const urls = generateLinkedInUrls(firstName, lastName, p.company);
+  
+  if (urls.length === 0) {
+    showToast('Could not generate LinkedIn URLs', true);
+    return;
+  }
+  
+  // Build URL selection modal
+  const modal = `
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10001;display:flex;align-items:center;justify-content:center" onclick="this.remove()">
+      <div style="background:#fff;border-radius:8px;padding:20px;max-width:500px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.15)" onclick="event.stopPropagation()">
+        <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">🔍 Predicted LinkedIn URLs</div>
+        <div style="font-size:11px;color:var(--text-2);margin-bottom:12px">Based on: ${firstName} ${lastName}${p.company ? ' @ ' + p.company : ''}</div>
+        <div style="max-height:300px;overflow-y:auto;margin-bottom:16px">
+          ${urls.map((url, idx) => `
+            <div style="display:flex;gap:8px;align-items:center;padding:8px;border:1px solid var(--border);border-radius:5px;margin-bottom:6px;background:var(--off-white)">
+              <div style="flex:1;font-size:11px;color:var(--text-2);font-family:var(--fm);word-break:break-all">${url}</div>
+              <button onclick="window.open('https://${url}', '_blank');this.closest('[style*=fixed]').remove()" style="font-size:9px;font-weight:700;padding:5px 10px;border-radius:4px;border:none;background:#0077b5;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">Open</button>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="this.closest('[style*=fixed]').remove()" style="flex:1;font-size:10px;font-weight:700;padding:8px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--text-2);cursor:pointer;font-family:var(--fb)">Cancel</button>
+          <a href="https://www.linkedin.com/search/results/all/?keywords=${encodeURIComponent(firstName + ' ' + lastName + (p.company ? ' ' + p.company : ''))}" target="_blank" style="flex:1;font-size:10px;font-weight:700;padding:8px;border-radius:5px;border:none;background:#0077b5;color:#fff;cursor:pointer;font-family:var(--fb);text-align:center;text-decoration:none" onclick="this.closest('[style*=fixed]').remove()">🔍 Search LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modal);
+};
+
+// Initialize LinkedIn tracking for a prospect (if not already present)
+function initLinkedInTracking(prospect) {
+  if (!prospect.linkedin) {
+    prospect.linkedin = {
+      profileUrl: '',
+      currentTitle: prospect.title || '',
+      currentCompany: prospect.company || '',
+      lastVerified: null,
+      lastChecked: null,
+      autoMonitor: false,
+      changeHistory: [],
+      pendingChange: null // Stores detected change awaiting user confirmation
+    };
+  }
+  return prospect.linkedin;
+}
+
+// Check if LinkedIn data needs verification (90+ days old)
+function linkedInNeedsVerification(linkedin) {
+  if (!linkedin || !linkedin.lastVerified) return true;
+  const lastVerified = new Date(linkedin.lastVerified);
+  const daysSince = (Date.now() - lastVerified.getTime()) / (1000 * 60 * 60 * 24);
+  return daysSince >= 90;
+}
+
+// Log job change in history
+function logJobChange(prospect, newTitle, newCompany) {
+  const linkedin = initLinkedInTracking(prospect);
+  const change = {
+    date: new Date().toISOString(),
+    fromTitle: linkedin.currentTitle,
+    fromCompany: linkedin.currentCompany,
+    toTitle: newTitle,
+    toCompany: newCompany
+  };
+  linkedin.changeHistory.unshift(change);
+  linkedin.currentTitle = newTitle;
+  linkedin.currentCompany = newCompany;
+  linkedin.lastVerified = new Date().toISOString();
+  linkedin.pendingChange = null;
+  
+  // Update prospect's main title/company if different
+  if (prospect.title !== newTitle) prospect.title = newTitle;
+  
+  return change;
+}
+
+// Background checker: searches web for job change signals
+async function checkLinkedInJobChange(prospect) {
+  const linkedin = initLinkedInTracking(prospect);
+  if (!linkedin.autoMonitor || !linkedin.currentCompany) return null;
+  
+  linkedin.lastChecked = new Date().toISOString();
+  
+  const name = prospect.contact || '';
+  const currentCo = linkedin.currentCompany;
+  
+  if (!name || !currentCo) return null;
+  
+  try {
+    // Search for job change signals
+    const query = `"${name}" ${currentCo} LinkedIn`;
+    const response = await fetch('https://www.googleapis.com/customsearch/v1?key=YOUR_API_KEY&cx=YOUR_CX&q=' + encodeURIComponent(query));
+    const data = await response.json();
+    
+    // Look for job change indicators in results
+    const signals = ['former', 'ex-', 'left', 'joined', 'appointed', 'new role at', 'promoted to'];
+    const results = data.items || [];
+    
+    for (const result of results) {
+      const text = (result.title + ' ' + result.snippet).toLowerCase();
+      const hasSignal = signals.some(sig => text.includes(sig));
+      const hasDifferentCompany = !text.includes(currentCo.toLowerCase());
+      
+      if (hasSignal && hasDifferentCompany) {
+        // Potential job change detected!
+        return {
+          detected: true,
+          source: result.link,
+          snippet: result.snippet,
+          detectedAt: new Date().toISOString()
+        };
+      }
+    }
+    
+    return { detected: false };
+  } catch (error) {
+    console.error('LinkedIn check error:', error);
+    return null;
+  }
+}
+
+// Run background checks for all prospects with autoMonitor enabled
+async function runLinkedInBackgroundChecks() {
+  const prospects = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
+  const toCheck = prospects.filter(p => {
+    const li = p.linkedin;
+    if (!li || !li.autoMonitor) return false;
+    // Check if we haven't checked in last 24 hours
+    if (!li.lastChecked) return true;
+    const hoursSince = (Date.now() - new Date(li.lastChecked).getTime()) / (1000 * 60 * 60);
+    return hoursSince >= 24;
+  });
+  
+  let changesDetected = 0;
+  for (const prospect of toCheck) {
+    const result = await checkLinkedInJobChange(prospect);
+    if (result && result.detected) {
+      prospect.linkedin.pendingChange = result;
+      changesDetected++;
+      // Create alert notification
+      notifAdd('linkedin', '🚨 Job Change Detected: ' + prospect.contact, 
+               prospect.company + ' → Verify on LinkedIn', 'LINKEDIN');
+    }
+  }
+  
+  if (changesDetected > 0) {
+    localStorage.setItem('bp_prospects', JSON.stringify(prospects));
+    showToast(`🚨 ${changesDetected} potential job change${changesDetected > 1 ? 's' : ''} detected`);
+  }
+  
+  return changesDetected;
+}
+
+// Initialize background checker on page load (check once per day)
+(function initLinkedInMonitor() {
+  const lastCheck = localStorage.getItem('li_last_background_check');
+  const shouldCheck = !lastCheck || (Date.now() - parseInt(lastCheck)) > (24 * 60 * 60 * 1000);
+  
+  if (shouldCheck) {
+    setTimeout(() => {
+      runLinkedInBackgroundChecks().then(() => {
+        localStorage.setItem('li_last_background_check', Date.now().toString());
+      });
+    }, 5000); // Run 5 seconds after page load
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════════════════
+//  END LINKEDIN JOB CHANGE MONITOR
+// ══════════════════════════════════════════════════════════════════════════
+
+
 // ── UI HELPERS ──
 function switchMode(mode){
   document.getElementById('form-signin').style.display=mode==='signin'?'block':'none';
@@ -1226,13 +1548,15 @@ function getHQHTML(session){
 
         <div class="ec-mto">
           <div class="ec-mto-hdr">
-            <span style="font-size:22px;flex-shrink:0">📧</span>
+            <span style="font-size:22px;flex-shrink:0">📋</span>
             <div>
-              <div style="font-weight:700;font-size:14px;margin-bottom:2px">Open in Outlook</div>
-              <div style="font-size:11px;color:var(--text-3);line-height:1.55">One tap launches Outlook with <strong style="color:var(--text)">To, Subject & Body pre-filled</strong>. Just review and hit Send.</div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:2px">Copy to Clipboard</div>
+              <div style="font-size:11px;color:var(--text-3);line-height:1.55">One click copies <strong style="color:var(--text)">To, Subject & Body</strong> — paste into your work email client.</div>
             </div>
           </div>
-          <button class="ec-mto-btn" id="ec-mto-btn" onclick="ecFireMailto()"><span style="font-size:16px">✉️</span><span id="ec-mto-lbl">Open in Outlook — Pre-filled & Ready</span></button>
+          <div style="display:flex;gap:10px;margin-bottom:0">
+            <button class="ec-mto-btn" onclick="ecCopyEmail()" style="flex:1;background:#10b981;border-color:#059669"><span style="font-size:16px">📋</span><span>Copy Email to Clipboard</span></button>
+          </div>
           <div class="ec-tip">
             <strong style="color:var(--gold);font-size:9px;letter-spacing:1.5px;text-transform:uppercase">⚡ First time on iPhone?</strong><br>
             If it opens Apple Mail instead: <strong>Settings → Outlook → Default Mail App → Outlook</strong>.
@@ -1720,6 +2044,27 @@ function initHQ(session){
   window._ecActiveIdx=0;
   if(window._hqProspect) ecSaveStatuses(window._hqProspect.company);
   window._ecStatuses={};window._ecNotes={};window._ecLaunched={};window._ecChecks={};
+  
+  // ── Segmented Intelligence Storage ──
+  // Stores competitor intel broken down by category for targeted email generation
+  window._intelSegments = {
+    news: [],          // Press releases, media coverage, exec changes
+    product: [],       // Feature launches, integrations, product updates
+    pricing: [],       // Price changes, promotions, packaging updates
+    marketing: [],     // Campaigns, messaging, events, content themes
+    activity: [],      // Hiring, funding, customer wins, market movement
+    technical: []      // API capabilities, integrations, security, compliance
+  };
+  
+  // Segment metadata tracks refresh status and data source
+  window._intelSegmentMeta = {
+    news: { lastRefresh: null, source: 'rss', autoRefresh: true },
+    product: { lastRefresh: null, source: 'manual', autoRefresh: false },
+    pricing: { lastRefresh: null, source: 'manual', autoRefresh: false },
+    marketing: { lastRefresh: null, source: 'manual', autoRefresh: false },
+    activity: { lastRefresh: null, source: 'mixed', autoRefresh: false },
+    technical: { lastRefresh: null, source: 'static', autoRefresh: false }
+  };
 }
 
 window.hqTab=function(tab){
@@ -2766,16 +3111,33 @@ function sreRefresh(){
   const p=window._hqProspect;
   const status=document.getElementById('sre-status');
   if(!status)return; // HQ not yet rendered
+  
+  // Get ACTIVE contact for display
+  const activeContact = window.getActiveContact ? window.getActiveContact() : null;
+  const contactName = activeContact ? (activeContact.fullName || [activeContact.firstName, activeContact.lastName].filter(Boolean).join(' ') || '—') : '—';
+  
   const fields=[
-    ['sre-company','company'],['sre-contact','contact'],['sre-persona','persona'],
+    ['sre-company','company'],['sre-persona','persona'],
     ['sre-industry','industry'],['sre-state','state'],['sre-headcount','headcount']
   ];
   if(!p){
     status.innerHTML='<span class="sre-dot"></span><span>No Prospect</span>';
     status.classList.remove('loaded');
+    // Update contact field separately
+    const contactEl=document.getElementById('sre-contact');
+    if(contactEl){contactEl.textContent='—';contactEl.classList.add('empty');}
     fields.forEach(([id])=>{const el=document.getElementById(id);if(el){el.textContent='—';el.classList.add('empty');}});
     return;
   }
+  
+  // Update contact field with ACTIVE contact
+  const contactEl=document.getElementById('sre-contact');
+  if(contactEl){
+    if(contactName&&contactName!=='—'){contactEl.textContent=contactName;contactEl.classList.remove('empty');}
+    else{contactEl.textContent='—';contactEl.classList.add('empty');}
+  }
+  
+  // Update other fields
   fields.forEach(([id,key])=>{
     const el=document.getElementById(id);
     if(!el)return;
@@ -5015,16 +5377,263 @@ function hqRenderBanner(){
   const pf=document.getElementById('hq-pf');if(!pf)return;pf.style.display='grid';
   const tc=p.track==='WFN'?'wfn':'ts';
   const tl=p.track==='WFN'?'WorkforceNow':'TotalSource PEO';
+  
+  // Get ACTIVE contact (not primary)
+  const activeIdx = window._selectedContactIdx || 0;
+  const activeContact = p.contacts && p.contacts[activeIdx] ? p.contacts[activeIdx] : null;
+  const contactName = activeContact ? (activeContact.fullName || [activeContact.firstName, activeContact.lastName].filter(Boolean).join(' ') || '—') : '—';
+  
   pf.innerHTML=`
     <div class="psf-item"><div class="psf-lbl">Company</div><div class="psf-val co">${p.company}</div></div>
-    <div class="psf-item"><div class="psf-lbl">Contact</div><div class="psf-val">${p.contact||'—'}</div></div>
+    <div class="psf-item"><div class="psf-lbl">Contact</div><div class="psf-val">${contactName}</div></div>
     <div class="psf-item"><div class="psf-lbl">Persona</div><div class="psf-val" style="font-size:11px">${p.persona}</div></div>
     <div class="psf-item"><div class="psf-lbl">Industry</div><div class="psf-val">${p.industry||'—'}</div></div>
     <div class="psf-item"><div class="psf-lbl">State / HC</div><div class="psf-val">${(p.state||'—')+' · '+(p.headcount||'—')+' EEs'}</div></div>
     <div class="psf-item"><div class="psf-lbl">Track</div><div class="psf-val ${tc}">${tl}</div></div>
     <div class="psf-item" style="border-right:none"><button onclick="openModal()" style="background:var(--off-white);border:1px solid var(--border);color:var(--text-2);border-radius:5px;padding:4px 10px;font-size:10px;cursor:pointer;font-family:var(--fb);font-weight:600">✏ Edit</button></div>
   `;
+  
+  // Add LinkedIn monitor section right after profile grid
+  const linkedInSection = document.getElementById('hq-linkedin-monitor');
+  if (linkedInSection) {
+    linkedInSection.innerHTML = renderLinkedInMonitor();
+  } else {
+    // Create LinkedIn monitor container if it doesn't exist
+    const parent = pf.parentElement;
+    if (parent) {
+      let liDiv = document.createElement('div');
+      liDiv.id = 'hq-linkedin-monitor';
+      liDiv.innerHTML = renderLinkedInMonitor();
+      // Insert after the profile grid
+      if (pf.nextSibling) {
+        parent.insertBefore(liDiv, pf.nextSibling);
+      } else {
+        parent.appendChild(liDiv);
+      }
+    }
+  }
+  
+  // Add AI Sales Agent controls after LinkedIn monitor
+  const agentSection = document.getElementById('hq-agent-controls');
+  if (agentSection) {
+    agentSection.innerHTML = typeof renderAgentControls === 'function' ? renderAgentControls(p) : '';
+  } else {
+    // Create agent controls container if it doesn't exist
+    const parent = pf.parentElement;
+    if (parent && typeof renderAgentControls === 'function') {
+      let agentDiv = document.createElement('div');
+      agentDiv.id = 'hq-agent-controls';
+      agentDiv.innerHTML = renderAgentControls(p);
+      // Insert after LinkedIn monitor or profile grid
+      const liSection = document.getElementById('hq-linkedin-monitor');
+      if (liSection && liSection.nextSibling) {
+        parent.insertBefore(agentDiv, liSection.nextSibling);
+      } else if (pf.nextSibling) {
+        parent.insertBefore(agentDiv, pf.nextSibling);
+      } else {
+        parent.appendChild(agentDiv);
+      }
+    }
+  }
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  LINKEDIN JOB CHANGE MONITOR UI
+// ══════════════════════════════════════════════════════════════════════════
+
+function renderLinkedInMonitor() {
+  const p = window._hqProspect;
+  if (!p) return '';
+  
+  const linkedin = initLinkedInTracking(p);
+  const needsVerif = linkedInNeedsVerification(linkedin);
+  const lastVerifiedText = linkedin.lastVerified 
+    ? new Date(linkedin.lastVerified).toLocaleDateString() 
+    : 'Never';
+  const daysSinceVerif = linkedin.lastVerified 
+    ? Math.floor((Date.now() - new Date(linkedin.lastVerified).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  
+  const statusColor = linkedin.pendingChange ? '#dc2626' : (needsVerif ? '#f59e0b' : '#10b981');
+  const statusIcon = linkedin.pendingChange ? '🚨' : (needsVerif ? '⚠️' : '🟢');
+  const statusText = linkedin.pendingChange ? 'Change Detected' : (needsVerif ? `Verify (${daysSinceVerif}d ago)` : 'Active');
+  
+  return `
+    <div style="margin-top:20px;padding:16px;background:#fff;border:1px solid var(--border);border-radius:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.5px">💼 LinkedIn Job Change Monitor</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:10px;font-weight:600;color:${statusColor}">${statusIcon} ${statusText}</span>
+        </div>
+      </div>
+      
+      ${linkedin.pendingChange ? `
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:10px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:#dc2626;margin-bottom:6px">🚨 Potential Job Change Detected</div>
+          <div style="font-size:10px;color:var(--text-2);line-height:1.5;margin-bottom:8px">${linkedin.pendingChange.snippet}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="confirmLinkedInChange()" style="flex:1;font-size:9px;font-weight:700;padding:5px 10px;border-radius:4px;border:none;background:#dc2626;color:#fff;cursor:pointer;font-family:var(--fb)">✓ Confirm Change</button>
+            <button onclick="dismissLinkedInChange()" style="flex:1;font-size:9px;font-weight:700;padding:5px 10px;border-radius:4px;border:1px solid #dc2626;background:#fff;color:#dc2626;cursor:pointer;font-family:var(--fb)">✗ False Alarm</button>
+          </div>
+        </div>
+      ` : ''}
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <div style="font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Current Title</div>
+          <div style="font-size:11px;color:var(--text);font-weight:500">${linkedin.currentTitle || '—'}</div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Current Company</div>
+          <div style="font-size:11px;color:var(--text);font-weight:500">${linkedin.currentCompany || '—'}</div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom:12px">
+        <div style="font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">LinkedIn Profile</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <input type="text" id="li-profile-url" value="${linkedin.profileUrl || ''}" placeholder="linkedin.com/in/name" 
+                 style="flex:1;font-size:10px;padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-family:var(--fm)"
+                 onchange="updateLinkedInUrl(this.value)">
+          ${linkedin.profileUrl ? `<a href="${linkedin.profileUrl.startsWith('http') ? linkedin.profileUrl : 'https://' + linkedin.profileUrl}" target="_blank" style="font-size:9px;font-weight:700;padding:6px 10px;border-radius:4px;border:1px solid #0077b5;background:#fff;color:#0077b5;text-decoration:none;white-space:nowrap;font-family:var(--fb)">🔗 Open</a>` : ''}
+        </div>
+        ${!linkedin.profileUrl ? `
+          <button onclick="autoFindLinkedIn()" style="width:100%;font-size:9px;font-weight:700;padding:7px 12px;border-radius:5px;border:1px solid #0077b5;background:#f0f9ff;color:#0077b5;cursor:pointer;font-family:var(--fb)">⚡ Auto-Find LinkedIn Profile</button>
+        ` : ''}
+      </div>
+      
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button onclick="manualLinkedInCheck()" style="flex:1;font-size:9px;font-weight:700;padding:7px 12px;border-radius:5px;border:1px solid #3b82f6;background:#fff;color:#3b82f6;cursor:pointer;font-family:var(--fb)">🔍 Check for Job Change</button>
+        <button onclick="toggleLinkedInAutoMonitor()" style="flex:1;font-size:9px;font-weight:700;padding:7px 12px;border-radius:5px;border:none;background:${linkedin.autoMonitor ? '#10b981' : 'var(--off-white)'};color:${linkedin.autoMonitor ? '#fff' : 'var(--text-2)'};cursor:pointer;font-family:var(--fb)">⚡ Auto-Monitor: ${linkedin.autoMonitor ? 'ON' : 'OFF'}</button>
+      </div>
+      
+      <div style="font-size:9px;color:var(--text-3);text-align:center;margin-bottom:8px">Last verified: ${lastVerifiedText}${linkedin.lastChecked ? ` · Last checked: ${new Date(linkedin.lastChecked).toLocaleDateString()}` : ''}</div>
+      
+      ${linkedin.changeHistory && linkedin.changeHistory.length > 0 ? `
+        <div style="border-top:1px solid var(--border);padding-top:10px">
+          <div style="font-size:9px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Change History</div>
+          ${linkedin.changeHistory.slice(0, 3).map(change => `
+            <div style="font-size:10px;color:var(--text-2);padding:4px 0;border-bottom:1px solid var(--off-white)">
+              <div style="font-weight:600">${change.toTitle} @ ${change.toCompany}</div>
+              <div style="font-size:9px;color:var(--text-3)">From: ${change.fromTitle} @ ${change.fromCompany} · ${new Date(change.date).toLocaleDateString()}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+// LinkedIn UI action handlers
+window.updateLinkedInUrl = function(url) {
+  const p = window._hqProspect;
+  if (!p) return;
+  const linkedin = initLinkedInTracking(p);
+  
+  // Validate URL - reject search URLs
+  if (url && url.includes('/search/')) {
+    showToast('⚠️ That\'s a search URL - paste the profile URL instead', true);
+    document.getElementById('li-profile-url').value = '';
+    return;
+  }
+  
+  linkedin.profileUrl = url;
+  window.tbMarkUnsaved();
+  if (typeof hqRenderBanner === 'function') hqRenderBanner();
+};
+
+window.toggleLinkedInAutoMonitor = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  const linkedin = initLinkedInTracking(p);
+  linkedin.autoMonitor = !linkedin.autoMonitor;
+  window.tbMarkUnsaved();
+  showToast(linkedin.autoMonitor ? '⚡ Auto-monitoring enabled' : 'Auto-monitoring disabled');
+  // Re-render to update UI
+  if (typeof hqRenderBanner === 'function') hqRenderBanner();
+};
+
+window.manualLinkedInCheck = function() {
+  const p = window._hqProspect;
+  if (!p) return;
+  
+  // Read URL directly from input field (in case user just pasted and didn't blur)
+  const inputField = document.getElementById('li-profile-url');
+  const inputUrl = inputField ? inputField.value.trim() : '';
+  
+  // Also get saved URL
+  const linkedin = initLinkedInTracking(p);
+  const profileUrl = inputUrl || linkedin.profileUrl;
+  
+  if (!profileUrl) {
+    showToast('Add LinkedIn URL first', true);
+    return;
+  }
+  
+  // If input has a URL but it's not saved yet, save it now
+  if (inputUrl && inputUrl !== linkedin.profileUrl) {
+    updateLinkedInUrl(inputUrl);
+  }
+  
+  // Open LinkedIn profile in new tab
+  const url = profileUrl.startsWith('http') ? profileUrl : 'https://' + profileUrl;
+  window.open(url, '_blank');
+  
+  // Show update prompt after a delay
+  setTimeout(() => {
+    const newTitle = prompt('Did their job change?\n\nIf YES, enter their NEW TITLE:\n(or click Cancel if no change)', linkedin.currentTitle || '');
+    if (newTitle === null) {
+      // User clicked cancel = no change
+      linkedin.lastVerified = new Date().toISOString();
+      window.tbMarkUnsaved();
+      showToast('✓ Verified - no change');
+      if (typeof hqRenderBanner === 'function') hqRenderBanner();
+    } else if (newTitle && newTitle !== linkedin.currentTitle) {
+      // Job changed!
+      const newCompany = prompt('Enter their NEW COMPANY:', p.company || '');
+      if (newCompany) {
+        logJobChange(p, newTitle, newCompany);
+        window.tbMarkUnsaved();
+        showToast('🚨 Job change logged!');
+        notifAdd('linkedin', '🚨 Job Change Logged: ' + p.contact, 
+                 `${linkedin.currentTitle} @ ${linkedin.currentCompany} → ${newTitle} @ ${newCompany}`, 'LINKEDIN');
+        if (typeof hqRenderBanner === 'function') hqRenderBanner();
+      }
+    }
+  }, 2000);
+};
+
+window.confirmLinkedInChange = function() {
+  const p = window._hqProspect;
+  if (!p || !p.linkedin || !p.linkedin.pendingChange) return;
+  
+  const newTitle = prompt('Enter their NEW TITLE:', p.linkedin.currentTitle);
+  if (!newTitle) return;
+  
+  const newCompany = prompt('Enter their NEW COMPANY:', p.company);
+  if (!newCompany) return;
+  
+  logJobChange(p, newTitle, newCompany);
+  window.tbMarkUnsaved();
+  showToast('✓ Job change confirmed & logged');
+  notifAdd('linkedin', '✓ Job Change Confirmed: ' + p.contact, 
+           `Now: ${newTitle} @ ${newCompany}`, 'LINKEDIN');
+  if (typeof hqRenderBanner === 'function') hqRenderBanner();
+};
+
+window.dismissLinkedInChange = function() {
+  const p = window._hqProspect;
+  if (!p || !p.linkedin) return;
+  p.linkedin.pendingChange = null;
+  p.linkedin.lastVerified = new Date().toISOString();
+  window.tbMarkUnsaved();
+  showToast('Change dismissed');
+  if (typeof hqRenderBanner === 'function') hqRenderBanner();
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+//  END LINKEDIN JOB CHANGE MONITOR UI
+// ══════════════════════════════════════════════════════════════════════════
 
 function hqAdvancePipeline(step){
   for(let i=0;i<step;i++){
@@ -5188,6 +5797,127 @@ function bpEngineSetStatus(status, detail) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// SEGMENTED INTELLIGENCE SYSTEM
+// ══════════════════════════════════════════════════════════════════════
+// Parses raw intel into 6 categories for targeted email generation
+
+// Parse raw intel text into segmented categories
+async function parseIntelIntoSegments(rawIntel) {
+  if (!rawIntel || rawIntel.trim().length < 50) {
+    console.log('[Intel Segments] No intel to parse');
+    return;
+  }
+
+  console.log('[Intel Segments] Parsing raw intel into categories...');
+  
+  const prompt = `You are an intelligence analyst. Parse this competitor intelligence into 6 categories.
+
+RAW INTEL:
+${rawIntel}
+
+Return ONLY a JSON object (no markdown, no preamble) with these exact keys:
+{
+  "news": [array of strings - press releases, media coverage, executive changes, lawsuits, regulatory news],
+  "product": [array of strings - feature launches, integrations, product updates, beta programs],
+  "pricing": [array of strings - price changes, promotions, discounts, packaging updates, contract changes],
+  "marketing": [array of strings - LinkedIn campaigns, ad messaging, events, content themes, webinars],
+  "activity": [array of strings - hiring surges, funding rounds, customer wins, market share, sales changes],
+  "technical": [array of strings - API capabilities, integrations, security certs, compliance, platform architecture]
+}
+
+Each array item should be 1-2 sentences maximum. Be specific and factual. If a category has no data, use empty array.`;
+
+  try {
+    const response = await fetch('https://sales-hq-api.ajbb705.workers.dev/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+      })
+    });
+
+    if (!response.ok) throw new Error('Segment parsing failed: ' + response.status);
+    
+    const data = await response.json();
+    const raw = data.candidates[0].content.parts[0].text;
+    
+    // Strip markdown fences if present
+    const clean = raw.replace(/```json\n?|\n?```/g, '').trim();
+    const segments = JSON.parse(clean);
+    
+    // Store in global state
+    window._intelSegments = segments;
+    window._intelSegmentMeta.news.lastRefresh = new Date().toISOString();
+    
+    console.log('[Intel Segments] Parsed successfully:', {
+      news: segments.news.length,
+      product: segments.product.length,
+      pricing: segments.pricing.length,
+      marketing: segments.marketing.length,
+      activity: segments.activity.length,
+      technical: segments.technical.length
+    });
+    
+    return segments;
+  } catch (err) {
+    console.error('[Intel Segments] Parse failed:', err);
+    return null;
+  }
+}
+
+// Get relevant intel segments for a specific touch day
+function getRelevantSegments(touchDay) {
+  const segments = window._intelSegments || {};
+  
+  // Segment-to-touch mapping strategy
+  const mapping = {
+    0: ['news', 'product', 'pricing', 'marketing', 'activity', 'technical'], // Baseline - all
+    1: ['news', 'activity'],           // Urgency hook
+    2: ['pricing', 'product'],         // Value hook
+    3: ['marketing', 'news'],          // Positioning
+    5: ['product', 'technical'],       // Differentiation
+    8: ['news', 'activity'],           // Refresh
+    10: ['technical', 'product'],      // Deep dive
+    15: ['news', 'pricing'],           // Mid-cycle refresh
+    17: ['marketing', 'activity'],     // Messaging counter
+    22: ['news', 'activity'],          // Final refresh
+    24: ['product', 'pricing'],        // Closing gaps
+    27: ['marketing', 'news'],         // Final positioning
+    30: ['activity', 'pricing']        // Urgency close
+  };
+  
+  // Find nearest mapping (e.g., Day 9 uses Day 8's mapping)
+  let useDay = touchDay;
+  while (!mapping[useDay] && useDay > 0) {
+    useDay--;
+  }
+  
+  const relevantKeys = mapping[useDay] || ['news', 'activity']; // Default fallback
+  
+  // Build intel text from relevant segments only
+  let intelText = '';
+  relevantKeys.forEach(key => {
+    const items = segments[key] || [];
+    if (items.length > 0) {
+      const label = {
+        news: 'RECENT NEWS & PRESS',
+        product: 'PRODUCT & FEATURES',
+        pricing: 'PRICING & PROMOTIONS',
+        marketing: 'MARKETING & CAMPAIGNS',
+        activity: 'MARKET ACTIVITY',
+        technical: 'TECHNICAL/INTEGRATION'
+      }[key];
+      
+      intelText += `━━━ ${label} ━━━\n`;
+      items.forEach(item => intelText += `• ${item}\n`);
+      intelText += '\n';
+    }
+  });
+  
+  return intelText.trim();
+}
+
 // ── Build rich context string for one touch ───────────────────────────
 function bpEngineBuildContext(p, touch, atResults) {
   const co  = p.company    || '[Company]';
@@ -5318,6 +6048,12 @@ function bpEngineBuildContext(p, touch, atResults) {
       if (mktR.recent_news)     ctx += `  Recent News: ${mktR.recent_news}\n`;
       if (mktR.talking_point)   ctx += `  Talking Point: ${mktR.talking_point}\n`;
     }
+  }
+
+  // ── Inject relevant intel segments for this touch ──
+  const segmentIntel = getRelevantSegments(touch.day);
+  if (segmentIntel && segmentIntel.length > 0) {
+    ctx += `\nSEGMENTED INTELLIGENCE (context-specific for Day ${touch.day}):\n${segmentIntel}\n`;
   }
 
   ctx += `\nCADENCE TOUCH: Day ${touch.day} — ${touch.label}\n`;
@@ -5557,11 +6293,11 @@ window.bpEngineInjectBadge = function() {
 // Master prose rules injected into every formatting prompt
 const PROSE_UNIVERSAL_RULES = `
 UNIVERSAL EMAIL WRITING RULES — apply to every touch without exception:
-- Never render markdown in the output. No asterisks, no ### headers, no bullet points, no bold via **.
+- Never render markdown in the output. No asterisks, no ### headers, no bold via **.
 - Never paste raw agent data directly. Always convert to natural prose first.
 - One insight per email. If the agent returned multiple data points, use only the sharpest one.
 - Prospect first name only in the greeting. Never leave placeholder brackets visible.
-- Email length: 3–5 sentences for most touches. Never exceed 5 sentences in the body.
+- Email length: 3–5 sentences for most touches. Never exceed 5 sentences in the body (bullet lists don't count toward sentence limit).
 - Tone: a knowledgeable colleague passing along a useful heads-up — not a salesperson. Warm, direct, peer-level.
 - Never use the phrase "Worth a quick conversation?" — use a specific, low-friction ask instead.
 - Never say "I hope this finds you well", "I wanted to reach out", or "Just following up."
@@ -5569,37 +6305,163 @@ UNIVERSAL EMAIL WRITING RULES — apply to every touch without exception:
 - Sign-off is always on its own line: rep name, then company, then website. Nothing else.
 - Output only the email body text. No subject line. No labels. No preamble. No explanation.
 - The email must read as if written by a human who genuinely knows this company — never generic.
+
+ATTENTION-GRABBING TECHNIQUES (use when relevant):
+1. OPEN WITH A QUESTION: When highlighting a problem, start with a concrete question that makes them think about the pain.
+   Example: "How many hours a week does your team spend reconciling payroll data between systems?"
+   
+2. USE BULLET POINTS FOR COMPARISONS: When showing before/after, current state vs. better state, or listing key findings, use simple bullet points in natural prose format:
+   
+   Example for system comparison:
+   "I noticed a few gaps in your current setup:
+   • Manual data entry: ~12 hours/week that could be automated
+   • System logins: 3 separate platforms vs. 1 unified
+   • Payroll errors: ~4% error rate vs. industry standard <1%"
+   
+   Example for cost breakdown:
+   "The benchmark shows three areas worth looking at:
+   • Monthly cost per employee: $15-20 above market rate
+   • Unused features: $3,000-5,000 in monthly waste
+   • Manual workarounds: 15 hours/week that could be automated"
+   
+   Keep bullet lists to 3-4 items maximum. Each bullet should be concise (one line when possible).
+
+3. QUANTIFY EVERYTHING: Include specific numbers when possible:
+   - "15-20 hours per week saved"
+   - "$3,000-5,000 monthly cost reduction"
+   - "40% faster onboarding"
+   - "3 systems consolidated to 1"
+
+4. CONCRETE CTAs: Instead of "let me know if interested", use:
+   - "Worth a 15-minute call?"
+   - "Can I show you this on [specific day]?"
+   - "15 minutes to walk through it?"
+   Always include a specific time commitment (10-15 minutes).
+
+5. SUBJECT LINE STYLE (when generating subjects separately):
+   Lead with concrete value or math: "Quick math on [Company]'s HR fragmentation cost" 
+   Not: "Following up about ADP solutions"
 `;
 
 // Per-touch prose system prompts
 const PROSE_TOUCH_PROMPTS = {
-  wfn_day1: `You are a post-processing email formatter for an ADP sales cadence.
-Touch: Day 1 — Research Brief (first touch, intel-driven)
-Goal: Establish credibility by showing you already know their world before the first contact.
+  wfn_day0: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 0 — Pre-Start Research (intel-driven email before cadence begins)
+Goal: Demonstrate you've already done deep research before the first contact. Show competitive threats and system fragmentation.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Weave company name, headcount, state, and industry into one natural sentence — never list them as a profile dump.
-2. Reference only ONE competitor threat from the intel — the most relevant one. Do not list all of them.
-3. The opening line should feel like you pulled something specific for them today — not a template.
-4. End with a single low-friction ask: a specific time offer, not an open-ended "let me know."
-5. Maximum 4 sentences in the body. No subject line in output.
+1. OPEN WITH A CONCRETE QUESTION about their current setup or a competitive threat.
+   Example: "How much time does your team spend reconciling data between [System 1] and [System 2]?"
+   Or: "Is [Competitor] on your radar yet for [Company]'s HR stack?"
+2. When intel shows system fragmentation or competitive threats, use bullet points to highlight the gaps:
+   "I noticed a few things about your current setup:
+   • Multiple systems: 3-4 separate platforms for payroll/benefits/time
+   • Manual data entry: ~15 hours/week reconciling between systems
+   • Integration gaps: No single source of truth for employee data"
+3. HIGHLIGHT THE MOST URGENT COMPETITIVE THREAT from the intel - name the competitor and what they're doing.
+4. QUANTIFY the impact when possible: "15-20 hours/week saved", "3-4 systems to 1", specific cost savings.
+5. Frame as "I noticed X from my research" - show you've already invested time understanding their situation.
+6. CTA: Specific time commitment. "Worth 15 minutes to walk through what I found?"
+7. Maximum 5 sentences + optional bullet list (3-4 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"I work with a number of [industry] companies in [state], and after looking at [Company]'s setup — [headcount] employees on [current product] — I noticed [Competitor] has been making a push into your space recently. There are usually a few underutilized features in [current product] at your size that could close the gap before that becomes a real problem. I can pull the full breakdown if useful. Would [specific day] work for a 15-minute call?"`,
+"Is UKG on your radar yet for Higher Logic's HR stack? I was doing some research on your setup and noticed you're running separate systems for payroll, learning management, and benefits — UKG has been making a strong push into organizations exactly like yours with their unified platform pitch. Most companies your size spend 12-15 hours per week just reconciling data between those systems. Worth 15 minutes to walk through what I found on the competitive landscape and your current fragmentation?"`,
+
+  wfn_day1: `You are a post-processing email formatter for an ADP sales cadence.
+Touch: Day 1 — Research Brief (first touch, intel-driven)
+Goal: Sound like a human who actually researched this company, not a template. Be personal, specific, attention-grabbing.
+${PROSE_UNIVERSAL_RULES}
+
+CRITICAL: Check the AGENT DATA for clientType. If clientType is "New Prospect" or "new" → use NEW CLIENT approach. If "Existing ADP Client" or "existing" → use EXISTING CLIENT approach.
+
+INTEL SEGMENT PRIORITY FOR DAY 1:
+- PRIORITIZE: "RECENT NEWS & PRESS" and "MARKET ACTIVITY" segments from Segmented Intelligence
+- Look for: Competitor funding, executive changes, hiring surges, market losses, press coverage
+- Reference SPECIFIC competitors by name from these segments
+- Example usage: "Saw Rippling raised $200M last week (RECENT NEWS) and is hiring 50 sales reps (MARKET ACTIVITY) to target software companies your size..."
+
+TONE REQUIREMENTS (APPLIES TO BOTH NEW AND EXISTING):
+1. Write like you're texting a colleague, not writing a formal email
+2. NO corporate jargon: "leverage", "synergies", "solutions", "reach out", "circle back"
+3. Use ACTUAL DATA from the context - Gong transcripts, Market Intelligence, Analysis Tool results, AND Segmented Intelligence
+4. If you see competitor mentions in RECENT NEWS or MARKET ACTIVITY, reference THE SPECIFIC COMPETITOR by name
+5. If you see pain points from Gong, quote or paraphrase them naturally
+6. Lead with the most surprising or attention-grabbing finding from NEWS or ACTIVITY segments
+7. Keep it under 4 sentences total
+
+RULES FOR NEW CLIENTS (do not have ADP yet):
+1. OPEN with the most interesting thing you found in their research (prioritize NEWS and ACTIVITY segments)
+   Example: "Saw your team is running Paycom + BambooHR + Excel for benefits — that's the exact fragmentation pattern I see right before companies consolidate."
+2. Reference SPECIFIC pain points from Gong transcripts if available
+   Example: "Your CFO mentioned spending 20 hours a month on payroll reconciliation in that Q3 board deck..."
+3. Mention ONE competitor threat BY NAME if in the NEWS or ACTIVITY data
+   Example: "Rippling's been cold-calling companies in [industry] all month (from MARKET ACTIVITY), so timing matters."
+4. Ask ONE specific question based on their situation
+   Example: "How many hours a week does [role] spend reconciling data between those systems?"
+5. NO feature lists, NO "solutions", NO sales speak
+
+RULES FOR EXISTING CLIENTS (already have ADP):
+1. OPEN with specific underutilization finding
+   Example: "Pulled your WFN profile — you're paying for automated time tracking but still using manual timesheets?"
+2. Reference ACTUAL unused features by name (from Analysis Tool results if available)
+3. Quantify the waste with real numbers
+   Example: "$4,200/month sitting idle in modules you've never turned on"
+4. Ask about ONE specific inefficiency you found
+   Example: "Why is [department] still using spreadsheets when you have Benefits Admin?"
+
+EXAMPLE TONE FOR NEW CLIENTS (attention-grabbing, personal):
+"Quick observation: Higher Logic's running 4 separate systems for HR/payroll/benefits. I'm seeing Paylocity make a push into software companies your size — they closed 3 deals in your market last month. Worth 10 minutes to talk consolidation math?"
+
+EXAMPLE TONE FOR EXISTING CLIENTS (direct, specific):
+"I ran your WFN profile — you're paying for tax filing automation but your team is still filing manually in 8 states? That's $3K/month you're lighting on fire. Can I show you how to flip it on?"
+
+REMEMBER: If you don't have specific data (Gong transcript, competitor intel from NEWS/ACTIVITY segments, analysis results), ASK about their current state instead of making generic claims.`,
 
   wfn_day2: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 2 — Insight Hook
-Goal: Create curiosity around unused ADP features the prospect is already paying for.
+Goal: Drop a fact bomb that makes them stop scrolling. Be direct, specific, human.
 ${PROSE_UNIVERSAL_RULES}
-RULES FOR THIS TOUCH:
-1. Lead with the financial or operational insight — not with a re-introduction or "following up on my last email."
-2. Reference the specific unused feature or cost gap but frame it as a discovery, not a data report.
-3. Do not say "I noticed" more than once in the entire email.
-4. The CTA should offer to send more — soft and easy to say yes to: "I can send it over if useful."
-5. Maximum 4 sentences. No bullet points or lists under any circumstances.
 
-EXAMPLE TONE (do not copy, use as style reference):
-"Most [product] clients at [Company]'s size are only actively using about 60% of what they're paying for — the rest sits idle. I pulled [Company]'s feature profile and there are [2-3 specific items] that could be running automatically right now. I can send the full breakdown if that's worth a look."`,
+CRITICAL: Check the AGENT DATA for clientType. If clientType is "New Prospect" or "new" → use NEW CLIENT approach. If "Existing ADP Client" or "existing" → use EXISTING CLIENT approach.
+
+INTEL SEGMENT PRIORITY FOR DAY 2:
+- PRIORITIZE: "PRICING & PROMOTIONS" and "PRODUCT & FEATURES" segments from Segmented Intelligence
+- Look for: Price increases, discount campaigns, new feature launches, product gaps, competitive packaging
+- Use these to build cost/value comparisons
+- Example usage: "Paycom just raised prices 12% for renewals (PRICING) — if you're running similar headcount, that's $4K/year more for the same features ADP includes (PRODUCT)."
+
+TONE REQUIREMENTS (APPLIES TO BOTH):
+1. Lead with the number — make it sting
+2. NO soft opens like "I wanted to follow up" or "Just circling back"
+3. Use real data from context if available (Gong, Market Intel, Analysis, AND Segmented Intelligence)
+4. Leverage PRICING & PROMOTIONS and PRODUCT & FEATURES segments to show cost/value gaps
+5. Sound like you're giving them insider info, not selling
+6. 3 sentences max
+7. End with simple yes/no or time commitment ask
+
+RULES FOR NEW CLIENTS (do not have ADP yet):
+1. LEAD with cost of their current fragmentation (actual $ if you can calculate it)
+   Example: "Higher Logic's burning ~$62K/year on HR system fragmentation — that's 3 separate vendors + 18 hours/week in manual reconciliation at $80/hr loaded cost."
+2. Reference ACTUAL competitor pricing/product changes from PRICING & PROMOTIONS or PRODUCT & FEATURES segments
+   Example: "Paylocity closed 4 deals in software companies your size this quarter. Timing matters."
+3. Show the math clearly using pricing intel
+4. Ask for 10-15 minutes, not "let me know if interested"
+
+RULES FOR EXISTING CLIENTS (already have ADP):
+1. LEAD with $ value sitting idle (be specific with module names if from Analysis Tool)
+   Example: "$4,800/month in WFN modules you're not using: Tax Filing ($1,200), Time & Attendance ($2,100), Benefits Admin ($1,500)."
+2. Show opportunity cost
+   Example: "Your team's spending 15 hours/week on manual work you're already paying to automate."
+3. Be direct about the waste
+4. Simple ask: "10 minutes to walk through activation?"
+
+EXAMPLE TONE FOR NEW CLIENTS (direct, $ focused):
+"Quick math: If Higher Logic's spending 18 hours/week reconciling data between Paycom and BambooHR, that's $62K annually in pure overhead. Consolidation pays for itself in 90 days. Worth 10 minutes?"
+
+EXAMPLE TONE FOR EXISTING CLIENTS (blunt, specific):
+"You're paying $4,200/month for WFN features you've never turned on. Benefits Admin, Time Tracking, Tax Filing — all sitting idle while your team does it manually. 15 minutes to activate what you own?"
+
+REMEMBER: Use REAL numbers from the context AND from PRICING/PRODUCT segments when possible. If you don't have specifics, ask about their current spend instead of making up numbers.`,
 
   wfn_day8_intel: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 8 — Mid-Cadence Intel (intel refresh touch)
@@ -5620,148 +6482,214 @@ Touch: Day 8 — Cost Benchmark
 Goal: Anchor the prospect to a concrete cost comparison that makes ADP's value tangible and personal.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with a benchmark number or cost gap — the first word of the email should not be "I."
-2. Use one specific number or range. Do not list multiple figures or create a breakdown.
-3. Frame the data as pulled for their specific profile — make it feel tailored, not templated.
-4. CTA: offer to share the full benchmark. Keep it frictionless.
-5. Maximum 4 sentences. No bullet points or lists under any circumstances.
+1. OPEN WITH A QUESTION about cost if possible: "What's [Company] actually spending on HR tech vs. the benchmark for [size] companies in [industry]?"
+2. Use bullet points to show the cost benchmark findings:
+   "The benchmark shows three gaps worth looking at:
+   • Cost per employee: $15-20 above market rate for your industry
+   • System count: 3-4 separate platforms vs. 1 unified (adds ~$3K monthly)
+   • Manual processing: ~15 hours/week that should be automated"
+3. QUANTIFY the total impact: "$X,XXX annual savings", "15-20 hours/week reclaimed", "40% reduction in admin overhead"
+4. Frame the data as pulled for their specific profile — make it feel tailored, not templated.
+5. CTA must be specific: "15 minutes to walk through the numbers?" not "let me know if interested"
+6. Maximum 5 sentences + bullet list (3-4 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"What [Company] is actually spending on HR tech vs. the benchmark for [headcount]-person [industry] firms in [state] is worth a look — there's usually a [X–Y]% gap that most clients don't realize until they run the comparison. I pulled the numbers for your profile specifically. I can send the full breakdown if that's useful."`,
+"What [Company] is actually spending on HR tech vs. the benchmark for [headcount]-person [industry] firms in [state] is worth a look — there's usually a 15-20% gap that most companies don't realize until they run the comparison. I pulled the numbers for your profile specifically. Worth 15 minutes to walk through it?"`,
 
   wfn_day15_intel: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 15 — Competitive Intel Pull (intel refresh touch)
-Goal: Surface a specific competitor move that directly affects this prospect's decision window.
+Goal: Surface a specific competitor move that directly affects this prospect's decision window with urgency.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Name the competitor and the specific move. Be concrete — vague intel has no impact.
-2. Connect the competitor move directly to a risk or opportunity for this prospect in one sentence.
-3. Do not oversell the threat. Let the specificity do the work — trust the data.
-4. 3–4 sentences. Close with a soft check-in, not a hard ask.
+1. OPEN WITH A QUESTION about the competitive threat: "Has [Competitor]'s new [feature/move] shown up on your radar yet?"
+2. Name the competitor and the specific move in concrete terms — be tactical, not vague.
+3. When showing competitive positioning, use bullet points to highlight the gap:
+   "[Competitor] just rolled out three things targeting companies like yours:
+   • Automated onboarding: 40% faster than fragmented systems
+   • Usage-based pricing: Undercutting legacy PEPM models
+   • Your segment: Specifically targeting [industry] in [state]"
+4. QUANTIFY the competitive gap when possible: "40% faster onboarding", "20% lower PEPM", "$X,XXX annual difference"
+5. Connect the competitor move directly to a timeline risk: "renewal window", "Q4 budget decision", "open enrollment"
+6. CTA: Specific time commitment. "Worth 15 minutes to compare side-by-side?"
+7. Maximum 5 sentences + optional bullet list (3 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"[Competitor] expanded their [module] last week with a new [feature] targeting [segment] — which puts [Company] squarely in their crosshairs. Thought you'd want to know before it shows up in your inbox from them first. Worth a quick sync on how [Company]'s current setup compares?"`,
+"Has UKG's new onboarding automation shown up on your radar yet? They just rolled it out specifically targeting [industry] companies in [state] — it cuts onboarding time by 40% compared to fragmented systems like what [Company] is running now. Given your [timeline], this is probably worth a 15-minute side-by-side comparison. Want to see what they're pitching vs. what you have?"`,
 
   wfn_day15_compliance: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 15 — Compliance Trigger
 Goal: Create urgency through a real, time-sensitive compliance gap relevant to their state and industry.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Open with the compliance fact — not a sales angle. The first sentence should state the regulation or update directly.
-2. Name the specific regulation or update. Do not be vague about what changed.
-3. Connect the compliance gap to one ADP feature that addresses it automatically.
-4. Frame as informational first. The ask should feel like a favor, not a pitch.
-5. Maximum 4 sentences.
+1. OPEN WITH THE COMPLIANCE FACT as a question when possible: "Is [Company] covered for [State]'s new [regulation]?"
+2. Name the specific regulation or update directly — do not be vague about what changed.
+3. When showing compliance gaps, use bullet points to highlight the risk:
+   "[State] just updated [regulation] — here's what changed for [industry] companies:
+   • Leave tracking: Manual spreadsheets no longer compliant
+   • Reporting requirements: New quarterly submissions required
+   • Penalty risk: $X,XXX per violation for non-compliance"
+4. QUANTIFY the compliance risk or fix time: "2-3 hours/week manual work", "potential $X,XXX penalty", "15 minutes to configure"
+5. Connect the compliance gap to one ADP feature that addresses it automatically.
+6. CTA: Specific time commitment. "15 minutes to make sure you're covered?"
+7. Maximum 5 sentences + optional bullet list (3 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"[State] updated its [leave/wage/compliance] requirements for [industry] companies this quarter, and a number of [product] clients in [Company]'s category have had to make manual adjustments to stay compliant. There's a specific module in [product] that handles this automatically — [Company] may already have access to it. Happy to walk through it if that's useful."`,
+"Is [Company] covered for [State]'s new leave tracking requirements yet? They updated [regulation] for [industry] companies this quarter — most companies your size are still using manual workarounds that don't meet the new standard. There's a specific module in WorkforceNow that handles this automatically in about 15 minutes. Worth a quick walk-through to make sure you're compliant?"`,
 
   wfn_day22_intel: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 22 — Final Push Intel (last intel touch before breakup)
-Goal: The most specific and time-sensitive intel touch of the cadence — make it feel genuinely urgent.
+Goal: The most specific and time-sensitive intel of the cadence — create genuine urgency with a narrow decision window.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Use the sharpest, most specific data point from the agent output. This is not the time for a soft opener.
-2. Do not reference previous emails or acknowledge the cadence timeline.
-3. Tone: peer-to-peer — a colleague passing along something actionable, not a rep checking in.
-4. Maximum 3 sentences. CTA is a light nudge toward a conversation — not a close.
+1. OPEN WITH AN URGENT QUESTION: "How narrow is [Company]'s decision window on [topic]?"
+   Or: "Is [Competitor]'s [move] forcing [Company]'s hand on [decision]?"
+2. Use the sharpest, most time-sensitive data point from the agent output — this is not the time for soft openers.
+3. When showing urgency around competitive moves or renewal timing, use bullet points:
+   "[Competitor] just launched [move] — here's why timing matters:
+   • Market traction: Already deployed with 3 [industry] companies in [state]
+   • Your timeline: [renewal/budget] window closes in 30 days
+   • Cost of delay: $X,XXX quarterly impact of staying fragmented"
+4. QUANTIFY the time pressure: "30-day renewal window", "Q4 budget freeze in 2 weeks", "$X,XXX quarterly cost of waiting"
+5. Frame as a peer-to-peer heads-up about a time-sensitive competitive or market shift.
+6. CTA: Ultra-specific. "10 minutes this week to talk through timing?"
+7. Maximum 4 sentences + optional bullet list (3 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"[Competitor] made a move in [Company]'s space this week — [specific action] that's already getting traction with [segment]. Given [Company]'s renewal timing and current setup, the window to get ahead of it is narrow. Happy to share what I'm seeing if it's useful."`,
+"How narrow is [Company]'s decision window on [topic]? [Competitor] just launched [specific move] that's already getting traction with [segment] — and given your [renewal/budget cycle], the window to get ahead of it is about 30 days. That's probably worth a 10-minute conversation before it closes. Available this week?"`,
 
   wfn_day22_breakup: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 22 — Breakup Email
-Goal: Leave the door open gracefully while creating one final moment of genuine awareness.
+Goal: Leave the door open gracefully while summarizing concrete value shared — create one final moment of awareness.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. This email can be slightly self-aware — it is the only touch in the cadence that can acknowledge the outreach pattern. Keep it light.
-2. Reference one concrete thing from the cadence (a competitor, compliance update, or cost benchmark) — never leave it generic.
-3. The breakup framing should be understated, not dramatic. No guilt-tripping or manufactured urgency.
-4. End with a clear, low-pressure door-opener that points to a future trigger (renewal, growth, a new hire).
-5. Maximum 5 sentences. No links, no attachments mentioned.
+1. OPEN WITH LIGHT SELF-AWARENESS: "I've reached out X times over the past few weeks..." but keep it brief.
+2. SUMMARIZE VALUE SHARED using a quick list (not a comparison table):
+   - Cost benchmark: $X,XXX potential savings
+   - Compliance update: [State] [regulation]
+   - Competitive intel: [Competitor]'s [move]
+   Format as a single sentence with commas, NOT as bullet points.
+3. Reference one concrete thing from the cadence that would be most valuable at renewal/budget/hiring time.
+4. Point to a natural future trigger: renewal cycle, budget planning, Q4, open enrollment, hiring push.
+5. CTA: Leave door open without pressure. "If [trigger] becomes relevant, I'm easy to find."
+6. Maximum 5 sentences. No tables needed for breakup.
 
 EXAMPLE TONE (do not copy, use as style reference):
-"I've reached out a few times over the past few weeks — I'll make this the last one for now. The [competitor move / compliance gap / cost benchmark] I flagged is still worth watching as [Company] heads into [renewal period / Q-end / hiring push]. If any of that becomes more relevant down the road, I'm easy to find. The door stays open."`,
+"I've reached out a few times over the past few weeks — the cost benchmark ($X,XXX potential savings), the [State] compliance update, and the intel on [Competitor]'s move. I'll make this the last one for now. If any of that becomes more relevant as you head into [renewal/budget cycle/Q4], I'm easy to find. The door stays open."`,
 
   wfn_day30: `You are a post-processing email formatter for an ADP sales cadence.
 Touch: Day 30 — Community Invite (final touch)
-Goal: Re-engage with a genuine value-add invite that removes all sales pressure and leaves a lasting impression.
+Goal: Re-engage with tangible deliverables (scorecard + briefing invite) that provide value with zero sales pressure.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. This is an invitation, not a sales email. The tone must reflect that completely — no pitch language.
-2. Lead with what they get, not who you are or what you sell.
-3. Reference the HCM Scorecard as something already prepared for them — make it feel exclusive, not promotional.
-4. The briefing invite should feel like a peer event — small, specific, no pitch — not a webinar or product demo.
-5. Maximum 4 sentences. CTA is a simple reply to confirm attendance or request the scorecard.
+1. LEAD WITH THE DELIVERABLE: "I put together an HCM Scorecard for [Company]..." — make it feel like a gift, not a hook.
+2. SUMMARIZE what the scorecard shows using a quick data-driven format:
+   "It benchmarks your current setup against [X] comparable [industry] firms in [state] and highlights:
+   - Cost efficiency: [finding]
+   - Feature utilization: [finding]
+   - Compliance gaps: [finding]"
+   Format as a single sentence with dashes, NOT a comparison table.
+3. Mention the quarterly briefing as a small, peer-level event — "no pitch, just data" is the key phrase.
+4. Frame as an invitation the person can easily decline or accept — no pressure language.
+5. CTA: Simple reply ask. "Reply here and I'll send both over."
+6. Maximum 5 sentences. No tables needed.
 
 EXAMPLE TONE (do not copy, use as style reference):
-"I put together an HCM Scorecard for [Company] — it benchmarks [Company]'s current setup against comparable [industry] firms in [state] and flags a few areas worth watching. I'm also hosting a small quarterly briefing next week for HR leaders in your space — no pitch, just data and a conversation. I'd love to hold a seat for you if you're interested."`,
+"I put together an HCM Scorecard for [Company] — it benchmarks your current setup against [X] comparable [industry] firms in [state] and flags cost gaps, unused features, and compliance blind spots worth watching. I'm also hosting a small quarterly briefing next week for HR leaders in your space — no pitch, just data and conversation. I'd love to hold a seat for you. Reply here and I'll send both over."`,
 
   ts_day2: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 2 — PEO Reality Check
 Goal: Plant the seed that the current PEO model may no longer be the right fit at their size and stage.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Reference their specific headcount as the natural inflection point — not a generic threshold.
-2. Frame this as a data-driven observation that you're passing along — not a sales pitch.
-3. The ask is to run a comparison, not to close a deal.
-4. Maximum 4 sentences.
+1. OPEN WITH A QUESTION about their current PEPM or PEO costs: "What's [Company] paying per employee per month for PEO right now?"
+2. Reference their specific headcount as the natural inflection point — not a generic threshold.
+3. When showing the PEPM shift, use bullet points to highlight the inflection:
+   "At [headcount] employees, a few things shift in PEO economics:
+   • PEPM efficiency: Fixed model that worked at 30-50 employees scales poorly
+   • Co-employment value: Diminishing returns as you grow
+   • Annual overpayment: $50-80 per employee adds up to $XX,XXX annually"
+4. QUANTIFY the headcount inflection and cost impact: "$50-80 PEPM difference", "$XX,XXX annual overpayment at [headcount]"
+5. Frame as a data-driven observation, not a pitch. "The math shifts at your size."
+6. CTA: Specific ask to run comparison. "10 minutes to run the numbers?"
+7. Maximum 5 sentences + optional bullet list (3 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"At [headcount] employees, [Company] is at the size where the math on PEO co-employment usually starts to shift — the fixed PEPM model that works well at smaller headcounts often becomes less efficient as the company scales. I've run this comparison for a few [industry] firms in [state] and the results are usually worth seeing. Happy to do the same for [Company] if that's useful."`,
+"What's [Company] paying per employee per month for PEO right now? At [headcount] employees, you're at the size where the fixed PEPM model that worked well at 30-50 employees starts to scale poorly — most companies your size are overpaying by $50-80 per employee monthly, which adds up to $XX,XXX annually. Worth 10 minutes to run the real numbers?"`,
 
   ts_day8: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 8 — Cost Comparison
 Goal: Make the PEPM cost gap tangible, personal, and tied directly to this prospect's situation.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with the cost insight — not with a re-introduction or reference to a previous email.
-2. Use one specific number or estimated range. No bullet-point cost breakdowns.
-3. Frame as data pulled for their profile specifically — not a general range.
-4. CTA: ask for their current PEPM to run a real, side-by-side comparison.
-5. Maximum 4 sentences.
+1. OPEN WITH A QUESTION about their current PEO cost: "What's [Company] paying per employee per month for PEO right now?"
+2. Use bullet points to show the cost difference:
+   "For [headcount]-person [industry] companies in [state], I'm seeing:
+   • PEPM range: TotalSource typically $50-80 lower than standard PEO
+   • Health premium markup: 8-12% lower on average
+   • Annual savings: $XX,XXX at your headcount"
+3. QUANTIFY the total annual impact for their headcount: "$XX,XXX annual savings at [headcount] employees"
+4. Frame as data pulled for their profile specifically — not a general range.
+5. CTA: ask for their current PEPM to run a real comparison. Be specific: "10 minutes to run the real numbers?"
+6. Maximum 5 sentences + bullet list (3 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"For a [headcount]-person [industry] company in [state], the difference between a standard PEO PEPM and what TotalSource typically delivers is usually in the [range] per employee per month range — which adds up quickly at [Company]'s size. I'd need your current PEPM to run a real comparison, but the initial numbers usually tell the story. Worth a 10-minute look?"`,
+"What's [Company] paying per employee per month for PEO right now? For a [headcount]-person [industry] company in [state], the difference between a standard PEO PEPM and what TotalSource typically delivers is usually $50-80 per employee — which adds up to $XX,XXX annually at your size. I'd need your current PEPM to run the real comparison. Worth 10 minutes?"`,
 
   ts_day15: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 15 — Case Study
 Goal: Use a comparable company outcome to make the alternative feel proven and real — not theoretical.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with the outcome of the case study company — not with "I wanted to share."
-2. Connect their industry and headcount to the case study naturally in one sentence — make the comparison feel obvious.
-3. The ask is to run the same analysis for them — keep it low-commitment and easy to say yes to.
-4. Maximum 4 sentences.
+1. OPEN WITH THE OUTCOME: "A [headcount]-person [industry] company just saved $XX,XXX annually by switching to TotalSource..."
+2. Connect their industry and headcount to the case study naturally — make the comparison feel obvious.
+3. When showing case study results, use bullet points to highlight the outcome:
+   "A 75-person [industry] company in [state] made the switch — year 1 results:
+   • PEPM reduction: From $285 to $223 (22% lower)
+   • Health premium savings: 22% reduction in first year
+   • Total annual savings: $47,000 at similar headcount"
+4. QUANTIFY the specific outcomes: "X% reduction in health premiums", "$XX,XXX first-year savings", "PEPM dropped from $X to $Y"
+5. Make the connection explicit: "[Company]'s profile is similar enough that the numbers would likely be in the same range."
+6. CTA: Offer to run the same analysis. "10 minutes to run the same analysis for [Company]?"
+7. Maximum 5 sentences + bullet list (3 bullets max).
 
 EXAMPLE TONE (do not copy, use as style reference):
-"A [headcount]-person [industry] company in [state] recently made the switch from their previous PEO to TotalSource and locked in a [X]% reduction in health premiums in the first year. [Company]'s profile is similar enough that the numbers would likely be in the same range. Happy to run the same analysis if you'd like to see it."`,
+"A 75-person [industry] company in [state] just locked in a 22% reduction in health premiums in year one by switching from their previous PEO to TotalSource — that's $XX,XXX in annual savings at a similar headcount to [Company]. [Company]'s profile is similar enough that the numbers would likely be in the same range. Worth 10 minutes to run the same analysis?"`,
 
   ts_day22_breakup: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 22 — Breakup Email
-Goal: Close the loop gracefully, reference the value shared, and leave a clear door open at renewal.
+Goal: Close the loop gracefully, reference specific value shared, and leave a clear door open at renewal.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Acknowledge the outreach briefly — light self-awareness, not self-deprecation.
-2. Reference the TotalSource cost data or case study shared earlier — make it feel like a useful resource left behind, not a last-ditch pitch.
-3. Point to renewal as the natural next checkpoint — no pressure, just a logical future moment.
-4. Maximum 4 sentences.
+1. OPEN WITH LIGHT SELF-AWARENESS: "I've reached out a few times..." but keep it brief.
+2. REFERENCE THE COST DATA SHARED: "The cost comparison I ran showed $XX,XXX potential annual savings at [headcount] employees."
+   Or mention the case study outcome shared earlier.
+3. Point to renewal as the natural next checkpoint — most PEO contracts renew annually.
+4. QUANTIFY the value left on the table if they want to reference it: "$XX,XXX annual savings", "X% health premium reduction"
+5. Frame the door-opener around their renewal timeline: "If [Company]'s renewal is in the next 6-12 months..."
+6. Maximum 4 sentences. No tables needed.
 
 EXAMPLE TONE (do not copy, use as style reference):
-"I've reached out a few times — I'll keep this one short. The cost comparison I ran for [Company] is still sitting in my notes whenever the timing is right. Renewal cycles are usually the natural moment to revisit this, so if [Company]'s is coming up in the next 6 months, I'm easy to find. The door stays open."`,
+"I've reached out a few times — I'll keep this one short. The cost comparison I ran for [Company] showed $XX,XXX in potential annual savings at [headcount] employees, and it's still sitting in my notes whenever the timing is right. Renewal cycles are usually the natural moment to revisit this, so if [Company]'s is coming up in the next 6-12 months, I'm easy to find. The door stays open."`,
 
   ts_day30: `You are a post-processing email formatter for an ADP TotalSource sales cadence.
 Touch: Day 30 — Community Invite
-Goal: Leave with a tangible deliverable and a no-pressure community connection that keeps the relationship alive.
+Goal: Leave with a tangible deliverable (scorecard) and a no-pressure community connection that keeps the relationship alive.
 ${PROSE_UNIVERSAL_RULES}
 RULES FOR THIS TOUCH:
-1. Lead with the scorecard as a delivered asset — not as a closing tactic. It's a gift, not a hook.
-2. Frame the briefing invite as informational, small, and easy to opt out of — peer event, not webinar.
-3. Warm, peer-level close. No sales language. No urgency.
-4. Maximum 4 sentences.
+1. LEAD WITH THE DELIVERABLE: "I put together a TotalSource Scorecard for [Company]..." — gift, not hook.
+2. SUMMARIZE what the scorecard shows using data-driven format:
+   "It benchmarks your current PEO setup against [X] comparable [industry] firms in [state] and highlights:
+   - PEPM efficiency: [finding]
+   - Health premium costs: [finding]
+   - Scaling implications: [finding]"
+   Format as a single sentence with dashes, NOT a comparison table.
+3. Mention the quarterly briefing as a small, peer-level event — "no pitch, just data and conversation" is key.
+4. Frame as an easy-to-decline invitation with no pressure.
+5. CTA: Simple reply ask. "Reply here and I'll send both over."
+6. Maximum 5 sentences. No tables needed.
 
 EXAMPLE TONE (do not copy, use as style reference):
-"I put together a TotalSource Scorecard for [Company] — it benchmarks [Company]'s current PEO setup against comparable [industry] firms in [state] and flags a few areas worth watching as you scale. I'm also hosting a small briefing next week for HR and ops leaders in your space — no pitch, just data. I'd love to hold a spot for you if you're interested."`,
+"I put together a TotalSource Scorecard for [Company] — it benchmarks your current PEO setup against [X] comparable [industry] firms in [state] and flags PEPM inefficiencies, health premium gaps, and scaling cost implications worth watching. I'm also hosting a small briefing next week for HR and ops leaders in your space — no pitch, just data. I'd love to hold a spot for you if you're interested. Reply here and I'll send both over."`,
 };
 
 // Core prose formatter — calls the AI proxy with a touch-specific system prompt
@@ -6150,7 +7078,33 @@ function buildTouches(p){
       _baseBody:`Hi ${nm},\n\nWrapping up my outreach — I put together a TotalSource Renewal Scorecard for ${co} that's yours to keep regardless of next steps. It benchmarks your current PEO cost structure against comparable ${ind} organizations.\n\nI'm also hosting a quarterly PEO & HCM Benchmarking Briefing for HR leaders in your space — no sales pitch, easy to unsubscribe, just data. I'd love to include you.\n\nReply here and I'll send both over.${sig}`},
   ];
   
-  return p.track==='WFN'?wfn:ts;
+  // Load saved touch content from localStorage if available
+  const touches = p.track==='WFN' ? wfn : ts;
+  const cadenceKey = 'cadence_' + p.company.replace(/\s+/g, '_');
+  const savedData = localStorage.getItem(cadenceKey);
+  
+  if (savedData) {
+    try {
+      const cadenceData = JSON.parse(savedData);
+      if (cadenceData.touches && Array.isArray(cadenceData.touches)) {
+        // Apply saved _proseBody to matching touches
+        touches.forEach(function(touch, idx){
+          const saved = cadenceData.touches[idx];
+          if (saved && saved._proseBody) {
+            touch._proseBody = saved._proseBody;
+          }
+          if (saved && saved.body && saved.body !== saved._baseBody) {
+            // Also restore body if it was customized
+            touch._proseBody = saved.body;
+          }
+        });
+      }
+    } catch(err) {
+      console.warn('[buildTouches] Failed to load saved touch data:', err);
+    }
+  }
+  
+  return touches;
 }
 
 // Helper: Get channel icon and color for multi-channel touches
@@ -6339,6 +7293,20 @@ window.ecMarkSent=function(){
   const _msDrw = document.getElementById('notif-drawer');
   if(_msDrw && _msDrw.classList.contains('open')) notifRenderList();
 };
+
+// Copy email content to clipboard for manual pasting
+window.ecCopyEmail=function(){
+  const p=window._hqProspect;const touches=buildTouches(p);const touch=touches[window._ecActiveIdx];
+  const toVal=(document.getElementById('ec-to-inp').value||p.email||'').trim();
+  if(!toVal){showToast('Add a recipient email first',true);return}
+  const copyText=`TO: ${toVal}\n\nSUBJECT: ${touch.subject}\n\nBODY:\n${ecGetBody()}`;
+  navigator.clipboard.writeText(copyText).then(()=>{
+    showToast('📋 Email copied to clipboard — paste into your work email');
+  }).catch(()=>{
+    showToast('Copy failed — try again',true);
+  });
+};
+
 
 window.ecSetSt=function(val){
   window._ecStatuses[window._ecActiveIdx]=val;
@@ -6748,6 +7716,53 @@ window.removeDrawerGongFile = function(touchIdx, fileIdx){
 
 // Analyze Gong in drawer
 window.analyzeDrawerGong = async function(touchIdx){
+  const p = window._hqProspect;
+  
+  // ── CHECK: Do we already have analysis for this touch? ──
+  if (p.gongData && p.gongData['touch_' + touchIdx]) {
+    const existing = p.gongData['touch_' + touchIdx];
+    const confirm = window.confirm(
+      `Gong analysis already exists for this touch (analyzed ${new Date(existing.analyzedAt).toLocaleDateString()}).\n\n` +
+      `Re-running costs money. Continue anyway?`
+    );
+    
+    if (!confirm) {
+      showToast('Using existing analysis');
+      
+      // Load existing data from prospect object
+      window._drawerGongData[touchIdx] = existing.extracted;
+      
+      // Display existing results
+      const resultsDiv = document.getElementById(`gong-results-${touchIdx}`);
+      if (resultsDiv) {
+        const extracted = existing.extracted;
+        let html = '<div style="font-size:9px;font-weight:700;color:#10b981;margin-bottom:6px">✓ Using Saved Analysis</div>';
+        
+        if(extracted.painPoints && extracted.painPoints.length > 0){
+          html += `<div style="margin-bottom:4px"><strong style="color:#ef4444">Pain:</strong> ${extracted.painPoints[0]}</div>`;
+        }
+        if(extracted.objections && extracted.objections.length > 0){
+          html += `<div style="margin-bottom:4px"><strong style="color:#f59e0b">Objection:</strong> ${extracted.objections[0]}</div>`;
+        }
+        if(extracted.timeline && extracted.timeline !== 'Not specified'){
+          html += `<div style="margin-bottom:4px"><strong style="color:#3b82f6">Timeline:</strong> ${extracted.timeline}</div>`;
+        }
+        if(extracted.keyQuotes && extracted.keyQuotes.length > 0){
+          html += `<div style="font-style:italic;color:var(--text-2);">"${extracted.keyQuotes[0]}"</div>`;
+        }
+        
+        resultsDiv.innerHTML = html;
+        resultsDiv.style.display = 'block';
+      }
+      
+      // Show inject button
+      const injectBtn = document.getElementById(`gong-inject-${touchIdx}`);
+      if(injectBtn) injectBtn.style.display = 'block';
+      
+      return; // Skip API call
+    }
+  }
+  
   const files = window._drawerGongFiles[touchIdx];
   if(!files || files.length === 0){
     showToast('Upload screenshots first', true);
@@ -6770,14 +7785,19 @@ window.analyzeDrawerGong = async function(touchIdx){
       });
     }));
     
-    const p = window._hqProspect;
     const touch = buildTouches(p)[touchIdx];
+    
+    // Get active contact
+    const activeContact = window.getActiveContact ? window.getActiveContact() : null;
+    const contactName = activeContact 
+      ? (activeContact.fullName || `${activeContact.firstName || ''} ${activeContact.lastName || ''}`.trim())
+      : 'Contact';
     
     // Build analysis prompt
     const prompt = `Analyze this Gong call transcript for Day ${touch.day} - ${touch.label}.
 
 Company: ${p.company}
-Contact: ${p.contact}
+Contact: ${contactName}
 Industry: ${p.industry}
 
 Extract:
@@ -6796,23 +7816,47 @@ Return as JSON:
   "keyQuotes": ["quote 1"]
 }`;
 
-    // Call Gemini API
+    // Call Gemini API via Cloudflare Worker (expects Anthropic format)
+    console.log('[Gong] Calling API:', API_ENDPOINTS.gemini);
+    
+    // Build Anthropic-format request (worker converts to Gemini)
+    const content = [{ type: "text", text: prompt }];
+    
+    // Add images as image_url blocks
+    images.forEach(imgBase64 => {
+      content.push({
+        type: "image_url",
+        image_url: {
+          url: imgBase64 // Keep as full data URL (data:image/png;base64,...)
+        }
+      });
+    });
+    
     const response = await fetch(API_ENDPOINTS.gemini, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: prompt,
-        images: images
+        messages: [{
+          role: "user",
+          content: content
+        }]
       })
     });
     
-    if(!response.ok) throw new Error('Analysis failed');
+    if(!response.ok) {
+      const errorText = await response.text();
+      console.error('[Gong API Error] Status:', response.status, 'Response:', errorText);
+      throw new Error(`Analysis failed: ${response.status} - ${errorText.substring(0, 150)}`);
+    }
     
     const data = await response.json();
+    
+    // Extract text from Gemini response format
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || data.text || '';
     let extracted;
     
     try {
-      const jsonMatch = data.text.match(/\{[\s\S]*\}/);
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if(jsonMatch){
         extracted = JSON.parse(jsonMatch[0]);
       } else {
@@ -6825,12 +7869,70 @@ Return as JSON:
         timeline: 'Not specified',
         buyingSignals: [],
         keyQuotes: [],
-        rawText: data.text.substring(0, 200)
+        rawText: responseText.substring(0, 200)
       };
     }
     
-    // Store the data
+    // Store the data in temporary memory
     window._drawerGongData[touchIdx] = extracted;
+    
+    // ── CRITICAL: Save Gong data to prospect object for persistence ──
+    const p = window._hqProspect;
+    if (!p.gongData) p.gongData = {};
+    
+    // Save with touch index as key
+    p.gongData['touch_' + touchIdx] = {
+      extracted: extracted,
+      analyzedAt: new Date().toISOString(),
+      touchDay: touch.day,
+      touchLabel: touch.label,
+      fileCount: files.length
+    };
+    
+    // Build full transcript text for email context
+    let transcriptText = '';
+    if (extracted.painPoints && extracted.painPoints.length > 0) {
+      transcriptText += 'PAIN POINTS:\n' + extracted.painPoints.map(p => '• ' + p).join('\n') + '\n\n';
+    }
+    if (extracted.objections && extracted.objections.length > 0) {
+      transcriptText += 'OBJECTIONS:\n' + extracted.objections.map(o => '• ' + o).join('\n') + '\n\n';
+    }
+    if (extracted.timeline && extracted.timeline !== 'Not specified') {
+      transcriptText += 'TIMELINE: ' + extracted.timeline + '\n\n';
+    }
+    if (extracted.buyingSignals && extracted.buyingSignals.length > 0) {
+      transcriptText += 'BUYING SIGNALS:\n' + extracted.buyingSignals.map(s => '• ' + s).join('\n') + '\n\n';
+    }
+    if (extracted.keyQuotes && extracted.keyQuotes.length > 0) {
+      transcriptText += 'KEY QUOTES:\n' + extracted.keyQuotes.map(q => '"' + q + '"').join('\n');
+    }
+    
+    // Save to prospect transcript field (used by email context builder)
+    if (!p.transcript || p.transcript.length === 0) {
+      p.transcript = transcriptText;
+    } else {
+      // Append to existing transcript
+      p.transcript += '\n\n─────────────────────────\n\n' + transcriptText;
+    }
+    
+    // ── Save to localStorage (proper prospect array format) ──
+    try {
+      const allProspects = JSON.parse(localStorage.getItem('bp_prospects') || '[]');
+      const prospectIndex = allProspects.findIndex(pr => pr.company === p.company);
+      
+      if (prospectIndex !== -1) {
+        // Update existing prospect
+        allProspects[prospectIndex] = p;
+        localStorage.setItem('bp_prospects', JSON.stringify(allProspects));
+        console.log('[Gong] Saved to prospect array in localStorage');
+      } else {
+        console.warn('[Gong] Prospect not found in bp_prospects array - data saved to window._hqProspect only');
+      }
+    } catch(err) {
+      console.error('[Gong] Failed to save to localStorage:', err);
+    }
+    
+    console.log('[Gong] Analysis saved to prospect object');
     
     // Display results (compact format for drawer)
     const resultsDiv = document.getElementById(`gong-results-${touchIdx}`);
@@ -6886,15 +7988,16 @@ window.injectDrawerGong = function(touchIdx){
   const p = window._hqProspect;
   const touch = buildTouches(p)[touchIdx];
   
-  // Extract first name from primary contact
+  // Extract first name from active contact
   let firstName = '[Name]';
-  if (p.contacts && p.contacts.length > 0) {
+  const activeContact = window.getActiveContact ? window.getActiveContact() : null;
+  if (activeContact) {
+    firstName = activeContact.firstName || activeContact.fullName?.split(' ')[0] || '[Name]';
+  } else if (p.contacts && p.contacts.length > 0) {
     const primaryContact = p.contacts.find(c => c.isPrimary) || p.contacts[0];
-    firstName = primaryContact.firstName || (p.contact || '').split(' ')[0] || '[Name]';
+    firstName = primaryContact.firstName || '[Name]';
   } else if (p.firstName) {
     firstName = p.firstName;
-  } else if (p.contact) {
-    firstName = p.contact.split(' ')[0];
   }
   
   // Build personalized email
@@ -6924,7 +8027,30 @@ window.injectDrawerGong = function(touchIdx){
   // Update touch
   touch._proseBody = personalizedBody;
   
-  showToast('✨ Email personalized!');
+  // Get prospect email
+  const toEmail = p.email || '';
+  if(!toEmail){
+    showToast('No email on file — add recipient first', true);
+    return;
+  }
+  
+  // Create mailto link and open in Outlook
+  const uri = 'mailto:' + encodeURIComponent(toEmail) + 
+              '?subject=' + encodeURIComponent(touch.subject) + 
+              '&body=' + encodeURIComponent(personalizedBody);
+  
+  const a = document.createElement('a');
+  a.href = uri;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => document.body.removeChild(a), 500);
+  
+  showToast('📧 Outlook opened — Day ' + touch.day + ' with Gong insights');
+  
+  // Add notification log
+  notifAdd('outreach', '📧 Gong-Enhanced Email: Day ' + touch.day + ' — ' + touch.label, 
+           p.company + ' · Personalized from call transcript', 'OUTREACH');
   
   // Refresh the outreach tab to show updated email
   notifRenderList();
@@ -6986,6 +8112,15 @@ window.cdtSetStartDate = function(when){
   
   console.log('[Auto-Start] Start date set - cadence is now active');
   showToast('Cadence start date set to ' + iso);
+  
+  // CRITICAL FIX: Refresh UI to show updated dates across all views
+  // This ensures the cadence timeline and alerts drawer stay in sync
+  if(typeof ecRenderAll === 'function'){
+    try { ecRenderAll(); } catch(e) { console.error('ecRenderAll failed:', e); }
+  }
+  if(typeof notifRenderList === 'function'){
+    try { notifRenderList(); } catch(e) { console.error('notifRenderList failed:', e); }
+  }
 };
 
 // Compute today's day-in-cadence (1-based; null if not started)
@@ -7119,7 +8254,7 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
         </div>
         <div id="cdt-intel-result-${day}" style="padding:0 10px 8px 62px">${intelResult ? cdtRenderIntelResult(intelResult) : ''}</div>
         <div class="cdt-intel-actions" style="padding:0 10px 10px 62px">
-          <button class="cdt-ia-btn email" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="cdtIntelEmail(${day})" title="Open pre-filled in Outlook">📧 Outlook</button>
+          <button class="cdt-ia-btn email" style="background:#e7f9f0;border-color:#a7f3d0;color:#065f46" onclick="cdtIntelCopyEmail(${day})" title="Copy email to clipboard">📋 Copy Email</button>
           <button class="cdt-ia-btn social" onclick="cdtIntelLinkedIn(${day})" title="Copy as LinkedIn post">💼 LinkedIn Post</button>
           <button class="cdt-ia-btn sms" onclick="cdtIntelSms(${day})" title="Send SMS to prospect">📱 SMS</button>
         </div>
@@ -7136,7 +8271,7 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
         </div>
         <div id="cdt-intel-result-${day}" style="padding:0 10px 8px 62px">${intelResult ? cdtRenderIntelResult(intelResult) : ''}</div>
         <div class="cdt-intel-actions" style="padding:0 10px 10px 62px">
-          <button class="cdt-ia-btn email" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="cdtIntelEmail(${day})" title="Open pre-filled in Outlook">📧 Outlook</button>
+          <button class="cdt-ia-btn email" style="background:#e7f9f0;border-color:#a7f3d0;color:#065f46" onclick="cdtIntelCopyEmail(${day})" title="Copy email to clipboard">📋 Copy Email</button>
           <button class="cdt-ia-btn social" onclick="cdtIntelLinkedIn(${day})" title="Copy as LinkedIn post">💼 LinkedIn Post</button>
           <button class="cdt-ia-btn sms" onclick="cdtIntelSms(${day})" title="Send SMS to prospect">📱 SMS</button>
         </div>
@@ -7183,7 +8318,8 @@ function cdtRenderTimeline(touches, sorted, touchDays, intelDays, todayNum){
         <div class="cdt-day-right">
           ${isToday ? '<span class="cdt-today-badge">TODAY</span>' : ''}
           <span class="cdt-status-pill ${pillCls}">${pillLabel}</span>
-          <button class="cdt-open-btn" style="background:#f0f4ff;border-color:#c7d7ff;color:#1e40af" onclick="event.stopPropagation();cdtQuickMailto(${idx})" title="Open pre-filled in Outlook">📧 Outlook</button>
+          <button class="cdt-open-btn" style="background:#e7f9f0;border-color:#a7f3d0;color:#065f46" onclick="event.stopPropagation();cdtCopyEmail(${idx})" title="Copy email to clipboard">📋 Copy Email</button>
+          <button class="cdt-open-btn" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af" onclick="event.stopPropagation();cdtRegenerateTouch(${idx})" title="Regenerate email with latest prompts">🔄 Regenerate</button>
           <button class="cdt-open-btn" style="background:#fff8f0;border-color:#fed7aa;color:#9a3412" onclick="event.stopPropagation();cdtResetTouch(${idx})" title="Reset this touch to Pending">↺ Reset</button>
         </div>
       </div>`;
@@ -7421,6 +8557,121 @@ window.cdtResetAll = function(){
   showToast('Cadence reset — starting from today');
 };
 
+// ── Regenerate All Emails with New Prompts ──
+window.cdtRegenerateAll = async function() {
+  const p = window._hqProspect;
+  if (!p) {
+    showToast('Load a prospect first', true);
+    return;
+  }
+  
+  if (!confirm('Regenerate all email touches with latest prompts and data?\n\nThis will:\n• Use new personal tone\n• Pull latest Gong/Intel data\n• Override existing emails\n\nContinue?')) {
+    return;
+  }
+  
+  const touches = buildTouches(p);
+  const emailTouches = touches.filter((t, idx) => {
+    // Only regenerate email touches (not calls/meetings)
+    return t.label.toLowerCase().includes('touch') || 
+           t.label.toLowerCase().includes('email') ||
+           t.label.toLowerCase().includes('hook') ||
+           t.label.toLowerCase().includes('value') ||
+           t.label.toLowerCase().includes('invite');
+  });
+  
+  if (emailTouches.length === 0) {
+    showToast('No email touches to regenerate', true);
+    return;
+  }
+  
+  // Show progress modal
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:8px;padding:24px;max-width:400px;width:90%;box-shadow:0 4px 20px rgba(0,0,0,0.15)">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">🔄 Regenerating Emails...</div>
+      <div id="regen-progress" style="font-size:11px;color:var(--text-2);margin-bottom:12px">Starting...</div>
+      <div style="background:var(--off-white);border-radius:4px;height:8px;overflow:hidden">
+        <div id="regen-progress-bar" style="background:#3b82f6;height:100%;width:0%;transition:width 0.3s"></div>
+      </div>
+      <div style="margin-top:12px;font-size:10px;color:var(--text-3)">Using latest prompts, Gong insights, and market intel</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  const progressText = document.getElementById('regen-progress');
+  const progressBar = document.getElementById('regen-progress-bar');
+  
+  let completed = 0;
+  const total = emailTouches.length;
+  
+  // Regenerate each email touch
+  for (let i = 0; i < emailTouches.length; i++) {
+    const touch = emailTouches[i];
+    const touchIdx = touches.indexOf(touch);
+    
+    progressText.textContent = `Regenerating Day ${touch.day} — ${touch.label} (${i + 1}/${total})`;
+    progressBar.style.width = ((i / total) * 100) + '%';
+    
+    try {
+      // Build enriched context using the same pipeline as the cadence engine
+      const rawContext = bpEngineBuildContext(p, touch, window._atResults || null);
+      
+      // Get the appropriate prompt key for this touch day
+      const dayKeyMap = {
+        0: 'wfn_day0',
+        1: 'wfn_day1',
+        2: 'wfn_day2',
+        3: 'wfn_day3',
+        5: 'wfn_day5',
+        8: 'wfn_day8_intel',
+        10: 'wfn_day10',
+        15: 'wfn_day15_intel',
+        17: 'wfn_day17',
+        22: 'wfn_day22_intel',
+        24: 'wfn_day24',
+        27: 'wfn_day27',
+        30: 'wfn_day30'
+      };
+      
+      const touchKey = p.track === 'WFN' ? (dayKeyMap[touch.day] || 'wfn_day1') : 'wfn_day1';
+      
+      // Format with new prompts
+      const proseBody = await bpProseFormat(touchKey, rawContext);
+      
+      // Store the formatted email
+      touch._proseBody = proseBody;
+      if (!window._ecTouches) window._ecTouches = [];
+      window._ecTouches[touchIdx] = touch;
+      
+      completed++;
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (err) {
+      console.error(`[Regen] Failed on Day ${touch.day}:`, err);
+      progressText.textContent = `Error on Day ${touch.day} — continuing...`;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  // Complete
+  progressBar.style.width = '100%';
+  progressText.textContent = `✓ Regenerated ${completed}/${total} emails!`;
+  
+  // Refresh UI
+  ecRenderAll();
+  
+  // Close modal after 2 seconds
+  setTimeout(() => {
+    modal.remove();
+    showToast(`✓ Regenerated ${completed} emails with new prompts!`);
+    notifAdd('outreach', '🔄 Emails Regenerated', `${completed} touches updated with latest prompts and data`, 'OUTREACH');
+  }, 2000);
+};
+
+
 window.cdtResetTouch = function(idx){
   const p = window._hqProspect;
   const touches = p ? buildTouches(p) : [];
@@ -7435,6 +8686,112 @@ window.cdtResetTouch = function(idx){
   ecRenderAll();
   showToast(label + ' reset to Pending');
 };
+
+// ── Regenerate Single Touch Email ──
+window.cdtRegenerateTouch = async function(idx) {
+  const p = window._hqProspect;
+  if (!p) {
+    showToast('Load a prospect first', true);
+    return;
+  }
+  
+  const touches = buildTouches(p);
+  const touch = touches[idx];
+  
+  if (!touch) {
+    showToast('Touch not found', true);
+    return;
+  }
+  
+  const label = 'Day ' + touch.day + ' — ' + touch.label;
+  
+  // Confirm regeneration
+  if (!confirm(`Regenerate ${label} with latest prompts and data?\n\nThis will use:\n• New personal tone\n• Latest Gong/Intel data\n• Segmented intelligence\n• Correct client type logic`)) {
+    return;
+  }
+  
+  showToast('🔄 Regenerating ' + label + '...');
+  
+  try {
+    // Build enriched context using the same pipeline as the cadence engine
+    const rawContext = bpEngineBuildContext(p, touch, window._atResults || null);
+    
+    // Get the appropriate prompt key for this touch day
+    const dayKeyMap = {
+      0: 'wfn_day0',
+      1: 'wfn_day1',
+      2: 'wfn_day2',
+      3: 'wfn_day3',
+      5: 'wfn_day5',
+      8: 'wfn_day8_intel',
+      10: 'wfn_day10',
+      15: 'wfn_day15_intel',
+      17: 'wfn_day17',
+      22: 'wfn_day22_intel',
+      24: 'wfn_day24',
+      27: 'wfn_day27',
+      30: 'wfn_day30'
+    };
+    
+    const touchKey = p.track === 'WFN' ? (dayKeyMap[touch.day] || 'wfn_day1') : 'wfn_day1';
+    
+    // Format with new prompts
+    const proseBody = await bpProseFormat(touchKey, rawContext);
+    
+    // Update the touch object with new content
+    touch._proseBody = proseBody;
+    touch.body = proseBody; // Also update body property
+    
+    // Store in global touches array
+    if (!window._ecTouches) window._ecTouches = [];
+    window._ecTouches[idx] = touch;
+    
+    // Also update in the prospect's cadence storage
+    const cadenceKey = 'cadence_' + p.company.replace(/\s+/g, '_');
+    const cadenceData = JSON.parse(localStorage.getItem(cadenceKey) || '{}');
+    if (!cadenceData.touches) cadenceData.touches = touches;
+    cadenceData.touches[idx] = touch;
+    localStorage.setItem(cadenceKey, JSON.stringify(cadenceData));
+    
+    // Refresh UI based on context (wrapped in try-catch to prevent UI errors from breaking regeneration)
+    try {
+      // If Composer tab is visible, refresh it
+      const composerView = document.getElementById('hq-composer-view');
+      if (composerView && composerView.style.display !== 'none') {
+        ecRenderAll();
+      }
+    } catch (uiErr) {
+      console.warn('[Regen] Composer refresh skipped:', uiErr.message);
+    }
+    
+    try {
+      // If drawer is open, refresh it
+      const drawer = document.getElementById('notif-drawer');
+      if (drawer && drawer.classList.contains('open')) {
+        notifRenderList();
+      }
+    } catch (uiErr) {
+      console.warn('[Regen] Drawer refresh skipped:', uiErr.message);
+    }
+    
+    try {
+      // Also refresh the cadence timeline if visible
+      if (typeof cdtRender === 'function') {
+        setTimeout(cdtRender, 100);
+      }
+    } catch (uiErr) {
+      console.warn('[Regen] Timeline refresh skipped:', uiErr.message);
+    }
+    
+    showToast('✓ ' + label + ' regenerated with new prompts!');
+    notifAdd('outreach', '🔄 Email Regenerated: ' + label, p.company + ' · Fresh content with latest data', 'OUTREACH');
+    
+  } catch (err) {
+    console.error('[Regen] Failed to regenerate touch:', err);
+    showToast('Regeneration failed: ' + err.message, true);
+  }
+};
+
 
 // Hook into ecRenderAll to also refresh tracker
 const _cdtOrigRenderAll = window.ecRenderAll || null;
@@ -7685,7 +9042,7 @@ function notifRenderOutreachTab(listEl){
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;align-items:flex-end">
           ${!isDone ? `<button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap">📅 Reschedule</button>` : ''}
-          <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">📧 Outlook</button>
+          <button onclick="notifCloseDrawer();cdtCopyEmail(${i})" style="font-size:10px;font-weight:700;padding:5px 9px;border-radius:4px;border:none;background:#10b981;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap">📋 Copy</button>
         </div>
       </div>
     </div>`;
@@ -8044,6 +9401,8 @@ window.notifClearAll = function(){
 // Prevents popup spam by delivering notifications 1 every 2 seconds
 const _browserNotifQueue = [];
 let _browserNotifTimer = null;
+let _browserNotifSummaryShown = false; // Reset when queue is cleared
+
 
 function notifBrowserPush(title, body){
   if(!('Notification' in window)) return;
@@ -8052,14 +9411,35 @@ function notifBrowserPush(title, body){
   // Add to queue instead of firing immediately
   _browserNotifQueue.push({ title, body, time: Date.now() });
   
-  // If timer not running, start throttled delivery
+  // If timer not running, start throttled delivery (and reset summary flag for new session)
   if (!_browserNotifTimer) {
+    _browserNotifSummaryShown = false; // Reset for each notification session
     deliverNextBrowserNotif();
   }
 }
 
 function deliverNextBrowserNotif() {
   if (_browserNotifQueue.length === 0) {
+    _browserNotifTimer = null;
+    return;
+  }
+  
+  // If there are many queued notifications (5+), show a summary instead
+  if (_browserNotifQueue.length >= 5 && !_browserNotifSummaryShown) {
+    _browserNotifSummaryShown = true;
+    try {
+      new Notification(`📬 ${_browserNotifQueue.length + 1} New Alerts`, {
+        body: 'Tap to view all notifications in Sales HQ',
+        icon: 'https://beyondpayroll.net/favicon.ico',
+        badge: 'https://beyondpayroll.net/favicon.ico',
+        tag: 'bp-summary',
+        requireInteraction: false
+      });
+    } catch(e) {
+      console.error('[Notif] Summary notification failed:', e);
+    }
+    // Clear the queue after showing summary
+    _browserNotifQueue = [];
     _browserNotifTimer = null;
     return;
   }
@@ -8078,8 +9458,8 @@ function deliverNextBrowserNotif() {
     console.error('[Notif] Browser notification failed:', e);
   }
   
-  // Deliver next notification after 2-second delay
-  _browserNotifTimer = setTimeout(deliverNextBrowserNotif, 2000);
+  // Deliver next notification after 5-second delay (increased from 2 for mobile)
+  _browserNotifTimer = setTimeout(deliverNextBrowserNotif, 5000);
 }
 
 // Request browser notification permission on first use
@@ -8540,10 +9920,11 @@ function openLinkedInModal(touchIndex, touchDay) {
         
         <div style="background:#f0f9ff;padding:12px;border-radius:8px;border-left:3px solid #0a66c2;margin-bottom:16px">
           <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px">💡 Quick Actions</div>
-          <div style="display:flex;gap:6px">
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <button onclick="autoFindLinkedInFromModal()" style="flex:1;padding:6px 10px;border:1px solid #0a66c2;border-radius:6px;background:#0a66c2;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">⚡ Auto-Find Profile</button>
             <button onclick="window.open('https://linkedin.com/search/results/people/?keywords=${encodeURIComponent((p.contact || '') + ' ' + p.company)}', '_blank')" style="flex:1;padding:6px 10px;border:1px solid #0a66c2;border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">🔍 Search</button>
-            <button onclick="window.open('https://linkedin.com', '_blank')" style="flex:1;padding:6px 10px;border:1px solid #0a66c2;border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">🔗 Open LinkedIn</button>
           </div>
+          <button onclick="window.open('https://linkedin.com', '_blank')" style="width:100%;padding:6px 10px;border:1px solid #0a66c2;border-radius:6px;background:var(--white);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fb)">🔗 Open LinkedIn</button>
         </div>
         
         <div style="display:flex;gap:10px">
@@ -9041,6 +10422,27 @@ FORMAT: Write 3-4 paragraphs separated by blank lines. Each paragraph should foc
     notifAdd('intel', '📊 Intel Refresh Complete — Day '+day+' · '+(intelDay?.label||'Intel'), p.company+' · Competitive brief ready', 'INTEL');
     notifBrowserPush('📊 Intel ready — '+p.company, 'Day '+day+' '+( intelDay?.label||'Intel')+' brief is ready');
     showToast('Intel refresh complete — Day '+day);
+    
+    // ── AUTO-PARSE INTEL INTO SEGMENTS (Day 0 only) ──
+    if(day === 0 && text && text.length > 50){
+      console.log('[Intel Segments] Auto-parsing Day 0 intel...');
+      parseIntelIntoSegments(text).then(function(segments){
+        if(segments){
+          showToast('✅ Intel segmented — 6 categories ready for targeted emails');
+          console.log('[Intel Segments] Auto-parse complete:', {
+            news: segments.news?.length || 0,
+            product: segments.product?.length || 0,
+            pricing: segments.pricing?.length || 0,
+            marketing: segments.marketing?.length || 0,
+            activity: segments.activity?.length || 0,
+            technical: segments.technical?.length || 0
+          });
+        }
+      }).catch(function(err){
+        console.warn('[Intel Segments] Auto-parse failed:', err);
+      });
+    }
+    
     // ── PROSE FORMATTING LAYER ── auto-convert intel output to email prose
     bpApplyIntelToEmail(day, text).catch(function(e){ console.warn('[ProseFormat] Intel-to-email failed:', e.message); });
   } catch(e){
@@ -9137,6 +10539,26 @@ window.cdtQuickMailto = function(idx){
   showToast('📧 Outlook ready — Day '+touch.day+' · '+touch.label);
   notifAdd('outreach','📧 Outlook Opened: Day '+touch.day+' — '+touch.label, p.company+' · '+p.contact,'OUTREACH');
 };
+
+// Copy email content to clipboard for manual pasting (timeline/intel version)
+window.cdtCopyEmail = function(idx){
+  const p = window._hqProspect; if(!p){ showToast('No prospect loaded',true); return; }
+  const touches = buildTouches(p);
+  const touch = touches[idx]; if(!touch) return;
+  const toEmail = p.email || '';
+  if(!toEmail){ showToast('No email on file — open composer to add recipient',true); cdtJumpTo(idx); return; }
+  const cleanBody = touch.body.replace(/\n\n—[\s\S]*$/, '');
+  const sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
+  const body = cleanBody + sig;
+  const copyText = `TO: ${toEmail}\n\nSUBJECT: ${touch.subject}\n\nBODY:\n${body}`;
+  navigator.clipboard.writeText(copyText).then(()=>{
+    showToast('📋 Day '+touch.day+' copied — paste into your work email');
+    notifAdd('outreach','📋 Email Copied: Day '+touch.day+' — '+touch.label, p.company+' · Ready to paste','OUTREACH');
+  }).catch(()=>{
+    showToast('Copy failed — try again',true);
+  });
+};
+
 
 // cdtDownloadTemplate — download .eml from timeline row
 window.cdtDownloadTemplate = function(idx){
@@ -9679,6 +11101,10 @@ function pdLoadProspect(idx){
   }, 200);
   // RESTORE SAVED MARKET ANALYSIS DATA
   if(typeof window.restoreMarketAnalysis==='function') setTimeout(window.restoreMarketAnalysis, 500);
+  // UPDATE CONTACTS BUTTON
+  if(typeof window.contactsUpdateButton==='function') setTimeout(window.contactsUpdateButton, 100);
+  // UPDATE HAMBURGER MENU (mobile)
+  if(typeof window.updateHamburgerMenu==='function') setTimeout(window.updateHamburgerMenu, 100);
 }
 
 function pdAddToCadence(idx){
@@ -9986,6 +11412,7 @@ window.cdtIntelEmail = async function(day) {
 
   // Use cadence touch subject if available, otherwise fall back to intel subject map
   const subjectMap = {
+    0: 'Quick competitive intel on '+p.company+'\'s HR stack',
     1: 'Quick thought on '+p.company+'\'s HR setup',
     8: 'Something came across my desk re: '+p.company,
     15: 'A competitor move worth flagging for '+p.company,
@@ -10004,7 +11431,7 @@ window.cdtIntelEmail = async function(day) {
   }
 
   // Otherwise build full enriched context using the same pipeline as the cadence engine
-  const dayKeyMap = {1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel'};
+  const dayKeyMap = {0:'wfn_day0', 1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel'};
   const touchKey = p.track==='WFN' ? (dayKeyMap[day]||'wfn_day8_intel') : 'wfn_day8_intel';
 
   // Use bpEngineBuildContext to pull ALL data: firmographic, pain points, transcript,
@@ -10027,6 +11454,61 @@ window.cdtIntelEmail = async function(day) {
   window.location.href = uri;
   showToast('\u2713 Outlook ready \u2014 Day '+day+' intel email pre-filled');
 };
+
+// Copy version of Intel email (no mailto)
+window.cdtIntelCopyEmail = async function(day) {
+  const p = window._hqProspect; if(!p) return;
+  const result = cdtGetIntelResult(day);
+  const intelDay = CDT_INTEL_DAYS.find(function(d){return d.day===day;});
+
+  // Find matching cadence touch to reuse its pre-built subject + body if available
+  const touches = window._ecTouches || [];
+  const matchTouch = touches.find(function(t){ return t.day === day; });
+
+  // Use cadence touch subject if available, otherwise fall back to intel subject map
+  const subjectMap = {
+    0: 'Quick competitive intel on '+p.company+'\'s HR stack',
+    1: 'Quick thought on '+p.company+'\'s HR setup',
+    8: 'Something came across my desk re: '+p.company,
+    15: 'A competitor move worth flagging for '+p.company,
+    22: 'Last thing I wanted to flag for '+p.company
+  };
+  const subject = (matchTouch && matchTouch.subject) || subjectMap[day] || ('[ADP Intel] '+(intelDay?intelDay.label:'Research Brief')+' \u2014 '+p.company);
+
+  // Get email body
+  let bodyText = '';
+  if (matchTouch && matchTouch._proseBody) {
+    bodyText = matchTouch._proseBody;
+  } else {
+    // Build full enriched context
+    const dayKeyMap = {0:'wfn_day0', 1:'wfn_day1', 8:'wfn_day8_intel', 15:'wfn_day15_intel', 22:'wfn_day22_intel'};
+    const touchKey = p.track==='WFN' ? (dayKeyMap[day]||'wfn_day8_intel') : 'wfn_day8_intel';
+    const fakeTouch = matchTouch || { day: day, label: intelDay ? intelDay.label : 'Intel Touch' };
+    let rawContext = bpEngineBuildContext(p, fakeTouch, window._atResults || null);
+    
+    if (result && result.result) {
+      rawContext += '\n\nLIVE INTEL AGENT OUTPUT (use the most specific finding from this):\n' + result.result;
+    }
+    
+    showToast('Formatting email…');
+    const proseBody = await bpProseFormat(touchKey, rawContext);
+    const sig = '\n\n—\nAJ\nADP\nbeyondpayroll.net';
+    bodyText = proseBody + sig;
+  }
+
+  const toEmail = p.email || '';
+  if (!toEmail) { showToast('No email on file for this prospect', true); return; }
+
+  const copyText = `TO: ${toEmail}\n\nSUBJECT: ${subject}\n\nBODY:\n${bodyText}`;
+  
+  navigator.clipboard.writeText(copyText).then(() => {
+    showToast('📋 Day ' + day + ' intel email copied to clipboard');
+    notifAdd('outreach', '📋 Intel Email Copied: Day ' + day, p.company + ' · Ready to paste', 'OUTREACH');
+  }).catch(() => {
+    showToast('Copy failed — try again', true);
+  });
+};
+
 
 // ── cdtIntelLinkedIn: prose-formatted LinkedIn post from intel agent output ──
 window.cdtIntelLinkedIn = async function(day) {
@@ -15724,7 +17206,8 @@ function notifRenderOutreachTabEnhanced(listEl){
         
         <!-- Action Buttons -->
         <div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;background:#fff">
-          <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:none;background:#1e40af;color:#fff;cursor:pointer;font-family:var(--fb);box-shadow:0 1px 2px rgba(0,0,0,.1)">📧 Outlook</button>
+          <button onclick="notifCloseDrawer();cdtCopyEmail(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:none;background:#10b981;color:#fff;cursor:pointer;font-family:var(--fb);box-shadow:0 1px 2px rgba(0,0,0,.1)">📋 Copy Email</button>
+          <button onclick="cdtRegenerateTouch(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:none;background:#eff6ff;color:#1e40af;cursor:pointer;font-family:var(--fb);border:1px solid #bfdbfe">🔄 Regenerate</button>
           <button onclick="notifCloseDrawer();cdtCopyLinkedIn(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:1px solid #0077b5;background:#fff;color:#0077b5;cursor:pointer;font-family:var(--fb)">💼 LinkedIn</button>
           <button onclick="notifCloseDrawer();cdtCopySMS(${i})" style="flex:1;min-width:100px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:1px solid #10b981;background:#fff;color:#10b981;cursor:pointer;font-family:var(--fb)">📱 SMS</button>
           <button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:600;padding:8px 12px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb)">📅 Reschedule</button>
@@ -15798,7 +17281,8 @@ function renderTouchRow(touch, i, status, tDate, todayNum, sentAt, isOverdue, is
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
         ${!isDone ? `<button onclick="cdtOpenReschedule(${i},${touch.day})" style="font-size:10px;font-weight:700;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--white);color:var(--text-2);cursor:pointer;font-family:var(--fb);white-space:nowrap;transition:all .15s" onmouseover="this.style.background='var(--off-white)'" onmouseout="this.style.background='var(--white)'">📅 Reschedule</button>` : ''}
-        <button onclick="notifCloseDrawer();cdtQuickMailto(${i})" style="font-size:10px;font-weight:700;padding:6px 12px;border-radius:6px;border:none;background:#3b82f6;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap;transition:all .15s" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">📧 ${isDone ? 'View' : 'Compose'}</button>
+        <button onclick="cdtRegenerateTouch(${i})" style="font-size:10px;font-weight:700;padding:6px 12px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1e40af;cursor:pointer;font-family:var(--fb);white-space:nowrap;transition:all .15s" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">🔄 Regenerate</button>
+        <button onclick="notifCloseDrawer();cdtCopyEmail(${i})" style="font-size:10px;font-weight:700;padding:6px 12px;border-radius:6px;border:none;background:#10b981;color:#fff;cursor:pointer;font-family:var(--fb);white-space:nowrap;transition:all .15s" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">📋 ${isDone ? 'Copy' : 'Copy Email'}</button>
       </div>
     </div>
   </div>`;
@@ -16092,8 +17576,175 @@ function notifRenderIntelTabEnhanced(listEl){
     html += '<div class="notif-empty" style="padding:40px 20px">No intel data<br><span style="font-size:11px;opacity:.6;margin-top:8px;display:block">Run intel refreshes from the Composer timeline</span></div>';
   }
 
+  // ── SEGMENTED INTELLIGENCE VIEWER ──
+  const segments = window._intelSegments || {};
+  const hasSegments = Object.values(segments).some(arr => arr && arr.length > 0);
+  
+  if(hasSegments){
+    html += `<div style="padding:10px 14px;border-top:2px solid var(--border);background:var(--off-white)">
+      <div style="font-size:10px;font-weight:800;letter-spacing:.8px;color:var(--text-3);text-transform:uppercase">📦 Segmented Intelligence</div>
+    </div>`;
+    
+    const segmentIcons = {
+      news: '📰',
+      product: '🚀',
+      pricing: '💰',
+      marketing: '📢',
+      activity: '📈',
+      technical: '⚙️'
+    };
+    
+    const segmentLabels = {
+      news: 'Recent News & Press',
+      product: 'Product & Features',
+      pricing: 'Pricing & Promotions',
+      marketing: 'Marketing & Campaigns',
+      activity: 'Market Activity',
+      technical: 'Technical/Integration'
+    };
+    
+    const segmentColors = {
+      news: { bg: '#fef2f2', border: '#fecaca', text: '#991b1b' },
+      product: { bg: '#f0f9ff', border: '#bae6fd', text: '#0c4a6e' },
+      pricing: { bg: '#fef3c7', border: '#fde68a', text: '#92400e' },
+      marketing: { bg: '#faf5ff', border: '#e9d5ff', text: '#6b21a8' },
+      activity: { bg: '#f0fdf4', border: '#bbf7d0', text: '#14532d' },
+      technical: { bg: '#f5f5f5', border: '#d4d4d4', text: '#404040' }
+    };
+    
+    Object.keys(segments).forEach(function(key){
+      const items = segments[key] || [];
+      if(items.length === 0) return;
+      
+      const icon = segmentIcons[key] || '📊';
+      const label = segmentLabels[key] || key;
+      const colors = segmentColors[key] || { bg: '#f9fafb', border: '#e5e7eb', text: '#374151' };
+      
+      html += `<div style="padding:12px 14px;border-bottom:1px solid var(--border);background:#fff">
+        <div onclick="toggleSegmentView('${key}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:16px">${icon}</span>
+            <span style="font-size:11px;font-weight:700;color:var(--text)">${label}</span>
+            <span style="font-size:9px;font-weight:700;color:${colors.text};background:${colors.bg};padding:2px 6px;border-radius:4px;border:1px solid ${colors.border}">${items.length} items</span>
+          </div>
+          <span id="segment-toggle-${key}" style="font-size:10px;color:var(--text-3)">▼</span>
+        </div>
+        
+        <div id="segment-content-${key}" style="display:none">
+          <div style="background:${colors.bg};border:1px solid ${colors.border};border-radius:4px;padding:8px;font-size:10px;line-height:1.6;color:${colors.text}">
+            ${items.map(function(item, i){ return '<div style="margin-bottom:'+(i<items.length-1?'6px':'0')+'">• '+item+'</div>'; }).join('')}
+          </div>
+        </div>
+      </div>`;
+    });
+    
+    // Add segment actions
+    html += `<div style="padding:12px 14px;background:var(--off-white);border-top:2px solid var(--border)">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="viewAllSegments()" style="flex:1;min-width:140px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer;font-family:var(--fb)">👁 View All Segments</button>
+        <button onclick="refreshSegments()" style="flex:1;min-width:140px;font-size:10px;font-weight:700;padding:8px 12px;border-radius:5px;border:none;background:#eff6ff;color:#1e40af;cursor:pointer;font-family:var(--fb);border:1px solid #bfdbfe">🔄 Refresh Segments</button>
+      </div>
+      <div style="font-size:9px;color:var(--text-3);margin-top:8px;text-align:center">
+        Segments auto-generated from Day 0 intel • Used for targeted email generation
+      </div>
+    </div>`;
+  }
+
   listEl.innerHTML = html;
 }
+
+// Toggle segment visibility
+window.toggleSegmentView = function(key){
+  const content = document.getElementById('segment-content-'+key);
+  const toggle = document.getElementById('segment-toggle-'+key);
+  if(!content || !toggle) return;
+  
+  const isOpen = content.style.display !== 'none';
+  content.style.display = isOpen ? 'none' : 'block';
+  toggle.textContent = isOpen ? '▼' : '▲';
+};
+
+// View all segments in modal
+window.viewAllSegments = function(){
+  const segments = window._intelSegments || {};
+  const meta = window._intelSegmentMeta || {};
+  
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px';
+  
+  let content = '<div style="padding:20px;overflow-y:auto;max-height:600px">';
+  
+  const segmentLabels = {
+    news: '📰 Recent News & Press',
+    product: '🚀 Product & Features',
+    pricing: '💰 Pricing & Promotions',
+    marketing: '📢 Marketing & Campaigns',
+    activity: '📈 Market Activity',
+    technical: '⚙️ Technical/Integration'
+  };
+  
+  Object.keys(segments).forEach(function(key){
+    const items = segments[key] || [];
+    const label = segmentLabels[key] || key;
+    const lastRefresh = meta[key]?.lastRefresh;
+    const refreshLabel = lastRefresh ? new Date(lastRefresh).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : 'Never';
+    
+    content += `<div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">${label}</div>
+      <div style="font-size:9px;color:var(--text-3);margin-bottom:8px">Last refresh: ${refreshLabel} · ${items.length} items</div>
+      <div style="background:var(--off-white);border:1px solid var(--border);border-radius:4px;padding:10px;font-size:11px;line-height:1.6">
+        ${items.length > 0 ? items.map(function(item){ return '<div style="margin-bottom:6px">• '+item+'</div>'; }).join('') : '<div style="color:var(--text-3)">No data in this segment</div>'}
+      </div>
+    </div>`;
+  });
+  
+  content += '</div>';
+  
+  modal.innerHTML = `<div style="background:var(--white);border-radius:var(--radius);max-width:800px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div>
+        <div style="font-family:var(--fd);font-size:15px;font-weight:600">📦 Segmented Intelligence</div>
+        <div style="font-size:11px;opacity:.6;margin-top:2px">All intel categories for targeted email generation</div>
+      </div>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;font-family:var(--fb)">✕</button>
+    </div>
+    ${content}
+    <div style="padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 16px;background:var(--off-white);border:1px solid var(--border);color:var(--text-2);border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--fb)">Close</button>
+    </div>
+  </div>`;
+  
+  document.body.appendChild(modal);
+};
+
+// Refresh segments (re-parse Day 0 intel)
+window.refreshSegments = async function(){
+  const p = window._hqProspect;
+  if(!p){ showToast('No prospect loaded',true); return; }
+  
+  const store = cdtGetIntelResults();
+  const prefix = p.company.replace(/\s+/g,'_') + '_day';
+  const day0Key = prefix + '0';
+  const day0Result = store[day0Key];
+  
+  if(!day0Result || !day0Result.result){
+    showToast('No Day 0 intel found — run Day 0 intel first',true);
+    return;
+  }
+  
+  showToast('🔄 Re-parsing intel into segments...');
+  
+  try {
+    const segments = await parseIntelIntoSegments(day0Result.result);
+    if(segments){
+      showToast('✅ Segments refreshed successfully');
+      notifRenderList(); // Refresh the drawer to show updated segments
+    }
+  } catch(err){
+    console.error('[Intel Segments] Refresh failed:', err);
+    showToast('Segment refresh failed',true);
+  }
+};
 
 console.log('✓ Enhanced notification UI loaded - streamlined cadence visibility');
 
@@ -19793,3 +21444,166 @@ window.switchProspectCardContact = function(contactIdx) {
 };
 
 console.log('✓ Prospect card contact dropdown loaded');
+
+// ═══════════════════════════════════════════════════════════════════
+// CONTACTS SIDEBAR DRAWER
+// ═══════════════════════════════════════════════════════════════════
+
+window.contactsToggleDrawer = function() {
+  const drawer = document.getElementById('contacts-drawer');
+  const overlay = document.getElementById('contacts-overlay');
+  const isOpen = drawer && drawer.classList.contains('open');
+  
+  if (isOpen) {
+    contactsCloseDrawer();
+  } else {
+    contactsOpenDrawer();
+  }
+};
+
+window.contactsOpenDrawer = function() {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || p.contacts.length === 0) {
+    showToast('No contacts available');
+    return;
+  }
+  
+  // Render contacts list
+  contactsRenderList();
+  
+  // Open drawer
+  const drawer = document.getElementById('contacts-drawer');
+  const overlay = document.getElementById('contacts-overlay');
+  if (drawer) drawer.classList.add('open');
+  if (overlay) overlay.classList.add('active');
+};
+
+window.contactsCloseDrawer = function() {
+  const drawer = document.getElementById('contacts-drawer');
+  const overlay = document.getElementById('contacts-overlay');
+  if (drawer) drawer.classList.remove('open');
+  if (overlay) overlay.classList.remove('active');
+};
+
+window.contactsRenderList = function() {
+  const p = window._hqProspect;
+  if (!p || !p.contacts) return;
+  
+  const body = document.getElementById('contacts-body');
+  const companyName = document.getElementById('contacts-company-name');
+  
+  if (companyName) companyName.textContent = p.company || '';
+  
+  const currentIdx = window._selectedContactIdx || 0;
+  
+  let html = '<div style="padding:16px">';
+  
+  p.contacts.forEach(function(contact, idx) {
+    const isActive = idx === currentIdx;
+    const isPrimary = contact.isPrimary;
+    const fullName = contact.fullName || [contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'Unknown';
+    
+    html += '<div class="contact-card ' + (isActive ? 'active' : '') + '" onclick="contactsSelectContact(' + idx + ')" style="';
+    html += 'background:' + (isActive ? 'var(--blue)' : 'var(--white)') + ';';
+    html += 'color:' + (isActive ? 'white' : 'var(--text)') + ';';
+    html += 'border:2px solid ' + (isActive ? 'var(--blue)' : isPrimary ? 'var(--blue)' : 'var(--border)') + ';';
+    html += 'border-radius:8px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all 0.2s;"';
+    html += ' onmouseover="if (!this.classList.contains(\'active\')) this.style.background=\'var(--off-white)\'"';
+    html += ' onmouseout="if (!this.classList.contains(\'active\')) this.style.background=\'var(--white)\'">';
+    
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    if (isPrimary) {
+      html += '<span style="font-size:9px;font-weight:700;';
+      html += 'color:' + (isActive ? 'white' : 'var(--blue)') + ';';
+      html += 'background:' + (isActive ? 'rgba(255,255,255,0.2)' : 'rgba(59,130,246,0.1)') + ';';
+      html += 'padding:3px 6px;border-radius:3px">PRIMARY</span>';
+    }
+    if (isActive) {
+      html += '<span style="font-size:9px;font-weight:700;background:rgba(255,255,255,0.2);padding:3px 6px;border-radius:3px">ACTIVE</span>';
+    }
+    html += '</div>';
+    
+    html += '<div style="font-size:16px;font-weight:600;margin-bottom:8px">' + fullName + '</div>';
+    
+    if (contact.title) {
+      html += '<div style="font-size:13px;opacity:0.9;margin-bottom:4px">📋 ' + contact.title + '</div>';
+    }
+    if (contact.email) {
+      html += '<div style="font-size:12px;opacity:0.9;margin-bottom:4px">📧 ' + contact.email + '</div>';
+    }
+    if (contact.phone) {
+      html += '<div style="font-size:12px;opacity:0.9">📞 ' + contact.phone + '</div>';
+    }
+    
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  
+  if (body) body.innerHTML = html;
+};
+
+window.contactsSelectContact = function(idx) {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || !p.contacts[idx]) return;
+  
+  window._selectedContactIdx = idx;
+  const contact = p.contacts[idx];
+  
+  // Update UI displays
+  contactsRenderList();
+  
+  // Refresh Command Center banner with new active contact
+  if (typeof hqRenderBanner === 'function') hqRenderBanner();
+  
+  // Refresh Smart Routing Engine prospect overview with new active contact
+  if (typeof sreRefresh === 'function') sreRefresh();
+  
+  // Update top card if element exists
+  const contactEl = document.getElementById('ecs-contact-container');
+  if (contactEl) {
+    contactEl.textContent = contact.fullName || [contact.firstName, contact.lastName].filter(Boolean).join(' ') || '';
+  }
+  
+  // Update email display
+  const emailEl = document.getElementById('ecs-email');
+  if (emailEl && contact.email) {
+    emailEl.textContent = contact.email;
+  }
+  
+  const fullName = contact.fullName || [contact.firstName, contact.lastName].filter(Boolean).join(' ') || 'contact';
+  showToast('Switched to ' + fullName);
+  
+  // Close drawer after selection
+  setTimeout(function() { contactsCloseDrawer(); }, 300);
+};
+
+// Show/hide contacts button based on prospect
+window.contactsUpdateButton = function() {
+  const p = window._hqProspect;
+  const btn = document.getElementById('tb-contacts-btn');
+  const countEl = document.getElementById('tb-contacts-count');
+  
+  if (btn && p && p.contacts && p.contacts.length > 1) {
+    btn.style.display = 'block';
+    if (countEl) countEl.textContent = p.contacts.length;
+  } else if (btn) {
+    btn.style.display = 'none';
+  }
+};
+
+console.log('✓ Contacts sidebar drawer loaded');
+
+// ═══════════════════════════════════════════════════════════════════
+// ACTIVE CONTACT HELPER
+// Returns the currently ACTIVE contact (not primary)
+// ═══════════════════════════════════════════════════════════════════
+window.getActiveContact = function() {
+  const p = window._hqProspect;
+  if (!p || !p.contacts || !p.contacts.length) return null;
+  
+  const idx = window._selectedContactIdx || 0;
+  return p.contacts[idx] || p.contacts[0];
+};
+
+console.log('✓ Active contact helper loaded');

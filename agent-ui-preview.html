@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sales Agent - UI Preview</title>
+<style>
+:root {
+  --navy: #0f1f3d;
+  --navy-2: #1a2b4a;
+  --gold: #c8a84b;
+  --white: #ffffff;
+  --off-white: #f8f9fa;
+  --text: #1f2937;
+  --text-2: #6b7280;
+  --border: #e5e7eb;
+  --radius-lg: 8px;
+  --fd: 'Georgia', serif;
+  --fb: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  font-family: var(--fb);
+  background: #f3f4f6;
+  padding: 20px;
+  margin: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-family: var(--fd);
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--text-2);
+  margin-bottom: 32px;
+}
+
+.demo-section {
+  background: var(--white);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.demo-section h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 0;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.prospect-card {
+  background: var(--white);
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.agent-controls {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--off-white);
+  border-radius: 6px;
+  border-left: 3px solid #8b5cf6;
+}
+
+.agent-controls button {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.agent-controls button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 16px;
+}
+
+.approval-item {
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.ai-rec {
+  padding: 8px;
+  background: #eff6ff;
+  border-left: 3px solid #3b82f6;
+  margin: 12px 0;
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🤖 AI Sales Agent - UI Preview</h1>
+  <p class="subtitle">This page shows what the agent UI will look like in Sales HQ</p>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SECTION 1: Agent Controls (Not Started) -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="demo-section">
+    <h2>1. Agent Controls - Not Started</h2>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px">This appears on prospect cards before the agent is activated</p>
+    
+    <div class="prospect-card">
+      <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">ABC Manufacturing Co.</div>
+      <div style="font-size:11px;color:var(--text-2);margin-bottom:4px">Contact: John Smith • john@abc.com</div>
+      <div style="font-size:11px;color:var(--text-2)">Industry: Manufacturing • Headcount: 250</div>
+      
+      <!-- Agent Control -->
+      <div class="agent-controls">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:700;color:var(--text)">🤖 AI Sales Agent</span>
+          <span style="font-size:9px;color:var(--text-2);font-style:italic">Not started</span>
+        </div>
+        <button style="font-size:10px;padding:6px 12px;background:#8b5cf6;color:#fff;border:none;border-radius:4px;font-weight:600;width:100%">
+          Start Agent
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SECTION 2: Agent Controls (Active) -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="demo-section">
+    <h2>2. Agent Controls - Active</h2>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px">Agent is running and taking actions</p>
+    
+    <div class="grid">
+      <!-- Active -->
+      <div class="prospect-card">
+        <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">XYZ Tech Solutions</div>
+        <div style="font-size:11px;color:var(--text-2)">Contact: Sarah Johnson</div>
+        
+        <div class="agent-controls" style="border-left-color:#10b981">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;font-weight:700;color:var(--text)">🤖 AI Agent</span>
+              <span style="font-size:9px;color:#10b981;font-weight:600">● Active</span>
+            </div>
+            <button style="font-size:9px;padding:3px 8px;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:3px">Log</button>
+          </div>
+          <div style="font-size:9px;color:var(--text-2);margin-bottom:8px">
+            <div>Actions: 3 | Next: 4/15/26</div>
+            <div style="margin-top:2px;font-style:italic">Last: email sent</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button style="flex:1;font-size:9px;padding:5px;background:#f59e0b;color:#fff;border:none;border-radius:3px;font-weight:600">Pause</button>
+            <button style="flex:1;font-size:9px;padding:5px;background:#ef4444;color:#fff;border:none;border-radius:3px;font-weight:600">Stop</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paused -->
+      <div class="prospect-card">
+        <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">Acme Industries</div>
+        <div style="font-size:11px;color:var(--text-2)">Contact: Mike Williams</div>
+        
+        <div class="agent-controls" style="border-left-color:#f59e0b">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;font-weight:700;color:var(--text)">🤖 AI Agent</span>
+              <span style="font-size:9px;color:#f59e0b;font-weight:600">⏸ Paused</span>
+            </div>
+            <button style="font-size:9px;padding:3px 8px;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:3px">Log</button>
+          </div>
+          <div style="font-size:9px;color:var(--text-2);margin-bottom:8px">
+            <div>Actions: 5 | Next: 4/18/26</div>
+            <div style="margin-top:2px;font-style:italic">Last: task created</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button style="flex:1;font-size:9px;padding:5px;background:#10b981;color:#fff;border:none;border-radius:3px;font-weight:600">Resume</button>
+            <button style="flex:1;font-size:9px;padding:5px;background:#ef4444;color:#fff;border:none;border-radius:3px;font-weight:600">Stop</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Waiting Approval -->
+      <div class="prospect-card">
+        <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:8px">Global Services Inc</div>
+        <div style="font-size:11px;color:var(--text-2)">Contact: Lisa Chen</div>
+        
+        <div class="agent-controls" style="border-left-color:#3b82f6">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;font-weight:700;color:var(--text)">🤖 AI Agent</span>
+              <span style="font-size:9px;color:#3b82f6;font-weight:600">⏳ Waiting Approval</span>
+            </div>
+            <button style="font-size:9px;padding:3px 8px;background:transparent;color:var(--text-2);border:1px solid var(--border);border-radius:3px">Log</button>
+          </div>
+          <div style="font-size:9px;color:var(--text-2);margin-bottom:8px">
+            <div>Actions: 2 | Next: Pending approval</div>
+            <div style="margin-top:2px;font-style:italic">Last: email drafted</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button style="flex:1;font-size:9px;padding:5px;background:#3b82f6;color:#fff;border:none;border-radius:3px;font-weight:600">View Draft</button>
+            <button style="flex:1;font-size:9px;padding:5px;background:#ef4444;color:#fff;border:none;border-radius:3px;font-weight:600">Stop</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SECTION 3: Approval Queue -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="demo-section">
+    <h2>3. Approval Queue</h2>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px">Drafted emails waiting for your review</p>
+    
+    <div class="approval-item">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text)">Global Services Inc</div>
+          <div style="font-size:9px;color:var(--text-2)">To: Lisa Chen (lisa@global.com)</div>
+        </div>
+        <div style="font-size:9px;color:var(--text-2)">4/12/26 2:30 PM</div>
+      </div>
+      
+      <div class="ai-rec">
+        <div style="font-size:9px;font-weight:600;color:#1e40af;margin-bottom:4px">🤖 AI Recommendation</div>
+        <div style="font-size:9px;color:var(--text-2);font-style:italic">OutSail research detected - personalized approach needed. High-stakes prospect with clear pain points around compliance automation.</div>
+      </div>
+      
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:600;color:var(--text);margin-bottom:4px">Subject:</div>
+        <div style="font-size:10px;color:var(--text);padding:6px;background:var(--off-white);border-radius:4px">
+          Saw you're evaluating payroll solutions - quick question
+        </div>
+      </div>
+      
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:600;color:var(--text);margin-bottom:4px">Body:</div>
+        <div style="font-size:9px;color:var(--text);padding:10px;background:var(--off-white);border-radius:4px;max-height:100px;overflow-y:auto;white-space:pre-wrap">Hi Lisa,
+
+I noticed Global Services is currently researching payroll and HR solutions on OutSail. Based on your industry (Professional Services) and size (250 employees), I wanted to reach out about a specific challenge we're seeing in similar organizations...
+
+Would you be open to a brief call next week?
+
+Best,
+AJ</div>
+      </div>
+      
+      <div style="display:flex;gap:8px">
+        <button style="flex:1;font-size:10px;padding:8px;background:#10b981;color:#fff;border:none;border-radius:4px;font-weight:600">
+          ✓ Approve & Send
+        </button>
+        <button style="flex:1;font-size:10px;padding:8px;background:#3b82f6;color:#fff;border:none;border-radius:4px;font-weight:600">
+          ✏️ Edit
+        </button>
+        <button style="flex:1;font-size:10px;padding:8px;background:#ef4444;color:#fff;border:none;border-radius:4px;font-weight:600">
+          ✕ Reject
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SECTION 4: Agent Log -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="demo-section">
+    <h2>4. Agent Log</h2>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px">Complete history of agent actions for a prospect</p>
+    
+    <div style="margin-bottom:16px;padding:12px;background:var(--off-white);border-radius:6px">
+      <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px">Agent Stats</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:10px">
+        <div>
+          <div style="color:var(--text-2)">Started</div>
+          <div style="font-weight:600;color:var(--text)">4/10/26</div>
+        </div>
+        <div>
+          <div style="color:var(--text-2)">Total Actions</div>
+          <div style="font-weight:600;color:var(--text)">5</div>
+        </div>
+        <div>
+          <div style="color:var(--text-2)">Next Action</div>
+          <div style="font-weight:600;color:var(--text)">4/15/26</div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px">Action History</div>
+    
+    <div style="padding:10px;background:var(--white);border:1px solid var(--border);border-radius:5px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:14px">📧</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text)">EMAIL SENT</span>
+        </div>
+        <span style="font-size:9px;color:var(--text-2)">4/12/26 2:30 PM</span>
+      </div>
+      <div style="font-size:9px;color:var(--text-2);margin-bottom:4px;font-style:italic">
+        AI Reasoning: Follow-up needed based on Day 3 timing. High pain points identified in Gong intel.
+      </div>
+      <div style="font-size:9px;color:var(--text);background:var(--off-white);padding:6px;border-radius:3px">
+        Subject: Following up on compliance automation<br>
+        Template: high_pain_point<br>
+        Email Type: follow_up
+      </div>
+    </div>
+
+    <div style="padding:10px;background:var(--white);border:1px solid var(--border);border-radius:5px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:14px">✅</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text)">TASK CREATED</span>
+        </div>
+        <span style="font-size:9px;color:var(--text-2)">4/10/26 9:15 AM</span>
+      </div>
+      <div style="font-size:9px;color:var(--text-2);margin-bottom:4px;font-style:italic">
+        AI Reasoning: First touch sent, create reminder for follow-up call in 3 days.
+      </div>
+      <div style="font-size:9px;color:var(--text);background:var(--off-white);padding:6px;border-radius:3px">
+        Task: Call Lisa Chen - follow up on initial email about compliance pain points<br>
+        Priority: medium
+      </div>
+    </div>
+
+    <div style="padding:10px;background:var(--white);border:1px solid var(--border);border-radius:5px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:14px">📧</span>
+          <span style="font-size:10px;font-weight:600;color:var(--text)">EMAIL SENT</span>
+        </div>
+        <span style="font-size:9px;color:var(--text-2)">4/8/26 11:00 AM</span>
+      </div>
+      <div style="font-size:9px;color:var(--text-2);margin-bottom:4px;font-style:italic">
+        AI Reasoning: First touch with clear pain points - send immediate value-based email.
+      </div>
+      <div style="font-size:9px;color:var(--text);background:var(--off-white);padding:6px;border-radius:3px">
+        Subject: Compliance automation for professional services firms<br>
+        Template: first_touch<br>
+        Email Type: first_touch
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SECTION 5: Top Nav Button -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="demo-section">
+    <h2>5. Top Navigation - Queue Button</h2>
+    <p style="font-size:12px;color:var(--text-2);margin-bottom:16px">This button appears in your top nav bar</p>
+    
+    <div style="background:var(--navy);padding:16px;border-radius:6px">
+      <button style="position:relative;font-size:11px;padding:8px 16px;background:var(--navy);color:var(--gold);border:1px solid var(--gold);border-radius:5px;cursor:pointer;font-weight:600;font-family:var(--fb)">
+        📋 Agent Queue
+        <span style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px">3</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:32px 0;color:var(--text-2);font-size:11px">
+    <p>🤖 AI Sales Agent for Sales HQ</p>
+    <p>Ready to integrate? Check the Integration Guide for step-by-step instructions.</p>
+  </div>
+</div>
+
+</body>
+</html>
